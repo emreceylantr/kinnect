@@ -11,6 +11,7 @@ import 'create_post_screen.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
 import 'post_detail_screen.dart';
+import 'messages_screen.dart'; // YENİ EKLENDİ: Mesajlaşma Ekranı
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -45,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // --- FLASH BİLDİRİM SİSTEMİ (DÜZELTİLDİ) ---
+  // --- FLASH BİLDİRİM SİSTEMİ (MEVCUT KOD) ---
   void _setupRealtimeSubscription() {
     _notificationChannel = Supabase.instance.client
         .channel('public:notifications')
@@ -78,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
         .from('profiles')
         .select('username, avatar_url')
         .eq('id', actorId)
-        .maybeSingle(); // single yerine maybeSingle daha güvenli
+        .maybeSingle();
 
     if (userRes == null || !mounted) return;
 
@@ -105,12 +106,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    // HATA ÇÖZÜMÜ BURADA: Overlay kontrolü
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
-    bool isRemoved = false; // Bildirim silindi mi kontrolü
+    bool isRemoved = false;
 
-    // Bildirimi silme fonksiyonu (Güvenli)
     void removeOverlay() {
       if (!isRemoved && overlayEntry.mounted) {
         isRemoved = true;
@@ -134,9 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 offset: Offset(0, value),
                 child: GestureDetector(
                   onTap: () async {
-                    removeOverlay(); // Önce kaldır
-
-                    // Sonra git
+                    removeOverlay();
                     if (postId != null) {
                       final postRes = await Supabase.instance.client
                           .from('posts')
@@ -192,7 +189,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     overlay.insert(overlayEntry);
 
-    // Otomatik kaldırma (Güvenli)
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted && !isRemoved) {
         removeOverlay();
@@ -243,6 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onWillPop: () async => false,
       child: Scaffold(
         backgroundColor: const Color(0xFF050505),
+        // Profil sekmesinde AppBar gizli
         appBar: _currentIndex == 4
             ? null
             : AppBar(
@@ -257,6 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           actions: [
+            // 1. BİLDİRİM İKONU
             IconButton(
               icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
               onPressed: () {
@@ -265,6 +263,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
+
+            // 2. YENİ EKLENEN: MESAJLAŞMA İKONU (Kağıt Uçak)
+            IconButton(
+              icon: const Icon(Icons.near_me_outlined, color: Colors.white),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                );
+              },
+            ),
+
+            // 3. ÇIKIŞ YAP İKONU
             IconButton(
               icon: const Icon(Icons.logout_rounded, color: Colors.white),
               onPressed: () async {
@@ -429,7 +439,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// --- POST CARD (DÜZELTİLMİŞ) ---
+// --- POST CARD (AYNI KALDI) ---
 class PostCard extends StatefulWidget {
   final Map<String, dynamic> post;
   final VoidCallback onRefresh;

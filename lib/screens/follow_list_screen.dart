@@ -1,18 +1,17 @@
-// lib/screens/follow_list_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/friend_service.dart';
 import 'profile_screen.dart';
 
 class FollowListScreen extends StatefulWidget {
   final String userId;
+  final String title;
   final String type; // 'followers' veya 'following'
 
   const FollowListScreen({
     super.key,
     required this.userId,
+    required this.title,
     required this.type,
   });
 
@@ -21,94 +20,137 @@ class FollowListScreen extends StatefulWidget {
 }
 
 class _FollowListScreenState extends State<FollowListScreen> {
-  final FriendService _friendService = FriendService();
+  final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
   List<Map<String, dynamic>> _users = [];
   bool _isLoading = true;
-  final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _fetchList();
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+  Future<void> _fetchList() async {
     try {
-      List<Map<String, dynamic>> data;
+      final client = Supabase.instance.client;
+      List<dynamic> response = [];
 
-      // DÜZELTME BURADA: Metod isimleri güncellendi (List eklendi)
       if (widget.type == 'followers') {
-        data = await _friendService.getFollowersList(widget.userId);
+        final friendships = await client
+            .from('friendships')
+            .select('user_id')
+            .eq('friend_id', widget.userId)
+            .eq('status', 'accepted');
+
+        final ids = (friendships as List).map((e) => e['user_id']).toList();
+        if (ids.isNotEmpty) response = await client.from('profiles').select().inFilter('id', ids);
+
       } else {
-        data = await _friendService.getFollowingList(widget.userId);
+        final friendships = await client
+            .from('friendships')
+            .select('friend_id')
+            .eq('user_id', widget.userId)
+            .eq('status', 'accepted');
+
+        final ids = (friendships as List).map((e) => e['friend_id']).toList();
+        if (ids.isNotEmpty) response = await client.from('profiles').select().inFilter('id', ids);
       }
 
       if (mounted) {
         setState(() {
-          _users = data;
+          _users = List<Map<String, dynamic>>.from(response);
           _isLoading = false;
         });
       }
     } catch (e) {
-      debugPrint('Liste yükleme hatası: $e');
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // --- TAKİPÇİYİ ÇIKAR ---
+  Future<void> _removeFollower(String targetUserId) async {
+    try {
+      await Supabase.instance.client
+          .from('friendships')
+          .delete()
+          .eq('friend_id', _currentUserId) // Ben (Takip edilen)
+          .eq('user_id', targetUserId);    // O (Takip eden)
+
+      setState(() {
+        _users.removeWhere((u) => u['id'] == targetUserId);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kişi çıkarıldı.')));
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  // --- TAKİPTEN ÇIK ---
+  Future<void> _unfollowUser(String targetUserId) async {
+    try {
+      await Supabase.instance.client
+          .from('friendships')
+          .delete()
+          .eq('user_id', _currentUserId) // Ben (Takip eden)
+          .eq('friend_id', targetUserId); // O (Takip edilen)
+
+      setState(() {
+        _users.removeWhere((u) => u['id'] == targetUserId);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Takipten çıkıldı.')));
+    } catch (e) {
+      print(e);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.type == 'followers' ? 'Takipçiler' : 'Takip Edilenler';
+    // Listeye bakan kişi, listenin sahibi mi? (Örn: Ben kendi takipçilerime mi bakıyorum?)
+    final isOwnList = widget.userId == _currentUserId;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF050505),
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFF050505),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        backgroundColor: Colors.transparent,
+        leading: const BackButton(color: Colors.white),
+        title: Text(widget.title, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF)))
           : _users.isEmpty
-          ? Center(child: Text('Kimse yok.', style: GoogleFonts.poppins(color: Colors.white54)))
+          ? Center(child: Text('Liste boş.', style: GoogleFonts.poppins(color: Colors.white54)))
           : ListView.builder(
         itemCount: _users.length,
         itemBuilder: (context, index) {
           final user = _users[index];
-          final fullName = user['full_name'] ?? 'Kullanıcı';
-          final username = user['username'] ?? 'anonim';
-          final avatarUrl = user['avatar_url'];
-          final isMe = user['id'] == _currentUserId;
+          final isMe = user['id'] == _currentUserId; // Listede kendimi görürsem buton olmasın
 
           return ListTile(
-            leading: GestureDetector(
-              onTap: () {
-                // Profile git
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => ProfileScreen(userId: user['id']))
-                );
-              },
-              child: CircleAvatar(
-                backgroundColor: const Color(0xFF6C63FF),
-                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                child: avatarUrl == null ? const Icon(Icons.person, color: Colors.white) : null,
-              ),
+            leading: CircleAvatar(
+              backgroundImage: user['avatar_url'] != null ? NetworkImage(user['avatar_url']) : null,
+              child: user['avatar_url'] == null ? const Icon(Icons.person) : null,
             ),
-            title: Text(fullName, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
-            subtitle: Text('@$username', style: GoogleFonts.poppins(color: Colors.white54)),
-            trailing: isMe
-                ? null
-                : const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 16),
+            title: Text(user['username'] ?? '', style: GoogleFonts.poppins(color: Colors.white)),
+            subtitle: Text(user['full_name'] ?? '', style: GoogleFonts.poppins(color: Colors.white54)),
+
+            // BUTONLAR (SADECE KENDİ LİSTEMSE GÖZÜKSÜN)
+            trailing: (isOwnList && !isMe)
+                ? (widget.type == 'followers'
+                ? OutlinedButton(
+              onPressed: () => _removeFollower(user['id']),
+              style: OutlinedButton.styleFrom(side: BorderSide(color: Colors.grey.shade800), padding: const EdgeInsets.symmetric(horizontal: 12)),
+              child: Text('Çıkar', style: GoogleFonts.poppins(color: Colors.white, fontSize: 12)),
+            )
+                : OutlinedButton(
+              onPressed: () => _unfollowUser(user['id']),
+              style: OutlinedButton.styleFrom(side: BorderSide(color: Colors.grey.shade800), padding: const EdgeInsets.symmetric(horizontal: 12)),
+              child: Text('Takipten Çık', style: GoogleFonts.poppins(color: Colors.white, fontSize: 12)),
+            )
+            )
+                : null,
+
             onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => ProfileScreen(userId: user['id']))
-              );
+              Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: user['id'])));
             },
           );
         },

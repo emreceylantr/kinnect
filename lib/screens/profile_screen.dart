@@ -1,15 +1,16 @@
-// lib/screens/profile_screen.dart
-
+import 'dart:io'; // Dosya işlemleri için
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart'; // Resim seçmek için
 
-import '../repositories/profile_repository.dart';
-import '../services/profile_service.dart';
-import '../services/friend_service.dart';
-import 'user_list_screen.dart';
+// Servis ve Ekran importların
+import '../services/feed_service.dart';
+import '../services/chat_service.dart';
+import 'messages_screen.dart';
 import 'post_detail_screen.dart';
+import 'follow_list_screen.dart';
+import 'edit_profile_screen.dart'; // Profili Düzenle Ekranı
 
 class ProfileScreen extends StatefulWidget {
   final String userId;
@@ -26,165 +27,415 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late final String _currentUserId;
-  late final ProfileService _profileService;
-  late final FriendService _friendService;
+  final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
+  final ChatService _chatService = ChatService();
 
-  Map<String, dynamic>? _profile;
-  bool _isProfileLoading = true;
-  int _postCount = 0;
+  // Veriler
+  Map<String, dynamic>? _profileData;
+  List<Map<String, dynamic>> _userPosts = [];
+
+  // İstatistikler
   int _followersCount = 0;
   int _followingCount = 0;
-  List<Map<String, dynamic>> _posts = [];
-  bool _isPostsLoading = true;
-  FollowStatus _followStatus = FollowStatus.notFollowing;
-  bool _isRelationshipLoading = true;
+  int _postCount = 0;
+
+  bool _isLoading = true;
+
+  // Takip Durumu
+  String _friendshipStatus = 'none';
 
   @override
   void initState() {
     super.initState();
-    final session = Supabase.instance.client.auth.currentSession;
-    _currentUserId = session?.user.id ?? '';
-    final client = Supabase.instance.client;
-    _profileService = ProfileService(ProfileRepository(client));
-    _friendService = FriendService();
-    if (_currentUserId.isNotEmpty) _loadInitialData();
+    _loadAllData();
   }
 
-  Future<void> _loadInitialData() async {
-    await _loadProfile();
-    await _loadFollowStatus();
-    await Future.wait([_loadStats(), _loadPosts()]);
-  }
-
-  // ... (Loaders aynen kalıyor, kısaltıyorum yer kaplamasın diye)
-  Future<void> _loadProfile() async {
-    try { final data = await _profileService.fetchProfile(widget.userId); if (mounted) setState(() { _profile = data; _isProfileLoading = false; }); } catch (e) { if (mounted) setState(() => _isProfileLoading = false); }
-  }
-  Future<void> _loadFollowStatus() async { if (_currentUserId.isEmpty) return; try { final status = await _friendService.getFollowStatus(currentUserId: _currentUserId, targetUserId: widget.userId); if (mounted) setState(() { _followStatus = status; _isRelationshipLoading = false; }); } catch (e) { if (mounted) setState(() => _isRelationshipLoading = false); } }
-  Future<void> _loadStats() async { try { final p = await Supabase.instance.client.from('posts').count(CountOption.exact).eq('user_id', widget.userId); final f1 = await _friendService.getFollowerCount(widget.userId); final f2 = await _friendService.getFollowingCount(widget.userId); if (mounted) setState(() { _postCount = p; _followersCount = f1; _followingCount = f2; }); } catch (e) {} }
-
-  Future<void> _loadPosts() async {
-    setState(() => _isPostsLoading = true);
+  // --- TÜM VERİLERİ YÜKLE ---
+  Future<void> _loadAllData() async {
     try {
-      final posts = await _friendService.getProfilePosts(targetUserId: widget.userId, status: _followStatus);
-      if (mounted) setState(() { _posts = posts; _isPostsLoading = false; });
-    } catch (e) { if (mounted) setState(() => _isPostsLoading = false); }
+      await Future.wait([
+        _fetchProfile(),
+        _checkFollowStatus(),
+        _fetchStats(),
+      ]);
+
+      // Postları çek
+      await _fetchPosts();
+
+      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
-  // --- LİSTE AÇMA ---
-  Future<void> _openFollowList(String type) async {
-    if (_profile == null) return;
-    List<Map<String, dynamic>> users = [];
-    String title = '';
-    if (type == 'followers') { title = 'Takipçiler'; users = await _friendService.getFollowersList(widget.userId); }
-    else { title = 'Takip Edilenler'; users = await _friendService.getFollowingList(widget.userId); }
-    final bool isOwnProfile = widget.userId == _currentUserId;
-    if (!mounted) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => UserListScreen(title: title, users: users, listType: type, isOwnList: isOwnProfile)));
-  }
-
-  Future<void> _handleFollowAction() async {
-    if (_currentUserId.isEmpty) return;
-    setState(() => _isRelationshipLoading = true);
+  Future<void> _fetchProfile() async {
     try {
-      if (_followStatus == FollowStatus.notFollowing) {
-        await _friendService.sendFollowRequest(currentUserId: _currentUserId, targetUserId: widget.userId);
-        _followStatus = FollowStatus.pendingOutgoing;
-      } else if (_followStatus == FollowStatus.pendingOutgoing || _followStatus == FollowStatus.following) {
-        await _friendService.unfollowOrCancel(currentUserId: _currentUserId, targetUserId: widget.userId);
-        _followStatus = FollowStatus.notFollowing;
-        if (_followStatus == FollowStatus.following) _followersCount--;
-      } else if (_followStatus == FollowStatus.pendingIncoming) {
-        await _friendService.acceptFollowRequest(currentUserId: _currentUserId, targetUserId: widget.userId);
-        _followStatus = FollowStatus.following;
-        _followersCount++;
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', widget.userId)
+          .single();
+      if (mounted) setState(() => _profileData = data);
+    } catch (_) {}
+  }
+
+  Future<void> _fetchPosts() async {
+    try {
+      final posts = await FeedService().getProfilePosts(widget.userId);
+      if (mounted) setState(() => _userPosts = posts);
+    } catch (_) {}
+  }
+
+  Future<void> _fetchStats() async {
+    try {
+      final posts = await Supabase.instance.client
+          .from('posts')
+          .count(CountOption.exact)
+          .eq('user_id', widget.userId);
+
+      final followers = await Supabase.instance.client
+          .from('friendships')
+          .count(CountOption.exact)
+          .eq('friend_id', widget.userId)
+          .eq('status', 'accepted');
+
+      final following = await Supabase.instance.client
+          .from('friendships')
+          .count(CountOption.exact)
+          .eq('user_id', widget.userId)
+          .eq('status', 'accepted');
+
+      if (mounted) {
+        setState(() {
+          _postCount = posts;
+          _followersCount = followers;
+          _followingCount = following;
+        });
       }
-      await _loadStats(); await _loadPosts();
-    } catch (e) {} finally { setState(() => _isRelationshipLoading = false); }
+    } catch (_) {}
   }
 
-  // --- PROFİL POST KARTI (ANA SAYFA İLE AYNISI - LİSTE GÖRÜNÜMÜ) ---
-  Widget _buildPostCard(Map<String, dynamic> post) {
-    final content = post['content']?.toString() ?? '';
-    final imageUrl = post['image_url']?.toString();
-    final createdAt = DateTime.tryParse(post['created_at'] ?? '');
-    String dateText = createdAt != null ? '${createdAt.day}/${createdAt.month}/${createdAt.year}' : '';
+  Future<void> _checkFollowStatus() async {
+    if (widget.userId == _currentUserId) return;
+    try {
+      final res = await Supabase.instance.client
+          .from('friendships')
+          .select('status')
+          .eq('user_id', _currentUserId)
+          .eq('friend_id', widget.userId)
+          .maybeSingle();
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (dateText.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(dateText, style: GoogleFonts.poppins(color: Colors.white24, fontSize: 11))),
+      if (mounted) {
+        setState(() {
+          if (res == null) {
+            _friendshipStatus = 'none';
+          } else {
+            _friendshipStatus = res['status'];
+          }
+        });
+      }
+    } catch (_) {}
+  }
 
-          if (content.isNotEmpty)
-            GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))),
-              child: Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(content, style: GoogleFonts.poppins(color: Colors.white))),
-            ),
+  // --- KAPAK FOTOĞRAFI GÜNCELLEME (YENİ) ---
+  Future<void> _updateCoverPhoto() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
 
-          if (imageUrl != null)
-            GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(backgroundColor: Colors.black, appBar: AppBar(backgroundColor: Colors.transparent, leading: const BackButton(color: Colors.white)), body: Center(child: InteractiveViewer(child: Image.network(imageUrl)))))),
-              child: Container(
-                margin: const EdgeInsets.only(top: 5),
-                height: 250, // Sabit yükseklik, eski tarz
-                width: double.infinity,
-                child: Hero(tag: 'profile_$imageUrl', child: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(imageUrl, fit: BoxFit.cover))),
-              ),
-            ),
+    if (image == null) return;
 
-          const SizedBox(height: 10),
-          GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))), child: const Icon(Icons.mode_comment_outlined, color: Colors.white70, size: 20)),
-        ],
-      ),
-    );
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kapak fotoğrafı yükleniyor...')));
+
+      final fileExt = image.path.split('.').last;
+      final fileName = 'cover_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final filePath = 'covers/$fileName';
+
+      // 1. Yükle
+      await Supabase.instance.client.storage.from('uploads').upload(filePath, File(image.path));
+
+      // 2. URL Al
+      final imageUrl = Supabase.instance.client.storage.from('uploads').getPublicUrl(filePath);
+
+      // 3. Veritabanını Güncelle
+      await Supabase.instance.client.from('profiles').update({
+        'cover_url': imageUrl,
+      }).eq('id', _currentUserId);
+
+      // 4. UI Güncelle
+      setState(() {
+        _profileData?['cover_url'] = imageUrl;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kapak güncellendi!')));
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+    }
+  }
+
+  // --- LİSTE EKRANINA GİT ---
+  void _openFollowList(String type, String title) {
+    bool canView = (widget.userId == _currentUserId) || (_friendshipStatus == 'accepted');
+
+    if (canView) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => FollowListScreen(
+            userId: widget.userId,
+            title: title,
+            type: type,
+          ),
+        ),
+      ).then((_) => _fetchStats());
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Listeyi görmek için takip etmelisin.')),
+      );
+    }
+  }
+
+  // --- TAKİP ET / ÇIKAR ---
+  Future<void> _handleFollowAction() async {
+    String previousStatus = _friendshipStatus;
+
+    setState(() {
+      if (_friendshipStatus == 'none') {
+        _friendshipStatus = 'pending';
+      } else {
+        _friendshipStatus = 'none';
+        if (previousStatus == 'accepted') _followersCount--;
+      }
+    });
+
+    try {
+      if (previousStatus == 'none') {
+        await Supabase.instance.client.from('friendships').insert({
+          'user_id': _currentUserId,
+          'friend_id': widget.userId,
+          'status': 'pending',
+        });
+
+        try {
+          await Supabase.instance.client.from('notifications').insert({
+            'user_id': widget.userId,
+            'actor_id': _currentUserId,
+            'type': 'follow',
+            'is_read': false
+          });
+        } catch (_) {}
+
+      } else {
+        await Supabase.instance.client
+            .from('friendships')
+            .delete()
+            .eq('user_id', _currentUserId)
+            .eq('friend_id', widget.userId);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _friendshipStatus = previousStatus;
+          if (previousStatus == 'accepted') _followersCount++;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hata oluştu.')));
+      }
+    }
+  }
+
+  void _startMessage() async {
+    try {
+      final roomId = await _chatService.createOrGetChatRoom(widget.userId);
+      if (!mounted) return;
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => ChatScreen(roomId: roomId, otherUser: _profileData ?? {}),
+      ));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isOwnProfile = widget.userId == _currentUserId;
-    final fullName = _profile?['full_name'] ?? (isOwnProfile ? 'Profilim' : 'Profil');
-    final username = _profile?['username'] ?? '';
-    final avatarUrl = _profile?['avatar_url'] as String?;
-    final bio = _profile?['bio'] as String? ?? '';
-    final bool canViewLists = isOwnProfile || (_followStatus == FollowStatus.following);
+    final isMe = widget.userId == _currentUserId;
+    final isFriend = _friendshipStatus == 'accepted';
+
+    final visiblePosts = _userPosts.where((post) {
+      if (isMe || isFriend) return true;
+      return post['visibility'] == 'public';
+    }).toList();
+
+    final showLockScreen = !isMe && !isFriend && visiblePosts.isEmpty;
+    final coverUrl = _profileData?['cover_url']; // Kapak fotoğrafı
 
     return Scaffold(
-      backgroundColor: const Color(0xFF050505),
-      appBar: AppBar(backgroundColor: const Color(0xFF050505), elevation: 0, title: Text(isOwnProfile ? 'Profilim' : fullName, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)), centerTitle: true, leading: widget.showBackButton ? IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white), onPressed: () => Navigator.pop(context)) : null),
-      body: RefreshIndicator(
-        color: const Color(0xFF6C63FF), backgroundColor: const Color(0xFF1A1A1A), onRefresh: _loadInitialData,
+      backgroundColor: const Color(0xFF000000),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF)))
+          : RefreshIndicator(
+        onRefresh: _loadAllData,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              const SizedBox(height: 20),
-              CircleAvatar(radius: 50, backgroundColor: const Color(0xFF6C63FF), backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null, child: avatarUrl == null ? const Icon(Icons.person, size: 50, color: Colors.white) : null),
-              const SizedBox(height: 12),
-              Text(fullName, style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-              Text('@$username', style: GoogleFonts.poppins(color: Colors.white54, fontSize: 14)),
-              const SizedBox(height: 20),
-              // --- İSTATİSTİKLER (TIKLANABİLİR) ---
-              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                _buildStatItem('Gönderi', _postCount, null),
-                _buildStatItem('Takipçi', _followersCount, canViewLists ? () => _openFollowList('followers') : null),
-                _buildStatItem('Takip', _followingCount, canViewLists ? () => _openFollowList('following') : null)
-              ]),
-              const SizedBox(height: 20),
-              Padding(padding: const EdgeInsets.symmetric(horizontal: 20), child: _buildActionButton()),
-              if (bio.isNotEmpty) Padding(padding: const EdgeInsets.all(20), child: Text(bio, textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.white70))),
-              const SizedBox(height: 30),
-              if (_posts.isNotEmpty) ...[
-                Padding(padding: const EdgeInsets.symmetric(horizontal: 20), child: Align(alignment: Alignment.centerLeft, child: Text('Gönderiler', style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)))),
-                // LIST VIEW (Izgara Değil)
-                ListView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: _posts.length, itemBuilder: (context, index) => _buildPostCard(_posts[index])),
-              ] else
-                Padding(padding: const EdgeInsets.all(40), child: Text(canViewLists ? 'Henüz gönderi yok.' : 'Hesap Gizli', style: GoogleFonts.poppins(color: Colors.white38))),
-              const SizedBox(height: 40),
+              // --- ÜST BÖLÜM (KAPAK + PROFİL) ---
+              Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  // 1. ARKA PLAN KAPAK FOTOĞRAFI
+                  Container(
+                    height: 420,
+                    width: double.infinity,
+                    foregroundDecoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.transparent,
+                          Color(0xCC000000),
+                          Color(0xFF000000),
+                        ],
+                        stops: [0.0, 0.4, 0.75, 1.0],
+                      ),
+                    ),
+                    child: coverUrl != null
+                        ? Image.network(coverUrl, fit: BoxFit.cover)
+                        : Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Colors.grey.shade900, Colors.black],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 2. KAPAK DÜZENLEME BUTONU (Sadece ben isem)
+                  if (isMe)
+                    Positioned(
+                      top: 50,
+                      right: 16,
+                      child: GestureDetector(
+                        onTap: _updateCoverPhoto,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white24),
+                          ),
+                          child: const Icon(Icons.add_a_photo, color: Colors.white, size: 18),
+                        ),
+                      ),
+                    ),
+
+                  // 3. GERİ BUTONU (Başkasının profilindeysem)
+                  if (!isMe && widget.showBackButton)
+                    Positioned(
+                      top: 50,
+                      left: 16,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+
+                  // 4. PROFİL İÇERİĞİ
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Avatar
+                        CircleAvatar(
+                          radius: 45,
+                          backgroundColor: const Color(0xFF1F1F1F),
+                          backgroundImage: _profileData?['avatar_url'] != null
+                              ? NetworkImage(_profileData!['avatar_url'])
+                              : null,
+                          child: _profileData?['avatar_url'] == null
+                              ? const Icon(Icons.person, size: 40, color: Colors.white54)
+                              : null,
+                        ),
+                        const SizedBox(height: 12),
+
+                        // İsim
+                        Text(
+                          _profileData?['full_name'] ?? 'İsimsiz',
+                          style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)]),
+                        ),
+                        const SizedBox(height: 4),
+                        // Bio
+                        Text(
+                          _profileData?['bio'] ?? '',
+                          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 3, color: Colors.black)]),
+                          textAlign: TextAlign.center,
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // İstatistikler
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildStat('Gönderi', _postCount.toString(), null),
+                            _buildStat('Takipçi', _followersCount.toString(), () => _openFollowList('followers', 'Takipçiler')),
+                            _buildStat('Takip', _followingCount.toString(), () => _openFollowList('following', 'Takip Edilenler')),
+                          ],
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Butonlar
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: isMe
+                              ? _buildMyProfileButtons()
+                              : _buildOtherProfileButtons(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const Divider(color: Colors.white10, height: 1),
+
+              // --- İÇERİK ---
+              showLockScreen
+                  ? Padding(
+                padding: const EdgeInsets.all(40.0),
+                child: Column(
+                  children: [
+                    const Icon(Icons.lock_outline, size: 40, color: Colors.white24),
+                    const SizedBox(height: 10),
+                    Text("Bu hesap gizli.", style: GoogleFonts.poppins(color: Colors.white24)),
+                    Text("Görmek için takip et.", style: GoogleFonts.poppins(color: Colors.white24, fontSize: 12)),
+                  ],
+                ),
+              )
+                  : (visiblePosts.isEmpty
+                  ? Padding(
+                padding: const EdgeInsets.all(40.0),
+                child: Column(
+                  children: [
+                    const Icon(Icons.feed_outlined, size: 40, color: Colors.white24),
+                    const SizedBox(height: 10),
+                    Text("Henüz gönderi yok.", style: GoogleFonts.poppins(color: Colors.white24)),
+                  ],
+                ),
+              )
+                  : ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: visiblePosts.length,
+                separatorBuilder: (context, index) => const Divider(color: Colors.white10, height: 1),
+                itemBuilder: (context, index) => _buildTwitterStylePost(visiblePosts[index]),
+              )
+              ),
             ],
           ),
         ),
@@ -192,18 +443,159 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, int value, VoidCallback? onTap) {
-    return GestureDetector(onTap: onTap, child: Column(children: [Text(value.toString(), style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)), const SizedBox(height: 4), Text(label, style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12))]));
+  // --- WIDGET'LAR ---
+
+  Widget _buildStat(String label, String value, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        color: Colors.transparent,
+        child: Column(
+          children: [
+            Text(value, style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])),
+            Text(label, style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])),
+          ],
+        ),
+      ),
+    );
   }
 
-  Widget _buildActionButton() {
-    if (widget.userId == _currentUserId) {
-      return SizedBox(width: double.infinity, child: OutlinedButton(onPressed: (){}, style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white24), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text('Profili Düzenle', style: GoogleFonts.poppins(color: Colors.white))));
+  // --- GÜNCELLENMİŞ BUTON: PROFİLİ DÜZENLE ---
+  Widget _buildMyProfileButtons() {
+    return SizedBox(
+      height: 36,
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () async {
+          if (_profileData == null) return;
+          // Edit sayfasına git
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => EditProfileScreen(currentProfile: _profileData!),
+            ),
+          );
+          // Eğer kaydedildiyse sayfayı yenile
+          if (result == true) {
+            _loadAllData();
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF262626).withOpacity(0.8),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          elevation: 0,
+        ),
+        child: Text("Profili Düzenle", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+      ),
+    );
+  }
+
+  Widget _buildOtherProfileButtons() {
+    String label = "Takip Et";
+    Color bgColor = const Color(0xFF6C63FF);
+    Color txtColor = Colors.white;
+
+    if (_friendshipStatus == 'accepted') {
+      label = "Takip Ediliyor";
+      bgColor = const Color(0xFF262626).withOpacity(0.8);
+    } else if (_friendshipStatus == 'pending') {
+      label = "İstek Gönderildi";
+      bgColor = Colors.grey.shade900.withOpacity(0.8);
+      txtColor = Colors.grey;
     }
-    String label = 'Takip Et'; Color bg = const Color(0xFF6C63FF); Color txt = Colors.white;
-    if (_followStatus == FollowStatus.following) { label = 'Takiptesin'; bg = const Color(0xFF1A1A1A); }
-    else if (_followStatus == FollowStatus.pendingOutgoing) { label = 'İstek Gönderildi'; bg = Colors.grey.shade800; txt = Colors.white54; }
-    else if (_followStatus == FollowStatus.pendingIncoming) { label = 'Kabul Et'; bg = Colors.green; }
-    return SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _isRelationshipLoading ? null : _handleFollowAction, style: ElevatedButton.styleFrom(backgroundColor: bg, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: _isRelationshipLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(label, style: GoogleFonts.poppins(color: txt, fontWeight: FontWeight.w600))));
+
+    return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 36,
+            child: ElevatedButton(
+              onPressed: _handleFollowAction,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: bgColor,
+                foregroundColor: txtColor,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 0,
+                padding: EdgeInsets.zero,
+              ),
+              child: Text(label, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: SizedBox(
+            height: 36,
+            child: ElevatedButton(
+              onPressed: _startMessage,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF262626).withOpacity(0.8),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 0,
+                padding: EdgeInsets.zero,
+              ),
+              child: Text("Mesaj", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTwitterStylePost(Map<String, dynamic> post) {
+    final profile = post['profiles'] ?? {};
+    final content = post['content'] ?? '';
+    final imageUrl = post['image_url'];
+    final date = DateTime.tryParse(post['created_at'] ?? '');
+    final dateStr = date != null ? '${date.day}/${date.month}' : '';
+    final likeCount = (post['likes'] as List?)?.length ?? 0;
+    final commentCount = (post['comments'] as List?)?.length ?? 0;
+
+    return InkWell(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: const Color(0xFF1F1F1F),
+              backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
+              child: profile['avatar_url'] == null ? const Icon(Icons.person, size: 20, color: Colors.white54) : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Flexible(child: Text(profile['full_name'] ?? 'İsimsiz', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), overflow: TextOverflow.ellipsis)),
+                    const SizedBox(width: 4),
+                    Flexible(child: Text('@${profile['username']}', style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
+                    const SizedBox(width: 6),
+                    Text('· $dateStr', style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12)),
+                  ]),
+                  if (content.isNotEmpty) ...[const SizedBox(height: 4), Text(content, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, height: 1.3))],
+                  if (imageUrl != null) ...[
+                    const SizedBox(height: 10),
+                    Container(height: 200, width: double.infinity, decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: const Color(0xFF1A1A1A), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover))),
+                  ],
+                  const SizedBox(height: 12),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Row(children: [const Icon(Icons.chat_bubble_outline, size: 18, color: Colors.grey), const SizedBox(width: 6), Text(commentCount.toString(), style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12))]),
+                    Row(children: [const Icon(Icons.favorite_border, size: 18, color: Colors.grey), const SizedBox(width: 6), Text(likeCount.toString(), style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12))]),
+                    const Icon(Icons.share_outlined, size: 18, color: Colors.grey),
+                    const SizedBox(width: 20),
+                  ]),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
