@@ -8,7 +8,12 @@ plugins {
 android {
     namespace = "com.kinnect.kinnect"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+
+    // --- GÜNCELLENEN KISIM ---
+    // Otomatik sürüm yerine manuel ve sağlam sürümü belirtiyoruz.
+    // Eğer Android Studio'da indirdiğin sürüm farklıysa (örn: 26.1.10909125) burayı güncelle.
+    ndkVersion = "27.0.12077973"
+    // -------------------------
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

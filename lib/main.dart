@@ -1,4 +1,3 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,7 +8,6 @@ import 'screens/home_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Supabase başlatılıyor
   await Supabase.initialize(
     url: 'https://vxrvudcafkgqusjrawme.supabase.co',
     anonKey: 'sb_publishable_tSqnWtXnUhEog3MIx5ajRw_PZeTlwuG',
@@ -33,10 +31,7 @@ class MyApp extends StatelessWidget {
           bodyColor: Colors.white,
           displayColor: Colors.white,
         ),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-          size: 24,
-        ),
+        iconTheme: const IconThemeData(color: Colors.white, size: 24),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -48,7 +43,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// Kullanıcı giriş yapmış mı kontrol eden ve YÜKLEME DURUMUNU yöneten gate
 class _AuthGate extends StatelessWidget {
   const _AuthGate();
 
@@ -59,26 +53,14 @@ class _AuthGate extends StatelessWidget {
     return StreamBuilder<AuthState>(
       stream: client.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        // 1. Siyah Ekran Çözümü: Veri beklenirken dönen çubuk göster
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             backgroundColor: Color(0xFF050505),
-            body: Center(
-              child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
-            ),
+            body: Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF))),
           );
         }
-
-        // 2. Oturum Kontrolü
         final session = snapshot.data?.session ?? client.auth.currentSession;
-
-        if (session == null) {
-          // Giriş yoksa -> Karşılama Ekranı
-          return WelcomeScreen();
-        } else {
-          // Giriş varsa -> Ana Ekran
-          return const HomeScreen();
-        }
+        return session != null ? const HomeScreen() : WelcomeScreen();
       },
     );
   }

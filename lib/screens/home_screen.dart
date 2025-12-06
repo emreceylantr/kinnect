@@ -1,17 +1,18 @@
-// lib/screens/home_screen.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// Servis ve Ekranlar
 import '../services/feed_service.dart';
+import '../services/chat_service.dart'; // Chat servisi eklendi
 import 'create_post_screen.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
 import 'post_detail_screen.dart';
-import 'messages_screen.dart'; // YENİ EKLENDİ: Mesajlaşma Ekranı
+import 'messages_screen.dart';
+import 'call_screen.dart'; // Arama ekranı
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // --- FLASH BİLDİRİM SİSTEMİ (MEVCUT KOD) ---
+  // --- FLASH BİLDİRİM VE ARAMA YAKALAMA ---
   void _setupRealtimeSubscription() {
     _notificationChannel = Supabase.instance.client
         .channel('public:notifications')
@@ -61,30 +62,138 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       callback: (payload) {
         if (mounted) {
-          _showTopNotification(payload.newRecord);
+          _handleNewNotification(payload.newRecord);
         }
       },
     )
         .subscribe();
   }
 
-  void _showTopNotification(Map<String, dynamic> data) async {
-    if (!mounted) return;
-
+  // Gelen bildirimi işle
+  void _handleNewNotification(Map<String, dynamic> data) async {
     final type = data['type'];
     final actorId = data['actor_id'];
-    final postId = data['post_id'];
 
+    // Bildirimi yapan kişiyi bul
     final userRes = await Supabase.instance.client
         .from('profiles')
-        .select('username, avatar_url')
+        .select('username, avatar_url, full_name, id')
         .eq('id', actorId)
         .maybeSingle();
 
     if (userRes == null || !mounted) return;
 
-    final username = userRes['username'] ?? 'Birisi';
-    final avatarUrl = userRes['avatar_url'];
+    // --- SENARYO 1: ARAMA (CALL) -> DIALOG ---
+    if (type == 'call') {
+      _showIncomingCallDialog(userRes);
+    }
+    // --- SENARYO 2: DİĞER BİLDİRİMLER -> BANNER ---
+    else {
+      _showTopNotification(data, userRes);
+    }
+  }
+
+  // --- GELEN ARAMA PENCERESİ (DIALOG) ---
+  void _showIncomingCallDialog(Map<String, dynamic> callerProfile) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Boşluğa basınca kapanmasın
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              CircleAvatar(
+                radius: 45,
+                backgroundImage: callerProfile['avatar_url'] != null
+                    ? NetworkImage(callerProfile['avatar_url'])
+                    : null,
+                backgroundColor: const Color(0xFF6C63FF),
+                child: callerProfile['avatar_url'] == null
+                    ? const Icon(Icons.person, size: 40, color: Colors.white)
+                    : null,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "${callerProfile['full_name'] ?? 'Biri'} seni bekliyor...",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Sohbet odasına katılmak ister misin?",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.spaceEvenly,
+          actions: [
+            // REDDET
+            Column(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  iconSize: 50,
+                  icon: const CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.redAccent,
+                    child: Icon(Icons.call_end, color: Colors.white, size: 28),
+                  ),
+                ),
+                Text("Reddet", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12))
+              ],
+            ),
+            // KATIL
+            Column(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Dialogu kapat
+
+                    // Oda ID'sini oluştur (Aynı mantık: İsimleri birleştir)
+                    final myId = _currentUserId;
+                    final otherId = callerProfile['id'].toString();
+                    List<String> ids = [myId, otherId];
+                    ids.sort();
+                    final callId = ids.join("_");
+
+                    // Direkt CallScreen'e at
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CallScreen(
+                          callId: callId,
+                          otherUserName: callerProfile['full_name'] ?? 'Kullanıcı',
+                          isVideo: false, // Sesli olarak katıl
+                        ),
+                      ),
+                    );
+                  },
+                  iconSize: 50,
+                  icon: const CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.greenAccent,
+                    child: Icon(Icons.phone, color: Colors.white, size: 28),
+                  ),
+                ),
+                Text("Katıl", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12))
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- FLASH BİLDİRİM (BANNER) ---
+  void _showTopNotification(Map<String, dynamic> data, Map<String, dynamic> userProfile) {
+    final type = data['type'];
+    final postId = data['post_id'];
 
     String message = '';
     IconData icon = Icons.notifications;
@@ -102,6 +211,10 @@ class _HomeScreenState extends State<HomeScreen> {
       message = 'yorum yaptı.';
       icon = Icons.chat_bubble;
       iconColor = Colors.blueAccent;
+    } else if (type == 'message') { // MESAJ BİLDİRİMİ EKLENDİ ✅
+      message = 'sana bir mesaj gönderdi 💬';
+      icon = Icons.mail_outline;
+      iconColor = Colors.cyanAccent;
     } else {
       return;
     }
@@ -134,7 +247,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: GestureDetector(
                   onTap: () async {
                     removeOverlay();
-                    if (postId != null) {
+
+                    // --- TIKLAMA YÖNLENDİRMELERİ ---
+                    if (type == 'message') {
+                      // Mesajsa: Odayı bul ve Chate git
+                      try {
+                        final roomId = await ChatService().createOrGetChatRoom(userProfile['id'].toString());
+                        if (mounted) {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => ChatScreen(
+                                roomId: roomId,
+                                otherUser: userProfile,
+                              ))
+                          );
+                        }
+                      } catch (e) {
+                        // Hata olursa en azından mesajlar listesine git
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const MessagesScreen()));
+                      }
+                    } else if (postId != null) {
+                      // Post Bildirimi
                       final postRes = await Supabase.instance.client
                           .from('posts')
                           .select('*, profiles(*), likes(user_id), comments(id)')
@@ -144,6 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: postRes)));
                       }
                     } else {
+                      // Takip vb.
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
                     }
                   },
@@ -162,8 +296,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         CircleAvatar(
                           radius: 18,
                           backgroundColor: const Color(0xFF333333),
-                          backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                          child: avatarUrl == null ? Icon(icon, size: 16, color: iconColor) : null,
+                          backgroundImage: userProfile['avatar_url'] != null ? NetworkImage(userProfile['avatar_url']) : null,
+                          child: userProfile['avatar_url'] == null ? Icon(icon, size: 16, color: iconColor) : null,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -171,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(username, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                              Text(userProfile['username'] ?? 'Birisi', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                               Text(message, style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12)),
                             ],
                           ),
@@ -188,15 +322,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     overlay.insert(overlayEntry);
-
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted && !isRemoved) {
-        removeOverlay();
-      }
-    });
+    Future.delayed(const Duration(seconds: 4), () { if (mounted && !isRemoved) removeOverlay(); });
   }
 
-  // --- ARAMA ---
+  // --- ARAMA (STANDART) ---
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () async {
@@ -239,7 +368,6 @@ class _HomeScreenState extends State<HomeScreen> {
       onWillPop: () async => false,
       child: Scaffold(
         backgroundColor: const Color(0xFF050505),
-        // Profil sekmesinde AppBar gizli
         appBar: _currentIndex == 4
             ? null
             : AppBar(
@@ -247,34 +375,21 @@ class _HomeScreenState extends State<HomeScreen> {
           elevation: 0,
           title: Text(
             _getAppBarTitle(),
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+            style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           actions: [
-            // 1. BİLDİRİM İKONU
             IconButton(
               icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                );
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
               },
             ),
-
-            // 2. YENİ EKLENEN: MESAJLAŞMA İKONU (Kağıt Uçak)
             IconButton(
               icon: const Icon(Icons.near_me_outlined, color: Colors.white),
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
-                );
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MessagesScreen()));
               },
             ),
-
-            // 3. ÇIKIŞ YAP İKONU
             IconButton(
               icon: const Icon(Icons.logout_rounded, color: Colors.white),
               onPressed: () async {
@@ -342,19 +457,12 @@ class _HomeScreenState extends State<HomeScreen> {
               prefixIcon: const Icon(Icons.search, color: Color(0xFF6C63FF)),
               filled: true,
               fillColor: const Color(0xFF1A1A1A),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: BorderSide.none,
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
               contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
             ),
           ),
         ),
-        Expanded(
-          child: _searchController.text.isNotEmpty
-              ? _buildUserSearchResults()
-              : _buildFeed(true),
-        ),
+        Expanded(child: _searchController.text.isNotEmpty ? _buildUserSearchResults() : _buildFeed(true)),
       ],
     );
   }
@@ -377,9 +485,7 @@ class _HomeScreenState extends State<HomeScreen> {
           subtitle: Text(user['full_name'] ?? '', style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
           trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 16),
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(
-                builder: (_) => ProfileScreen(userId: user['id'])
-            ));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: user['id'])));
           },
         );
       },
@@ -393,16 +499,9 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           const Icon(FontAwesomeIcons.robot, size: 60, color: Color(0xFF6C63FF)),
           const SizedBox(height: 20),
-          Text(
-            'Yapay Zeka Asistanı',
-            style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          Text('Yapay Zeka Asistanı', style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          Text(
-            'Yakında burada senin için\nöneriler hazırlayacağım!',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(color: Colors.white54),
-          ),
+          Text('Yakında burada senin için\nöneriler hazırlayacağım!', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.white54)),
         ],
       ),
     );
@@ -439,13 +538,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// --- POST CARD (AYNI KALDI) ---
+// --- POST CARD ---
 class PostCard extends StatefulWidget {
   final Map<String, dynamic> post;
   final VoidCallback onRefresh;
-
   const PostCard({super.key, required this.post, required this.onRefresh});
-
   @override
   State<PostCard> createState() => _PostCardState();
 }
@@ -474,11 +571,7 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _openFullScreen(String url) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.transparent, leading: const BackButton(color: Colors.white)),
-      body: Center(child: InteractiveViewer(child: Image.network(url))),
-    )));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(backgroundColor: Colors.black, appBar: AppBar(backgroundColor: Colors.transparent, leading: const BackButton(color: Colors.white)), body: Center(child: InteractiveViewer(child: Image.network(url))))));
   }
 
   @override
@@ -487,7 +580,6 @@ class _PostCardState extends State<PostCard> {
     final profile = p['profiles'] ?? {};
     final date = DateTime.tryParse(p['created_at'] ?? '');
     final dateStr = date != null ? '${date.day}/${date.month}' : '';
-
     final likeCount = (p['likes'] as List?)?.length ?? 0;
     final commentCount = (p['comments'] as List?)?.length ?? 0;
 
@@ -495,10 +587,7 @@ class _PostCardState extends State<PostCard> {
       onTap: _goToDetail,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-        decoration: BoxDecoration(
-            color: const Color(0xFF111111),
-            borderRadius: BorderRadius.circular(16)
-        ),
+        decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -506,67 +595,15 @@ class _PostCardState extends State<PostCard> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 12),
               leading: GestureDetector(
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: p['user_id']))),
-                child: CircleAvatar(
-                  radius: 18,
-                  backgroundColor: const Color(0xFF6C63FF),
-                  backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
-                  child: profile['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white) : null,
-                ),
+                child: CircleAvatar(radius: 18, backgroundColor: const Color(0xFF6C63FF), backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null, child: profile['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white) : null),
               ),
-              title: GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: p['user_id']))),
-                child: Text(profile['full_name'] ?? 'Bilinmiyor', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-              ),
+              title: GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: p['user_id']))), child: Text(profile['full_name'] ?? 'Bilinmiyor', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14))),
               subtitle: Text('@${profile['username']}', style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
               trailing: Text(dateStr, style: GoogleFonts.poppins(color: Colors.white38, fontSize: 11)),
             ),
-
-            if (p['content'] != null && p['content'].toString().isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Text(p['content'], style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
-              ),
-
-            if (p['image_url'] != null)
-              GestureDetector(
-                onTap: () => _openFullScreen(p['image_url']),
-                child: Container(
-                  margin: const EdgeInsets.only(top: 8),
-                  width: double.infinity,
-                  height: 300,
-                  child: Hero(
-                    tag: p['image_url'],
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.network(p['image_url'], fit: BoxFit.cover),
-                    ),
-                  ),
-                ),
-              ),
-
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: _toggleLike,
-                    child: Icon(isLiked ? Icons.favorite : Icons.favorite_border, color: isLiked ? Colors.red : Colors.white70, size: 26),
-                  ),
-                  if (likeCount > 0) Padding(padding: const EdgeInsets.only(left: 6), child: Text("$likeCount", style: const TextStyle(color: Colors.white70))),
-
-                  const SizedBox(width: 16),
-
-                  GestureDetector(
-                    onTap: _goToDetail,
-                    child: const Icon(Icons.chat_bubble_outline, color: Colors.white70, size: 24),
-                  ),
-                  if (commentCount > 0) Padding(padding: const EdgeInsets.only(left: 6), child: Text("$commentCount", style: const TextStyle(color: Colors.white70))),
-
-                  const Spacer(),
-                  const Icon(Icons.share_outlined, color: Colors.white70, size: 24),
-                ],
-              ),
-            ),
+            if (p['content'] != null && p['content'].toString().isNotEmpty) Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), child: Text(p['content'], style: GoogleFonts.poppins(color: Colors.white, fontSize: 14))),
+            if (p['image_url'] != null) GestureDetector(onTap: () => _openFullScreen(p['image_url']), child: Container(margin: const EdgeInsets.only(top: 8), width: double.infinity, height: 300, child: Hero(tag: p['image_url'], child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(p['image_url'], fit: BoxFit.cover))))),
+            Padding(padding: const EdgeInsets.all(12), child: Row(children: [GestureDetector(onTap: _toggleLike, child: Icon(isLiked ? Icons.favorite : Icons.favorite_border, color: isLiked ? Colors.red : Colors.white70, size: 26)), if (likeCount > 0) Padding(padding: const EdgeInsets.only(left: 6), child: Text("$likeCount", style: const TextStyle(color: Colors.white70))), const SizedBox(width: 16), GestureDetector(onTap: _goToDetail, child: const Icon(Icons.chat_bubble_outline, color: Colors.white70, size: 24)), if (commentCount > 0) Padding(padding: const EdgeInsets.only(left: 6), child: Text("$commentCount", style: const TextStyle(color: Colors.white70))), const Spacer(), const Icon(Icons.share_outlined, color: Colors.white70, size: 24)])),
           ],
         ),
       ),
