@@ -10,7 +10,6 @@
             <key>CFBundleURLSchemes</key>
             <array>
                 <string>io.supabase.flutterquickstart</string>
-
                 <string>com.googleusercontent.apps.71608708372-9dvs03siqhcg5o9g8f7q6haatc1ismcn</string>
             </array>
         </dict>
@@ -18,10 +17,12 @@
 
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Profil fotoğrafı yüklemek ve gönderi paylaşmak için galeriye erişim izni gerekiyor.</string>
+
     <key>NSCameraUsageDescription</key>
-    <string>Fotoğraf çekip paylaşmak için kameraya erişim izni gerekiyor.</string>
+    <string>Fotoğraf çekmek, paylaşmak ve görüntülü arama yapabilmek için kameraya erişim izni gerekiyor.</string>
+
     <key>NSMicrophoneUsageDescription</key>
-    <string>Video kaydı için mikrofona erişim gerekiyor.</string>
+    <string>Video kaydı yapmak ve sesli/görüntülü arama yapabilmek için mikrofona erişim izni gerekiyor.</string>
 
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>

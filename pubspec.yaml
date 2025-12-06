@@ -10,25 +10,37 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # --- SESLİ MESAJ İÇİN GEREKLİLER ---
+  record: ^6.0.0        # <--- Yükseltildi (Daha stabil)
+  audioplayers: ^6.0.0
+  path_provider: ^2.1.2
+  permission_handler: ^12.0.1 # <--- KRİTİK DÜZELTME: Zego'nun istediği 12.0.1'e yükseltildi
+
+  # --- KİMLİK DOĞRULAMA ---
   google_sign_in: ^6.2.1
 
-  # GEREKLİ GÜNCELLEME: Hata veren paketi son sürüme çektik
-  intl: ^0.20.2
+  # --- YARDIMCILAR ---
+  intl: ^0.19.0
+  timeago: ^3.6.1
 
-  # İKONLAR
+  # --- TASARIM & İKONLAR ---
   font_awesome_flutter: ^10.6.0
   cupertino_icons: ^1.0.6
-
-  # SUPABASE
-  supabase_flutter: ^2.8.0
-
-  # GİRİŞ EKRANI
-  introduction_screen: ^3.1.14
-
-  # FONTLAR
   google_fonts: ^6.2.1
 
+  # --- BACKEND ---
+  supabase_flutter: ^2.8.0
+
+  # --- EKRANLAR ---
+  introduction_screen: ^3.1.14
+
+  # --- MEDYA ---
   image_picker: ^1.0.7
+
+  # --- ZEGO CLOUD (ARAMA & GÖRÜNTÜLÜ SOHBET) ---
+  zego_uikit: ^2.28.35
+  zego_uikit_prebuilt_call: ^4.22.1
+  zego_uikit_signaling_plugin: ^2.8.19
 
 dev_dependencies:
   flutter_test:
