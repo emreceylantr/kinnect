@@ -1,150 +1,593 @@
-// lib/screens/post_detail_screen.dart
-
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:timeago/timeago.dart' as timeago;
+
+import '../widgets/fuel_button.dart';
 import '../services/feed_service.dart';
+import '../screens/profile_screen.dart';
+
+import 'package:record/record.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:path_provider/path_provider.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;
-  const PostDetailScreen({super.key, required this.post});
+  final bool isExploreMode; // ⭐ Yeni parametre
+
+  const PostDetailScreen({
+    super.key,
+    required this.post,
+    this.isExploreMode = false,
+  });
 
   @override
   State<PostDetailScreen> createState() => _PostDetailScreenState();
 }
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
-  final FeedService _feedService = FeedService();
-  final TextEditingController _commentController = TextEditingController();
-  final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
+  final SupabaseClient client = Supabase.instance.client;
+  final TextEditingController commentController = TextEditingController();
+  final AudioRecorder audioRecorder = AudioRecorder();
+  final AudioPlayer audioPlayer = AudioPlayer();
 
-  bool isLiked = false;
-  bool _hasChanges = false;
+  List<Map<String, dynamic>> comments = [];
+  bool loadingComments = true;
+  late bool isLiked;
+  late bool isFueled;
+  late int likeCount;
+  late int fuelCount;
+  late int commentCount;
+
+  bool isRecording = false;
+  Timer? recordTimer;
+  int recordDuration = 0;
+  String? playingCommentId;
+  bool isComposing = false;
+
+  String get myId => client.auth.currentUser!.id;
 
   @override
   void initState() {
     super.initState();
+
     final likes = widget.post['likes'] as List<dynamic>? ?? [];
-    isLiked = likes.any((l) => l['user_id'] == _currentUserId);
-  }
 
-  void _toggleLike() async {
-    setState(() { isLiked = !isLiked; _hasChanges = true; });
-    await _feedService.toggleLike(widget.post['id']);
-  }
+    isLiked = likes.any((l) => l["user_id"] == myId);
+    isFueled = isLiked;
+    likeCount = likes.length;
+    fuelCount = likeCount;
 
-  void _onBack() { Navigator.pop(context, _hasChanges); }
+    commentCount = (widget.post['comments'] as List?)?.length ?? 0;
 
-  Future<void> _deletePost() async {
-    final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(backgroundColor: const Color(0xFF1E1E1E), title: const Text('Sil?', style: TextStyle(color: Colors.white)), content: const Text('Bu gönderi silinecek.', style: TextStyle(color: Colors.white70)), actions: [TextButton(child: const Text('İptal'), onPressed: () => Navigator.pop(ctx, false)), TextButton(child: const Text('Sil', style: TextStyle(color: Colors.red)), onPressed: () => Navigator.pop(ctx, true))]));
-    if (confirm == true) {
-      try {
-        await _feedService.deletePost(widget.post['id']);
-        if (mounted) { Navigator.pop(context, true); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Silindi."))); }
-      } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Silinemedi: $e")));
-      }
-    }
-  }
+    _fetchComments();
 
-  Future<void> _deleteComment(String commentId) async {
-    try {
-      await _feedService.deleteComment(commentId);
-      // StreamBuilder otomatik günceller
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Yorum silinemedi.")));
-    }
-  }
-
-  Future<void> _sendComment() async {
-    final text = _commentController.text.trim();
-    if (text.isEmpty) return;
-    _commentController.clear(); FocusScope.of(context).unfocus();
-    try { await _feedService.addComment(widget.post['id'], text); } catch (e) {}
-  }
-
-  void _openHeroImage(BuildContext context, String imageUrl) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => Scaffold(backgroundColor: Colors.black, appBar: AppBar(backgroundColor: Colors.transparent, leading: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context))), body: Center(child: Hero(tag: 'detail_$imageUrl', child: InteractiveViewer(child: Image.network(imageUrl)))))));
+    commentController.addListener(() {
+      setState(() {
+        isComposing = commentController.text.trim().isNotEmpty;
+      });
+    });
   }
 
   @override
-  Widget build(BuildContext context) {
-    final profile = (widget.post['profiles'] ?? {}) as Map<String, dynamic>;
-    final fullName = profile['full_name'] ?? 'Bilinmiyor';
-    final username = profile['username'] ?? 'anonim';
-    final content = widget.post['content'] ?? '';
-    final imageUrl = widget.post['image_url'];
-    final profilePic = profile['avatar_url'];
-    final createdAt = DateTime.tryParse(widget.post['created_at'] ?? '');
-    final String dateText = createdAt != null ? '${createdAt.day}/${createdAt.month} ${createdAt.hour}:${createdAt.minute}' : '';
+  void dispose() {
+    commentController.dispose();
+    audioRecorder.dispose();
+    audioPlayer.dispose();
+    recordTimer?.cancel();
+    super.dispose();
+  }
 
-    return WillPopScope(
-      onWillPop: () async { _onBack(); return false; },
-      child: Scaffold(
-        backgroundColor: const Color(0xFF050505),
-        appBar: AppBar(title: Text('Gönderi', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)), backgroundColor: const Color(0xFF050505), leading: IconButton(icon: const Icon(Icons.arrow_back_ios, color: Colors.white), onPressed: _onBack), actions: [if (widget.post['user_id'] == _currentUserId) IconButton(icon: const Icon(Icons.delete_outline, color: Colors.redAccent), onPressed: _deletePost)]),
-        body: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
+  // *********************************************************
+  // 🔥 YORUMLARI GETİR
+  // *********************************************************
+
+  Future<void> _fetchComments() async {
+    try {
+      final res = await client
+          .from("comments")
+          .select("*, profiles(*)")
+          .eq("post_id", widget.post['id'])
+          .order("created_at", ascending: true);
+
+      setState(() {
+        comments = List<Map<String, dynamic>>.from(res as List);
+        commentCount = comments.length;
+        loadingComments = false;
+      });
+    } catch (_) {}
+  }
+
+  // *********************************************************
+  // ❤️ BEĞENİ (NORMAL MOD)
+  // *********************************************************
+
+  void _toggleLike() async {
+    setState(() {
+      isLiked = !isLiked;
+      likeCount += isLiked ? 1 : -1;
+    });
+
+    await FeedService().toggleLike(widget.post["id"]);
+  }
+
+  // *********************************************************
+  // 🔥 ATEŞ MODU (FUELBUTTON)
+  // *********************************************************
+
+  void _toggleFuel() async {
+    setState(() {
+      isFueled = !isFueled;
+      fuelCount += isFueled ? 1 : -1;
+    });
+
+    await FeedService().toggleLike(widget.post["id"]);
+  }
+
+  // *********************************************************
+  // 💬 YORUM EKLE
+  // *********************************************************
+
+  Future<void> _sendTextComment() async {
+    final msg = commentController.text.trim();
+    if (msg.isEmpty) return;
+
+    commentController.clear();
+    setState(() => isComposing = false);
+
+    await client.from("comments").insert({
+      "post_id": widget.post["id"],
+      "user_id": myId,
+      "content": msg,
+      "audio_url": null,
+    });
+
+    _fetchComments();
+  }
+
+  // *********************************************************
+  // 🔊 SES KAYDI BAŞLAT
+  // *********************************************************
+
+  Future<void> _startRecording() async {
+    if (!await audioRecorder.hasPermission()) return;
+
+    final dir = await getApplicationDocumentsDirectory();
+    final path = "${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
+
+    await audioRecorder.start(const RecordConfig(), path: path);
+
+    setState(() {
+      isRecording = true;
+      recordDuration = 0;
+    });
+
+    recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() => recordDuration++);
+      if (recordDuration >= 15) _stopRecording();
+    });
+  }
+
+  // *********************************************************
+  // 🎤 SES KAYDI DURDUR
+  // *********************************************************
+
+  Future<void> _stopRecording() async {
+    recordTimer?.cancel();
+    if (!isRecording) return;
+
+    final path = await audioRecorder.stop();
+    setState(() => isRecording = false);
+
+    if (path != null && recordDuration > 1) {
+      _uploadAndSendAudio(path);
+    }
+  }
+
+  // *********************************************************
+  // 📤 SES YÜKLE & YORUM OLARAK EKLE
+  // *********************************************************
+
+  Future<void> _uploadAndSendAudio(String filePath) async {
+    final file = File(filePath);
+    final name = "comment_${DateTime.now().millisecondsSinceEpoch}.m4a";
+
+    await client.storage
+        .from("uploads")
+        .upload("comment_audio/$name", file);
+
+    final url = client.storage
+        .from("uploads")
+        .getPublicUrl("comment_audio/$name");
+
+    await client.from("comments").insert({
+      "post_id": widget.post["id"],
+      "user_id": myId,
+      "content": "🎤 Sesli Yorum",
+      "audio_url": url,
+    });
+
+    _fetchComments();
+  }
+
+  // *********************************************************
+  // 🔊 SES OYNAT
+  // *********************************************************
+
+  Future<void> _playPause(String url, String id) async {
+    if (playingCommentId == id) {
+      await audioPlayer.stop();
+      setState(() => playingCommentId = null);
+    } else {
+      await audioPlayer.stop();
+      setState(() => playingCommentId = id);
+      await audioPlayer.play(UrlSource(url));
+    }
+  }
+
+  // *********************************************************
+  // 🧱 UI
+  // *********************************************************
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF000000),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        leading: const BackButton(color: Colors.white),
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          widget.isExploreMode ? "Ateşin Başı 🔥" : "Gönderi",
+          style: GoogleFonts.poppins(
+              color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildPostCard(),
+                  _buildComments(),
+                ],
+              ),
+            ),
+          ),
+          _buildInput(),
+        ],
+      ),
+    );
+  }
+
+  // *********************************************************
+  // 🔥 GÖNDERİ KARTI
+  // *********************************************************
+
+  Widget _buildPostCard() {
+    final profile = widget.post["profiles"] ?? {};
+    final text = widget.post["content"] ?? "";
+    final image = widget.post["image_url"];
+
+    final date = DateTime.tryParse(widget.post["created_at"] ?? "");
+    final dateStr = date != null ? "${date.day}/${date.month}" : "";
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1A1A1A),
+        border: Border(bottom: BorderSide(color: Colors.white12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // PROFIL
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            ProfileScreen(userId: widget.post["user_id"]))),
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundImage: profile["avatar_url"] != null
+                      ? NetworkImage(profile["avatar_url"])
+                      : null,
+                  backgroundColor: Colors.grey[900],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // POST KARTI
-                    Container(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white12))),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ListTile(leading: CircleAvatar(backgroundColor: const Color(0xFF6C63FF), backgroundImage: profilePic != null ? NetworkImage(profilePic) : null, child: profilePic == null ? const Icon(Icons.person, color: Colors.white) : null), title: Text(fullName, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)), subtitle: Text('@$username', style: GoogleFonts.poppins(color: Colors.white54))),
-                          if (content.isNotEmpty) Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), child: Text(content, style: GoogleFonts.poppins(color: Colors.white, fontSize: 16))),
-                          if (imageUrl != null) GestureDetector(onTap: () => _openHeroImage(context, imageUrl), child: Container(width: double.infinity, constraints: const BoxConstraints(maxHeight: 500), color: Colors.black, margin: const EdgeInsets.only(top: 8), child: Hero(tag: 'detail_$imageUrl', child: Image.network(imageUrl, fit: BoxFit.contain)))),
-                          Padding(padding: const EdgeInsets.all(12), child: Row(children: [GestureDetector(onTap: _toggleLike, child: Icon(isLiked ? Icons.favorite : Icons.favorite_border, color: isLiked ? Colors.red : Colors.white, size: 26)), const SizedBox(width: 16), const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 24), const SizedBox(width: 16), const Icon(Icons.send_outlined, color: Colors.white, size: 24)])),
-                          Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: Text(dateText, style: GoogleFonts.poppins(color: Colors.white38, fontSize: 12))),
-                        ],
-                      ),
-                    ),
-                    // YORUMLAR LİSTESİ
-                    StreamBuilder<List<Map<String, dynamic>>>(
-                      stream: _feedService.getCommentsStream(widget.post['id']),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const SizedBox();
-                        final comments = snapshot.data!;
-                        if (comments.isEmpty) return Padding(padding: const EdgeInsets.only(top: 40), child: Center(child: Text("Henüz yorum yok. İlk sen yaz!", style: GoogleFonts.poppins(color: Colors.white38))));
-
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: comments.length,
-                          itemBuilder: (context, index) {
-                            final c = comments[index];
-                            final cp = c['profile'] ?? {};
-                            final isMyComment = c['user_id'] == _currentUserId;
-
-                            return ListTile(
-                              leading: CircleAvatar(radius: 16, backgroundImage: cp['avatar_url'] != null ? NetworkImage(cp['avatar_url']) : null, backgroundColor: Colors.grey[800], child: cp['avatar_url'] == null ? const Icon(Icons.person, size: 16, color: Colors.white) : null),
-                              title: RichText(text: TextSpan(children: [TextSpan(text: "${cp['username'] ?? 'anonim'} ", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)), TextSpan(text: c['content'], style: const TextStyle(color: Colors.white))])),
-                              // SİLME BUTONU (Sadece kendi yorumunsa)
-                              trailing: isMyComment
-                                  ? IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Colors.grey), onPressed: () => _deleteComment(c['id']))
-                                  : null,
-                            );
-                          },
-                        );
-                      },
-                    )
+                    Text(profile["full_name"] ?? "İsimsiz",
+                        style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold)),
+                    Text("@${profile["username"]}",
+                        style: GoogleFonts.poppins(
+                            color: Colors.white54, fontSize: 12)),
                   ],
                 ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              color: const Color(0xFF1A1A1A),
-              child: Row(children: [Expanded(child: TextField(controller: _commentController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(hintText: 'Yorum ekle...', hintStyle: TextStyle(color: Colors.white38), border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16)))), IconButton(icon: const Icon(Icons.send, color: Color(0xFF6C63FF)), onPressed: _sendComment)]),
+              Text(dateStr,
+                  style: GoogleFonts.poppins(
+                      color: Colors.white54, fontSize: 12)),
+            ],
+          ),
+
+          if (text.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(text,
+                style:
+                GoogleFonts.poppins(color: Colors.white, fontSize: 15)),
+          ],
+
+          if (image != null) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(image),
             ),
           ],
+
+          const SizedBox(height: 14),
+
+          // ----------------------------------------------------
+          //  ❤️ NORMAL MOD → KALP
+          //  🔥 EXPLORE MOD → FUEL BUTTON
+          // ----------------------------------------------------
+
+          widget.isExploreMode
+              ? Row(
+            children: [
+              FuelButton(
+                isFueled: isFueled,
+                count: fuelCount,
+                onTap: _toggleFuel,
+                size: 30,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                "$fuelCount Odun",
+                style: GoogleFonts.poppins(
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              const Icon(FontAwesomeIcons.comment,
+                  color: Colors.grey, size: 22),
+              const SizedBox(width: 6),
+              Text("$commentCount",
+                  style: GoogleFonts.poppins(
+                      color: Colors.grey, fontSize: 14)),
+            ],
+          )
+              : Row(
+            children: [
+              GestureDetector(
+                onTap: _toggleLike,
+                child: Icon(
+                  isLiked
+                      ? FontAwesomeIcons.solidHeart
+                      : FontAwesomeIcons.heart,
+                  color:
+                  isLiked ? Colors.redAccent : Colors.white54,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text("$likeCount",
+                  style: GoogleFonts.poppins(
+                      color: Colors.white54, fontSize: 14)),
+
+              const Spacer(),
+              const Icon(FontAwesomeIcons.comment,
+                  color: Colors.grey, size: 22),
+              const SizedBox(width: 6),
+              Text("$commentCount",
+                  style: GoogleFonts.poppins(
+                      color: Colors.grey, fontSize: 14)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // *********************************************************
+  // 💬 YORUM LİSTESİ
+  // *********************************************************
+
+  Widget _buildComments() {
+    if (loadingComments) {
+      return const Padding(
+        padding: EdgeInsets.all(30),
+        child: Center(
+            child: CircularProgressIndicator(color: Colors.orange)),
+      );
+    }
+
+    if (comments.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(40),
+        child: Center(
+          child: Text(
+            widget.isExploreMode ? "İlk odunu sen at 🔥" : "İlk yorumu sen yap!",
+            style: GoogleFonts.poppins(color: Colors.white54),
+          ),
         ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: comments.length,
+      itemBuilder: (_, i) {
+        final c = comments[i];
+        final p = c["profiles"] ?? {};
+        final id = c["id"].toString();
+        final isAudio = c["audio_url"] != null;
+        final isMine = c["user_id"] == myId;
+        final isPlaying = playingCommentId == id;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // PROFIL
+              CircleAvatar(
+                radius: 18,
+                backgroundImage: p["avatar_url"] != null
+                    ? NetworkImage(p["avatar_url"])
+                    : null,
+                backgroundColor: Colors.grey[900],
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ÜST BİLGİ
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(p["username"] ?? "Kullanıcı",
+                            style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
+                        Text(
+                          timeago.format(
+                              DateTime.parse(c["created_at"]),
+                              locale: "en_short"),
+                          style: GoogleFonts.poppins(
+                              color: Colors.white38, fontSize: 11),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    // SESLİ YORUM
+                    if (isAudio)
+                      GestureDetector(
+                        onTap: () => _playPause(c["audio_url"], id),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: isPlaying
+                                ? Colors.orange
+                                : const Color(0xFF2C2C2C),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isPlaying ? Icons.pause : Icons.play_arrow,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                isPlaying ? "Çalıyor..." : "Sesli Yorum",
+                                style: GoogleFonts.poppins(
+                                    color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+
+                    // METİN YORUM
+                    else
+                      Text(
+                        c["content"] ?? "",
+                        style: GoogleFonts.poppins(
+                            color: Colors.white, fontSize: 14),
+                      )
+                  ],
+                ),
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // *********************************************************
+  // ✍️ YORUM YAZMA ALANI
+  // *********************************************************
+
+  Widget _buildInput() {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 10,
+        bottom: Platform.isIOS ? 32 : 14,
+      ),
+      decoration: const BoxDecoration(
+        color: Color(0xFF111111),
+        border: Border(top: BorderSide(color: Colors.white12)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF2A2A2A),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: TextField(
+                controller: commentController,
+                style: const TextStyle(color: Colors.white),
+                maxLines: null,
+                decoration: InputDecoration(
+                  hintText: isRecording
+                      ? "Kaydediliyor... ($recordDuration)"
+                      : "Yorum yaz...",
+                  hintStyle:
+                  TextStyle(color: Colors.white38, fontSize: 14),
+                  border: InputBorder.none,
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          // 🎤 SES KAYDI BUTONU
+          GestureDetector(
+            onLongPress: isComposing ? null : _startRecording,
+            onLongPressUp: _stopRecording,
+            onTap: isComposing ? _sendTextComment : null,
+            child: CircleAvatar(
+              radius: 22,
+              backgroundColor:
+              isRecording ? Colors.redAccent : Colors.orange,
+              child: Icon(
+                isComposing ? Icons.send : Icons.mic,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
