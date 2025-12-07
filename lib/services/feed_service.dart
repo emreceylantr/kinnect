@@ -1,6 +1,4 @@
-// lib/services/feed_service.dart
-
-import 'package:flutter/foundation.dart'; // Hata çıktıları için debugPrint eklendi
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FeedService {
@@ -18,17 +16,20 @@ class FeedService {
     return user.id;
   }
 
-  // --- ANA AKIŞ (SADECE ARKADAŞLAR) ---
+  // --- 1. ANA AKIŞ (SADECE ARKADAŞLAR + BEN) ---
   Future<List<Map<String, dynamic>>> getFriendsFeed() async {
     try {
+      // Takip ettiklerimi bul
       final following = await client
           .from('friendships')
           .select('friend_id')
           .eq('user_id', _myId)
           .eq('status', 'accepted');
 
-      final targetIds =
-      (following as List).map((e) => e['friend_id'] as String).toList();
+      final targetIds = (following as List).map((e) => e['friend_id'] as String).toList();
+
+      // Kendi gönderilerimi de ana akışta göreyim
+      targetIds.add(_myId);
 
       if (targetIds.isEmpty) return [];
 
@@ -40,48 +41,30 @@ class FeedService {
 
       return List<Map<String, dynamic>>.from(posts as List);
     } catch (e) {
-      debugPrint('HATA (Arkadaş Akışı): $e'); // Hatayı konsola yazdırır
+      debugPrint('HATA (Arkadaş Akışı): $e');
       return [];
     }
   }
 
-  // --- KEŞFET (HERKESE AÇIK GÖNDERİLER) ---
+  // --- 2. KEŞFET (HERKES - FİLTRESİZ) ---
+  // (Düzeltilen Yer: Arkadaş/Ben ayrımı yapmadan tüm PUBLIC postları çeker)
   Future<List<Map<String, dynamic>>> getExploreFeed() async {
     try {
-      // 1. Arkadaş listesini çek
-      final following = await client
-          .from('friendships')
-          .select('friend_id')
-          .eq('user_id', _myId)
-          .eq('status', 'accepted');
-
-      final excludedIds =
-      (following as List).map((e) => e['friend_id'] as String).toList();
-
-      // 2. Kendimi de hariç tutulacaklara ekle (kendi postumu keşfette görmiyim)
-      excludedIds.add(_myId);
-
-      // 3. Public postları çek
       final response = await client
           .from('posts')
           .select('*, profiles(*), likes(user_id), comments(id)')
-          .eq('visibility', 'public')
+          .eq('visibility', 'public') // Sadece herkese açık olanlar
           .order('created_at', ascending: false)
           .limit(50);
 
-      final allPublicPosts = List<Map<String, dynamic>>.from(response as List);
-
-      // 4. Flutter tarafında filtrele (Hariç tutulanları listeden çıkar)
-      return allPublicPosts
-          .where((p) => !excludedIds.contains(p['user_id']))
-          .toList();
+      return List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
       debugPrint('HATA (Keşfet): $e');
       return [];
     }
   }
 
-  // --- PROFİL POSTLARI (Sorun yaşadığın yer burası olabilir) ---
+  // --- 3. PROFİL POSTLARI ---
   Future<List<Map<String, dynamic>>> getProfilePosts(String userId) async {
     try {
       final response = await client
@@ -92,13 +75,12 @@ class FeedService {
 
       return List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
-      // BURASI ÇOK ÖNEMLİ: Hata varsa terminalde göreceksin
       debugPrint('HATA (Profil Postları): $e');
       return [];
     }
   }
 
-  // --- YORUM STREAM ---
+  // --- 4. YORUM STREAM (SİLİNMEDİ, DURUYOR) ---
   Stream<List<Map<String, dynamic>>> getCommentsStream(String postId) {
     return client
         .from('comments')
@@ -108,26 +90,19 @@ class FeedService {
         .asyncMap((rows) async {
       if (rows.isEmpty) return [];
 
-      final userIds =
-      rows.map((r) => r['user_id'] as String).toSet().toList();
+      final userIds = rows.map((r) => r['user_id'] as String).toSet().toList();
+      final profiles = await client.from('profiles').select().inFilter('id', userIds);
 
-      final profiles =
-      await client.from('profiles').select().inFilter('id', userIds);
+      final profileMap = { for (final p in profiles) p['id'] as String: p };
 
-      final profileMap = {
-        for (final p in profiles) p['id'] as String: p,
-      };
-
-      return rows
-          .map((r) => {
+      return rows.map((r) => {
         ...r,
         'profile': profileMap[r['user_id']] ?? <String, dynamic>{},
-      })
-          .toList();
+      }).toList();
     });
   }
 
-  // --- YORUM EKLE ---
+  // --- 5. YORUM EKLEME (SİLİNMEDİ) ---
   Future<void> addComment(String postId, String content) async {
     await client.from('comments').insert({
       'user_id': _myId,
@@ -136,13 +111,13 @@ class FeedService {
     });
   }
 
-  // --- YORUM SİL ---
+  // --- 6. YORUM SİLME (SİLİNMEDİ) ---
   Future<void> deleteComment(String commentId) async {
     await client.from('comments').delete().eq('id', commentId);
   }
 
-  // --- LIKE TOGGLE (BEĞEN / BEĞENME) ---
-  Future<bool> toggleLike(String postId) async {
+  // --- 7. BEĞENİ / HARLAMA (TOGGLE) ---
+  Future<void> toggleLike(String postId) async {
     try {
       final existing = await client
           .from('likes')
@@ -153,36 +128,40 @@ class FeedService {
 
       if (existing != null) {
         await client.from('likes').delete().eq('id', existing['id']);
-        return false; // Beğeni geri alındı
       } else {
         await client.from('likes').insert({
           'user_id': _myId,
           'post_id': postId,
         });
-        return true; // Beğenildi
+
+        // Bildirim Gönder
+        final post = await client.from('posts').select('user_id').eq('id', postId).single();
+        if (post['user_id'] != _myId) {
+          await client.from('notifications').insert({
+            'user_id': post['user_id'],
+            'actor_id': _myId,
+            'type': 'like',
+            'post_id': postId,
+            'is_read': false,
+          });
+        }
       }
     } catch (e) {
-      debugPrint('HATA (Like): $e');
+      debugPrint('HATA (Like/Fuel): $e');
       rethrow;
     }
   }
 
-  // --- POST SİL ---
+  // --- 8. POST SİLME (SİLİNMEDİ) ---
   Future<void> deletePost(String postId) async {
     await client.from('posts').delete().eq('id', postId);
   }
 
-  // --- POST GÖRÜNÜRLÜĞÜ GÜNCELLE ---
-  Future<void> updatePostVisibility(
-      String postId,
-      String visibility,
-      ) async {
-    await client
-        .from('posts')
-        .update({
+  // --- 9. GÖRÜNÜRLÜK GÜNCELLEME (SİLİNMEDİ) ---
+  Future<void> updatePostVisibility(String postId, String visibility) async {
+    await client.from('posts').update({
       'visibility': visibility,
       'audience': visibility,
-    })
-        .eq('id', postId);
+    }).eq('id', postId);
   }
 }

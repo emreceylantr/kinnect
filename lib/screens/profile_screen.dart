@@ -1,16 +1,16 @@
-import 'dart:io'; // Dosya işlemleri için
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:image_picker/image_picker.dart'; // Resim seçmek için
+import 'package:image_picker/image_picker.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // FontAwesome eklendi
 
-// Servis ve Ekran importların
 import '../services/feed_service.dart';
 import '../services/chat_service.dart';
 import 'messages_screen.dart';
 import 'post_detail_screen.dart';
 import 'follow_list_screen.dart';
-import 'edit_profile_screen.dart'; // Profili Düzenle Ekranı
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userId;
@@ -58,10 +58,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _checkFollowStatus(),
         _fetchStats(),
       ]);
-
-      // Postları çek
       await _fetchPosts();
-
       if (mounted) setState(() => _isLoading = false);
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
@@ -137,10 +134,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {}
   }
 
-  // --- KAPAK FOTOĞRAFI GÜNCELLEME (YENİ) ---
+  // --- KAPAK FOTOĞRAFI GÜNCELLEME ---
   Future<void> _updateCoverPhoto() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+        maxWidth: 1920,
+        maxHeight: 1080
+    );
 
     if (image == null) return;
 
@@ -151,18 +153,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final fileName = 'cover_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
       final filePath = 'covers/$fileName';
 
-      // 1. Yükle
       await Supabase.instance.client.storage.from('uploads').upload(filePath, File(image.path));
-
-      // 2. URL Al
       final imageUrl = Supabase.instance.client.storage.from('uploads').getPublicUrl(filePath);
 
-      // 3. Veritabanını Güncelle
       await Supabase.instance.client.from('profiles').update({
         'cover_url': imageUrl,
       }).eq('id', _currentUserId);
 
-      // 4. UI Güncelle
       setState(() {
         _profileData?['cover_url'] = imageUrl;
       });
@@ -267,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }).toList();
 
     final showLockScreen = !isMe && !isFriend && visiblePosts.isEmpty;
-    final coverUrl = _profileData?['cover_url']; // Kapak fotoğrafı
+    final coverUrl = _profileData?['cover_url'];
 
     return Scaffold(
       backgroundColor: const Color(0xFF000000),
@@ -313,7 +310,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  // 2. KAPAK DÜZENLEME BUTONU (Sadece ben isem)
+                  // 2. KAPAK DÜZENLEME BUTONU
                   if (isMe)
                     Positioned(
                       top: 50,
@@ -332,7 +329,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
 
-                  // 3. GERİ BUTONU (Başkasının profilindeysem)
+                  // 3. GERİ BUTONU
                   if (!isMe && widget.showBackButton)
                     Positioned(
                       top: 50,
@@ -428,12 +425,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               )
-                  : ListView.separated(
+                  : ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: visiblePosts.length,
-                separatorBuilder: (context, index) => const Divider(color: Colors.white10, height: 1),
-                itemBuilder: (context, index) => _buildTwitterStylePost(visiblePosts[index]),
+                // Burası değişti: Artık yeni kart tasarımını kullanıyor
+                itemBuilder: (context, index) => _buildHomeStylePost(visiblePosts[index]),
               )
               ),
             ],
@@ -460,7 +457,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // --- GÜNCELLENMİŞ BUTON: PROFİLİ DÜZENLE ---
   Widget _buildMyProfileButtons() {
     return SizedBox(
       height: 36,
@@ -468,14 +464,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: ElevatedButton(
         onPressed: () async {
           if (_profileData == null) return;
-          // Edit sayfasına git
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => EditProfileScreen(currentProfile: _profileData!),
             ),
           );
-          // Eğer kaydedildiyse sayfayı yenile
           if (result == true) {
             _loadAllData();
           }
@@ -544,7 +538,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildTwitterStylePost(Map<String, dynamic> post) {
+  // --- YENİ FONKSİYON: ANA AKIŞ TARZI GÖNDERİ KARTI ---
+  Widget _buildHomeStylePost(Map<String, dynamic> post) {
     final profile = post['profiles'] ?? {};
     final content = post['content'] ?? '';
     final imageUrl = post['image_url'];
@@ -553,43 +548,79 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final likeCount = (post['likes'] as List?)?.length ?? 0;
     final commentCount = (post['comments'] as List?)?.length ?? 0;
 
-    return InkWell(
+    // Beğeni durumu kontrolü
+    final isLiked = (post['likes'] as List?)?.any((l) => l['user_id'] == _currentUserId) ?? false;
+
+    return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
+      child: Container(
+        // Ana Akış (Home Screen) ile aynı kenar boşlukları ve stil
+        margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E), // Koyu gri kart rengi
+          borderRadius: BorderRadius.circular(16), // Yuvarlatılmış köşeler
+          border: Border.all(color: Colors.white.withOpacity(0.05)), // İnce çerçeve
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5), // Gölge efekti
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: const Color(0xFF1F1F1F),
-              backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
-              child: profile['avatar_url'] == null ? const Icon(Icons.person, size: 20, color: Colors.white54) : null,
+            // Üst Bilgi (Avatar, İsim, Tarih)
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              leading: CircleAvatar(
+                radius: 20,
+                backgroundColor: const Color(0xFF1F1F1F),
+                backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
+                child: profile['avatar_url'] == null ? const Icon(Icons.person, size: 20, color: Colors.white54) : null,
+              ),
+              title: Text(profile['full_name'] ?? 'İsimsiz', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+              subtitle: Text('@${profile['username']}', style: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 13)),
+              trailing: Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+
+            // İçerik Metni
+            if (content.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Text(content, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, height: 1.4)),
+              ),
+
+            // Görsel
+            if (imageUrl != null)
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                width: double.infinity,
+                constraints: const BoxConstraints(maxHeight: 350),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(imageUrl, fit: BoxFit.cover),
+                ),
+              ),
+
+            // Alt İkonlar (FontAwesome kullanıldı)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Row(
                 children: [
-                  Row(children: [
-                    Flexible(child: Text(profile['full_name'] ?? 'İsimsiz', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), overflow: TextOverflow.ellipsis)),
-                    const SizedBox(width: 4),
-                    Flexible(child: Text('@${profile['username']}', style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
-                    const SizedBox(width: 6),
-                    Text('· $dateStr', style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12)),
-                  ]),
-                  if (content.isNotEmpty) ...[const SizedBox(height: 4), Text(content, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, height: 1.3))],
-                  if (imageUrl != null) ...[
-                    const SizedBox(height: 10),
-                    Container(height: 200, width: double.infinity, decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: const Color(0xFF1A1A1A), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover))),
-                  ],
-                  const SizedBox(height: 12),
-                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Row(children: [const Icon(Icons.chat_bubble_outline, size: 18, color: Colors.grey), const SizedBox(width: 6), Text(commentCount.toString(), style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12))]),
-                    Row(children: [const Icon(Icons.favorite_border, size: 18, color: Colors.grey), const SizedBox(width: 6), Text(likeCount.toString(), style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12))]),
-                    const Icon(Icons.share_outlined, size: 18, color: Colors.grey),
-                    const SizedBox(width: 20),
-                  ]),
+                  Icon(isLiked ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart, color: isLiked ? Colors.redAccent : Colors.grey, size: 20),
+                  const SizedBox(width: 6),
+                  if (likeCount > 0) Text("$likeCount", style: GoogleFonts.poppins(color: Colors.grey, fontSize: 13)),
+
+                  const SizedBox(width: 20),
+
+                  const Icon(FontAwesomeIcons.comment, color: Colors.grey, size: 20),
+                  const SizedBox(width: 6),
+                  if (commentCount > 0) Text("$commentCount", style: GoogleFonts.poppins(color: Colors.grey, fontSize: 13)),
+
+                  const Spacer(),
+                  const Icon(FontAwesomeIcons.shareFromSquare, color: Colors.grey, size: 20),
                 ],
               ),
             ),
