@@ -42,6 +42,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   late int fuelCount;
   late int commentCount;
 
+  // Fuel Modu için 24 saat kontrolü
+  bool isAlive = true;
+
   bool isRecording = false;
   Timer? recordTimer;
   int recordDuration = 0;
@@ -61,6 +64,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     likeCount = likes.length;
     fuelCount = likeCount;
 
+    // 🔥 24 Saat Kontrolü (Sönmüş mü?)
+    final date = DateTime.tryParse(widget.post['created_at'] ?? '')?.toLocal();
+    if (date != null && DateTime.now().difference(date).inHours >= 24) {
+      isAlive = false;
+    }
+
     commentCount = (widget.post['comments'] as List?)?.length ?? 0;
 
     _fetchComments();
@@ -69,6 +78,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       setState(() {
         isComposing = commentController.text.trim().isNotEmpty;
       });
+    });
+
+    // Ses bitince player reset
+    audioPlayer.onPlayerComplete.listen((event) {
+      if (mounted) setState(() => playingCommentId = null);
     });
   }
 
@@ -93,16 +107,18 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           .eq("post_id", widget.post['id'])
           .order("created_at", ascending: true);
 
-      setState(() {
-        comments = List<Map<String, dynamic>>.from(res as List);
-        commentCount = comments.length;
-        loadingComments = false;
-      });
+      if (mounted) {
+        setState(() {
+          comments = List<Map<String, dynamic>>.from(res as List);
+          commentCount = comments.length;
+          loadingComments = false;
+        });
+      }
     } catch (_) {}
   }
 
   // *********************************************************
-  // ❤️ BEĞENİ (NORMAL MOD)
+  // ❤️ BEĞENİ (NORMAL MOD) - isFuel: false
   // *********************************************************
 
   void _toggleLike() async {
@@ -111,24 +127,68 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       likeCount += isLiked ? 1 : -1;
     });
 
-    await FeedService().toggleLike(widget.post["id"]);
+    // 🔥 DÜZELTME: Normal beğeni bildirimi gider
+    await FeedService().toggleLike(widget.post["id"], isFuel: false);
   }
 
   // *********************************************************
-  // 🔥 ATEŞ MODU (FUELBUTTON)
+  // 🔥 ATEŞ MODU (FUELBUTTON) - isFuel: true
   // *********************************************************
 
   void _toggleFuel() async {
+    if (!isAlive) return; // Sönmüşse işlem yapma
+
     setState(() {
       isFueled = !isFueled;
       fuelCount += isFueled ? 1 : -1;
     });
 
-    await FeedService().toggleLike(widget.post["id"]);
+    // 🔥 DÜZELTME: Harlama bildirimi gider
+    await FeedService().toggleLike(widget.post["id"], isFuel: true);
   }
 
   // *********************************************************
-  // 💬 YORUM EKLE
+  // 🗑️ YORUM SİLME
+  // *********************************************************
+  Future<void> _deleteComment(String commentId) async {
+    try {
+      await client.from('comments').delete().eq('id', commentId);
+      setState(() {
+        comments.removeWhere((c) => c['id'] == commentId);
+        commentCount--;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Yorum silindi.')));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Silinemedi.')));
+    }
+  }
+
+  void _confirmDelete(String commentId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text("Yorumu Sil", style: TextStyle(color: Colors.white)),
+        content: const Text("Bu yorumu silmek istediğine emin misin?", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("İptal", style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteComment(commentId);
+            },
+            child: const Text("Sil", style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // *********************************************************
+  // 💬 YORUM EKLE (METİN)
   // *********************************************************
 
   Future<void> _sendTextComment() async {
@@ -138,14 +198,31 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     commentController.clear();
     setState(() => isComposing = false);
 
-    await client.from("comments").insert({
-      "post_id": widget.post["id"],
-      "user_id": myId,
-      "content": msg,
-      "audio_url": null,
-    });
+    try {
+      await client.from("comments").insert({
+        "post_id": widget.post["id"],
+        "user_id": myId,
+        "content": msg,
+        "audio_url": null,
+      });
 
-    _fetchComments();
+      // Bildirim (Post sahibi değilsem)
+      if (widget.post['user_id'] != myId) {
+        try {
+          await client.from('notifications').insert({
+            'user_id': widget.post['user_id'],
+            'actor_id': myId,
+            'type': 'comment',
+            'post_id': widget.post['id'],
+            'is_read': false,
+          });
+        } catch (_) {}
+      }
+
+      _fetchComments();
+    } catch(e) {
+      debugPrint("Yorum hatası: $e");
+    }
   }
 
   // *********************************************************
@@ -153,22 +230,22 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   // *********************************************************
 
   Future<void> _startRecording() async {
-    if (!await audioRecorder.hasPermission()) return;
+    if (await audioRecorder.hasPermission()) {
+      final dir = await getApplicationDocumentsDirectory();
+      final path = "${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
 
-    final dir = await getApplicationDocumentsDirectory();
-    final path = "${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
+      await audioRecorder.start(const RecordConfig(), path: path);
 
-    await audioRecorder.start(const RecordConfig(), path: path);
+      setState(() {
+        isRecording = true;
+        recordDuration = 0;
+      });
 
-    setState(() {
-      isRecording = true;
-      recordDuration = 0;
-    });
-
-    recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() => recordDuration++);
-      if (recordDuration >= 15) _stopRecording();
-    });
+      recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        setState(() => recordDuration++);
+        if (recordDuration >= 15) _stopRecording();
+      });
+    }
   }
 
   // *********************************************************
@@ -192,25 +269,29 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   // *********************************************************
 
   Future<void> _uploadAndSendAudio(String filePath) async {
-    final file = File(filePath);
-    final name = "comment_${DateTime.now().millisecondsSinceEpoch}.m4a";
+    try {
+      final file = File(filePath);
+      final name = "comment_${DateTime.now().millisecondsSinceEpoch}.m4a";
 
-    await client.storage
-        .from("uploads")
-        .upload("comment_audio/$name", file);
+      await client.storage
+          .from("uploads")
+          .upload("comment_audio/$name", file);
 
-    final url = client.storage
-        .from("uploads")
-        .getPublicUrl("comment_audio/$name");
+      final url = client.storage
+          .from("uploads")
+          .getPublicUrl("comment_audio/$name");
 
-    await client.from("comments").insert({
-      "post_id": widget.post["id"],
-      "user_id": myId,
-      "content": "🎤 Sesli Yorum",
-      "audio_url": url,
-    });
+      await client.from("comments").insert({
+        "post_id": widget.post["id"],
+        "user_id": myId,
+        "content": "🎤 Sesli Yorum",
+        "audio_url": url,
+      });
 
-    _fetchComments();
+      _fetchComments();
+    } catch (e) {
+      debugPrint("Ses yükleme hatası: $e");
+    }
   }
 
   // *********************************************************
@@ -310,6 +391,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(profile["full_name"] ?? "İsimsiz",
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.bold)),
@@ -353,15 +435,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               FuelButton(
                 isFueled: isFueled,
                 count: fuelCount,
+                isExpired: !isAlive, // 🔥 SÖNMÜŞSE
                 onTap: _toggleFuel,
                 size: 30,
               ),
               const SizedBox(width: 10),
-              Text(
-                "$fuelCount Odun",
-                style: GoogleFonts.poppins(
-                    color: Colors.orange,
-                    fontWeight: FontWeight.bold),
+              // Flexible taşmayı önler
+              Flexible(
+                child: Text(
+                  "$fuelCount Odun",
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold),
+                ),
               ),
               const Spacer(),
               const Icon(FontAwesomeIcons.comment,
@@ -386,17 +473,22 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text("$likeCount",
-                  style: GoogleFonts.poppins(
-                      color: Colors.white54, fontSize: 14)),
+              Flexible(
+                child: Text("$likeCount",
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                        color: Colors.white54, fontSize: 14)),
+              ),
 
               const Spacer(),
               const Icon(FontAwesomeIcons.comment,
                   color: Colors.grey, size: 22),
               const SizedBox(width: 6),
-              Text("$commentCount",
-                  style: GoogleFonts.poppins(
-                      color: Colors.grey, fontSize: 14)),
+              Flexible(
+                child: Text("$commentCount",
+                    style: GoogleFonts.poppins(
+                        color: Colors.grey, fontSize: 14)),
+              ),
             ],
           ),
         ],
@@ -447,12 +539,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // PROFIL
-              CircleAvatar(
-                radius: 18,
-                backgroundImage: p["avatar_url"] != null
-                    ? NetworkImage(p["avatar_url"])
-                    : null,
-                backgroundColor: Colors.grey[900],
+              GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: c['user_id']))),
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundImage: p["avatar_url"] != null
+                      ? NetworkImage(p["avatar_url"])
+                      : null,
+                  backgroundColor: Colors.grey[900],
+                ),
               ),
 
               const SizedBox(width: 12),
@@ -469,12 +564,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold)),
-                        Text(
-                          timeago.format(
-                              DateTime.parse(c["created_at"]),
-                              locale: "en_short"),
-                          style: GoogleFonts.poppins(
-                              color: Colors.white38, fontSize: 11),
+                        Row(
+                          children: [
+                            Text(
+                              timeago.format(
+                                  DateTime.parse(c["created_at"]),
+                                  locale: "en_short"),
+                              style: GoogleFonts.poppins(
+                                  color: Colors.white38, fontSize: 11),
+                            ),
+                            if (isMine)
+                              GestureDetector(
+                                onTap: () => _confirmDelete(id),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 10),
+                                  child: Icon(Icons.delete_outline, color: Colors.white30, size: 16),
+                                ),
+                              )
+                          ],
                         ),
                       ],
                     ),
@@ -556,6 +663,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 controller: commentController,
                 style: const TextStyle(color: Colors.white),
                 maxLines: null,
+                keyboardType: TextInputType.multiline,
                 decoration: InputDecoration(
                   hintText: isRecording
                       ? "Kaydediliyor... ($recordDuration)"
@@ -572,7 +680,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
           const SizedBox(width: 10),
 
-          // 🎤 SES KAYDI BUTONU
+          // 🎤 SES KAYDI BUTONU / GÖNDER
           GestureDetector(
             onLongPress: isComposing ? null : _startRecording,
             onLongPressUp: _stopRecording,
@@ -584,6 +692,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               child: Icon(
                 isComposing ? Icons.send : Icons.mic,
                 color: Colors.white,
+                size: 20,
               ),
             ),
           ),

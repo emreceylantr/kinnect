@@ -7,6 +7,7 @@ class FuelButton extends StatefulWidget {
   final int count;
   final VoidCallback onTap;
   final double size;
+  final bool isExpired; // Sönmüş mü?
 
   const FuelButton({
     super.key,
@@ -14,14 +15,14 @@ class FuelButton extends StatefulWidget {
     required this.count,
     required this.onTap,
     this.size = 28,
+    this.isExpired = false,
   });
 
   @override
   State<FuelButton> createState() => _FuelButtonState();
 }
 
-class _FuelButtonState extends State<FuelButton>
-    with TickerProviderStateMixin {
+class _FuelButtonState extends State<FuelButton> with TickerProviderStateMixin {
   late AnimationController _mainController;
   late AnimationController _logController;
   late AnimationController _sparkController;
@@ -38,68 +39,26 @@ class _FuelButtonState extends State<FuelButton>
   void initState() {
     super.initState();
 
-    // --- Ateş büyüme / nefes alma ---
-    _mainController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 220),
-    );
-
+    _mainController = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
     _scaleAnim = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 1.35)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: 1.35, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeIn)),
-        weight: 50,
-      ),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
     ]).animate(_mainController);
 
-    // --- Kütük animasyonu ---
-    _logController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 380),
-    );
+    _logController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+    _logSlide = Tween<Offset>(begin: const Offset(1.2, -1.5), end: const Offset(0.0, 0.1)).animate(CurvedAnimation(parent: _logController, curve: Curves.easeIn));
+    _logRotate = Tween<double>(begin: 0.0, end: -0.3).animate(_logController);
+    _logFade = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 20),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 40),
+    ]).animate(_logController);
 
-    _logSlide = Tween<Offset>(
-      begin: const Offset(1.3, -1.4),
-      end: const Offset(0.0, 0.1),
-    ).animate(
-      CurvedAnimation(
-        parent: _logController,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _sparkController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    _sparkAnim = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _sparkController, curve: Curves.easeOut));
 
-    _logRotate = Tween<double>(begin: 0.0, end: -0.45).animate(_logController);
-
-    _logFade = Tween<double>(begin: 0.0, end: 1.0)
-        .chain(CurveTween(curve: Curves.easeOut))
-        .animate(_logController);
-
-    // --- Kıvılcımlar ---
-    _sparkController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-
-    _sparkAnim = CurvedAnimation(
-      parent: _sparkController,
-      curve: Curves.easeOut,
-    );
-
-    // --- Duman / Söndürme ---
-    _steamController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-
-    _steamAnim = CurvedAnimation(
-      parent: _steamController,
-      curve: Curves.easeOut,
-    );
+    _steamController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _steamAnim = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _steamController, curve: Curves.easeOut));
   }
 
   @override
@@ -111,15 +70,15 @@ class _FuelButtonState extends State<FuelButton>
     super.dispose();
   }
 
-  // 🔥 Tıklama davranışı
   void _handleTap() {
+    if (widget.isExpired) return;
+
     if (!widget.isFueled) {
-      // --- HARLAMA ---
-      _logController.forward(from: 0.0);
-      _mainController.forward(from: 0.0);
-      _sparkController.forward(from: 0.0);
+      _logController.forward(from: 0.0).then((_) {
+        _mainController.forward(from: 0.0);
+        _sparkController.forward(from: 0.0);
+      });
     } else {
-      // --- SÖNDÜRME ---
       _steamController.forward(from: 0.0);
     }
     widget.onTap();
@@ -127,92 +86,76 @@ class _FuelButtonState extends State<FuelButton>
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 Ateş rengi hesaplama
     Color fireColor;
-    if (widget.count == 0) fireColor = Colors.grey.shade700;
-    else if (widget.count < 5) fireColor = Colors.orange;
-    else fireColor = Colors.redAccent;
+    bool isAlive = !widget.isExpired;
 
-    if (!widget.isFueled && widget.count > 0) {
-      fireColor = fireColor.withOpacity(0.7);
+    if (!isAlive) {
+      fireColor = Colors.blueGrey.shade700;
+    } else if (widget.count == 0) {
+      fireColor = Colors.grey.shade700;
+    } else if (widget.count < 5) {
+      fireColor = Colors.orange;
+    } else {
+      fireColor = Colors.redAccent;
     }
+
+    if (isAlive && !widget.isFueled && widget.count > 0) fireColor = fireColor.withOpacity(0.7);
 
     return GestureDetector(
       onTap: _handleTap,
       child: SizedBox(
         width: widget.size + 16,
-        height: widget.size + 18,
+        height: widget.size + 16,
         child: Stack(
-          clipBehavior: Clip.none,
           alignment: Alignment.center,
+          clipBehavior: Clip.none,
           children: [
-            // --- SABİT KÜTÜK TABANI ---
             Positioned(
-              bottom: 3,
+              bottom: 0,
               child: Icon(
                 FontAwesomeIcons.xmarksLines,
                 color: const Color(0xFF4E342E),
                 size: widget.size * 0.9,
               ),
             ),
-
-            // --- KIVILCIM PARÇACIKLARI ---
-            AnimatedBuilder(
-              animation: _sparkController,
-              builder: (_, __) {
-                if (!_sparkController.isAnimating) return const SizedBox();
-                final v = _sparkAnim.value;
-                final opacity = (1.0 - v).clamp(0.0, 1.0);
-                final spread = v * 26;
-
-                return Stack(
-                  children: List.generate(6, (i) {
-                    final angle = (-90 + i * 36) * (math.pi / 180);
-                    return Transform.translate(
-                      offset: Offset(
-                        math.cos(angle) * spread,
-                        math.sin(angle) * spread - 6,
-                      ),
-                      child: Opacity(
-                        opacity: opacity,
-                        child: const Icon(
-                          Icons.circle,
-                          color: Colors.yellow,
-                          size: 4,
+            if (isAlive)
+              AnimatedBuilder(
+                animation: _sparkController,
+                builder: (context, child) {
+                  if (!_sparkController.isAnimating) return const SizedBox();
+                  double val = _sparkAnim.value;
+                  double spread = val * 25;
+                  return Stack(
+                    children: List.generate(5, (index) {
+                      double angle = (index * 72 - 90) * (math.pi / 180);
+                      return Transform.translate(
+                        offset: Offset(math.cos(angle) * spread, math.sin(angle) * spread - 10),
+                        child: Opacity(
+                          opacity: 1.0 - val,
+                          child: const Icon(Icons.circle, color: Colors.yellow, size: 4),
                         ),
-                      ),
-                    );
-                  }),
-                );
-              },
-            ),
-
-            // --- ANA ATEŞ ---
+                      );
+                    }),
+                  );
+                },
+              ),
             Positioned(
-              bottom: 5,
+              bottom: 4,
               child: ScaleTransition(
                 scale: _scaleAnim,
                 child: Icon(
-                  FontAwesomeIcons.fire,
-                  size: widget.size,
+                  isAlive ? FontAwesomeIcons.fire : FontAwesomeIcons.smog,
                   color: fireColor,
-                  shadows: widget.isFueled
-                      ? [
-                    BoxShadow(
-                      color: fireColor.withOpacity(0.6),
-                      blurRadius: 14,
-                      spreadRadius: 1,
-                    )
-                  ]
-                      : [],
+                  size: widget.size,
+                  shadows: (isAlive && widget.isFueled) ? [
+                    BoxShadow(color: fireColor.withOpacity(0.6), blurRadius: 15, spreadRadius: 1)
+                  ] : [],
                 ),
               ),
             ),
-
-            // --- KÜTÜK UÇUŞU ---
             AnimatedBuilder(
               animation: _logController,
-              builder: (_, __) {
+              builder: (context, child) {
                 if (!_logController.isAnimating) return const SizedBox();
                 return SlideTransition(
                   position: _logSlide,
@@ -221,8 +164,7 @@ class _FuelButtonState extends State<FuelButton>
                     child: FadeTransition(
                       opacity: _logFade,
                       child: Container(
-                        width: 22,
-                        height: 8,
+                        width: 20, height: 8,
                         decoration: BoxDecoration(
                           color: const Color(0xFF5D4037),
                           borderRadius: BorderRadius.circular(4),
@@ -234,26 +176,18 @@ class _FuelButtonState extends State<FuelButton>
                 );
               },
             ),
-
-            // --- DUMAN ---
             AnimatedBuilder(
               animation: _steamController,
-              builder: (_, __) {
+              builder: (context, child) {
                 if (!_steamController.isAnimating) return const SizedBox();
-
-                final v = _steamAnim.value;
-
+                double val = _steamAnim.value;
                 return Positioned(
-                  bottom: 10 + (v * 22),
+                  bottom: 10 + (val * 20),
                   child: Opacity(
-                    opacity: (1.0 - v).clamp(0.0, 1.0),
+                    opacity: 1.0 - val,
                     child: Transform.scale(
-                      scale: 0.5 + (v * 1.1),
-                      child: Icon(
-                        FontAwesomeIcons.cloud,
-                        color: Colors.blueGrey.withOpacity(0.6),
-                        size: widget.size,
-                      ),
+                      scale: 0.5 + val,
+                      child: Icon(FontAwesomeIcons.cloud, color: Colors.blueGrey.withOpacity(0.5), size: widget.size),
                     ),
                   ),
                 );

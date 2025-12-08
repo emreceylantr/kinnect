@@ -5,11 +5,11 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../services/friend_service.dart';
-import '../services/chat_service.dart'; // Eklendi
+import '../services/chat_service.dart';
 import 'profile_screen.dart';
 import 'post_detail_screen.dart';
 import 'user_list_screen.dart';
-import 'messages_screen.dart'; // Eklendi
+import 'messages_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -29,14 +29,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _friendService = FriendService();
   }
 
-  // Gruplama (Aynen korundu)
+  // Gruplama (GÜNCELLENDİ: Fuel eklendi)
   List<GroupedNotification> _groupNotifications(List<FollowNotification> rawList) {
     List<GroupedNotification> grouped = [];
     Map<String, List<FollowNotification>> postGroups = {};
     List<FollowNotification> others = [];
 
     for (var n in rawList) {
-      if (n.postId != null && (n.type == 'like' || n.type == 'comment')) {
+      // 🔥 GÜNCELLEME: 'fuel' tipini de buraya dahil ettik
+      if (n.postId != null && (n.type == 'like' || n.type == 'comment' || n.type == 'fuel')) {
         String key = "${n.postId}_${n.type}";
         if (!postGroups.containsKey(key)) postGroups[key] = [];
         postGroups[key]!.add(n);
@@ -72,7 +73,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
-      appBar: AppBar(backgroundColor: const Color(0xFF050505), elevation: 0, title: Text("Bildirimler", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)), leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white), onPressed: () => Navigator.pop(context))),
+      appBar: AppBar(
+          backgroundColor: const Color(0xFF050505),
+          elevation: 0,
+          title: Text("Bildirimler", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
+          leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white), onPressed: () => Navigator.pop(context))
+      ),
       body: RefreshIndicator(
         onRefresh: _refresh,
         color: const Color(0xFF6C63FF),
@@ -139,20 +145,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     String text = "";
     Widget? trailing;
 
-    // TİP BELİRLEME
-    if (group.type == 'like') {
+    // --- TİP BELİRLEME (GÜNCELLENDİ) ---
+    if (group.type == 'fuel') {
+      // 🔥 HARLAMA BİLDİRİMİ
+      text = count == 1 ? "gönderini harladı 🔥" : "ve ${count - 1} diğer kişi gönderini harladı 🔥";
+      if (group.postImage != null) {
+        trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
+      }
+    } else if (group.type == 'like') {
       text = count == 1 ? "gönderini beğendi." : "ve ${count - 1} diğer kişi gönderini beğendi.";
-      if (group.postImage != null) trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
+      if (group.postImage != null) {
+        trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
+      }
     } else if (group.type == 'comment') {
       text = count == 1 ? "yorum yaptı." : "ve ${count - 1} diğer kişi yorum yaptı.";
-      if (group.postImage != null) trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
+      if (group.postImage != null) {
+        trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
+      }
     } else if (group.type == 'follow') {
       text = "seni takip etmeye başladı.";
       trailing = SizedBox(height: 30, child: ElevatedButton(onPressed: (){ Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: notif.userId))); }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1E1E), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(horizontal: 12)), child: const Text("Profili Gör", style: TextStyle(fontSize: 12, color: Colors.white70))));
-    } else if (group.type == 'message') { // MESAJ
+    } else if (group.type == 'message') {
       text = "sana mesaj gönderdi 💬";
       trailing = const Icon(Icons.mail_outline, color: Colors.cyanAccent);
-    } else if (group.type == 'call') { // ARAMA
+    } else if (group.type == 'call') {
       text = "sohbet odasına katıldı 📞";
       trailing = const Icon(Icons.phone_in_talk, color: Colors.greenAccent);
     }
@@ -174,6 +190,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           }
         } else if (group.postId != null) {
           final postRes = await Supabase.instance.client.from('posts').select('*, profiles(*), likes(user_id), comments(id)').eq('id', group.postId!).maybeSingle();
+          // Eğer harlamaysa ve detayda açılacaksa ExplorePostDetail'e yönlendirilebilir ama
+          // şimdilik standart detaya gidiyoruz, kafa karışmasın.
           if (postRes != null && mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: postRes)));
         } else {
           Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: notif.userId)));
