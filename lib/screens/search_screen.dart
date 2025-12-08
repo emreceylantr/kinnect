@@ -6,7 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../widgets/fuel_button.dart';
 import '../services/feed_service.dart';
 import 'profile_screen.dart';
-import 'post_detail_screen.dart';
+import 'post_detail_screen.dart'; // Tek ve akıllı detay sayfası
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -16,14 +16,15 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  // --- DEĞİŞKENLER ---
   final SupabaseClient client = Supabase.instance.client;
   final FeedService feedService = FeedService();
 
   final String myId = Supabase.instance.client.auth.currentUser!.id;
   final TextEditingController searchController = TextEditingController();
 
-  bool isExpanded = false; // Dynamic Island durumu
-  String selectedFilter = "Harlanan";
+  bool isExpanded = false; // Dynamic Island Arama Çubuğu durumu
+  String selectedFilter = "Harlanan"; // Varsayılan filtre
 
   List<Map<String, dynamic>> searchResults = [];
   List<Map<String, dynamic>> explorePosts = [];
@@ -35,10 +36,9 @@ class _SearchScreenState extends State<SearchScreen> {
     _fetchExplore();
   }
 
-  // *********************************************************
-  // 🔍 ARAMA İŞLEMI
-  // *********************************************************
-
+  // ---------------------------------------------------------
+  // 1. ARAMA İŞLEMİ (KULLANICI ARA)
+  // ---------------------------------------------------------
   Future<void> _performSearch(String text) async {
     if (text.trim().isEmpty) {
       setState(() => searchResults = []);
@@ -51,60 +51,94 @@ class _SearchScreenState extends State<SearchScreen> {
         .ilike("username", "%$text%")
         .limit(15);
 
-    setState(() {
-      searchResults = List<Map<String, dynamic>>.from(res as List);
-    });
-  }
-
-  // *********************************************************
-  // 🔥 KEŞFET (ATEŞ AKIŞI)
-  // *********************************************************
-
-  Future<void> _fetchExplore() async {
-    setState(() => loadingExplore = true);
-
-    final data = await feedService.getExploreFeed();
-
-    // FİLTRELEME
-    if (selectedFilter == "Harlanan") {
-      data.sort((a, b) => (b['likes'] as List).length.compareTo((a['likes'] as List).length));
-    } else {
-      data.sort((a, b) => b['created_at'].compareTo(a['created_at']));
+    if (mounted) {
+      setState(() {
+        searchResults = List<Map<String, dynamic>>.from(res as List);
+      });
     }
-
-    setState(() {
-      explorePosts = data;
-      loadingExplore = false;
-    });
   }
 
-  // *********************************************************
-  // 🔥 OPTIMISTIC FUEL UPDATE
-  // *********************************************************
+  // ---------------------------------------------------------
+  // 2. KEŞFET VERİLERİ (GÜNDEM VE 24 SAAT MANTIĞI)
+  // ---------------------------------------------------------
+  Future<void> _fetchExplore() async {
+    // Sadece liste boşsa yükleniyor göster
+    if (explorePosts.isEmpty) setState(() => loadingExplore = true);
 
+    try {
+      final data = await feedService.getExploreFeed();
+      final now = DateTime.now();
+
+      // --- SIRALAMA ALGORİTMASI ---
+      if (selectedFilter == "Harlanan") {
+        data.sort((a, b) {
+          // Saat dilimi düzeltmesi (.toLocal)
+          final dateA = DateTime.tryParse(a['created_at'])?.toLocal() ?? DateTime(2000);
+          final dateB = DateTime.tryParse(b['created_at'])?.toLocal() ?? DateTime(2000);
+
+          // 24 Saat Kontrolü: Post hala "Canlı" mı?
+          final isAliveA = now.difference(dateA).inHours < 24;
+          final isAliveB = now.difference(dateB).inHours < 24;
+
+          // KURAL 1: Canlı olanlar her zaman ölülerden (kül olmuş) üsttedir.
+          if (isAliveA && !isAliveB) return -1; // A üstte
+          if (!isAliveA && isAliveB) return 1;  // B üstte
+
+          // KURAL 2: İkisi de aynı durumdaysa, Odun sayısına göre sırala (Çoktan aza)
+          int countA = (a['likes'] as List).length;
+          int countB = (b['likes'] as List).length;
+          return countB.compareTo(countA);
+        });
+      } else {
+        // "Yeni" Filtresi: Sadece tarihe göre (En yeni en üstte)
+        data.sort((a, b) => b['created_at'].compareTo(a['created_at']));
+      }
+
+      if (mounted) {
+        setState(() {
+          explorePosts = data;
+          loadingExplore = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => loadingExplore = false);
+      debugPrint("Keşfet hatası: $e");
+    }
+  }
+
+  // ---------------------------------------------------------
+  // 3. HARLAMA (OPTIMISTIC UPDATE)
+  // ---------------------------------------------------------
   void _toggleFuel(int index, String postId) async {
     final post = explorePosts[index];
-    final likes = List<dynamic>.from(post["likes"] ?? []);
 
+    // 24 Saat Kontrolü: Sönmüşse işlem yapma
+    final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
+    final isAlive = date != null && DateTime.now().difference(date).inHours < 24;
+
+    // Eğer post ölüyse (kül olduysa) harlamaya izin verme
+    if (!isAlive) return;
+
+    final likes = List<dynamic>.from(post["likes"] ?? []);
     final isFueled = likes.any((l) => l["user_id"] == myId);
 
-    if (isFueled) {
-      likes.removeWhere((l) => l["user_id"] == myId);
-    } else {
-      likes.add({"user_id": myId, "post_id": postId});
-    }
-
+    // Ekranda anında güncelle (Sunucuyu bekleme)
     setState(() {
+      if (isFueled) {
+        likes.removeWhere((l) => l["user_id"] == myId);
+      } else {
+        likes.add({"user_id": myId, "post_id": postId});
+      }
       explorePosts[index] = {...post, "likes": likes};
     });
 
-    await feedService.toggleLike(postId);
+    // 🔥 BURASI KRİTİK: isFuel: true gönderiyoruz ki bildirim "Harladı" gitsin
+    await feedService.toggleLike(postId, isFuel: true);
   }
 
-  // *********************************************************
-  // ✨ UI BAŞLANGICI
-  // *********************************************************
-
+  // ---------------------------------------------------------
+  // EKRAN YAPISI (UI)
+  // ---------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,15 +147,15 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Stack(
           alignment: Alignment.topCenter,
           children: [
-            // ALTTAKİ BÜTÜN İÇERİK
+            // İÇERİK KATMANI
             Padding(
-              padding: const EdgeInsets.only(top: 60),
+              padding: const EdgeInsets.only(top: 60), // Search bar boşluğu
               child: isExpanded || searchController.text.isNotEmpty
                   ? _buildSearchList()
                   : _buildExploreFeed(),
             ),
 
-            // ÜST DYNAMIC ISLAND SEARCH BAR
+            // ÜST KATMAN (Dynamic Island Arama)
             _buildSearchBar(),
           ],
         ),
@@ -129,13 +163,11 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // *********************************************************
-  // 🟥 DYNAMIC ISLAND SEARCH BAR
-  // *********************************************************
-
+  // --- DYNAMIC ISLAND SEARCH BAR ---
   Widget _buildSearchBar() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
       width: isExpanded ? MediaQuery.of(context).size.width - 32 : 150,
       height: 45,
       margin: const EdgeInsets.only(top: 10),
@@ -150,17 +182,16 @@ class _SearchScreenState extends State<SearchScreen> {
           const Icon(Icons.search, color: Colors.white70, size: 18),
           const SizedBox(width: 8),
 
-          // KAPALI HAL
+          // Kapalıyken sadece "Ara" yazısı
           if (!isExpanded)
             GestureDetector(
               onTap: () => setState(() => isExpanded = true),
               child: Text(
-                "Ara",
+                "Arkadaş Ara",
                 style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13),
               ),
             )
-
-          // AÇIK HAL
+          // Açıkken TextField
           else
             Expanded(
               child: TextField(
@@ -170,7 +201,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 decoration: const InputDecoration(
                     hintText: "Kullanıcı ara...",
                     hintStyle: TextStyle(color: Colors.white38),
-                    border: InputBorder.none),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.only(bottom: 2)),
                 onChanged: _performSearch,
               ),
             ),
@@ -192,17 +224,13 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // *********************************************************
-  // 🔍 ARAMA SONUÇLARI
-  // *********************************************************
-
+  // --- ARAMA LİSTESİ ---
   Widget _buildSearchList() {
     if (searchResults.isEmpty) {
       return const Center(
         child: Text("Sonuç yok", style: TextStyle(color: Colors.white54)),
       );
     }
-
     return ListView.builder(
       itemCount: searchResults.length,
       itemBuilder: (_, i) {
@@ -214,8 +242,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 : null,
             backgroundColor: Colors.grey[900],
           ),
-          title: Text(user["username"],
-              style: const TextStyle(color: Colors.white)),
+          title: Text(user["username"], style: const TextStyle(color: Colors.white)),
           onTap: () {
             Navigator.push(
               context,
@@ -229,16 +256,13 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // *********************************************************
-  // 🔥 KEŞFET AKIŞI
-  // *********************************************************
-
+  // --- KEŞFET AKIŞI (Filtreler + Liste) ---
   Widget _buildExploreFeed() {
     return Column(
       children: [
         const SizedBox(height: 5),
 
-        // FİLTRE
+        // FİLTRELER (Yatay Kaydırma)
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -255,26 +279,19 @@ class _SearchScreenState extends State<SearchScreen> {
 
         Expanded(
           child: loadingExplore
-              ? const Center(
-              child: CircularProgressIndicator(color: Colors.orange))
+              ? const Center(child: CircularProgressIndicator(color: Colors.orange))
               : ListView.builder(
             padding: const EdgeInsets.only(top: 5, bottom: 80),
             itemCount: explorePosts.length,
-            itemBuilder: (_, i) =>
-                _buildExplorePostCard(explorePosts[i], i),
+            itemBuilder: (_, i) => _buildExplorePostCard(explorePosts[i], i),
           ),
         )
       ],
     );
   }
 
-  // *********************************************************
-  // 🔥 FİLTRE CHIP
-  // *********************************************************
-
   Widget _buildChip(String text) {
     final selected = selectedFilter == text;
-
     return GestureDetector(
       onTap: () {
         setState(() => selectedFilter = text);
@@ -298,10 +315,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // *********************************************************
-  // 🔥 HOME TARZI KART + FUEL BUTTON
-  // *********************************************************
-
+  // --- KART TASARIMI ---
   Widget _buildExplorePostCard(Map<String, dynamic> post, int index) {
     final profile = post["profiles"] ?? {};
     final likes = post["likes"] as List? ?? [];
@@ -314,16 +328,62 @@ class _SearchScreenState extends State<SearchScreen> {
     final content = post["content"] ?? "";
     final imageUrl = post["image_url"];
 
+    // 24 SAAT KONTROLÜ
+    final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
+    final now = DateTime.now();
+    final isAlive = date != null && now.difference(date).inHours < 24;
+
+    // DURUM RENKLERİ VE METNİ
+    Color statusColor = Colors.grey;
+    String statusText = "";
+
+    if (!isAlive) {
+      statusColor = Colors.blueGrey;
+      statusText = "KÜL OLDU 💨";
+    } else {
+      if (likeCount > 9) {
+        statusColor = Colors.redAccent;
+        statusText = "CEHENNEM 🔥";
+      } else if (likeCount > 3) {
+        statusColor = Colors.orange;
+        statusText = "ALEVLİ";
+      } else if (likeCount > 0) {
+        statusColor = Colors.amber;
+      }
+    }
+
+    // GÜNDEM ROZETİ (#1)
+    Widget? badge;
+    if (selectedFilter == "Harlanan" && index == 0 && isAlive) {
+      badge = Container(
+        margin: const EdgeInsets.only(left: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.amber,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(
+          "#1 GÜNDEM",
+          style: GoogleFonts.poppins(
+              color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10),
+        ),
+      );
+    }
+
     return GestureDetector(
+      // DETAYA GİT: "isExploreMode: true" İLE
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => PostDetailScreen(
             post: post,
-            isExploreMode: true, // 🔥 BURASI ÖNEMLİ
+            isExploreMode: true, // Ateş modu aktif
           ),
         ),
-      ),
+      ).then((_) {
+        // Geri dönünce listeyi yenile
+        _fetchExplore();
+      }),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
@@ -334,8 +394,9 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // PROFIL KISMI
+            // PROFIL
             ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14),
               leading: CircleAvatar(
                 radius: 20,
                 backgroundImage: profile["avatar_url"] != null
@@ -343,10 +404,18 @@ class _SearchScreenState extends State<SearchScreen> {
                     : null,
                 backgroundColor: Colors.grey[900],
               ),
-              title: Text(
-                profile["full_name"] ?? "İsimsiz",
-                style: GoogleFonts.poppins(
-                    color: Colors.white, fontWeight: FontWeight.bold),
+              title: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      profile["full_name"] ?? "İsimsiz",
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  if (badge != null) badge,
+                ],
               ),
               subtitle: Text(
                 "@${profile["username"]}",
@@ -367,9 +436,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
             // FOTO
             if (imageUrl != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(imageUrl),
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(imageUrl, width: double.infinity, fit: BoxFit.cover),
+                ),
               ),
 
             // ALT BAR
@@ -377,20 +449,38 @@ class _SearchScreenState extends State<SearchScreen> {
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Row(
                 children: [
+                  // 🔥 ATEŞ BUTONU (isExpired parametresini düzgün alır)
                   FuelButton(
                     isFueled: isFueled,
                     count: likeCount,
+                    isExpired: !isAlive,
                     onTap: () => _toggleFuel(index, post["id"]),
+                    size: 30,
                   ),
 
                   const SizedBox(width: 12),
 
-                  Text(
-                    "$likeCount Odun",
-                    style: GoogleFonts.poppins(
-                        color: Colors.orange,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (likeCount > 0)
+                          Text(
+                            "$likeCount", // Sadece sayı
+                            style: GoogleFonts.poppins(
+                                color: statusColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16),
+                          ),
+                        if (statusText.isNotEmpty && likeCount > 0)
+                          Text(
+                            statusText,
+                            style: GoogleFonts.poppins(
+                                color: statusColor.withOpacity(0.7),
+                                fontSize: 10),
+                          ),
+                      ],
+                    ),
                   ),
 
                   const Spacer(),

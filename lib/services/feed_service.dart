@@ -16,10 +16,11 @@ class FeedService {
     return user.id;
   }
 
-  // --- 1. ANA AKIŞ (SADECE ARKADAŞLAR + BEN) ---
+  // --- 1. ANA AKIŞ (SADECE ARKADAŞLAR + PUBLIC OLMAYANLAR) ---
+  // Arkadaşının 'Public' (Herkes) attığı post buraya düşmez, sadece arkadaşlarına özel olanlar düşer.
   Future<List<Map<String, dynamic>>> getFriendsFeed() async {
     try {
-      // Takip ettiklerimi bul
+      // Takip ettiklerimi (Arkadaşlarımı) bul
       final following = await client
           .from('friendships')
           .select('friend_id')
@@ -37,6 +38,7 @@ class FeedService {
           .from('posts')
           .select('*, profiles(*), likes(user_id), comments(id)')
           .inFilter('user_id', targetIds)
+          .neq('visibility', 'public') // 🔥 ÖNEMLİ: Public olanları ana akıştan gizle!
           .order('created_at', ascending: false);
 
       return List<Map<String, dynamic>>.from(posts as List);
@@ -46,8 +48,7 @@ class FeedService {
     }
   }
 
-  // --- 2. KEŞFET (HERKES - FİLTRESİZ) ---
-  // (Düzeltilen Yer: Arkadaş/Ben ayrımı yapmadan tüm PUBLIC postları çeker)
+  // --- 2. KEŞFET (HERKES - SADECE PUBLIC OLANLAR) ---
   Future<List<Map<String, dynamic>>> getExploreFeed() async {
     try {
       final response = await client
@@ -80,7 +81,7 @@ class FeedService {
     }
   }
 
-  // --- 4. YORUM STREAM (SİLİNMEDİ, DURUYOR) ---
+  // --- 4. YORUM STREAM ---
   Stream<List<Map<String, dynamic>>> getCommentsStream(String postId) {
     return client
         .from('comments')
@@ -102,7 +103,7 @@ class FeedService {
     });
   }
 
-  // --- 5. YORUM EKLEME (SİLİNMEDİ) ---
+  // --- 5. YORUM EKLEME ---
   Future<void> addComment(String postId, String content) async {
     await client.from('comments').insert({
       'user_id': _myId,
@@ -111,13 +112,15 @@ class FeedService {
     });
   }
 
-  // --- 6. YORUM SİLME (SİLİNMEDİ) ---
+  // --- 6. YORUM SİLME ---
   Future<void> deleteComment(String commentId) async {
     await client.from('comments').delete().eq('id', commentId);
   }
 
   // --- 7. BEĞENİ / HARLAMA (TOGGLE) ---
-  Future<void> toggleLike(String postId) async {
+  // isFuel: true ise 'fuel' (Harlama) işlemi yapılır.
+  // isFuel: false ise 'like' (Beğeni) işlemi yapılır.
+  Future<void> toggleLike(String postId, {bool isFuel = false}) async {
     try {
       final existing = await client
           .from('likes')
@@ -127,20 +130,37 @@ class FeedService {
           .maybeSingle();
 
       if (existing != null) {
+        // --- SİLME İŞLEMİ (SÖNDÜRME / VAZGEÇME) ---
         await client.from('likes').delete().eq('id', existing['id']);
+
+        // 🔥 GÜNCELLEME: Bildirimi de siliyoruz ki kirlilik olmasın
+        final typeToDelete = isFuel ? 'fuel' : 'like';
+        try {
+          await client.from('notifications').delete()
+              .eq('post_id', postId)
+              .eq('actor_id', _myId)
+              .eq('type', typeToDelete);
+        } catch (_) {
+          // Bildirim zaten yoksa hata vermesin devam etsin
+        }
+
       } else {
+        // --- EKLEME İŞLEMİ (HARLAMA / BEĞENME) ---
         await client.from('likes').insert({
           'user_id': _myId,
           'post_id': postId,
         });
 
-        // Bildirim Gönder
+        // Bildirim Gönder (Post sahibi ben değilsem)
         final post = await client.from('posts').select('user_id').eq('id', postId).single();
         if (post['user_id'] != _myId) {
+          // 🔥 ÖNEMLİ: Eğer bu bir 'fuel' ise tipi 'fuel' kaydet, yoksa 'like' kaydet.
+          final notifType = isFuel ? 'fuel' : 'like';
+
           await client.from('notifications').insert({
             'user_id': post['user_id'],
             'actor_id': _myId,
-            'type': 'like',
+            'type': notifType,
             'post_id': postId,
             'is_read': false,
           });
@@ -148,16 +168,16 @@ class FeedService {
       }
     } catch (e) {
       debugPrint('HATA (Like/Fuel): $e');
-      rethrow;
+      // Rethrow kaldırdım, UI çökmesin diye sadece loglasın.
     }
   }
 
-  // --- 8. POST SİLME (SİLİNMEDİ) ---
+  // --- 8. POST SİLME ---
   Future<void> deletePost(String postId) async {
     await client.from('posts').delete().eq('id', postId);
   }
 
-  // --- 9. GÖRÜNÜRLÜK GÜNCELLEME (SİLİNMEDİ) ---
+  // --- 9. GÖRÜNÜRLÜK GÜNCELLEME ---
   Future<void> updatePostVisibility(String postId, String visibility) async {
     await client.from('posts').update({
       'visibility': visibility,
