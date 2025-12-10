@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // FontAwesome eklendi
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../services/feed_service.dart';
 import '../services/chat_service.dart';
@@ -11,6 +11,7 @@ import 'messages_screen.dart';
 import 'post_detail_screen.dart';
 import 'follow_list_screen.dart';
 import 'edit_profile_screen.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userId;
@@ -48,6 +49,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadAllData();
+  }
+
+  // --- ÇIKIŞ YAP FONKSİYONU ---
+  Future<void> _logout() async {
+    try {
+      await Supabase.instance.client.auth.signOut();
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Çıkış yapılırken hata oluştu: $e')),
+        );
+      }
+    }
   }
 
   // --- TÜM VERİLERİ YÜKLE ---
@@ -282,7 +302,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   // 1. ARKA PLAN KAPAK FOTOĞRAFI
                   Container(
-                    height: 420,
+                    height: 380,
                     width: double.infinity,
                     foregroundDecoration: const BoxDecoration(
                       gradient: LinearGradient(
@@ -291,10 +311,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         colors: [
                           Colors.transparent,
                           Colors.transparent,
-                          Color(0xCC000000),
+                          Color(0xAA000000),
                           Color(0xFF000000),
                         ],
-                        stops: [0.0, 0.4, 0.75, 1.0],
+                        stops: [0.0, 0.4, 0.7, 1.0],
                       ),
                     ),
                     child: coverUrl != null
@@ -310,11 +330,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  // 2. KAPAK DÜZENLEME BUTONU
-                  if (isMe)
+                  // 2. BUTONLAR (KAMERA ve ÇIKIŞ)
+                  if (isMe) ...[
                     Positioned(
                       top: 50,
-                      right: 16,
+                      right: 70,
                       child: GestureDetector(
                         onTap: _updateCoverPhoto,
                         child: Container(
@@ -328,8 +348,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
+                    Positioned(
+                      top: 50,
+                      right: 16,
+                      child: GestureDetector(
+                        onTap: _logout,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white24),
+                          ),
+                          child: const Icon(Icons.logout, color: Colors.white, size: 18),
+                        ),
+                      ),
+                    ),
+                  ],
 
-                  // 3. GERİ BUTONU
                   if (!isMe && widget.showBackButton)
                     Positioned(
                       top: 50,
@@ -342,56 +378,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // 4. PROFİL İÇERİĞİ
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
+                    padding: const EdgeInsets.only(bottom: 10),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // Avatar
-                        CircleAvatar(
-                          radius: 45,
-                          backgroundColor: const Color(0xFF1F1F1F),
-                          backgroundImage: _profileData?['avatar_url'] != null
-                              ? NetworkImage(_profileData!['avatar_url'])
-                              : null,
-                          child: _profileData?['avatar_url'] == null
-                              ? const Icon(Icons.person, size: 40, color: Colors.white54)
-                              : null,
+                        Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF6C63FF), Color(0xFF1DB954)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                          ),
+                          child: CircleAvatar(
+                            radius: 45,
+                            backgroundColor: const Color(0xFF1F1F1F),
+                            backgroundImage: _profileData?['avatar_url'] != null
+                                ? NetworkImage(_profileData!['avatar_url'])
+                                : null,
+                            child: _profileData?['avatar_url'] == null
+                                ? const Icon(Icons.person, size: 40, color: Colors.white54)
+                                : null,
+                          ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
 
                         // İsim
                         Text(
                           _profileData?['full_name'] ?? 'İsimsiz',
                           style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)]),
                         ),
-                        const SizedBox(height: 4),
-                        // Bio
-                        Text(
-                          _profileData?['bio'] ?? '',
-                          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 3, color: Colors.black)]),
-                          textAlign: TextAlign.center,
-                        ),
 
-                        const SizedBox(height: 20),
+                        // --- YENİ EKLENEN KISIM: KULLANICI ADI ---
+                        if (_profileData?['username'] != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2), // İsimle arasına çok az boşluk
+                            child: Text(
+                              '@${_profileData!['username']}',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white60, // Silik gri ton
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 3, color: Colors.black)],
+                              ),
+                            ),
+                          ),
+
+                        // Bio
+                        if (_profileData?['bio'] != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            child: Text(
+                              _profileData!['bio'],
+                              style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 3, color: Colors.black)]),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+
+                        const SizedBox(height: 16),
 
                         // İstatistikler
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _buildStat('Gönderi', _postCount.toString(), null),
+                            Container(width: 1, height: 20, color: Colors.white12),
                             _buildStat('Takipçi', _followersCount.toString(), () => _openFollowList('followers', 'Takipçiler')),
+                            Container(width: 1, height: 20, color: Colors.white12),
                             _buildStat('Takip', _followingCount.toString(), () => _openFollowList('following', 'Takip Edilenler')),
                           ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Butonlar
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: isMe
-                              ? _buildMyProfileButtons()
-                              : _buildOtherProfileButtons(),
                         ),
                       ],
                     ),
@@ -399,24 +459,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
 
-              const Divider(color: Colors.white10, height: 1),
+              // --- BUTONLAR ALANI ---
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    isMe ? _buildMyProfileButtons() : _buildOtherProfileButtons(),
+                    const SizedBox(height: 10),
+                    _buildSpotifyButton(),
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              ),
 
               // --- İÇERİK ---
               showLockScreen
                   ? Padding(
-                padding: const EdgeInsets.all(40.0),
+                padding: const EdgeInsets.only(top: 40),
                 child: Column(
                   children: [
                     const Icon(Icons.lock_outline, size: 40, color: Colors.white24),
                     const SizedBox(height: 10),
                     Text("Bu hesap gizli.", style: GoogleFonts.poppins(color: Colors.white24)),
-                    Text("Görmek için takip et.", style: GoogleFonts.poppins(color: Colors.white24, fontSize: 12)),
                   ],
                 ),
               )
                   : (visiblePosts.isEmpty
                   ? Padding(
-                padding: const EdgeInsets.all(40.0),
+                padding: const EdgeInsets.only(top: 40),
                 child: Column(
                   children: [
                     const Icon(Icons.feed_outlined, size: 40, color: Colors.white24),
@@ -427,12 +498,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               )
                   : ListView.builder(
                 shrinkWrap: true,
+                padding: EdgeInsets.zero,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: visiblePosts.length,
-                // Burası değişti: Artık yeni kart tasarımını kullanıyor
-                itemBuilder: (context, index) => _buildHomeStylePost(visiblePosts[index]),
+                itemBuilder: (context, index) => _buildHomeStylePost(visiblePosts[index], index),
               )
               ),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -445,13 +517,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildStat(String label, String value, VoidCallback? onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        color: Colors.transparent,
-        child: Column(
-          children: [
-            Text(value, style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])),
-            Text(label, style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])),
-          ],
+      child: Column(
+        children: [
+          Text(value, style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])),
+          Text(label, style: GoogleFonts.poppins(color: Colors.white60, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpotifyButton() {
+    return SizedBox(
+      height: 45,
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Spotify servisi bağlanıyor...')));
+        },
+        icon: const Icon(FontAwesomeIcons.spotify, color: Colors.white, size: 20),
+        label: Text("Spotify Hesabını Bağla", style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF1DB954),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
         ),
       ),
     );
@@ -459,7 +548,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildMyProfileButtons() {
     return SizedBox(
-      height: 36,
+      height: 45,
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () async {
@@ -475,10 +564,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF262626).withOpacity(0.8),
+          backgroundColor: const Color(0xFF262626),
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
+          side: const BorderSide(color: Colors.white12),
         ),
         child: Text("Profili Düzenle", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
       ),
@@ -492,10 +582,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (_friendshipStatus == 'accepted') {
       label = "Takip Ediliyor";
-      bgColor = const Color(0xFF262626).withOpacity(0.8);
+      bgColor = const Color(0xFF262626);
     } else if (_friendshipStatus == 'pending') {
       label = "İstek Gönderildi";
-      bgColor = Colors.grey.shade900.withOpacity(0.8);
+      bgColor = Colors.grey.shade900;
       txtColor = Colors.grey;
     }
 
@@ -503,32 +593,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Expanded(
           child: SizedBox(
-            height: 36,
+            height: 45,
             child: ElevatedButton(
               onPressed: _handleFollowAction,
               style: ElevatedButton.styleFrom(
                 backgroundColor: bgColor,
                 foregroundColor: txtColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
-                padding: EdgeInsets.zero,
               ),
               child: Text(label, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         Expanded(
           child: SizedBox(
-            height: 36,
+            height: 45,
             child: ElevatedButton(
               onPressed: _startMessage,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF262626).withOpacity(0.8),
+                backgroundColor: const Color(0xFF262626),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
-                padding: EdgeInsets.zero,
+                side: const BorderSide(color: Colors.white12),
               ),
               child: Text("Mesaj", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
@@ -538,8 +627,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // --- YENİ FONKSİYON: ANA AKIŞ TARZI GÖNDERİ KARTI ---
-  Widget _buildHomeStylePost(Map<String, dynamic> post) {
+  Widget _buildHomeStylePost(Map<String, dynamic> post, int index) {
     final profile = post['profiles'] ?? {};
     final content = post['content'] ?? '';
     final imageUrl = post['image_url'];
@@ -548,21 +636,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final likeCount = (post['likes'] as List?)?.length ?? 0;
     final commentCount = (post['comments'] as List?)?.length ?? 0;
 
-    // Beğeni durumu kontrolü
     final isLiked = (post['likes'] as List?)?.any((l) => l['user_id'] == _currentUserId) ?? false;
 
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))),
       child: Container(
-        // Ana Akış (Home Screen) ile aynı kenar boşlukları ve stil
-        margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E), // Koyu gri kart rengi
-          borderRadius: BorderRadius.circular(16), // Yuvarlatılmış köşeler
-          border: Border.all(color: Colors.white.withOpacity(0.05)), // İnce çerçeve
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.5), // Gölge efekti
+              color: Colors.black.withOpacity(0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -571,11 +657,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Üst Bilgi (Avatar, İsim, Tarih)
             ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               leading: CircleAvatar(
-                radius: 20,
+                radius: 18,
                 backgroundColor: const Color(0xFF1F1F1F),
                 backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
                 child: profile['avatar_url'] == null ? const Icon(Icons.person, size: 20, color: Colors.white54) : null,
@@ -584,18 +669,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               subtitle: Text('@${profile['username']}', style: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 13)),
               trailing: Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
             ),
-
-            // İçerik Metni
             if (content.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: Text(content, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, height: 1.4)),
               ),
-
-            // Görsel
             if (imageUrl != null)
               Container(
-                margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                margin: const EdgeInsets.fromLTRB(16, 6, 16, 0),
                 width: double.infinity,
                 constraints: const BoxConstraints(maxHeight: 350),
                 child: ClipRRect(
@@ -603,8 +684,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Image.network(imageUrl, fit: BoxFit.cover),
                 ),
               ),
-
-            // Alt İkonlar (FontAwesome kullanıldı)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: Row(
@@ -612,13 +691,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Icon(isLiked ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart, color: isLiked ? Colors.redAccent : Colors.grey, size: 20),
                   const SizedBox(width: 6),
                   if (likeCount > 0) Text("$likeCount", style: GoogleFonts.poppins(color: Colors.grey, fontSize: 13)),
-
                   const SizedBox(width: 20),
-
                   const Icon(FontAwesomeIcons.comment, color: Colors.grey, size: 20),
                   const SizedBox(width: 6),
                   if (commentCount > 0) Text("$commentCount", style: GoogleFonts.poppins(color: Colors.grey, fontSize: 13)),
-
                   const Spacer(),
                   const Icon(FontAwesomeIcons.shareFromSquare, color: Colors.grey, size: 20),
                 ],
