@@ -1,9 +1,32 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uni_links/uni_links.dart';
 
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
+import 'services/spotify_service.dart';
+
+// 🔥 Spotify Deep Link Listener
+StreamSubscription? _spotifySub;
+
+Future<void> _initSpotifyDeepLinkListener() async {
+  _spotifySub = uriLinkStream.listen((Uri? uri) async {
+    if (uri == null) return;
+
+    // kinnect://callback?code=XXXX
+    if (uri.scheme == 'kinnect' && uri.host == 'callback') {
+      final code = uri.queryParameters['code'];
+      if (code != null) {
+        await SpotifyService().exchangeCodeForToken(code);
+      }
+    }
+  }, onError: (err) {
+    debugPrint('Spotify DeepLink Error: $err');
+  });
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +35,9 @@ Future<void> main() async {
     url: 'https://vxrvudcafkgqusjrawme.supabase.co',
     anonKey: 'sb_publishable_tSqnWtXnUhEog3MIx5ajRw_PZeTlwuG',
   );
+
+  // 🔥 EKLENEN TEK SATIR
+  await _initSpotifyDeepLinkListener();
 
   runApp(const MyApp());
 }
@@ -56,11 +82,18 @@ class _AuthGate extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             backgroundColor: Color(0xFF050505),
-            body: Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF))),
+            body: Center(
+              child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+            ),
           );
         }
-        final session = snapshot.data?.session ?? client.auth.currentSession;
-        return session != null ? const HomeScreen() : WelcomeScreen();
+
+        final session =
+            snapshot.data?.session ?? client.auth.currentSession;
+
+        return session != null
+            ? const HomeScreen()
+            : WelcomeScreen();
       },
     );
   }
