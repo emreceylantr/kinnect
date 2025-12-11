@@ -11,8 +11,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/feed_service.dart';
 import '../services/chat_service.dart';
 
-// --- YENİ WIDGET ---
-import '../widgets/music_player_card.dart'; // 🔥 YENİ WIDGET IMPORT
+// --- YENİ WIDGET IMPORTU (GÜNCELLENDİ) ---
+import '../widgets/music_player_card.dart'; // 🔥 ARTIK BUNU KULLANIYORUZ
 
 // --- EKRANLAR ---
 import 'messages_screen.dart';
@@ -39,9 +39,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
   final ChatService _chatService = ChatService();
 
+  // Veriler
   Map<String, dynamic>? _profileData;
   List<Map<String, dynamic>> _userPosts = [];
 
+  // İstatistikler
   int _followersCount = 0;
   int _followingCount = 0;
   int _postCount = 0;
@@ -77,6 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _fetchProfile(),
         _checkFollowStatus(),
         _fetchStats(),
+        // 🔥 NOT: Şarkı verisini artık MusicPlayerCard kendi içinde çekiyor, buradan sildik.
       ]);
       await _fetchPosts();
       if (mounted) setState(() => _isLoading = false);
@@ -358,7 +361,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       isMe ? _buildMyProfileButtons() : _buildOtherProfileButtons(),
                       const SizedBox(height: 5),
 
-                      // 🔥🔥🔥 YENİ HİBRİT MÜZİK KARTI BURADA 🔥🔥🔥
+                      // 🔥🔥🔥 YENİ HİBRİT MÜZİK KARTI (GÜNCELLENDİ) 🔥🔥🔥
                       MusicPlayerCard(userId: widget.userId, isMe: isMe),
 
                       const SizedBox(height: 10),
