@@ -1,14 +1,20 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui'; // BUZLU CAM İÇİN GEREKLİ
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+// --- SERVİSLER ---
 import '../services/feed_service.dart';
 import '../services/chat_service.dart';
+
+// --- YENİ WIDGET ---
+import '../widgets/music_player_card.dart'; // 🔥 YENİ WIDGET IMPORT
+
+// --- EKRANLAR ---
 import 'messages_screen.dart';
 import 'post_detail_screen.dart';
 import 'follow_list_screen.dart';
@@ -43,8 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   String _friendshipStatus = 'none';
 
-  // TEMA RENKLERİ
-  final Color _accentBlue = const Color(0xFF1E88E5); // Yeni koyu mavi tonu
+  final Color _accentBlue = const Color(0xFF1E88E5);
 
   @override
   void initState() {
@@ -52,7 +57,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadAllData();
   }
 
-  // --- ÇIKIŞ ---
   Future<void> _logout() async {
     try {
       await Supabase.instance.client.auth.signOut();
@@ -67,7 +71,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // --- VERİ YÜKLEME ---
   Future<void> _loadAllData() async {
     try {
       await Future.wait([
@@ -147,7 +150,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {}
   }
 
-  // --- KAPAK FOTOĞRAFI ---
   Future<void> _updateCoverPhoto() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
@@ -236,7 +238,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // --- 🔥 SİLME FONKSİYONLARI ---
   Future<void> _deletePost(String postId) async {
     try {
       await Supabase.instance.client.from('posts').delete().eq('id', postId);
@@ -262,7 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextButton(onPressed: () {
             Navigator.pop(ctx);
             _deletePost(postId);
-          }, child: Text("Sil", style: TextStyle(color: _accentBlue, fontWeight: FontWeight.bold))), // Sil butonu da mavi oldu
+          }, child: Text("Sil", style: TextStyle(color: _accentBlue, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -282,7 +283,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final coverUrl = _profileData?['cover_url'];
 
     return Scaffold(
-      // DEĞİŞİKLİK 1: ARKA PLAN TEKRAR DÜZ SİYAH YAPILDI
       body: Container(
         color: const Color(0xFF000000),
         child: _isLoading
@@ -293,7 +293,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               children: [
-                // --- ÜST KISIM ---
                 Stack(
                   alignment: Alignment.bottomCenter,
                   children: [
@@ -351,21 +350,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
 
-                // --- BUTONLAR ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
                       const SizedBox(height: 10),
                       isMe ? _buildMyProfileButtons() : _buildOtherProfileButtons(),
-                      const SizedBox(height: 10),
-                      _buildSpotifyButton(),
+                      const SizedBox(height: 5),
+
+                      // 🔥🔥🔥 YENİ HİBRİT MÜZİK KARTI BURADA 🔥🔥🔥
+                      MusicPlayerCard(userId: widget.userId, isMe: isMe),
+
                       const SizedBox(height: 10),
                     ],
                   ),
                 ),
 
-                // --- POSTLAR LİSTESİ ---
                 showLockScreen
                     ? Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [const Icon(Icons.lock_outline, size: 40, color: Colors.white24), const SizedBox(height: 10), Text("Bu hesap gizli.", style: GoogleFonts.poppins(color: Colors.white24))]))
                     : (visiblePosts.isEmpty
@@ -387,8 +387,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // --- WIDGET'LAR ---
-
   Widget _buildStat(String label, String value, VoidCallback? onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -397,18 +395,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text(value, style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])),
           Text(label, style: GoogleFonts.poppins(color: Colors.white60, fontSize: 12)),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSpotifyButton() {
-    return SizedBox(
-      height: 45, width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Spotify servisi bağlanıyor...'))); },
-        icon: const Icon(FontAwesomeIcons.spotify, color: Colors.white, size: 20),
-        label: Text("Spotify Hesabını Bağla", style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 2),
       ),
     );
   }
@@ -441,7 +427,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 🔥🔥🔥 BUZLU CAM ve ÇÖP KUTUSU TASARIMI 🔥🔥🔥
   Widget _buildHomeStylePost(Map<String, dynamic> post, int index) {
     final profile = post['profiles'] ?? {};
     final content = post['content'] ?? '';
@@ -493,15 +478,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         Text(dateStr, style: GoogleFonts.poppins(color: Colors.white60, fontSize: 12)),
 
-                        // DEĞİŞİKLİK 2: ÇÖP KUTUSU İKONU KÜÇÜLTÜLDÜ VE MAVİ YAPILDI
                         if (isMe) ...[
                           const SizedBox(width: 12),
                           GestureDetector(
                             onTap: () => _confirmDelete(post['id']),
                             child: Container(
-                              padding: const EdgeInsets.all(5), // Padding azaltıldı (Daha küçük alan)
-                              decoration: BoxDecoration(color: _accentBlue.withOpacity(0.1), shape: BoxShape.circle), // Kırmızı yerine mavi zemin
-                              child: Icon(Icons.delete_outline, color: _accentBlue, size: 18), // Mavi ve daha küçük ikon
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(color: _accentBlue.withOpacity(0.1), shape: BoxShape.circle),
+                              child: Icon(Icons.delete_outline, color: _accentBlue, size: 18),
                             ),
                           ),
                         ]
