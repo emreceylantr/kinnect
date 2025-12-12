@@ -10,9 +10,10 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 // --- SERVİSLER ---
 import '../services/feed_service.dart';
 import '../services/chat_service.dart';
+import '../services/safety_service.dart'; // 🔥 GÜVENLİK SERVİSİ
 
-// --- YENİ WIDGET IMPORTU (GÜNCELLENDİ) ---
-import '../widgets/music_player_card.dart'; // 🔥 ARTIK BUNU KULLANIYORUZ
+// --- WIDGET IMPORTU ---
+import '../widgets/music_player_card.dart'; // 🔥 MÜZİK KARTI
 
 // --- EKRANLAR ---
 import 'messages_screen.dart';
@@ -38,6 +39,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
   final ChatService _chatService = ChatService();
+  final SafetyService _safetyService = SafetyService();
 
   // Veriler
   Map<String, dynamic>? _profileData;
@@ -51,12 +53,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   String _friendshipStatus = 'none';
 
+  // Engelleme Durumu
+  bool _isBlockedByMe = false;
+
   final Color _accentBlue = const Color(0xFF1E88E5);
 
   @override
   void initState() {
     super.initState();
-    _loadAllData();
+    // 1. Profil verilerini hemen çek (Eski kodundaki gibi)
+    _loadProfileData();
+
+    // 2. 🔥 KRİTİK HAMLE: Engelleme kontrolünü "Ekran Çizildikten Sonra" yap.
+    // Böylece Müzik Kartı'nın yüklenmesini asla engellemez/geciktirmez.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkBlockStatusBg();
+    });
+  }
+
+  // --- 1. NORMAL VERİ YÜKLEME (HIZLI) ---
+  Future<void> _loadProfileData() async {
+    setState(() => _isLoading = true);
+    try {
+      await Future.wait([
+        _fetchProfile(),
+        _checkFollowStatus(),
+        _fetchStats(),
+      ]);
+      await _fetchPosts();
+
+      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // --- 2. ARKADA ÇALIŞAN GÜVENLİK KONTROLÜ ---
+  Future<void> _checkBlockStatusBg() async {
+    if (widget.userId == _currentUserId) return;
+    try {
+      // 1 saniye gecikme bile verebiliriz ki UI tam otursun (İsteğe bağlı)
+      // await Future.delayed(Duration(milliseconds: 500));
+
+      final isBlocked = await _safetyService.isUserBlocked(widget.userId);
+      if (mounted && isBlocked) {
+        setState(() {
+          _isBlockedByMe = true;
+          _profileData = null;
+          _userPosts = [];
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _logout() async {
@@ -73,20 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<void> _loadAllData() async {
-    try {
-      await Future.wait([
-        _fetchProfile(),
-        _checkFollowStatus(),
-        _fetchStats(),
-        // 🔥 NOT: Şarkı verisini artık MusicPlayerCard kendi içinde çekiyor, buradan sildik.
-      ]);
-      await _fetchPosts();
-      if (mounted) setState(() => _isLoading = false);
-    } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
+  // --- DİĞER FONKSİYONLAR (HİÇ DOKUNULMADI) ---
 
   Future<void> _fetchProfile() async {
     try {
@@ -272,8 +306,124 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // *********************************************************
+  // 🛡️ GÜVENLİK FONKSİYONLARI (EKSİKSİZ)
+  // *********************************************************
+
+  void _showReportDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final reasons = ["Spam veya Yanıltıcı", "Taklit veya Sahte Hesap", "Nefret Söylemi", "Şiddet veya Tehlikeli", "Zorbalık veya Taciz", "Diğer"];
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text("Kullanıcıyı Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: reasons.length,
+              separatorBuilder: (c, i) => const Divider(color: Colors.white12),
+              itemBuilder: (c, i) => ListTile(
+                title: Text(reasons[i], style: GoogleFonts.poppins(color: Colors.white70)),
+                onTap: () { Navigator.pop(ctx); _submitReport(reasons[i]); },
+              ),
+            ),
+          ),
+          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text("İptal", style: GoogleFonts.poppins(color: Colors.grey)))],
+        );
+      },
+    );
+  }
+
+  Future<void> _submitReport(String reason) async {
+    try {
+      await _safetyService.reportContent(targetId: widget.userId, type: 'user', reason: reason);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Şikayet edildi."), backgroundColor: Colors.green));
+    } catch (_) {}
+  }
+
+  void _confirmBlockAction() {
+    final isBlocking = !_isBlockedByMe;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: Text(isBlocking ? "Engelle" : "Engeli Kaldır", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text(isBlocking ? "Bu kullanıcıyı engellemek istediğine emin misin?" : "Engeli kaldırmak istiyor musun?", style: GoogleFonts.poppins(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text("İptal", style: GoogleFonts.poppins(color: Colors.grey))),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              if (isBlocking) {
+                await _safetyService.blockUser(widget.userId);
+                if (mounted) setState(() { _isBlockedByMe = true; _profileData = null; _userPosts = []; });
+              } else {
+                await _safetyService.unblockUser(widget.userId);
+                if (mounted) {
+                  setState(() { _isBlockedByMe = false; _isLoading = true; });
+                  _loadProfileData();
+                }
+              }
+            },
+            child: Text(isBlocking ? "Engelle" : "Kaldır", style: GoogleFonts.poppins(color: isBlocking ? Colors.redAccent : Colors.greenAccent, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmUnblockAction() {
+    _confirmBlockAction();
+  }
+
+  // *********************************************************
+  // 🏗️ UI
+  // *********************************************************
+
   @override
   Widget build(BuildContext context) {
+    // 🔥 ENGELLİ KULLANICI EKRANI (Engelli olduğu anlaşılınca buraya döner)
+    if (_isBlockedByMe) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: widget.showBackButton ? const BackButton(color: Colors.white) : null,
+          title: Text("Kullanıcı Engellendi", style: GoogleFonts.poppins(color: Colors.white, fontSize: 16)),
+          centerTitle: true,
+          actions: [
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Colors.white),
+              color: const Color(0xFF2C2C2C),
+              onSelected: (val) { if(val == 'unblock') _confirmUnblockAction(); },
+              itemBuilder: (ctx) => [PopupMenuItem(value: 'unblock', child: Text("Engeli Kaldır", style: GoogleFonts.poppins(color: Colors.white)))],
+            )
+          ],
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.block, size: 80, color: Colors.white24),
+              const SizedBox(height: 20),
+              Text("Bu kullanıcıyı engelledin.", style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: _confirmUnblockAction,
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF262626), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                child: Text("Engeli Kaldır", style: GoogleFonts.poppins(color: Colors.white)),
+              )
+            ],
+          ),
+        ),
+      );
+    }
+
+    // --- NORMAL PROFİL (BURASI ESKİ KODUN AYNISI - HIZLI YÜKLENİR) ---
     final isMe = widget.userId == _currentUserId;
     final isFriend = _friendshipStatus == 'accepted';
 
@@ -291,7 +441,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF)))
             : RefreshIndicator(
-          onRefresh: _loadAllData,
+          onRefresh: _loadProfileData,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
@@ -317,9 +467,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (isMe) ...[
                       Positioned(top: 50, right: 70, child: GestureDetector(onTap: _updateCoverPhoto, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)), child: const Icon(Icons.add_a_photo, color: Colors.white, size: 18)))),
                       Positioned(top: 50, right: 16, child: GestureDetector(onTap: _logout, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)), child: const Icon(Icons.logout, color: Colors.white, size: 18)))),
+                    ] else ...[
+                      if (widget.showBackButton)
+                        Positioned(top: 50, left: 16, child: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white), onPressed: () => Navigator.pop(context))),
+
+                      // 🔥 GÜVENLİK MENÜSÜ
+                      Positioned(
+                        top: 50,
+                        right: 16,
+                        child: Container(
+                          decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)),
+                          child: PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert, color: Colors.white, size: 18),
+                            color: const Color(0xFF2C2C2C),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            onSelected: (value) {
+                              if (value == 'report') _showReportDialog();
+                              if (value == 'block') _confirmBlockAction();
+                            },
+                            itemBuilder: (ctx) => [
+                              PopupMenuItem(value: 'report', child: Text("Kullanıcıyı Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13))),
+                              PopupMenuItem(value: 'block', child: Text("Engelle", style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 13))),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
-                    if (!isMe && widget.showBackButton)
-                      Positioned(top: 50, left: 16, child: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white), onPressed: () => Navigator.pop(context))),
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: Column(
@@ -361,7 +534,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       isMe ? _buildMyProfileButtons() : _buildOtherProfileButtons(),
                       const SizedBox(height: 5),
 
-                      // 🔥🔥🔥 YENİ HİBRİT MÜZİK KARTI (GÜNCELLENDİ) 🔥🔥🔥
+                      // 🔥🔥🔥 MÜZİK KARTI (BURADA, ARTIK GÜVENLE ÇALIŞIR) 🔥🔥🔥
                       MusicPlayerCard(userId: widget.userId, isMe: isMe),
 
                       const SizedBox(height: 10),
@@ -409,7 +582,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         onPressed: () async {
           if (_profileData == null) return;
           final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => EditProfileScreen(currentProfile: _profileData!)));
-          if (result == true) _loadAllData();
+          if (result == true) _loadProfileData();
         },
         style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF262626), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0, side: const BorderSide(color: Colors.white12)),
         child: Text("Profili Düzenle", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
