@@ -1,5 +1,3 @@
-// lib/screens/login_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'home_screen.dart';
 import 'create_profile_screen.dart';
+import 'forgot_password_screen.dart'; // ✅ UNUTULMAMASI GEREKEN IMPORT
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -27,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final AuthService _authService = AuthService();
 
-  // --- GİRİŞ YAP FONKSİYONU (DÜZELTİLDİ) ---
+  // --- GİRİŞ YAP FONKSİYONU ---
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -37,12 +36,8 @@ class _LoginScreenState extends State<LoginScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
-      // 1. Giriş Yap (AuthService üzerinden)
-      // Not: Buradan dönen 'response' değişkenini kullanmıyoruz,
-      // çünkü senin AuthService yapın özel bir AuthResult döndürüyor.
       await _authService.signInWithEmail(email, password);
 
-      // 2. Kullanıcı ID'sini doğrudan Supabase Client'tan alıyoruz (En garanti yol)
       final user = Supabase.instance.client.auth.currentUser;
       final userId = user?.id;
 
@@ -60,7 +55,6 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-      // 3. KONTROL: Profili Gerçekten Var mı?
       final profileData = await Supabase.instance.client
           .from('profiles')
           .select()
@@ -70,13 +64,13 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (profileData != null) {
-        // Profil VAR -> Ana Sayfa
+        // Profil var, ana sayfaya git
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const HomeScreen()),
               (route) => false,
         );
       } else {
-        // Profil YOK -> Profil Oluşturma
+        // Profil yok, oluşturmaya git
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const CreateProfileScreen()),
               (route) => false,
@@ -194,17 +188,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Şifre sıfırlama yakında!"),
-                          backgroundColor: Color(0xFF1E1E1E),
+                      // 🔥 Şifremi unuttum ekranına geçiş
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen(),
                         ),
                       );
                     },
                     child: Text(
                       "Şifreni mi unuttun?",
-                      style:
-                      GoogleFonts.poppins(color: const Color(0xFF6C63FF)),
+                      style: GoogleFonts.poppins(color: const Color(0xFF6C63FF)),
                     ),
                   ),
                 ),

@@ -1,4 +1,5 @@
 // lib/services/auth_service.dart
+
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -30,6 +31,20 @@ class AuthService {
               '71608708372-c01lic0b0jlojeqvaou65j8me28h4n99.apps.googleusercontent.com',
             );
 
+  // --- 🔥 GÜNCELLENEN FONKSİYON ---
+  /// Şifre sıfırlama e-postası gönder
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await Supabase.instance.client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'kinnect://reset-callback', // 🔥 KRİTİK NOKTA BURASI
+      );
+    } catch (e) {
+      throw Exception("Sıfırlama maili gönderilemedi: $e");
+    }
+  }
+  // ---------------------------------
+
   /// E-posta ile giriş
   Future<AuthResult> signInWithEmail(String email, String password) async {
     final res = await _authRepository.signInWithEmail(email, password);
@@ -50,7 +65,6 @@ class AuthService {
 
   /// Google ile giriş
   Future<AuthResult> signInWithGoogle() async {
-    // Kullanıcı hesabı seçer
     final googleUser = await _googleSignIn.signIn();
     if (googleUser == null) {
       throw Exception('Google oturumu iptal edildi.');
