@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart'; // ✅ DEĞİŞİKLİK: uni_links yerine app_links geldi
 
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
@@ -13,7 +13,11 @@ import 'services/spotify_service.dart';
 StreamSubscription? _spotifySub;
 
 Future<void> _initSpotifyDeepLinkListener() async {
-  _spotifySub = uriLinkStream.listen((Uri? uri) async {
+  // ✅ DEĞİŞİKLİK: AppLinks instance'ı oluşturuldu
+  final appLinks = AppLinks();
+
+  // ✅ DEĞİŞİKLİK: appLinks üzerinden stream dinleniyor
+  _spotifySub = appLinks.uriLinkStream.listen((Uri? uri) async {
     if (uri == null) return;
 
     // kinnect://callback?code=XXXX
@@ -33,10 +37,10 @@ Future<void> main() async {
 
   await Supabase.initialize(
     url: 'https://vxrvudcafkgqusjrawme.supabase.co',
-    anonKey: 'sb_publishable_tSqnWtXnUhEog3MIx5ajRw_PZeTlwuG',
+    anonKey: 'sb_publishable_tSqnWtXnUhEog3MIx5ajRw_PZeTlwuG', // ⚠️ Not: Bu key publishable olduğu için kodda kalabilir ama production için .env kullanman önerilir.
   );
 
-  // 🔥 EKLENEN TEK SATIR
+  // 🔥 Listener başlatılıyor (Fonksiyon içi güncellendi)
   await _initSpotifyDeepLinkListener();
 
   runApp(const MyApp());
