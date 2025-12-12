@@ -8,6 +8,7 @@ import 'package:timeago/timeago.dart' as timeago;
 
 import '../widgets/fuel_button.dart';
 import '../services/feed_service.dart';
+import '../services/safety_service.dart'; // Güvenlik servisi (Şikayet için)
 import '../screens/profile_screen.dart';
 
 import 'package:record/record.dart';
@@ -16,7 +17,7 @@ import 'package:path_provider/path_provider.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;
-  final bool isExploreMode; // ⭐ Yeni parametre
+  final bool isExploreMode;
 
   const PostDetailScreen({
     super.key,
@@ -33,6 +34,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   final TextEditingController commentController = TextEditingController();
   final AudioRecorder audioRecorder = AudioRecorder();
   final AudioPlayer audioPlayer = AudioPlayer();
+  final SafetyService _safetyService = SafetyService();
 
   List<Map<String, dynamic>> comments = [];
   bool loadingComments = true;
@@ -42,9 +44,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   late int fuelCount;
   late int commentCount;
 
-  // Fuel Modu için 24 saat kontrolü
   bool isAlive = true;
-
   bool isRecording = false;
   Timer? recordTimer;
   int recordDuration = 0;
@@ -64,7 +64,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     likeCount = likes.length;
     fuelCount = likeCount;
 
-    // 🔥 24 Saat Kontrolü (Sönmüş mü?)
     final date = DateTime.tryParse(widget.post['created_at'] ?? '')?.toLocal();
     if (date != null && DateTime.now().difference(date).inHours >= 24) {
       isAlive = false;
@@ -80,7 +79,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       });
     });
 
-    // Ses bitince player reset
     audioPlayer.onPlayerComplete.listen((event) {
       if (mounted) setState(() => playingCommentId = null);
     });
@@ -96,7 +94,145 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   // *********************************************************
-  // 🔥 YORUMLARI GETİR
+  // 🛡️ ŞİKAYET ETME FONKSİYONLARI (ENGELLEME KALDIRILDI)
+  // *********************************************************
+
+  // 1. ADIM: SEBEP SEÇME
+  void _showReportDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final reasons = [
+          "Spam veya Yanıltıcı",
+          "Çıplaklık veya Cinsellik",
+          "Nefret Söylemi",
+          "Şiddet veya Tehlikeli",
+          "Zorbalık veya Taciz",
+          "Diğer"
+        ];
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: reasons.length,
+              separatorBuilder: (c, i) => const Divider(color: Colors.white12),
+              itemBuilder: (c, i) => ListTile(
+                title: Text(reasons[i], style: GoogleFonts.poppins(color: Colors.white70)),
+                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 14),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showReportDetailsDialog(reasons[i]); // Detay ekranına geç
+                },
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text("İptal", style: GoogleFonts.poppins(color: Colors.grey)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 2. ADIM: EK AÇIKLAMA YAZMA
+  void _showReportDetailsDialog(String reason) {
+    final TextEditingController detailsController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text("Ek Açıklama", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Seçilen: $reason", style: GoogleFonts.poppins(color: Colors.orange, fontSize: 12)),
+            const SizedBox(height: 10),
+            Text("Daha fazla detay ekleyerek incelememize yardımcı olabilirsin (İsteğe bağlı).", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13)),
+            const SizedBox(height: 15),
+            TextField(
+              controller: detailsController,
+              style: const TextStyle(color: Colors.white),
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: "Buraya yaz...",
+                hintStyle: const TextStyle(color: Colors.white24),
+                filled: true,
+                fillColor: Colors.black38,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text("İptal", style: GoogleFonts.poppins(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _submitReport(reason, detailsController.text.trim());
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6C63FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            child: Text("Gönder", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. ADIM: GÖNDERME İŞLEMİ
+  Future<void> _submitReport(String reason, String description) async {
+    try {
+      await _safetyService.reportContent(
+        targetId: widget.post['id'],
+        type: 'post',
+        reason: reason,
+        description: description.isEmpty ? null : description,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Bildirimin alındı. Teşekkürler! 🛡️"),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Hata: $e"), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
+
+  // 4. POST SİLME (Sadece kendi postunsa)
+  Future<void> _deletePost() async {
+    try {
+      await client.from('posts').delete().eq('id', widget.post['id']);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Gönderi silindi.")));
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Silinemedi.")));
+    }
+  }
+
+  // *********************************************************
+  // 🔥 YORUMLAR VE DİĞER İŞLEMLER
   // *********************************************************
 
   Future<void> _fetchComments() async {
@@ -117,39 +253,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     } catch (_) {}
   }
 
-  // *********************************************************
-  // ❤️ BEĞENİ (NORMAL MOD) - isFuel: false
-  // *********************************************************
-
   void _toggleLike() async {
     setState(() {
       isLiked = !isLiked;
       likeCount += isLiked ? 1 : -1;
     });
-
-    // 🔥 DÜZELTME: Normal beğeni bildirimi gider
     await FeedService().toggleLike(widget.post["id"], isFuel: false);
   }
 
-  // *********************************************************
-  // 🔥 ATEŞ MODU (FUELBUTTON) - isFuel: true
-  // *********************************************************
-
   void _toggleFuel() async {
-    if (!isAlive) return; // Sönmüşse işlem yapma
-
+    if (!isAlive) return;
     setState(() {
       isFueled = !isFueled;
       fuelCount += isFueled ? 1 : -1;
     });
-
-    // 🔥 DÜZELTME: Harlama bildirimi gider
     await FeedService().toggleLike(widget.post["id"], isFuel: true);
   }
 
-  // *********************************************************
-  // 🗑️ YORUM SİLME
-  // *********************************************************
   Future<void> _deleteComment(String commentId) async {
     try {
       await client.from('comments').delete().eq('id', commentId);
@@ -187,10 +307,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  // *********************************************************
-  // 💬 YORUM EKLE (METİN)
-  // *********************************************************
-
   Future<void> _sendTextComment() async {
     final msg = commentController.text.trim();
     if (msg.isEmpty) return;
@@ -206,7 +322,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         "audio_url": null,
       });
 
-      // Bildirim (Post sahibi değilsem)
       if (widget.post['user_id'] != myId) {
         try {
           await client.from('notifications').insert({
@@ -224,10 +339,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       debugPrint("Yorum hatası: $e");
     }
   }
-
-  // *********************************************************
-  // 🔊 SES KAYDI BAŞLAT
-  // *********************************************************
 
   Future<void> _startRecording() async {
     if (await audioRecorder.hasPermission()) {
@@ -248,10 +359,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  // *********************************************************
-  // 🎤 SES KAYDI DURDUR
-  // *********************************************************
-
   Future<void> _stopRecording() async {
     recordTimer?.cancel();
     if (!isRecording) return;
@@ -263,10 +370,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       _uploadAndSendAudio(path);
     }
   }
-
-  // *********************************************************
-  // 📤 SES YÜKLE & YORUM OLARAK EKLE
-  // *********************************************************
 
   Future<void> _uploadAndSendAudio(String filePath) async {
     try {
@@ -293,10 +396,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       debugPrint("Ses yükleme hatası: $e");
     }
   }
-
-  // *********************************************************
-  // 🔊 SES OYNAT
-  // *********************************************************
 
   Future<void> _playPause(String url, String id) async {
     if (playingCommentId == id) {
@@ -346,17 +445,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  // *********************************************************
-  // 🔥 GÖNDERİ KARTI
-  // *********************************************************
-
   Widget _buildPostCard() {
     final profile = widget.post["profiles"] ?? {};
     final text = widget.post["content"] ?? "";
     final image = widget.post["image_url"];
-
     final date = DateTime.tryParse(widget.post["created_at"] ?? "");
     final dateStr = date != null ? "${date.day}/${date.month}" : "";
+
+    // Post Sahibi miyim?
+    final isMyPost = widget.post["user_id"] == myId;
 
     return Container(
       width: double.infinity,
@@ -368,7 +465,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // PROFIL
           Row(
             children: [
               GestureDetector(
@@ -401,9 +497,49 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ],
                 ),
               ),
-              Text(dateStr,
-                  style: GoogleFonts.poppins(
-                      color: Colors.white54, fontSize: 12)),
+              Text(dateStr, style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
+
+              // 🔥 MENÜ (Sadece Silme ve Şikayet kaldı, Engelleme silindi)
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_horiz, color: Colors.white54),
+                color: const Color(0xFF2C2C2C),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                onSelected: (value) {
+                  if (value == 'delete') _deletePost();
+                  if (value == 'report') _showReportDialog();
+                },
+                itemBuilder: (BuildContext context) {
+                  if (isMyPost) {
+                    return [
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                            const SizedBox(width: 10),
+                            Text("Gönderiyi Sil", style: GoogleFonts.poppins(color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ];
+                  } else {
+                    // 🔥 Başkasıysa SADECE ŞİKAYET ET (Engelleme kalktı)
+                    return [
+                      PopupMenuItem(
+                        value: 'report',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.flag_outlined, color: Colors.orange, size: 20),
+                            const SizedBox(width: 10),
+                            Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ];
+                  }
+                },
+              ),
             ],
           ),
 
@@ -424,23 +560,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
           const SizedBox(height: 14),
 
-          // ----------------------------------------------------
-          //  ❤️ NORMAL MOD → KALP
-          //  🔥 EXPLORE MOD → FUEL BUTTON
-          // ----------------------------------------------------
-
           widget.isExploreMode
               ? Row(
             children: [
               FuelButton(
                 isFueled: isFueled,
                 count: fuelCount,
-                isExpired: !isAlive, // 🔥 SÖNMÜŞSE
+                isExpired: !isAlive,
                 onTap: _toggleFuel,
                 size: 30,
               ),
               const SizedBox(width: 10),
-              // Flexible taşmayı önler
               Flexible(
                 child: Text(
                   "$fuelCount Odun",
@@ -496,10 +626,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  // *********************************************************
-  // 💬 YORUM LİSTESİ
-  // *********************************************************
-
   Widget _buildComments() {
     if (loadingComments) {
       return const Padding(
@@ -538,7 +664,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // PROFIL
               GestureDetector(
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: c['user_id']))),
                 child: CircleAvatar(
@@ -556,7 +681,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ÜST BİLGİ
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -588,7 +712,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                     const SizedBox(height: 6),
 
-                    // SESLİ YORUM
                     if (isAudio)
                       GestureDetector(
                         onTap: () => _playPause(c["audio_url"], id),
@@ -618,7 +741,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         ),
                       )
 
-                    // METİN YORUM
                     else
                       Text(
                         c["content"] ?? "",
@@ -634,10 +756,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       },
     );
   }
-
-  // *********************************************************
-  // ✍️ YORUM YAZMA ALANI
-  // *********************************************************
 
   Widget _buildInput() {
     return Container(
@@ -680,7 +798,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
           const SizedBox(width: 10),
 
-          // 🎤 SES KAYDI BUTONU / GÖNDER
           GestureDetector(
             onLongPress: isComposing ? null : _startRecording,
             onLongPressUp: _stopRecording,
