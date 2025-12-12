@@ -18,47 +18,55 @@ class AppleMusicService {
 
   Future<Map<String, dynamic>?> getCurrentTrack() async {
     try {
-      if (await Permission.mediaLibrary.isGranted) {
-        final Map<dynamic, dynamic>? nativeData = await platform.invokeMethod('getAppleMusicTrack');
-        if (nativeData == null) return null;
+      if (!await Permission.mediaLibrary.isGranted) return null;
 
-        final bool isPlaying = nativeData['is_playing'] ?? false; // Swift'ten gelen veri
-        final String songName = nativeData['name'] ?? '';
-        final String artistName = nativeData['artist'] ?? '';
-        final String storeId = nativeData['storeId'] ?? '0';
+      final Map<dynamic, dynamic>? native =
+      await platform.invokeMethod('getAppleMusicTrack');
+      if (native == null) return null;
 
-        if (storeId != '0') {
-          final url = Uri.parse('https://itunes.apple.com/lookup?id=$storeId&country=TR');
-          final response = await http.get(url);
-          if (response.statusCode == 200) {
-            final data = jsonDecode(response.body);
-            if (data['resultCount'] > 0) {
-              final track = data['results'][0];
-              return {
-                'provider': 'apple',
-                'is_playing': isPlaying,
-                'song_name': track['trackName'],
-                'artist_name': track['artistName'],
-                'image_url': track['artworkUrl100']?.replaceAll('100x100', '600x600'),
-                'preview_url': track['previewUrl'],
-                'external_url': track['trackViewUrl'],
-              };
-            }
+      final isPlaying = native['is_playing'] ?? false;
+      final song = native['name'] ?? '';
+      final artist = native['artist'] ?? '';
+      final storeId = native['storeId'] ?? '0';
+
+      if (storeId != '0') {
+        final res = await http.get(
+          Uri.parse('https://itunes.apple.com/lookup?id=$storeId&country=TR'),
+        );
+        if (res.statusCode == 200) {
+          final data = jsonDecode(res.body);
+          if (data['resultCount'] > 0) {
+            final track = data['results'][0];
+            return {
+              'provider': 'apple',
+              'is_playing': isPlaying,
+              'song_name': track['trackName'],
+              'artist_name': track['artistName'],
+              'image_url':
+              track['artworkUrl100']?.replaceAll('100x100', '600x600'),
+              'preview_url': track['previewUrl'],
+              'external_url': track['trackViewUrl'],
+              'timestamp': DateTime.now().toIso8601String(),
+            };
           }
         }
-        return await _searchFallback(songName, artistName, isPlaying);
       }
+
+      return _searchFallback(song, artist, isPlaying);
     } catch (_) {}
     return null;
   }
 
-  Future<Map<String, dynamic>?> _searchFallback(String song, String artist, bool isPlaying) async {
+  Future<Map<String, dynamic>?> _searchFallback(
+      String song, String artist, bool isPlaying) async {
     try {
-      final query = Uri.encodeComponent("$song $artist");
-      final url = Uri.parse('https://itunes.apple.com/search?term=$query&media=music&entity=song&limit=1');
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      final q = Uri.encodeComponent("$song $artist");
+      final res = await http.get(
+        Uri.parse(
+            'https://itunes.apple.com/search?term=$q&media=music&entity=song&limit=1'),
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
         if (data['resultCount'] > 0) {
           final track = data['results'][0];
           return {
@@ -66,9 +74,11 @@ class AppleMusicService {
             'is_playing': isPlaying,
             'song_name': track['trackName'],
             'artist_name': track['artistName'],
-            'image_url': track['artworkUrl100']?.replaceAll('100x100', '600x600'),
+            'image_url':
+            track['artworkUrl100']?.replaceAll('100x100', '600x600'),
             'preview_url': track['previewUrl'],
             'external_url': track['trackViewUrl'],
+            'timestamp': DateTime.now().toIso8601String(),
           };
         }
       }
