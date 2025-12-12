@@ -13,7 +13,7 @@ dependencies:
   # --- MÜZİK SERVİSLERİ (YENİ EKLENENLER) ---
   http: ^1.2.0           # Spotify & Apple Music API istekleri için
   url_launcher: ^6.2.5   # Spotify uygulamasını açmak için
-  uni_links: ^0.5.1
+  app_links: ^6.3.0
 
 
   # --- SESLİ MESAJ İÇİN GEREKLİLER ---

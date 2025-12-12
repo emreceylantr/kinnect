@@ -5,8 +5,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../widgets/fuel_button.dart';
 import '../services/feed_service.dart';
+import '../services/safety_service.dart'; // 🔥 GÜVENLİK SERVİSİ
 import 'profile_screen.dart';
-import 'post_detail_screen.dart'; // Tek ve akıllı detay sayfası
+import 'post_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -19,6 +20,7 @@ class _SearchScreenState extends State<SearchScreen> {
   // --- DEĞİŞKENLER ---
   final SupabaseClient client = Supabase.instance.client;
   final FeedService feedService = FeedService();
+  final SafetyService _safetyService = SafetyService(); // 🔥 Güvenlik
 
   final String myId = Supabase.instance.client.auth.currentUser!.id;
   final TextEditingController searchController = TextEditingController();
@@ -37,7 +39,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   // ---------------------------------------------------------
-  // 1. ARAMA İŞLEMİ (KULLANICI ARA)
+  // 1. ARAMA İŞLEMİ (KULLANICI ARA + FİLTRELE)
   // ---------------------------------------------------------
   Future<void> _performSearch(String text) async {
     if (text.trim().isEmpty) {
@@ -45,10 +47,18 @@ class _SearchScreenState extends State<SearchScreen> {
       return;
     }
 
+    // 🔥 ADIM 1: Beni engelleyenlerin listesini al
+    // (Benim engellediklerimi almıyoruz, onları aratınca bulabilmeliyim)
+    final blockedMeIds = await _safetyService.getIdsThatBlockedMe();
+
+    // Kendimi de sonuçlarda görmeyeyim
+    blockedMeIds.add(myId);
+
     final res = await client
         .from("profiles")
         .select()
         .ilike("username", "%$text%")
+        .not('id', 'in', blockedMeIds) // 🔥 BENİ ENGELLEYENLERİ GİZLE
         .limit(15);
 
     if (mounted) {
@@ -66,6 +76,7 @@ class _SearchScreenState extends State<SearchScreen> {
     if (explorePosts.isEmpty) setState(() => loadingExplore = true);
 
     try {
+      // FeedService içindeki getExploreFeed zaten engellileri temizleyip getiriyor
       final data = await feedService.getExploreFeed();
       final now = DateTime.now();
 
@@ -132,7 +143,7 @@ class _SearchScreenState extends State<SearchScreen> {
       explorePosts[index] = {...post, "likes": likes};
     });
 
-    // 🔥 BURASI KRİTİK: isFuel: true gönderiyoruz ki bildirim "Harladı" gitsin
+    // isFuel: true gönderiyoruz ki bildirim "Harladı" gitsin
     await feedService.toggleLike(postId, isFuel: true);
   }
 
@@ -241,8 +252,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 ? NetworkImage(user["avatar_url"])
                 : null,
             backgroundColor: Colors.grey[900],
+            child: user["avatar_url"] == null
+                ? const Icon(Icons.person, color: Colors.white54)
+                : null,
           ),
-          title: Text(user["username"], style: const TextStyle(color: Colors.white)),
+          title: Text(user["username"] ?? "İsimsiz", style: const TextStyle(color: Colors.white)),
           onTap: () {
             Navigator.push(
               context,
@@ -403,6 +417,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     ? NetworkImage(profile["avatar_url"])
                     : null,
                 backgroundColor: Colors.grey[900],
+                child: profile["avatar_url"] == null
+                    ? const Icon(Icons.person, color: Colors.white54)
+                    : null,
               ),
               title: Row(
                 children: [
@@ -449,7 +466,7 @@ class _SearchScreenState extends State<SearchScreen> {
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Row(
                 children: [
-                  // 🔥 ATEŞ BUTONU (isExpired parametresini düzgün alır)
+                  // 🔥 ATEŞ BUTONU
                   FuelButton(
                     isFueled: isFueled,
                     count: likeCount,

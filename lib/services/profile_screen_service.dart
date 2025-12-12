@@ -1,46 +1,46 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// ProfileScreen'e özel: profil verisi + istatistik + gönderiler
+/// 🔥 ProfileScreen için TEK servis
+/// - Profil bilgisi
+/// - İstatistikler
+/// - Gönderiler (realtime)
 class ProfileScreenService {
   final SupabaseClient client;
 
   ProfileScreenService({SupabaseClient? client})
       : client = client ?? Supabase.instance.client;
 
-  /// Profil + gönderi sayısı + takipçi/takip edilen sayıları
+  // ---------------------------------------------------------------------------
+  // PROFİL + İSTATİSTİKLER
+  // ---------------------------------------------------------------------------
+
   Future<Map<String, dynamic>> getProfileWithStats(String userId) async {
-    // Profil
+    // 🔹 Profil
     final profile = await client
         .from('profiles')
         .select()
         .eq('id', userId)
         .single();
 
-    // Gönderi sayısı
-    final posts = await client
+    // 🔹 Gönderi sayısı (COUNT)
+    final postCount = await client
         .from('posts')
-        .select('id')
+        .count(CountOption.exact)
         .eq('user_id', userId);
 
-    final postCount = (posts as List).length;
-
-    // Takipçi sayısı
-    final followersRows = await client
+    // 🔹 Takipçi sayısı
+    final followersCount = await client
         .from('friendships')
-        .select('id')
+        .count(CountOption.exact)
         .eq('friend_id', userId)
         .eq('status', 'accepted');
 
-    final followersCount = (followersRows as List).length;
-
-    // Takip edilen sayısı
-    final followingRows = await client
+    // 🔹 Takip edilen sayısı
+    final followingCount = await client
         .from('friendships')
-        .select('id')
+        .count(CountOption.exact)
         .eq('user_id', userId)
         .eq('status', 'accepted');
-
-    final followingCount = (followingRows as List).length;
 
     return {
       'profile': profile,
@@ -50,18 +50,69 @@ class ProfileScreenService {
     };
   }
 
-  /// Kullanıcının gönderileri (profil akışı)
-  Stream<List<Map<String, dynamic>>> getUserPostsStream(String userId) {
-    return Stream.fromFuture(_getUserPostsOnce(userId));
+  // ---------------------------------------------------------------------------
+  // PROFİL GÖNDERİLERİ (REALTIME)
+  // ---------------------------------------------------------------------------
+
+  Stream<List<Map<String, dynamic>>> getUserPostsStream({
+    required String userId,
+    bool includePrivate = true,
+  }) {
+    var query = client
+        .from('posts')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+
+    if (!includePrivate) {
+      query = query.eq('visibility', 'public');
+    }
+
+    return query.asyncMap((rows) async {
+      if (rows.isEmpty) return [];
+
+      final userIds = rows
+          .map((r) => r['user_id'] as String)
+          .toSet()
+          .toList();
+
+      final profiles = await client
+          .from('profiles')
+          .select()
+          .inFilter('id', userIds);
+
+      final profileMap = {
+        for (final p in profiles) p['id'] as String: p,
+      };
+
+      return rows.map((row) {
+        return {
+          ...row,
+          'profiles': profileMap[row['user_id']] ?? {},
+        };
+      }).toList();
+    });
   }
 
-  Future<List<Map<String, dynamic>>> _getUserPostsOnce(String userId) async {
-    final rows = await client
+  // ---------------------------------------------------------------------------
+  // TEK SEFERLİK FETCH (STREAM İSTEMEZSEN)
+  // ---------------------------------------------------------------------------
+
+  Future<List<Map<String, dynamic>>> getUserPostsOnce({
+    required String userId,
+    bool includePrivate = true,
+  }) async {
+    var query = client
         .from('posts')
         .select('*, profiles(*)')
         .eq('user_id', userId)
         .order('created_at', ascending: false);
 
+    if (!includePrivate) {
+      query = query.eq('visibility', 'public');
+    }
+
+    final rows = await query;
     return List<Map<String, dynamic>>.from(rows);
   }
 }

@@ -5,10 +5,9 @@ allprojects {
     }
 }
 
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
+val newBuildDir: Directory = rootProject.layout.buildDirectory
+    .dir("../../build")
+    .get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
@@ -19,13 +18,23 @@ subprojects {
 subprojects {
     project.evaluationDependsOn(":app")
 
-    // 🔥 DÜZELTME BURADA: Eski paketlerin (uni_links gibi) namespace hatasını çözer
-    afterEvaluate {
+    // 🔥 DÜZELTME BURADA: Senin yazdığın mantığı bir değişkene atadık
+    // Böylece hem "hemen şimdi" hem de "sonra" çalıştırabilir hale geldik.
+    val configureNamespaceAction = {
         if (extensions.findByName("android") != null) {
             val androidExtension = extensions.getByName("android") as com.android.build.gradle.BaseExtension
             if (androidExtension.namespace == null) {
                 androidExtension.namespace = group.toString()
             }
+        }
+    }
+
+    // Hata veren kısmı bu kontrol ile değiştirdik:
+    if (project.state.executed) {
+        configureNamespaceAction() // Zaten hazırsan hemen çalıştır
+    } else {
+        afterEvaluate {
+            configureNamespaceAction() // Değilsen hazır olunca çalıştır
         }
     }
 }
