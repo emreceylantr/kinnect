@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'safety_service.dart'; // 🔥 GÜVENLİK SERVİSİ DAHİL EDİLDİ
 
 class FeedService {
   final SupabaseClient client;
+  final SafetyService _safetyService = SafetyService(); // 🔥 Servis örneği
 
   FeedService({SupabaseClient? client})
       : client = client ?? Supabase.instance.client;
@@ -16,11 +18,18 @@ class FeedService {
     return user.id;
   }
 
-  // --- 1. ANA AKIŞ (SADECE ARKADAŞLAR + PUBLIC OLMAYANLAR) ---
-  // Arkadaşının 'Public' (Herkes) attığı post buraya düşmez, sadece arkadaşlarına özel olanlar düşer.
+  // --- 1. ANA AKIŞ (SADECE ARKADAŞLAR + PUBLIC OLMAYANLAR + ÇİFT TARAFLI ENGEL FİLTRESİ) ---
   Future<List<Map<String, dynamic>>> getFriendsFeed() async {
     try {
-      // Takip ettiklerimi (Arkadaşlarımı) bul
+      // A. Engelleme Listelerini Al (Çift Yönlü)
+      // Hem benim engellediklerim, hem de beni engelleyenler
+      final myBlocks = await _safetyService.getIdsIBlocked();
+      final blockedMe = await _safetyService.getIdsThatBlockedMe();
+
+      // İki listeyi birleştirip tekil (unique) bir liste yapıyoruz
+      final allHiddenIds = {...myBlocks, ...blockedMe};
+
+      // B. Takip ettiklerimi (Arkadaşlarımı) bul
       final following = await client
           .from('friendships')
           .select('friend_id')
@@ -32,13 +41,17 @@ class FeedService {
       // Kendi gönderilerimi de ana akışta göreyim
       targetIds.add(_myId);
 
+      // 🔥 C. GİZLİ KULLANICILARI LİSTEDEN ÇIKAR
+      // Eğer takip ettiğim biri engellendiyse, ID listesinden siliyoruz
+      targetIds.removeWhere((id) => allHiddenIds.contains(id));
+
       if (targetIds.isEmpty) return [];
 
       final posts = await client
           .from('posts')
           .select('*, profiles(*), likes(user_id), comments(id)')
           .inFilter('user_id', targetIds)
-          .neq('visibility', 'public') // 🔥 ÖNEMLİ: Public olanları ana akıştan gizle!
+          .neq('visibility', 'public') // Public olanları ana akıştan gizle
           .order('created_at', ascending: false);
 
       return List<Map<String, dynamic>>.from(posts as List);
@@ -48,9 +61,14 @@ class FeedService {
     }
   }
 
-  // --- 2. KEŞFET (HERKES - SADECE PUBLIC OLANLAR) ---
+  // --- 2. KEŞFET (HERKES - SADECE PUBLIC OLANLAR + ÇİFT TARAFLI ENGEL FİLTRESİ) ---
   Future<List<Map<String, dynamic>>> getExploreFeed() async {
     try {
+      // A. Engelleme Listelerini Al (Çift Yönlü)
+      final myBlocks = await _safetyService.getIdsIBlocked();
+      final blockedMe = await _safetyService.getIdsThatBlockedMe();
+      final allHiddenIds = {...myBlocks, ...blockedMe};
+
       final response = await client
           .from('posts')
           .select('*, profiles(*), likes(user_id), comments(id)')
@@ -58,7 +76,16 @@ class FeedService {
           .order('created_at', ascending: false)
           .limit(50);
 
-      return List<Map<String, dynamic>>.from(response as List);
+      final List<Map<String, dynamic>> allPosts = List<Map<String, dynamic>>.from(response as List);
+
+      // 🔥 B. GİZLİ KULLANICILARI FİLTRELE
+      // Post sahibi bu "yasaklı listede" ise postu gösterme
+      final filteredPosts = allPosts.where((post) {
+        final postOwnerId = post['user_id'];
+        return !allHiddenIds.contains(postOwnerId);
+      }).toList();
+
+      return filteredPosts;
     } catch (e) {
       debugPrint('HATA (Keşfet): $e');
       return [];
@@ -118,8 +145,6 @@ class FeedService {
   }
 
   // --- 7. BEĞENİ / HARLAMA (TOGGLE) ---
-  // isFuel: true ise 'fuel' (Harlama) işlemi yapılır.
-  // isFuel: false ise 'like' (Beğeni) işlemi yapılır.
   Future<void> toggleLike(String postId, {bool isFuel = false}) async {
     try {
       final existing = await client
@@ -133,16 +158,14 @@ class FeedService {
         // --- SİLME İŞLEMİ (SÖNDÜRME / VAZGEÇME) ---
         await client.from('likes').delete().eq('id', existing['id']);
 
-        // 🔥 GÜNCELLEME: Bildirimi de siliyoruz ki kirlilik olmasın
+        // Bildirimi de temizle
         final typeToDelete = isFuel ? 'fuel' : 'like';
         try {
           await client.from('notifications').delete()
               .eq('post_id', postId)
               .eq('actor_id', _myId)
               .eq('type', typeToDelete);
-        } catch (_) {
-          // Bildirim zaten yoksa hata vermesin devam etsin
-        }
+        } catch (_) {}
 
       } else {
         // --- EKLEME İŞLEMİ (HARLAMA / BEĞENME) ---
@@ -154,7 +177,6 @@ class FeedService {
         // Bildirim Gönder (Post sahibi ben değilsem)
         final post = await client.from('posts').select('user_id').eq('id', postId).single();
         if (post['user_id'] != _myId) {
-          // 🔥 ÖNEMLİ: Eğer bu bir 'fuel' ise tipi 'fuel' kaydet, yoksa 'like' kaydet.
           final notifType = isFuel ? 'fuel' : 'like';
 
           await client.from('notifications').insert({
@@ -168,7 +190,6 @@ class FeedService {
       }
     } catch (e) {
       debugPrint('HATA (Like/Fuel): $e');
-      // Rethrow kaldırdım, UI çökmesin diye sadece loglasın.
     }
   }
 
