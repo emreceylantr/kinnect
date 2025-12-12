@@ -29,23 +29,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _friendService = FriendService();
   }
 
-  // Gruplama (GÜNCELLENDİ: Fuel eklendi)
+  // 🔥 GÜNCELLENMİŞ GRUPLAMA MANTIĞI 🔥
+  // Hem post etkileşimlerini hem de mesajları gruplar.
   List<GroupedNotification> _groupNotifications(List<FollowNotification> rawList) {
     List<GroupedNotification> grouped = [];
+
+    // Post Grupları: "postId_type" anahtarı ile (Örn: 123_like)
     Map<String, List<FollowNotification>> postGroups = {};
+
+    // Mesaj Grupları: "userId" anahtarı ile (Örn: user_abc_123)
+    Map<String, List<FollowNotification>> messageGroups = {};
+
+    // Diğerleri (Takip, Arama vb.)
     List<FollowNotification> others = [];
 
     for (var n in rawList) {
-      // 🔥 GÜNCELLEME: 'fuel' tipini de buraya dahil ettik
+      // 1. Post Etkileşimleri (Like, Comment, Fuel)
       if (n.postId != null && (n.type == 'like' || n.type == 'comment' || n.type == 'fuel')) {
         String key = "${n.postId}_${n.type}";
         if (!postGroups.containsKey(key)) postGroups[key] = [];
         postGroups[key]!.add(n);
-      } else {
+      }
+      // 2. Mesajlar (Gönderen kişiye göre grupla)
+      else if (n.type == 'message') {
+        String key = n.userId; // Gönderen ID
+        if (!messageGroups.containsKey(key)) messageGroups[key] = [];
+        messageGroups[key]!.add(n);
+      }
+      // 3. Diğerleri
+      else {
         others.add(n);
       }
     }
 
+    // Post gruplarını listeye ekle
     postGroups.forEach((key, list) {
       grouped.add(GroupedNotification(
         type: list.first.type,
@@ -56,6 +73,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ));
     });
 
+    // Mesaj gruplarını listeye ekle
+    messageGroups.forEach((key, list) {
+      grouped.add(GroupedNotification(
+        type: 'message',
+        notifications: list,
+        createdAt: list.first.createdAt, // En son mesajın tarihi
+      ));
+    });
+
+    // Diğerlerini ekle
     for (var n in others) {
       grouped.add(GroupedNotification(
         type: n.type,
@@ -63,6 +90,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         createdAt: n.createdAt,
       ));
     }
+
+    // Hepsini tarihe göre yeniden sırala (En yeni en üstte)
     grouped.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return grouped;
   }
@@ -125,7 +154,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   final rawList = snapshot.data ?? [];
                   final filteredList = rawList.where((n) => !(n.type == 'follow' && n.friendshipStatus == 'pending')).toList();
                   if (filteredList.isEmpty) return Padding(padding: const EdgeInsets.all(40), child: Center(child: Column(children: [const Icon(Icons.notifications_none, size: 48, color: Colors.white24), const SizedBox(height: 8), Text("Henüz bildirim yok.", style: GoogleFonts.poppins(color: Colors.white54))])));
+
                   final groupedList = _groupNotifications(filteredList);
+
                   return ListView.separated(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: groupedList.length, separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.white10), itemBuilder: (context, index) => _buildGroupCard(groupedList[index]));
                 },
               ),
@@ -140,34 +171,44 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final notif = group.notifications.first;
     final username = notif.userProfile['username'] ?? 'anonim';
     final avatarUrl = notif.userProfile['avatar_url'];
-    final count = group.notifications.length;
+
+    // 🔥 ÖNEMLİ: Gerçek kişi sayısını bulmak için Set kullanıyoruz.
+    // Ebrar beğenip çekip tekrar beğenirse listede 2 bildirim olur ama uniqueUserIds 1 olur.
+    final uniqueUserIds = group.notifications.map((n) => n.userId).toSet();
+    final count = uniqueUserIds.length;
+
+    // Mesajlar için toplam sayı (aynı kişi 5 mesaj atarsa 5 görünür)
+    final msgCount = group.notifications.length;
 
     String text = "";
     Widget? trailing;
 
     // --- TİP BELİRLEME (GÜNCELLENDİ) ---
     if (group.type == 'fuel') {
-      // 🔥 HARLAMA BİLDİRİMİ
+      // 🔥 HARLAMA
       text = count == 1 ? "gönderini harladı 🔥" : "ve ${count - 1} diğer kişi gönderini harladı 🔥";
       if (group.postImage != null) {
         trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
       }
     } else if (group.type == 'like') {
+      // BEĞENİ
       text = count == 1 ? "gönderini beğendi." : "ve ${count - 1} diğer kişi gönderini beğendi.";
       if (group.postImage != null) {
         trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
       }
     } else if (group.type == 'comment') {
+      // YORUM
       text = count == 1 ? "yorum yaptı." : "ve ${count - 1} diğer kişi yorum yaptı.";
       if (group.postImage != null) {
         trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
       }
+    } else if (group.type == 'message') {
+      // 💬 MESAJ (Gruplanmış)
+      text = msgCount == 1 ? "sana mesaj gönderdi 💬" : "sana $msgCount mesaj gönderdi 💬";
+      trailing = const Icon(Icons.mail_outline, color: Colors.cyanAccent);
     } else if (group.type == 'follow') {
       text = "seni takip etmeye başladı.";
       trailing = SizedBox(height: 30, child: ElevatedButton(onPressed: (){ Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: notif.userId))); }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1E1E), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(horizontal: 12)), child: const Text("Profili Gör", style: TextStyle(fontSize: 12, color: Colors.white70))));
-    } else if (group.type == 'message') {
-      text = "sana mesaj gönderdi 💬";
-      trailing = const Icon(Icons.mail_outline, color: Colors.cyanAccent);
     } else if (group.type == 'call') {
       text = "sohbet odasına katıldı 📞";
       trailing = const Icon(Icons.phone_in_talk, color: Colors.greenAccent);
@@ -190,8 +231,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           }
         } else if (group.postId != null) {
           final postRes = await Supabase.instance.client.from('posts').select('*, profiles(*), likes(user_id), comments(id)').eq('id', group.postId!).maybeSingle();
-          // Eğer harlamaysa ve detayda açılacaksa ExplorePostDetail'e yönlendirilebilir ama
-          // şimdilik standart detaya gidiyoruz, kafa karışmasın.
           if (postRes != null && mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: postRes)));
         } else {
           Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: notif.userId)));
