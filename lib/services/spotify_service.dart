@@ -10,74 +10,123 @@ class SpotifyService {
   final String _redirectUri = "kinnect://callback";
 
   Future<void> authenticate() async {
-    final String scopes = "user-read-currently-playing user-read-playback-state user-read-recently-played";
-    final Uri url = Uri.parse("https://accounts.spotify.com/authorize?response_type=code&client_id=$_clientId&scope=$scopes&redirect_uri=$_redirectUri&show_dialog=true");
-    if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
+    final scopes =
+        "user-read-currently-playing user-read-playback-state user-read-recently-played";
+
+    final url = Uri.parse(
+      "https://accounts.spotify.com/authorize"
+          "?response_type=code"
+          "&client_id=$_clientId"
+          "&scope=$scopes"
+          "&redirect_uri=$_redirectUri"
+          "&show_dialog=true",
+    );
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
   }
 
   Future<bool> exchangeCodeForToken(String code) async {
     try {
-      final response = await http.post(
+      final res = await http.post(
         Uri.parse("https://accounts.spotify.com/api/token"),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': 'Basic ' + base64Encode(utf8.encode('$_clientId:$_clientSecret'))},
-        body: {'grant_type': 'authorization_code', 'code': code, 'redirect_uri': _redirectUri},
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ${base64Encode(utf8.encode("$_clientId:$_clientSecret"))}',
+        },
+        body: {
+          'grant_type': 'authorization_code',
+          'code': code,
+          'redirect_uri': _redirectUri,
+        },
       );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        await Supabase.instance.client.from('profiles').update({'spotify_refresh_token': data['refresh_token']}).eq('id', Supabase.instance.client.auth.currentUser!.id);
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        await Supabase.instance.client.from('profiles').update({
+          'spotify_refresh_token': data['refresh_token'],
+        }).eq('id', Supabase.instance.client.auth.currentUser!.id);
         return true;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("Spotify token error: $e");
+    }
     return false;
   }
 
   Future<Map<String, dynamic>?> getCurrentTrack(String userId) async {
     try {
-      final profile = await Supabase.instance.client.from('profiles').select('spotify_refresh_token').eq('id', userId).single();
+      final profile = await Supabase.instance.client
+          .from('profiles')
+          .select('spotify_refresh_token')
+          .eq('id', userId)
+          .single();
+
       final refreshToken = profile['spotify_refresh_token'];
       if (refreshToken == null) return null;
 
-      final tokenRes = await http.post(Uri.parse("https://accounts.spotify.com/api/token"),
-          headers: {'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': 'Basic ' + base64Encode(utf8.encode('$_clientId:$_clientSecret'))},
-          body: {'grant_type': 'refresh_token', 'refresh_token': refreshToken});
+      final tokenRes = await http.post(
+        Uri.parse("https://accounts.spotify.com/api/token"),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ${base64Encode(utf8.encode("$_clientId:$_clientSecret"))}',
+        },
+        body: {
+          'grant_type': 'refresh_token',
+          'refresh_token': refreshToken,
+        },
+      );
 
       if (tokenRes.statusCode != 200) return null;
       final accessToken = jsonDecode(tokenRes.body)['access_token'];
 
-      // 1. Şu an çalanı kontrol et
-      final playerRes = await http.get(Uri.parse("https://api.spotify.com/v1/me/player/currently-playing"), headers: {'Authorization': 'Bearer $accessToken'});
-      if (playerRes.statusCode == 200 && playerRes.body.isNotEmpty) {
-        final data = jsonDecode(playerRes.body);
+      // 🔥 ŞU AN ÇALAN
+      final nowRes = await http.get(
+        Uri.parse("https://api.spotify.com/v1/me/player/currently-playing"),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+
+      if (nowRes.statusCode == 200 && nowRes.body.isNotEmpty) {
+        final data = jsonDecode(nowRes.body);
         if (data['item'] != null) {
-          // Eğer şarkı çalıyorsa veya duraklatılmışsa (ama player açıksa)
           return {
             'provider': 'spotify',
-            'is_playing': data['is_playing'], // Burası true ise kesin çalıyordur
+            'is_playing': data['is_playing'],
             'song_name': data['item']['name'],
             'artist_name': data['item']['artists'][0]['name'],
             'image_url': data['item']['album']['images'][0]['url'],
             'external_url': data['item']['external_urls']['spotify'],
+            'timestamp': DateTime.now().toIso8601String(),
           };
         }
       }
 
-      // 2. Çalan yoksa son dinleneni getir (is_playing: false)
-      final recentRes = await http.get(Uri.parse("https://api.spotify.com/v1/me/player/recently-played?limit=1"), headers: {'Authorization': 'Bearer $accessToken'});
+      // 🔥 SON DİNLENEN
+      final recentRes = await http.get(
+        Uri.parse("https://api.spotify.com/v1/me/player/recently-played?limit=1"),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+
       if (recentRes.statusCode == 200) {
         final data = jsonDecode(recentRes.body);
-        if ((data['items'] as List).isNotEmpty) {
-          final item = data['items'][0]['track'];
+        if (data['items'].isNotEmpty) {
+          final item = data['items'][0];
+          final track = item['track'];
           return {
             'provider': 'spotify',
             'is_playing': false,
-            'song_name': item['name'],
-            'artist_name': item['artists'][0]['name'],
-            'image_url': item['album']['images'][0]['url'],
-            'external_url': item['external_urls']['spotify'],
+            'song_name': track['name'],
+            'artist_name': track['artists'][0]['name'],
+            'image_url': track['album']['images'][0]['url'],
+            'external_url': track['external_urls']['spotify'],
+            'timestamp': item['played_at'],
           };
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("Spotify error: $e");
+    }
     return null;
   }
 }
