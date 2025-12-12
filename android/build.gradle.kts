@@ -15,8 +15,19 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
+
+    // 🔥 DÜZELTME BURADA: Eski paketlerin (uni_links gibi) namespace hatasını çözer
+    afterEvaluate {
+        if (extensions.findByName("android") != null) {
+            val androidExtension = extensions.getByName("android") as com.android.build.gradle.BaseExtension
+            if (androidExtension.namespace == null) {
+                androidExtension.namespace = group.toString()
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
