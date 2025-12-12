@@ -25,7 +25,7 @@ class MusicPlayerCard extends StatefulWidget {
 }
 
 class _MusicPlayerCardState extends State<MusicPlayerCard>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final SpotifyService _spotifyService = SpotifyService();
   final AppleMusicService _appleMusicService = AppleMusicService();
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -34,6 +34,7 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
 
   Timer? _timer;
   late AnimationController _animController;
+  late AnimationController _loadingAnimController;
 
   bool _isPlayingPreview = false;
   bool _isLoading = true;
@@ -42,10 +43,17 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
   void initState() {
     super.initState();
 
+    // Müzik çalar (equalizer) animasyonu
     _animController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     )..repeat(reverse: true);
+
+    // Yükleme animasyonu (Sade nefes alma efekti için)
+    _loadingAnimController = AnimationController(
+      duration: const Duration(seconds: 1), // Daha yavaş ve sakin
+      vsync: this,
+    )..repeat(reverse: true); // Parlayıp sönme döngüsü
 
     _audioPlayer.onPlayerStateChanged.listen((state) {
       if (mounted) {
@@ -62,12 +70,13 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
   void dispose() {
     _timer?.cancel();
     _animController.dispose();
+    _loadingAnimController.dispose();
     _audioPlayer.dispose();
     super.dispose();
   }
 
   /* -------------------------------------------------------------------------- */
-  /*                                DATA FLOW                                   */
+  /* DATA FLOW                                   */
   /* -------------------------------------------------------------------------- */
 
   Future<void> _initDataFlow() async {
@@ -102,7 +111,7 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
   }
 
   /* -------------------------------------------------------------------------- */
-  /*                          SYNC – TEK OTORİTE                                 */
+  /* SYNC – TEK OTORİTE                                 */
   /* -------------------------------------------------------------------------- */
 
   Future<void> _syncMusicData() async {
@@ -143,7 +152,7 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
   }
 
   /* -------------------------------------------------------------------------- */
-  /*                                   UI                                       */
+  /* UI                                       */
   /* -------------------------------------------------------------------------- */
 
   void _showConnectionSheet() {
@@ -239,10 +248,64 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
     );
   }
 
+  // --- GÜNCELLENMİŞ SADE YÜKLEME EKRANI ---
+  Widget _buildLoadingView() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      height: 84,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF101010),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Center(
+        child: AnimatedBuilder(
+          animation: _loadingAnimController,
+          builder: (context, child) {
+            // Dönme yok, sadece hafif bir şeffaflık (nefes alma) efekti
+            // 0.3 ile 1.0 arasında yavaşça gidip gelir
+            final opacity = 0.3 + (_loadingAnimController.value * 0.7);
+
+            return Opacity(
+              opacity: opacity,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const FaIcon(
+                    FontAwesomeIcons.spotify,
+                    color: Color(0xFF1DB954),
+                    size: 20, // İkon boyutu biraz küçültüldü, daha zarif
+                  ),
+                  const SizedBox(width: 16),
+                  // Ortadaki çizgi veya nokta
+                  Container(
+                    width: 4,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                      color: Colors.white24,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const FaIcon(
+                    FontAwesomeIcons.apple,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+  // ----------------------------------------
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const SizedBox(height: 84);
+      return _buildLoadingView();
     }
 
     if (_trackData == null) {
