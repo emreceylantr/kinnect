@@ -94,7 +94,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   // *********************************************************
-  // 🛡️ ŞİKAYET ETME FONKSİYONLARI (ENGELLEME KALDIRILDI)
+  // 🛡️ ŞİKAYET ETME FONKSİYONLARI (MODERN TASARIM 🔥)
   // *********************************************************
 
   // 1. ADIM: SEBEP SEÇME
@@ -110,83 +110,146 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           "Zorbalık veya Taciz",
           "Diğer"
         ];
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: reasons.length,
-              separatorBuilder: (c, i) => const Divider(color: Colors.white12),
-              itemBuilder: (c, i) => ListTile(
-                title: Text(reasons[i], style: GoogleFonts.poppins(color: Colors.white70)),
-                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 14),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showReportDetailsDialog(reasons[i]); // Detay ekranına geç
-                },
-              ),
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+                color: const Color(0xFF252525),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, spreadRadius: 5)]
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                Text("Bu gönderiyi neden bildiriyorsun?", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 11)),
+                const SizedBox(height: 20),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: List.generate(reasons.length, (index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              _showReportDetailsDialog(reasons[index]);
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.03), borderRadius: BorderRadius.circular(12)),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(reasons[index], style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12.5)),
+                                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 12),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    child: Text("Vazgeç", style: GoogleFonts.poppins(color: Colors.white38, fontSize: 13)),
+                  ),
+                )
+              ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text("İptal", style: GoogleFonts.poppins(color: Colors.grey)),
-            ),
-          ],
         );
       },
     );
   }
 
-  // 2. ADIM: EK AÇIKLAMA YAZMA
+  // 2. ADIM: EK AÇIKLAMA YAZMA (GÜNCELLENMİŞ ESTETİK)
   void _showReportDetailsDialog(String reason) {
     final TextEditingController detailsController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text("Ek Açıklama", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Seçilen: $reason", style: GoogleFonts.poppins(color: Colors.orange, fontSize: 12)),
-            const SizedBox(height: 10),
-            Text("Daha fazla detay ekleyerek incelememize yardımcı olabilirsin (İsteğe bağlı).", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13)),
-            const SizedBox(height: 15),
-            TextField(
-              controller: detailsController,
-              style: const TextStyle(color: Colors.white),
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: "Buraya yaz...",
-                hintStyle: const TextStyle(color: Colors.white24),
-                filled: true,
-                fillColor: Colors.black38,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+              color: const Color(0xFF252525),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, spreadRadius: 5)]
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Text("Ek Açıklama", style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600))), // Font büyütüldü
+              const SizedBox(height: 15),
+              Text("Seçilen: $reason", style: GoogleFonts.poppins(color: Colors.orange, fontSize: 12)), // Font büyütüldü
+              const SizedBox(height: 5),
+              Text("Detay eklemek istersen aşağıya yazabilirsin.", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)), // Font büyütüldü
+              const SizedBox(height: 15),
+              TextField(
+                controller: detailsController,
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 14), // Font büyütüldü
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: "Buraya yaz...",
+                  hintStyle: GoogleFonts.poppins(color: Colors.white24, fontSize: 14),
+                  filled: true,
+                  fillColor: Colors.black26,
+                  contentPadding: const EdgeInsets.all(12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+
+              // 🔥 HİZALI VE KİBAR BUTONLAR
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 10), // Daha küçük buton
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                      ),
+                      child: Text("Vazgeç", style: GoogleFonts.poppins(color: Colors.white38, fontSize: 13)),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _submitReport(reason, detailsController.text.trim());
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6C63FF),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 10), // Daha küçük buton
+                          elevation: 0
+                      ),
+                      child: Text("Gönder", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text("İptal", style: GoogleFonts.poppins(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _submitReport(reason, detailsController.text.trim());
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6C63FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            child: Text("Gönder", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
       ),
     );
   }
@@ -218,18 +281,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  // 4. POST SİLME (Sadece kendi postunsa)
-  Future<void> _deletePost() async {
-    try {
-      await client.from('posts').delete().eq('id', widget.post['id']);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Gönderi silindi.")));
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Silinemedi.")));
-    }
-  }
 
   // *********************************************************
   // 🔥 YORUMLAR VE DİĞER İŞLEMLER
@@ -497,48 +548,47 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ],
                 ),
               ),
-              Text(dateStr, style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
 
-              // 🔥 MENÜ (Sadece Silme ve Şikayet kaldı, Engelleme silindi)
-              const SizedBox(width: 8),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_horiz, color: Colors.white54),
-                color: const Color(0xFF2C2C2C),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                onSelected: (value) {
-                  if (value == 'delete') _deletePost();
-                  if (value == 'report') _showReportDialog();
-                },
-                itemBuilder: (BuildContext context) {
-                  if (isMyPost) {
-                    return [
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                            const SizedBox(width: 10),
-                            Text("Gönderiyi Sil", style: GoogleFonts.poppins(color: Colors.white)),
-                          ],
-                        ),
+              // 🔥 YENİ MODERN HEADER: Eğer post benimse menü yok, başkasınınsa var.
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(dateStr, style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
+                  // Sadece başkasının postuysa şikayet menüsü göster
+                  if (!isMyPost) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 28, height: 28,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05), // Çok hafif arka plan
+                        shape: BoxShape.circle,
                       ),
-                    ];
-                  } else {
-                    // 🔥 Başkasıysa SADECE ŞİKAYET ET (Engelleme kalktı)
-                    return [
-                      PopupMenuItem(
-                        value: 'report',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.flag_outlined, color: Colors.orange, size: 20),
-                            const SizedBox(width: 10),
-                            Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white)),
-                          ],
-                        ),
+                      child: PopupMenuButton<String>(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.more_horiz, color: Colors.white70, size: 18),
+                        color: const Color(0xFF2C2C2C),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        onSelected: (value) {
+                          if (value == 'report') _showReportDialog();
+                        },
+                        itemBuilder: (BuildContext context) {
+                          return [
+                            PopupMenuItem(
+                              value: 'report',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.flag_outlined, color: Colors.white70, size: 18),
+                                  const SizedBox(width: 10),
+                                  Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13)),
+                                ],
+                              ),
+                            ),
+                          ];
+                        },
                       ),
-                    ];
-                  }
-                },
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
