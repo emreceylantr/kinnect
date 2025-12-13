@@ -1,27 +1,32 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:permission_handler/permission_handler.dart';
+// permission_handler'ı sildik, artık gerek yok.
 
 class AppleMusicService {
   static const platform = MethodChannel('com.kinnect.app/music');
 
+  // ▼▼▼▼ DEĞİŞEN KISIM ▼▼▼▼
   Future<bool> requestPermission() async {
-    var status = await Permission.mediaLibrary.status;
-    if (status.isDenied) status = await Permission.mediaLibrary.request();
-    if (status.isPermanentlyDenied) {
-      await openAppSettings();
+    try {
+      // Artık direkt iOS (Swift) tarafına "İzni sen iste" diyoruz.
+      final bool granted = await platform.invokeMethod('requestAppleMusicPermission');
+      return granted;
+    } catch (e) {
+      print("İzin hatası: $e");
       return false;
     }
-    return status.isGranted;
   }
+  // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
   Future<Map<String, dynamic>?> getCurrentTrack() async {
     try {
-      if (!await Permission.mediaLibrary.isGranted) return null;
+      // Paketli kontrolü sildik, direkt Swift'ten veriyi istiyoruz.
+      // Swift zaten izin yoksa null döndürecek şekilde ayarlandı.
 
       final Map<dynamic, dynamic>? native =
       await platform.invokeMethod('getAppleMusicTrack');
+
       if (native == null) return null;
 
       final isPlaying = native['is_playing'] ?? false;
@@ -84,6 +89,5 @@ class AppleMusicService {
       }
     } catch (_) {}
     return null;
-    ///emreeeee
   }
 }

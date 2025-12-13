@@ -1,86 +1,143 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
+    <dict>
 
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>kinnect</string>
+        <!-- ========================= -->
+        <!-- APP TEMEL BİLGİLERİ -->
+        <!-- ========================= -->
 
-                <string>com.googleusercontent.apps.71608708372-9dvs03siqhcg5o9g8f7q6haatc1ismcn</string>
+        <key>CADisableMinimumFrameDurationOnPhone</key>
+        <true/>
 
-                <string>io.supabase.flutterquickstart</string>
-            </array>
-        </dict>
-    </array>
+        <key>CFBundleDevelopmentRegion</key>
+        <string>$(DEVELOPMENT_LANGUAGE)</string>
 
-    <key>LSApplicationQueriesSchemes</key>
-    <array>
-        <string>spotify</string>
-        <string>https</string>
-        <string>http</string>
-    </array>
+        <key>CFBundleDisplayName</key>
+        <string>Kinnect</string>
 
-    <key>NSAppleMusicUsageDescription</key>
-    <string>Profilinde anlık dinlediğin şarkıyı göstermek için medya kütüphanesine erişim izni gerekiyor.</string>
+        <key>CFBundleExecutable</key>
+        <string>$(EXECUTABLE_NAME)</string>
 
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>Profil fotoğrafı yüklemek ve gönderi paylaşmak için galeriye erişim izni gerekiyor.</string>
+        <key>CFBundleIdentifier</key>
+        <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 
-    <key>NSCameraUsageDescription</key>
-    <string>Fotoğraf çekmek, paylaşmak ve görüntülü arama yapabilmek için kameraya erişim izni gerekiyor.</string>
+        <key>CFBundleInfoDictionaryVersion</key>
+        <string>6.0</string>
 
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Video kaydı yapmak ve sesli/görüntülü arama yapabilmek için mikrofona erişim izni gerekiyor.</string>
+        <key>CFBundleName</key>
+        <string>kinnect</string>
 
-    <key>CADisableMinimumFrameDurationOnPhone</key>
-    <true/>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>$(DEVELOPMENT_LANGUAGE)</string>
-    <key>CFBundleDisplayName</key>
-    <string>Kinnect</string>
-    <key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
-    <key>CFBundleIdentifier</key>
-    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>kinnect</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>$(FLUTTER_BUILD_NAME)</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
-    <key>CFBundleVersion</key>
-    <string>$(FLUTTER_BUILD_NUMBER)</string>
-    <key>LSRequiresIPhoneOS</key>
-    <true/>
-    <key>UIApplicationSupportsIndirectInputEvents</key>
-    <true/>
-    <key>UILaunchStoryboardName</key>
-    <string>LaunchScreen</string>
-    <key>UIMainStoryboardFile</key>
-    <string>Main</string>
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-    <key>UISupportedInterfaceOrientations~ipad</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationPortraitUpsideDown</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
 
-</dict>
+        <key>CFBundleShortVersionString</key>
+        <string>$(FLUTTER_BUILD_NAME)</string>
+
+        <key>CFBundleVersion</key>
+        <string>$(FLUTTER_BUILD_NUMBER)</string>
+
+        <key>CFBundleSignature</key>
+        <string>????</string>
+
+        <!-- ========================= -->
+        <!-- 🔥 OAUTH / DEEP LINK AYARLARI -->
+        <!-- ========================= -->
+
+        <key>CFBundleURLTypes</key>
+        <array>
+            <dict>
+                <key>CFBundleTypeRole</key>
+                <string>Editor</string>
+
+                <key>CFBundleURLSchemes</key>
+                <array>
+                    <!-- 🔥 Supabase / Spotify OAuth -->
+                    <string>io.supabase.flutter</string>
+
+                    <!-- 🔥 App internal deep link -->
+                    <string>kinnect</string>
+
+                    <!-- 🔥 Google Sign-In -->
+                    <string>com.googleusercontent.apps.71608708372-9dvs03siqhcg5o9g8f7q6haatc1ismcn</string>
+                </array>
+            </dict>
+        </array>
+
+        <!-- ========================= -->
+        <!-- 🔍 HARİCİ APP SORGULARI -->
+        <!-- ========================= -->
+
+        <key>LSApplicationQueriesSchemes</key>
+        <array>
+            <string>spotify</string>
+            <string>https</string>
+            <string>http</string>
+        </array>
+
+        <key>LSRequiresIPhoneOS</key>
+        <true/>
+
+        <!-- ========================= -->
+        <!-- 🔐 PERMISSION AÇIKLAMALARI -->
+        <!-- ========================= -->
+
+        <key>NSAppleMusicUsageDescription</key>
+        <string>
+            Profilinde anlık dinlediğin şarkıyı göstermek için Apple Music erişimi gerekiyor.
+        </string>
+
+        <key>NSMediaLibraryUsageDescription</key>
+        <string>
+            Profilinde anlık dinlediğin müzik bilgisini göstermek için medya kütüphanesine erişim gerekiyor.
+        </string>
+
+        <key>NSCameraUsageDescription</key>
+        <string>
+            Fotoğraf çekmek, paylaşmak ve görüntülü arama yapabilmek için kamera erişimi gerekiyor.
+        </string>
+
+        <key>NSMicrophoneUsageDescription</key>
+        <string>
+            Sesli ve görüntülü arama yapabilmek için mikrofon erişimi gerekiyor.
+        </string>
+
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>
+            Profil fotoğrafı yüklemek ve gönderi paylaşmak için galeriye erişim gerekiyor.
+        </string>
+
+        <!-- ========================= -->
+        <!-- UI / LAUNCH AYARLARI -->
+        <!-- ========================= -->
+
+        <key>UIApplicationSupportsIndirectInputEvents</key>
+        <true/>
+
+        <key>UILaunchStoryboardName</key>
+        <string>LaunchScreen</string>
+
+        <key>UIMainStoryboardFile</key>
+        <string>Main</string>
+
+        <!-- ========================= -->
+        <!-- EKRAN ORYANTASYONLARI -->
+        <!-- ========================= -->
+
+        <key>UISupportedInterfaceOrientations</key>
+        <array>
+            <string>UIInterfaceOrientationPortrait</string>
+            <string>UIInterfaceOrientationLandscapeLeft</string>
+            <string>UIInterfaceOrientationLandscapeRight</string>
+        </array>
+
+        <key>UISupportedInterfaceOrientations~ipad</key>
+        <array>
+            <string>UIInterfaceOrientationPortrait</string>
+            <string>UIInterfaceOrientationPortraitUpsideDown</string>
+            <string>UIInterfaceOrientationLandscapeLeft</string>
+            <string>UIInterfaceOrientationLandscapeRight</string>
+        </array>
+
+    </dict>
 </plist>
