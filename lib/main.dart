@@ -7,9 +7,8 @@ import 'package:app_links/app_links.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/change_password_screen.dart';
-import 'services/spotify_service.dart';
 
-// 🔥 Global Navigator Key (Uygulamanın Direksiyonu)
+// 🔥 Global Navigator Key
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
@@ -42,11 +41,10 @@ class _MyAppState extends State<MyApp> {
     _initAuthListener();
   }
 
-  // 🔗 Deep Link Listener (Spotify + Password Reset)
+  // 🔗 Deep Link Dinleyicisi
   Future<void> _initDeepLinks() async {
     _appLinks = AppLinks();
 
-    // Cold start
     try {
       final initialUri = await _appLinks.getInitialLink();
       if (initialUri != null) {
@@ -54,7 +52,6 @@ class _MyAppState extends State<MyApp> {
       }
     } catch (_) {}
 
-    // Warm start
     _linkSubscription = _appLinks.uriLinkStream.listen((Uri? uri) {
       if (uri != null) {
         _handleDeepLink(uri);
@@ -62,39 +59,46 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  // 🔐 Supabase Auth Listener (Password Recovery)
+  // 🔐 Supabase Auth Listener (ASIL OLAY BURADA)
   void _initAuthListener() {
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      if (data.event == AuthChangeEvent.passwordRecovery) {
-        _navigateToResetScreen();
-      }
-    });
+          final event = data.event;
+          final session = data.session;
+
+          debugPrint("🔥 Auth Event: $event");
+
+          // Şifre sıfırlama
+          if (event == AuthChangeEvent.passwordRecovery) {
+            _navigateToResetScreen();
+          }
+
+          // ✅ Spotify / OAuth / Google login sonrası
+          if (event == AuthChangeEvent.signedIn && session != null) {
+            debugPrint("✅ OAuth Login Başarılı");
+
+            navigatorKey.currentState?.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  (route) => false,
+            );
+          }
+        });
   }
 
-  // 🔥 Link Analizi
+  // 🔍 Deep Link Analizi (SADECE RESET İÇİN)
   void _handleDeepLink(Uri uri) {
     debugPrint("🔗 Gelen Link: $uri");
 
-    // Şifre sıfırlama
     if (uri.host == 'reset-callback' ||
         uri.fragment.contains('type=recovery')) {
       _navigateToResetScreen();
-    }
-
-    // Spotify callback
-    else if (uri.scheme == 'kinnect' && uri.host == 'callback') {
-      final code = uri.queryParameters['code'];
-      if (code != null) {
-        SpotifyService().exchangeCodeForToken(code);
-      }
     }
   }
 
   void _navigateToResetScreen() {
     navigatorKey.currentState?.pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
-      (route) => false,
+          (route) => false,
     );
   }
 
@@ -117,6 +121,12 @@ class _MyAppState extends State<MyApp> {
         textTheme: GoogleFonts.poppinsTextTheme().apply(
           bodyColor: Colors.white,
           displayColor: Colors.white,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: IconThemeData(color: Colors.white),
         ),
       ),
       home: const _AuthGate(),

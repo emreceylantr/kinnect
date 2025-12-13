@@ -1,51 +1,65 @@
 import UIKit
 import Flutter
-import MediaPlayer // 🔥 Bu kütüphane şart!
+import MediaPlayer // Müzik çalar erişimi için şart
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
-  override func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-  ) -> Bool {
+    override func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
 
-    let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
-    let musicChannel = FlutterMethodChannel(name: "com.kinnect.app/music",
-                                              binaryMessenger: controller.binaryMessenger)
+        let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
+        let musicChannel = FlutterMethodChannel(name: "com.kinnect.app/music",
+                                                binaryMessenger: controller.binaryMessenger)
 
-    musicChannel.setMethodCallHandler({
-      (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
-      if call.method == "getAppleMusicTrack" {
-          self.getCurrentMediaItem(result: result)
-      } else {
-        result(FlutterMethodNotImplemented)
-      }
-    })
+        musicChannel.setMethodCallHandler({
+            (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
 
-    GeneratedPluginRegistrant.register(with: self)
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-  }
+            if call.method == "getAppleMusicTrack" {
+                self.getNowPlaying(result: result)
+            }
+            // ▼▼▼▼ GÜNCELLEME BURADA: İZİN İSTEME FONKSİYONU EKLENDİ ▼▼▼▼
+            else if call.method == "requestAppleMusicPermission" {
+                // Bu kod çalıştığında ekrana o "İzin Ver" kutusu ZORLA çıkar
+                MPMediaLibrary.requestAuthorization { status in
+                    // Kullanıcı izin verdi mi? (authorized = true)
+                    let isGranted = (status == .authorized)
+                    result(isGranted)
+                }
+            }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            else {
+                result(FlutterMethodNotImplemented)
+            }
+        })
 
-  // Anlık çalan şarkıyı sistemden çeken fonksiyon
-  private func getCurrentMediaItem(result: FlutterResult) {
-      let musicPlayer = MPMusicPlayerController.systemMusicPlayer
-      if let nowPlaying = musicPlayer.nowPlayingItem {
-          // Şarkı bilgilerini al
-          let title = nowPlaying.title ?? ""
-          let artist = nowPlaying.artist ?? ""
-          let album = nowPlaying.albumTitle ?? ""
-          // Store ID (iTunes ID'si) varsa işimiz çok kolaylaşır
-          let storeId = nowPlaying.playbackStoreID
+        GeneratedPluginRegistrant.register(with: self)
+        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
 
-          let songInfo: [String: Any] = [
-              "name": title,
-              "artist": artist,
-              "album": album,
-              "storeId": storeId
-          ]
-          result(songInfo)
-      } else {
-          result(nil) // Şarkı çalmıyor
-      }
-  }
+    // Şarkı bilgisini çeken fonksiyon
+    private func getNowPlaying(result: FlutterResult) {
+        let musicPlayer = MPMusicPlayerController.systemMusicPlayer
+
+        // Şarkı çalıyor mu?
+        let isPlaying = musicPlayer.playbackState == .playing
+
+        if let nowPlayingItem = musicPlayer.nowPlayingItem {
+            let songName = nowPlayingItem.title ?? ""
+            let artistName = nowPlayingItem.artist ?? ""
+            let storeId = nowPlayingItem.playbackStoreID // iTunes Store ID'si
+
+            let trackInfo: [String: Any] = [
+                "name": songName,
+                "artist": artistName,
+                "storeId": storeId,
+                "is_playing": isPlaying
+            ]
+            result(trackInfo)
+        } else {
+            // Hiçbir şey çalmıyorsa boş dönelim
+            result(nil)
+        }
+    }
 }
