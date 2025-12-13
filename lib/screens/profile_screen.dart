@@ -1,5 +1,3 @@
-// ⬇⬇⬇  (KOD AYNEN DEVAM EDİYOR – SENİN ATTIĞININ TAMAMI) ⬇⬇⬇
-
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
@@ -60,7 +58,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final Color _accentBlue = const Color(0xFF1E88E5);
 
-  // 🔴🔴🔴 EKLENEN SESSION RESTORE 🔴🔴🔴
+  // 🔴 SPOTIFY İÇİN KRİTİK: Session'ı yenilemeye çalışır
   Future<void> _restoreSessionIfAny() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session != null) {
@@ -72,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
 
-    // 🔴🔴🔴 BU SATIR OLMADAN SPOTIFY DÖNMEZ 🔴🔴🔴
+    // Spotify bağlantısı sonrası oturumun geri yüklenmesini sağlar
     _restoreSessionIfAny();
 
     _loadProfileData();
@@ -81,6 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _checkBlockStatusBg();
     });
 
+    // Auth Dinleyicisi: Başarılı bağlantı sonrası sayfayı yenilemek için
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
           if (data.event == AuthChangeEvent.signedIn ||
@@ -104,11 +103,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _authSubscription.cancel();
     super.dispose();
   }
-
-  // 🔥🔥🔥 AŞAĞIDAN SONRASI
-  // 🔥🔥🔥 SENİN GÖNDERDİĞİN KODUN
-  // 🔥🔥🔥 TEK SATIR DEĞİŞMEDEN DEVAM EDİYOR
-  // 🔥🔥🔥 (DEVAMI BİREBİR AYNI)
 
   // --- 1. VERİ YÜKLEME ---
   Future<void> _loadProfileData() async {
@@ -349,6 +343,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // --- MÜZİK AYARLARI MENÜSÜ ---
   void _openMusicSettings() {
     showModalBottomSheet(
       context: context,
@@ -406,30 +401,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 🔥🔥🔥 YETKİLENDİRME AKIŞI GÜÇLENDİRİLDİ 🔥🔥🔥
+  // SPOTIFY BAĞLAMA FONKSİYONU
   void _connectMusicService(String provider) async {
     if (provider == 'Spotify') {
       try {
         await Supabase.instance.client.auth.signInWithOAuth(
           OAuthProvider.spotify,
-          scopes:
-          'user-read-currently-playing user-read-playback-state user-top-read user-read-recently-played',
+          redirectTo: 'kinnect://callback',
+          scopes: 'user-read-currently-playing user-read-playback-state user-top-read user-read-recently-played',
           queryParams: {
+            'prompt': 'consent',
             'show_dialog': 'true',
           },
         );
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text('Hata: $e')));
+          // Hata mesajını kullanıcıya göster (Örn: Unsupported Provider)
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Bağlantı Hatası: $e'), backgroundColor: Colors.red)
+          );
         }
       }
     }
   }
-
-
-
-
 
 
   // *********************************************************
@@ -453,7 +447,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               separatorBuilder: (c, i) => const Divider(color: Colors.white12),
               itemBuilder: (c, i) => ListTile(
                 title: Text(reasons[i], style: GoogleFonts.poppins(color: Colors.white70)),
-                onTap: () { Navigator.pop(ctx); _submitReport(reasons[i]); },
+                onTap: () { Navigator.pop(ctx); _submitReport(widget.userId, 'user', reasons[i]); },
               ),
             ),
           ),
@@ -463,9 +457,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _submitReport(String reason) async {
+  Future<void> _submitReport(String targetId, String type, String reason) async {
     try {
-      await _safetyService.reportContent(targetId: widget.userId, type: 'user', reason: reason);
+      await _safetyService.reportContent(targetId: targetId, type: type, reason: reason);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Şikayet edildi."), backgroundColor: Colors.green));
     } catch (_) {}
   }
@@ -598,20 +592,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Positioned(
                         top: 50,
                         right: 16,
-                        child: Container(
-                          decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)),
-                          child: PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert, color: Colors.white, size: 18),
-                            color: const Color(0xFF2C2C2C),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            onSelected: (value) {
-                              if (value == 'report') _showReportDialog();
-                              if (value == 'block') _confirmBlockAction();
-                            },
-                            itemBuilder: (ctx) => [
-                              PopupMenuItem(value: 'report', child: Text("Kullanıcıyı Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13))),
-                              PopupMenuItem(value: 'block', child: Text("Engelle", style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 13))),
-                            ],
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(30),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                            child: Container(
+                              height: 36, width: 36,
+                              decoration: BoxDecoration(color: Colors.black.withOpacity(0.25), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.15), width: 1)),
+                              child: PopupMenuButton<String>(
+                                padding: EdgeInsets.zero,
+                                icon: const Icon(Icons.more_horiz, color: Colors.white, size: 20),
+                                color: const Color(0xFF2C2C2C),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                onSelected: (value) {
+                                  if (value == 'report') _showReportDialog();
+                                  if (value == 'block') _confirmBlockAction();
+                                },
+                                itemBuilder: (ctx) => [
+                                  PopupMenuItem(value: 'report', child: Row(children: [const Icon(Icons.flag_outlined, color: Colors.white70, size: 18), const SizedBox(width: 10), Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13))])),
+                                  PopupMenuItem(value: 'block', child: Row(children: [const Icon(Icons.block, color: Colors.redAccent, size: 18), const SizedBox(width: 10), Text("Engelle", style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 13))])),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -654,6 +656,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     children: [
                       const SizedBox(height: 10),
+                      // 🔥 GÜNCELLENEN BUTON KISMI BURADA 🔥
                       isMe ? _buildMyProfileButtons() : _buildOtherProfileButtons(),
                       const SizedBox(height: 5),
 
@@ -697,6 +700,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // 🔥 ARKADAŞININ YENİ DÜZENİ (Profili Düzenle + Müzik Ayarları Yan Yana)
   Widget _buildMyProfileButtons() {
     return SizedBox(
       height: 45,
@@ -797,19 +801,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ],
                           ),
                         ),
-                        Text(dateStr, style: GoogleFonts.poppins(color: Colors.white60, fontSize: 12)),
 
-                        if (isMe) ...[
-                          const SizedBox(width: 12),
-                          GestureDetector(
-                            onTap: () => _confirmDelete(post['id']),
-                            child: Container(
-                              padding: const EdgeInsets.all(5),
-                              decoration: BoxDecoration(color: _accentBlue.withOpacity(0.1), shape: BoxShape.circle),
-                              child: Icon(Icons.delete_outline, color: _accentBlue, size: 18),
-                            ),
-                          ),
-                        ]
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(dateStr, style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
+                            if (isMe) ...[
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => _confirmDelete(post['id']),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: _accentBlue.withOpacity(0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.delete_outline,
+                                    color: _accentBlue,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                            ]
+                          ],
+                        ),
                       ],
                     ),
                   ),
