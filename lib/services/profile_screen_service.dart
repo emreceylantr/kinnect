@@ -1,9 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 🔥 ProfileScreen için TEK servis
-/// - Profil bilgisi
-/// - İstatistikler
-/// - Gönderiler (realtime)
+/// Supabase Flutter v2 uyumlu
 class ProfileScreenService {
   final SupabaseClient client;
 
@@ -15,32 +13,34 @@ class ProfileScreenService {
   // ---------------------------------------------------------------------------
 
   Future<Map<String, dynamic>> getProfileWithStats(String userId) async {
-    // 🔹 Profil
+    // Profil
     final profile = await client
         .from('profiles')
         .select()
         .eq('id', userId)
         .single();
 
-    // 🔹 Gönderi sayısı (COUNT)
-    final postCount = await client
-        .from('posts')
-        .count(CountOption.exact)
-        .eq('user_id', userId);
+    // Sayılar (v2 safe count)
+    final postCount = await _count(
+      table: 'posts',
+      filters: {'user_id': userId},
+    );
 
-    // 🔹 Takipçi sayısı
-    final followersCount = await client
-        .from('friendships')
-        .count(CountOption.exact)
-        .eq('friend_id', userId)
-        .eq('status', 'accepted');
+    final followersCount = await _count(
+      table: 'friendships',
+      filters: {
+        'friend_id': userId,
+        'status': 'accepted',
+      },
+    );
 
-    // 🔹 Takip edilen sayısı
-    final followingCount = await client
-        .from('friendships')
-        .count(CountOption.exact)
-        .eq('user_id', userId)
-        .eq('status', 'accepted');
+    final followingCount = await _count(
+      table: 'friendships',
+      filters: {
+        'user_id': userId,
+        'status': 'accepted',
+      },
+    );
 
     return {
       'profile': profile,
@@ -51,30 +51,30 @@ class ProfileScreenService {
   }
 
   // ---------------------------------------------------------------------------
-  // PROFİL GÖNDERİLERİ (REALTIME)
+  // PROFİL GÖNDERİLERİ (REALTIME – v2 SAFE)
   // ---------------------------------------------------------------------------
 
   Stream<List<Map<String, dynamic>>> getUserPostsStream({
     required String userId,
     bool includePrivate = true,
   }) {
-    var query = client
+    return client
         .from('posts')
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
-        .order('created_at', ascending: false);
+        .asyncMap((rows) async {
+      // Gizli post filtreleme
+      if (!includePrivate) {
+        rows = rows
+            .where((r) => r['visibility'] == 'public')
+            .toList();
+      }
 
-    if (!includePrivate) {
-      query = query.eq('visibility', 'public');
-    }
-
-    return query.asyncMap((rows) async {
       if (rows.isEmpty) return [];
 
-      final userIds = rows
-          .map((r) => r['user_id'] as String)
-          .toSet()
-          .toList();
+      // Profil bilgileri
+      final userIds =
+      rows.map((r) => r['user_id'] as String).toSet().toList();
 
       final profiles = await client
           .from('profiles')
@@ -95,24 +95,42 @@ class ProfileScreenService {
   }
 
   // ---------------------------------------------------------------------------
-  // TEK SEFERLİK FETCH (STREAM İSTEMEZSEN)
+  // TEK SEFERLİK FETCH (STREAM YOK)
   // ---------------------------------------------------------------------------
 
   Future<List<Map<String, dynamic>>> getUserPostsOnce({
     required String userId,
     bool includePrivate = true,
   }) async {
-    var query = client
+    final rows = await client
         .from('posts')
         .select('*, profiles(*)')
         .eq('user_id', userId)
         .order('created_at', ascending: false);
 
-    if (!includePrivate) {
-      query = query.eq('visibility', 'public');
+    // Gizli post filtresi (client-side, v2 safe)
+    final filtered = includePrivate
+        ? rows
+        : rows.where((r) => r['visibility'] == 'public').toList();
+
+    return List<Map<String, dynamic>>.from(filtered);
+  }
+
+  // ---------------------------------------------------------------------------
+  // COUNT HELPER (SUPABASE FLUTTER v2 SAFE)
+  // ---------------------------------------------------------------------------
+
+  Future<int> _count({
+    required String table,
+    required Map<String, dynamic> filters,
+  }) async {
+    var query = client.from(table).select();
+
+    for (final entry in filters.entries) {
+      query = query.eq(entry.key, entry.value);
     }
 
-    final rows = await query;
-    return List<Map<String, dynamic>>.from(rows);
+    final data = await query;
+    return data.length;
   }
 }
