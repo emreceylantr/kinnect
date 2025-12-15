@@ -7,6 +7,8 @@ import 'package:app_links/app_links.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/change_password_screen.dart';
+// 👇 BURAYI KENDİ DOSYA ADINA GÖRE DÜZENLE KANKA
+import 'screens/create_profile_screen.dart';
 
 // 🔥 Global Navigator Key
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -59,7 +61,7 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  // 🔐 Supabase Auth Listener (ASIL OLAY BURADA)
+  // 🔐 Supabase Auth Listener (GÜNCELLENDİ)
   void _initAuthListener() {
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
@@ -73,19 +75,25 @@ class _MyAppState extends State<MyApp> {
             _navigateToResetScreen();
           }
 
-          // ✅ Spotify / OAuth / Google login sonrası
-          if (event == AuthChangeEvent.signedIn && session != null) {
-            debugPrint("✅ OAuth Login Başarılı");
+          // ✅ Login olunca direkt Home'a gitmek yerine KONTROL FONKSİYONUNA gidiyoruz
+          if ((event == AuthChangeEvent.signedIn || event == AuthChangeEvent.tokenRefreshed) && session != null) {
+            debugPrint("✅ Oturum açıldı, Profil kontrol ediliyor...");
+            // Burada direkt yönlendirme yapmıyoruz, AuthGate zaten build edilecek
+            // Ama eğer manuel tetiklemek istersen _checkProfileAndNavigate kullanılabilir.
+            // Listener içinde genelde setState gerekmez, AuthGate session değişikliğini algılar.
+          }
 
+          // Çıkış yapıldıysa
+          if (event == AuthChangeEvent.signedOut) {
             navigatorKey.currentState?.pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const HomeScreen()),
+              MaterialPageRoute(builder: (_) => const WelcomeScreen()),
                   (route) => false,
             );
           }
         });
   }
 
-  // 🔍 Deep Link Analizi (SADECE RESET İÇİN)
+  // 🔍 Deep Link Analizi
   void _handleDeepLink(Uri uri) {
     debugPrint("🔗 Gelen Link: $uri");
 
@@ -129,17 +137,92 @@ class _MyAppState extends State<MyApp> {
           iconTheme: IconThemeData(color: Colors.white),
         ),
       ),
-      home: const _AuthGate(),
+      // 🔥 ARTIK DİREKT HOMESCREEN YOK, KONTROL KAPISI VAR
+      home: const AuthGate(),
     );
   }
 }
 
-class _AuthGate extends StatelessWidget {
-  const _AuthGate();
+// 🚪 YENİ GÜVENLİK KAPISI (PROFILE CHECKER)
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _isLoading = true;
+  bool _hasProfile = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUserStatus();
+  }
+
+  Future<void> _checkUserStatus() async {
+    final session = Supabase.instance.client.auth.currentSession;
+
+    // 1. Eğer oturum yoksa direkt Welcome'a
+    if (session == null) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      // 2. Oturum var, peki PROFİL var mı?
+      final userId = session.user.id;
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', userId)
+          .maybeSingle(); // maybeSingle: Kayıt varsa getirir, yoksa null döner (Hata vermez)
+
+      if (mounted) {
+        setState(() {
+          _hasProfile = data != null; // Veri geldiyse profil vardır
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Profil kontrol hatası: $e");
+      // Hata olursa güvenli taraf seçip loadingi kapatıyoruz, muhtemelen create'e düşer
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasProfile = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final session = Supabase.instance.client.auth.currentSession;
-    return session != null ? const HomeScreen() : const WelcomeScreen();
+
+    // 1. Henüz kontrol ediliyorsa Yükleniyor göster
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      );
+    }
+
+    // 2. Oturum yoksa -> Welcome Screen
+    if (session == null) {
+      return const WelcomeScreen();
+    }
+
+    // 3. Oturum var AMA Profil Yoksa -> Create Profile Screen
+    if (!_hasProfile) {
+      return const CreateProfileScreen();
+    }
+
+    // 4. Her şey tamamsa -> Home Screen
+    return const HomeScreen();
   }
 }
