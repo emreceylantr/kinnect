@@ -7,7 +7,7 @@ import 'package:app_links/app_links.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/change_password_screen.dart';
-// 👇 BURAYI KENDİ DOSYA ADINA GÖRE DÜZENLE KANKA
+// 👇 Dosya yolun doğruysa burası kalabilir
 import 'screens/create_profile_screen.dart';
 
 // 🔥 Global Navigator Key
@@ -61,29 +61,20 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  // 🔐 Supabase Auth Listener (GÜNCELLENDİ)
+  // 🔐 Supabase Auth Listener (SADECE RESET VE ÇIKIŞ İÇİN)
   void _initAuthListener() {
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
           final event = data.event;
-          final session = data.session;
 
-          debugPrint("🔥 Auth Event: $event");
+          debugPrint("🔥 Auth Event Main: $event");
 
-          // Şifre sıfırlama
+          // Şifre sıfırlama ekranına yönlendirme
           if (event == AuthChangeEvent.passwordRecovery) {
             _navigateToResetScreen();
           }
 
-          // ✅ Login olunca direkt Home'a gitmek yerine KONTROL FONKSİYONUNA gidiyoruz
-          if ((event == AuthChangeEvent.signedIn || event == AuthChangeEvent.tokenRefreshed) && session != null) {
-            debugPrint("✅ Oturum açıldı, Profil kontrol ediliyor...");
-            // Burada direkt yönlendirme yapmıyoruz, AuthGate zaten build edilecek
-            // Ama eğer manuel tetiklemek istersen _checkProfileAndNavigate kullanılabilir.
-            // Listener içinde genelde setState gerekmez, AuthGate session değişikliğini algılar.
-          }
-
-          // Çıkış yapıldıysa
+          // Çıkış yapılırsa Welcome'a at
           if (event == AuthChangeEvent.signedOut) {
             navigatorKey.currentState?.pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => const WelcomeScreen()),
@@ -137,13 +128,13 @@ class _MyAppState extends State<MyApp> {
           iconTheme: IconThemeData(color: Colors.white),
         ),
       ),
-      // 🔥 ARTIK DİREKT HOMESCREEN YOK, KONTROL KAPISI VAR
+      // 🔥 HER ŞEYİN KONTROL NOKTASI BURASI
       home: const AuthGate(),
     );
   }
 }
 
-// 🚪 YENİ GÜVENLİK KAPISI (PROFILE CHECKER)
+// 🚪 GÜÇLENDİRİLMİŞ AUTH GATE (Canlı Takip Yapar)
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
@@ -154,21 +145,38 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   bool _isLoading = true;
   bool _hasProfile = false;
+  StreamSubscription<AuthState>? _gateAuthSubscription;
 
   @override
   void initState() {
     super.initState();
     _checkUserStatus();
+
+    // 🔥 GÜNCELLEME: Login/Logout olaylarını anlık dinle
+    // Kullanıcı WelcomeScreen'den giriş yaparsa burası tetiklenir ve profili tekrar kontrol eder.
+    _gateAuthSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      _checkUserStatus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _gateAuthSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _checkUserStatus() async {
+    // Yükleniyor durumuna çek ki geçiş anında saçmalamasın
+    if (mounted) setState(() => _isLoading = true);
+
     final session = Supabase.instance.client.auth.currentSession;
 
-    // 1. Eğer oturum yoksa direkt Welcome'a
+    // 1. Eğer oturum yoksa -> Yükleniyor'u kapat, Profile yok de.
     if (session == null) {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _hasProfile = false;
         });
       }
       return;
@@ -181,21 +189,20 @@ class _AuthGateState extends State<AuthGate> {
           .from('profiles')
           .select()
           .eq('id', userId)
-          .maybeSingle(); // maybeSingle: Kayıt varsa getirir, yoksa null döner (Hata vermez)
+          .maybeSingle();
 
       if (mounted) {
         setState(() {
-          _hasProfile = data != null; // Veri geldiyse profil vardır
+          _hasProfile = data != null; // Veri varsa true, yoksa false
           _isLoading = false;
         });
       }
     } catch (e) {
       debugPrint("Profil kontrol hatası: $e");
-      // Hata olursa güvenli taraf seçip loadingi kapatıyoruz, muhtemelen create'e düşer
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _hasProfile = false;
+          _hasProfile = false; // Hata varsa güvenli mod: Profil yok say
         });
       }
     }
@@ -205,7 +212,7 @@ class _AuthGateState extends State<AuthGate> {
   Widget build(BuildContext context) {
     final session = Supabase.instance.client.auth.currentSession;
 
-    // 1. Henüz kontrol ediliyorsa Yükleniyor göster
+    // 1. Kontrol sürüyorsa Loading göster
     if (_isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator(color: Colors.white)),
