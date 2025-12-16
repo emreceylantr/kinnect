@@ -11,6 +11,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/feed_service.dart';
 import '../services/chat_service.dart';
 import '../services/safety_service.dart';
+import '../services/spotify_service.dart'; // 🔥 Spotify Token işlemleri için şart
 
 // --- WIDGET IMPORTU ---
 import '../widgets/music_player_card.dart';
@@ -37,28 +38,32 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final String _currentUserId =
-      Supabase.instance.client.auth.currentUser!.id;
+  // Mevcut kullanıcı ID'si
+  final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
 
+  // Servisler
   final ChatService _chatService = ChatService();
   final SafetyService _safetyService = SafetyService();
 
+  // Veri Değişkenleri
   Map<String, dynamic>? _profileData;
   List<Map<String, dynamic>> _userPosts = [];
 
+  // Sayaçlar
   int _followersCount = 0;
   int _followingCount = 0;
   int _postCount = 0;
 
+  // Durum Kontrolleri
   bool _isLoading = true;
   String _friendshipStatus = 'none';
   bool _isBlockedByMe = false;
 
+  // Auth Dinleyicisi
   late final StreamSubscription<AuthState> _authSubscription;
-
   final Color _accentBlue = const Color(0xFF1E88E5);
 
-  // 🔴 SPOTIFY İÇİN KRİTİK: Session'ı yenilemeye çalışır
+  // 🔴 Session Kontrolü
   Future<void> _restoreSessionIfAny() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session != null) {
@@ -70,32 +75,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
 
-    // Spotify bağlantısı sonrası oturumun geri yüklenmesini sağlar
     _restoreSessionIfAny();
-
     _loadProfileData();
 
+    // Blok kontrolü (UI çizildikten sonra)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkBlockStatusBg();
     });
 
-    // Auth Dinleyicisi: Başarılı bağlantı sonrası sayfayı yenilemek için
-    _authSubscription =
-        Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-          if (data.event == AuthChangeEvent.signedIn ||
-              data.event == AuthChangeEvent.tokenRefreshed ||
-              data.event == AuthChangeEvent.userUpdated) {
-            if (mounted) {
-              _loadProfileData();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Müzik servisi başarıyla bağlandı!"),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
-          }
-        });
+    // 🔥 KRİTİK KISIM: Auth Listener 🔥
+    // Kullanıcı Spotify uygulamasından döndüğünde veya uygulama açıldığında çalışır.
+    // Spam mesajı engellemek için SnackBar kaldırıldı, sessizce güncelleme yapılır.
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+      // Eğer giriş işlemi, token yenileme veya kullanıcı güncellemesi olduysa
+      if (data.event == AuthChangeEvent.signedIn ||
+          data.event == AuthChangeEvent.tokenRefreshed ||
+          data.event == AuthChangeEvent.userUpdated) {
+
+        // 1. Token'ı sessizce veritabanına kaydet/güncelle
+        await SpotifyService().updateTokenFromSession();
+
+        // 2. Arayüzü yenile (Böylece Müzik Kartı "Bağla" durumundan "Müzik" durumuna geçer)
+        if (mounted) {
+          _loadProfileData();
+        }
+      }
+    });
   }
 
   @override
@@ -106,6 +111,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // --- 1. VERİ YÜKLEME ---
   Future<void> _loadProfileData() async {
+    // Sadece ilk yüklemede loading göster (Sayfa her yenilendiğinde kararmasın)
     if (_profileData == null) setState(() => _isLoading = true);
 
     try {
@@ -139,6 +145,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (_) {}
   }
+
+  // --- YARDIMCI FONKSİYONLAR ---
 
   Future<void> _logout() async {
     try {
@@ -174,22 +182,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchStats() async {
     try {
-      final posts = await Supabase.instance.client
-          .from('posts')
-          .count(CountOption.exact)
-          .eq('user_id', widget.userId);
-
-      final followers = await Supabase.instance.client
-          .from('friendships')
-          .count(CountOption.exact)
-          .eq('friend_id', widget.userId)
-          .eq('status', 'accepted');
-
-      final following = await Supabase.instance.client
-          .from('friendships')
-          .count(CountOption.exact)
-          .eq('user_id', widget.userId)
-          .eq('status', 'accepted');
+      final posts = await Supabase.instance.client.from('posts').count(CountOption.exact).eq('user_id', widget.userId);
+      final followers = await Supabase.instance.client.from('friendships').count(CountOption.exact).eq('friend_id', widget.userId).eq('status', 'accepted');
+      final following = await Supabase.instance.client.from('friendships').count(CountOption.exact).eq('user_id', widget.userId).eq('status', 'accepted');
 
       if (mounted) {
         setState(() {
@@ -343,92 +338,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // --- MÜZİK AYARLARI MENÜSÜ ---
-  void _openMusicSettings() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) {
-        final hasSpotify = _profileData?['spotify_refresh_token'] != null;
-        final hasApple = _profileData?['apple_music_token'] != null;
-
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Müzik Bağlantıları", style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-
-              ListTile(
-                leading: const Icon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954)),
-                title: Text("Spotify", style: GoogleFonts.poppins(color: Colors.white)),
-                subtitle: Text(hasSpotify ? "Bağlı" : "Bağlı Değil", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
-                trailing: hasSpotify
-                    ? const Icon(Icons.check_circle, color: Colors.green)
-                    : OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _connectMusicService("Spotify");
-                  },
-                  style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF1DB954))),
-                  child: Text("Bağla", style: GoogleFonts.poppins(color: const Color(0xFF1DB954))),
-                ),
-              ),
-              const Divider(color: Colors.white12),
-
-              ListTile(
-                leading: const Icon(FontAwesomeIcons.apple, color: Colors.white),
-                title: Text("Apple Music", style: GoogleFonts.poppins(color: Colors.white)),
-                subtitle: Text(hasApple ? "Bağlı" : "Bağlı Değil", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
-                trailing: hasApple
-                    ? const Icon(Icons.check_circle, color: Colors.green)
-                    : OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _connectMusicService("AppleMusic");
-                  },
-                  style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white)),
-                  child: Text("Bağla", style: GoogleFonts.poppins(color: Colors.white)),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // SPOTIFY BAĞLAMA FONKSİYONU
-  void _connectMusicService(String provider) async {
-    if (provider == 'Spotify') {
-      try {
-        await Supabase.instance.client.auth.signInWithOAuth(
-          OAuthProvider.spotify,
-          redirectTo: 'kinnect://callback',
-          scopes: 'user-read-currently-playing user-read-playback-state user-top-read user-read-recently-played',
-          queryParams: {
-            'prompt': 'consent',
-            'show_dialog': 'true',
-          },
-        );
-      } catch (e) {
-        if (mounted) {
-          // Hata mesajını kullanıcıya göster (Örn: Unsupported Provider)
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Bağlantı Hatası: $e'), backgroundColor: Colors.red)
-          );
-        }
-      }
-    }
-  }
-
-
-  // *********************************************************
-  // 🛡️ GÜVENLİK FONKSİYONLARI
-  // *********************************************************
+  // --- GÜVENLİK ---
 
   void _showReportDialog() {
     showDialog(
@@ -500,7 +410,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // *********************************************************
-  // 🏗️ UI
+  // 🏗️ UI - TASARIM
   // *********************************************************
 
   @override
@@ -554,134 +464,139 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final coverUrl = _profileData?['cover_url'];
 
     return Scaffold(
-      body: Container(
-        color: const Color(0xFF000000),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF)))
-            : RefreshIndicator(
-          onRefresh: _loadProfileData,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              children: [
-                Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    Container(
-                      height: 380,
-                      width: double.infinity,
-                      foregroundDecoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, Colors.transparent, Color(0xAA000000), Color(0xFF000000)],
-                          stops: [0.0, 0.4, 0.7, 1.0],
-                        ),
+      backgroundColor: Colors.black,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF)))
+          : RefreshIndicator(
+        onRefresh: _loadProfileData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  // KAPAK FOTOĞRAFI
+                  Container(
+                    height: 380,
+                    width: double.infinity,
+                    foregroundDecoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.transparent, Color(0xAA000000), Color(0xFF000000)],
+                        stops: [0.0, 0.4, 0.7, 1.0],
                       ),
-                      child: coverUrl != null
-                          ? Image.network(coverUrl, fit: BoxFit.cover)
-                          : Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Colors.grey.shade900, Colors.black]))),
                     ),
-                    if (isMe) ...[
-                      Positioned(top: 50, right: 70, child: GestureDetector(onTap: _updateCoverPhoto, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)), child: const Icon(Icons.add_a_photo, color: Colors.white, size: 18)))),
-                      Positioned(top: 50, right: 16, child: GestureDetector(onTap: _logout, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)), child: const Icon(Icons.logout, color: Colors.white, size: 18)))),
-                    ] else ...[
-                      if (widget.showBackButton)
-                        Positioned(top: 50, left: 16, child: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white), onPressed: () => Navigator.pop(context))),
+                    child: coverUrl != null
+                        ? Image.network(coverUrl, fit: BoxFit.cover)
+                        : Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Colors.grey.shade900, Colors.black]))),
+                  ),
 
-                      Positioned(
-                        top: 50,
-                        right: 16,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(30),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-                            child: Container(
-                              height: 36, width: 36,
-                              decoration: BoxDecoration(color: Colors.black.withOpacity(0.25), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.15), width: 1)),
-                              child: PopupMenuButton<String>(
-                                padding: EdgeInsets.zero,
-                                icon: const Icon(Icons.more_horiz, color: Colors.white, size: 20),
-                                color: const Color(0xFF2C2C2C),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                onSelected: (value) {
-                                  if (value == 'report') _showReportDialog();
-                                  if (value == 'block') _confirmBlockAction();
-                                },
-                                itemBuilder: (ctx) => [
-                                  PopupMenuItem(value: 'report', child: Row(children: [const Icon(Icons.flag_outlined, color: Colors.white70, size: 18), const SizedBox(width: 10), Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13))])),
-                                  PopupMenuItem(value: 'block', child: Row(children: [const Icon(Icons.block, color: Colors.redAccent, size: 18), const SizedBox(width: 10), Text("Engelle", style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 13))])),
-                                ],
-                              ),
+                  // BUTONLAR (GERİ - ÇIKIŞ - FOTO GÜNCELLEME)
+                  if (isMe) ...[
+                    Positioned(top: 50, right: 70, child: GestureDetector(onTap: _updateCoverPhoto, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)), child: const Icon(Icons.add_a_photo, color: Colors.white, size: 18)))),
+                    Positioned(top: 50, right: 16, child: GestureDetector(onTap: _logout, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)), child: const Icon(Icons.logout, color: Colors.white, size: 18)))),
+                  ] else ...[
+                    if (widget.showBackButton)
+                      Positioned(top: 50, left: 16, child: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white), onPressed: () => Navigator.pop(context))),
+
+                    Positioned(
+                      top: 50,
+                      right: 16,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                          child: Container(
+                            height: 36, width: 36,
+                            decoration: BoxDecoration(color: Colors.black.withOpacity(0.25), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.15), width: 1)),
+                            child: PopupMenuButton<String>(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.more_horiz, color: Colors.white, size: 20),
+                              color: const Color(0xFF2C2C2C),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              onSelected: (value) {
+                                if (value == 'report') _showReportDialog();
+                                if (value == 'block') _confirmBlockAction();
+                              },
+                              itemBuilder: (ctx) => [
+                                PopupMenuItem(value: 'report', child: Row(children: [const Icon(Icons.flag_outlined, color: Colors.white70, size: 18), const SizedBox(width: 10), Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13))])),
+                                PopupMenuItem(value: 'block', child: Row(children: [const Icon(Icons.block, color: Colors.redAccent, size: 18), const SizedBox(width: 10), Text("Engelle", style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 13))])),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                    ],
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF6C63FF), Color(0xFF1DB954)], begin: Alignment.topLeft, end: Alignment.bottomRight)),
-                            child: CircleAvatar(radius: 45, backgroundColor: const Color(0xFF1F1F1F), backgroundImage: _profileData?['avatar_url'] != null ? NetworkImage(_profileData!['avatar_url']) : null, child: _profileData?['avatar_url'] == null ? const Icon(Icons.person, size: 40, color: Colors.white54) : null),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(_profileData?['full_name'] ?? 'İsimsiz', style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])),
-                          if (_profileData?['username'] != null)
-                            Padding(padding: const EdgeInsets.only(top: 2), child: Text('@${_profileData!['username']}', style: GoogleFonts.poppins(color: Colors.white60, fontSize: 14, fontWeight: FontWeight.w500, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 3, color: Colors.black)]))),
-                          if (_profileData?['bio'] != null)
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text(_profileData!['bio'], style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 3, color: Colors.black)]), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildStat('Gönderi', _postCount.toString(), null),
-                              Container(width: 1, height: 20, color: Colors.white12),
-                              _buildStat('Takipçi', _followersCount.toString(), () => _openFollowList('followers', 'Takipçiler')),
-                              Container(width: 1, height: 20, color: Colors.white12),
-                              _buildStat('Takip', _followingCount.toString(), () => _openFollowList('following', 'Takip Edilenler')),
-                            ],
-                          ),
-                        ],
-                      ),
                     ),
                   ],
-                ),
 
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 10),
-                      // 🔥 GÜNCELLENEN BUTON KISMI BURADA 🔥
-                      isMe ? _buildMyProfileButtons() : _buildOtherProfileButtons(),
-                      const SizedBox(height: 5),
-
-                      MusicPlayerCard(userId: widget.userId, isMe: isMe),
-
-                      const SizedBox(height: 10),
-                    ],
+                  // PROFİL DETAYLARI
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF6C63FF), Color(0xFF1DB954)], begin: Alignment.topLeft, end: Alignment.bottomRight)),
+                          child: CircleAvatar(radius: 45, backgroundColor: const Color(0xFF1F1F1F), backgroundImage: _profileData?['avatar_url'] != null ? NetworkImage(_profileData!['avatar_url']) : null, child: _profileData?['avatar_url'] == null ? const Icon(Icons.person, size: 40, color: Colors.white54) : null),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(_profileData?['full_name'] ?? 'İsimsiz', style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])),
+                        if (_profileData?['username'] != null)
+                          Padding(padding: const EdgeInsets.only(top: 2), child: Text('@${_profileData!['username']}', style: GoogleFonts.poppins(color: Colors.white60, fontSize: 14, fontWeight: FontWeight.w500, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 3, color: Colors.black)]))),
+                        if (_profileData?['bio'] != null)
+                          Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text(_profileData!['bio'], style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 3, color: Colors.black)]), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildStat('Gönderi', _postCount.toString(), null),
+                            Container(width: 1, height: 20, color: Colors.white12),
+                            _buildStat('Takipçi', _followersCount.toString(), () => _openFollowList('followers', 'Takipçiler')),
+                            Container(width: 1, height: 20, color: Colors.white12),
+                            _buildStat('Takip', _followingCount.toString(), () => _openFollowList('following', 'Takip Edilenler')),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
+              ),
 
-                showLockScreen
-                    ? Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [const Icon(Icons.lock_outline, size: 40, color: Colors.white24), const SizedBox(height: 10), Text("Bu hesap gizli.", style: GoogleFonts.poppins(color: Colors.white24))]))
-                    : (visiblePosts.isEmpty
-                    ? Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [const Icon(Icons.feed_outlined, size: 40, color: Colors.white24), const SizedBox(height: 10), Text("Henüz gönderi yok.", style: GoogleFonts.poppins(color: Colors.white24))]))
-                    : ListView.builder(
-                  shrinkWrap: true,
-                  padding: EdgeInsets.zero,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: visiblePosts.length,
-                  itemBuilder: (context, index) => _buildHomeStylePost(visiblePosts[index], index),
-                )
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    // BUTONLAR (Profili Düzenle vs)
+                    isMe ? _buildMyProfileButtons() : _buildOtherProfileButtons(),
+                    const SizedBox(height: 5),
+
+                    // 🔥 MÜZİK OYNATICI KARTI 🔥
+                    MusicPlayerCard(userId: widget.userId, isMe: isMe),
+
+                    const SizedBox(height: 10),
+                  ],
                 ),
-                const SizedBox(height: 40),
-              ],
-            ),
+              ),
+
+              // GÖNDERİ LİSTESİ VEYA KİLİT EKRANI
+              showLockScreen
+                  ? Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [const Icon(Icons.lock_outline, size: 40, color: Colors.white24), const SizedBox(height: 10), Text("Bu hesap gizli.", style: GoogleFonts.poppins(color: Colors.white24))]))
+                  : (visiblePosts.isEmpty
+                  ? Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [const Icon(Icons.feed_outlined, size: 40, color: Colors.white24), const SizedBox(height: 10), Text("Henüz gönderi yok.", style: GoogleFonts.poppins(color: Colors.white24))]))
+                  : ListView.builder(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: visiblePosts.length,
+                itemBuilder: (context, index) => _buildHomeStylePost(visiblePosts[index], index),
+              )
+              ),
+              const SizedBox(height: 40),
+            ],
           ),
         ),
       ),
@@ -700,41 +615,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 🔥 ARKADAŞININ YENİ DÜZENİ (Profili Düzenle + Müzik Ayarları Yan Yana)
   Widget _buildMyProfileButtons() {
     return SizedBox(
-      height: 45,
       width: double.infinity,
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () async {
-                if (_profileData == null) return;
-                final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => EditProfileScreen(currentProfile: _profileData!)));
-                if (result == true) _loadProfileData();
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF262626), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0, side: const BorderSide(color: Colors.white12)),
-              child: Text("Profili Düzenle", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-            ),
-          ),
-          const SizedBox(width: 10),
-          SizedBox(
-            width: 50,
-            child: ElevatedButton(
-              onPressed: _openMusicSettings,
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF262626),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                  side: const BorderSide(color: Colors.white12),
-                  padding: EdgeInsets.zero
-              ),
-              child: const Icon(FontAwesomeIcons.music, size: 16, color: Colors.white70),
-            ),
-          ),
-        ],
+      height: 45,
+      child: ElevatedButton(
+        onPressed: () async {
+          if (_profileData == null) return;
+          final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => EditProfileScreen(currentProfile: _profileData!)));
+          if (result == true) _loadProfileData();
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF262626),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 0,
+          side: const BorderSide(color: Colors.white12),
+        ),
+        child: Text("Profili Düzenle", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
       ),
     );
   }

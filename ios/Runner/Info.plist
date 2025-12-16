@@ -3,10 +3,6 @@
 <plist version="1.0">
     <dict>
 
-        <!-- ========================= -->
-        <!-- APP TEMEL BİLGİLERİ -->
-        <!-- ========================= -->
-
         <key>CADisableMinimumFrameDurationOnPhone</key>
         <true/>
 
@@ -40,47 +36,47 @@
         <key>CFBundleSignature</key>
         <string>????</string>
 
-        <!-- ========================= -->
-        <!-- 🔥 OAUTH / DEEP LINK AYARLARI -->
-        <!-- ========================= -->
-
         <key>CFBundleURLTypes</key>
         <array>
             <dict>
                 <key>CFBundleTypeRole</key>
                 <string>Editor</string>
-
+                <key>CFBundleURLName</key>
+                <string>com.emre.kinnect</string>
                 <key>CFBundleURLSchemes</key>
                 <array>
-                    <!-- 🔥 Supabase / Spotify OAuth -->
-                    <string>io.supabase.flutter</string>
-
-                    <!-- 🔥 App internal deep link -->
                     <string>kinnect</string>
+                </array>
+            </dict>
 
-                    <!-- 🔥 Google Sign-In -->
+            <dict>
+                <key>CFBundleTypeRole</key>
+                <string>Editor</string>
+                <key>CFBundleURLSchemes</key>
+                <array>
                     <string>com.googleusercontent.apps.71608708372-9dvs03siqhcg5o9g8f7q6haatc1ismcn</string>
+                </array>
+            </dict>
+
+            <dict>
+                <key>CFBundleTypeRole</key>
+                <string>Editor</string>
+                <key>CFBundleURLSchemes</key>
+                <array>
+                    <string>io.supabase.flutter</string>
                 </array>
             </dict>
         </array>
 
-        <!-- ========================= -->
-        <!-- 🔍 HARİCİ APP SORGULARI -->
-        <!-- ========================= -->
-
         <key>LSApplicationQueriesSchemes</key>
         <array>
             <string>spotify</string>
-            <string>https</string>
+            <string>kinnect</string> <string>https</string>
             <string>http</string>
         </array>
 
         <key>LSRequiresIPhoneOS</key>
         <true/>
-
-        <!-- ========================= -->
-        <!-- 🔐 PERMISSION AÇIKLAMALARI -->
-        <!-- ========================= -->
 
         <key>NSAppleMusicUsageDescription</key>
         <string>
@@ -107,10 +103,6 @@
             Profil fotoğrafı yüklemek ve gönderi paylaşmak için galeriye erişim gerekiyor.
         </string>
 
-        <!-- ========================= -->
-        <!-- UI / LAUNCH AYARLARI -->
-        <!-- ========================= -->
-
         <key>UIApplicationSupportsIndirectInputEvents</key>
         <true/>
 
@@ -119,10 +111,6 @@
 
         <key>UIMainStoryboardFile</key>
         <string>Main</string>
-
-        <!-- ========================= -->
-        <!-- EKRAN ORYANTASYONLARI -->
-        <!-- ========================= -->
 
         <key>UISupportedInterfaceOrientations</key>
         <array>
