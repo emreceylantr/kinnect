@@ -23,6 +23,53 @@ import 'follow_list_screen.dart';
 import 'edit_profile_screen.dart';
 import 'login_screen.dart';
 
+// 🔥🔥🔥 YENİ ÖZEL "ALTIN NEON TAÇ" ADMIN ROZETİ WIDGET'I 🔥🔥🔥
+class AdminBadge extends StatelessWidget {
+  final double size;
+  const AdminBadge({super.key, this.size = 24});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      // Metnin yanına boşluk bırak
+      margin: const EdgeInsets.only(left: 8),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        // Tam daire şekli
+        shape: BoxShape.circle,
+        // 🔥 Altın -> Turuncu Gradyan Arka Plan
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFD700), Color(0xFFFF6D00)], // Altın sarısından turuncuya
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        // 🔥 İnce Beyaz Çerçeve (%80 opaklık)
+        border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.2),
+        // 🔥 Turuncu Neon Parlama Efekti (Glow Shadow)
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFFAB00).withOpacity(0.6), // Parlama rengi
+            blurRadius: 12.0, // Ne kadar yayılacağı
+            spreadRadius: 2.0, // Ne kadar genişleyeceği
+            offset: const Offset(0, 0), // Tam arkasında
+          ),
+        ],
+      ),
+      // 🔥 İçindeki Beyaz Taç İkonu
+      child: Center(
+        child: Icon(
+          FontAwesomeIcons.crown, // Kral tacı ikonu
+          color: Colors.white,
+          size: size * 0.55, // Boyutu kutuya oranla ayarla
+        ),
+      ),
+    );
+  }
+}
+// 🔥🔥🔥 ROZET WIDGET SONU 🔥🔥🔥
+
+
 class ProfileScreen extends StatefulWidget {
   final String userId;
   final bool showBackButton;
@@ -446,6 +493,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isMe = widget.userId == _currentUserId;
     final isFriend = _friendshipStatus == 'accepted';
 
+    // ✅ ADMIN KONTROLÜ (Veritabanında is_admin true ise)
+    final bool isAdmin = _profileData?['is_admin'] == true;
+
     final visiblePosts = _userPosts.where((post) {
       if (isMe || isFriend) return true;
       return post['visibility'] == 'public';
@@ -484,7 +534,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Colors.grey.shade900, Colors.black]))),
                   ),
 
-                  // BUTONLAR (GERİ - ÇIKIŞ - FOTO GÜNCELLEME)
+                  // BUTONLAR
                   if (isMe) ...[
                     Positioned(top: 50, right: 70, child: GestureDetector(onTap: _updateCoverPhoto, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)), child: const Icon(Icons.add_a_photo, color: Colors.white, size: 18)))),
                     Positioned(top: 50, right: 16, child: GestureDetector(onTap: _logout, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)), child: const Icon(Icons.logout, color: Colors.white, size: 18)))),
@@ -534,7 +584,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: CircleAvatar(radius: 45, backgroundColor: const Color(0xFF1F1F1F), backgroundImage: _profileData?['avatar_url'] != null ? NetworkImage(_profileData!['avatar_url']) : null, child: _profileData?['avatar_url'] == null ? const Icon(Icons.person, size: 40, color: Colors.white54) : null),
                         ),
                         const SizedBox(height: 10),
-                        Text(_profileData?['full_name'] ?? 'İsimsiz', style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])),
+
+                        // 🔥 PROFİL İSMİ VE YENİ ALTIN TAÇ ROZETİ 🔥
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                                _profileData?['full_name'] ?? 'İsimsiz',
+                                style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])
+                            ),
+
+                            // ✅ EĞER ADMIN İSE ALTIN ROZETİ GÖSTER (Büyük Boy)
+                            if (isAdmin) ...[
+                              const AdminBadge(size: 24),
+                            ]
+                          ],
+                        ),
+
                         if (_profileData?['username'] != null)
                           Padding(padding: const EdgeInsets.only(top: 2), child: Text('@${_profileData!['username']}', style: GoogleFonts.poppins(color: Colors.white60, fontSize: 14, fontWeight: FontWeight.w500, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 3, color: Colors.black)]))),
                         if (_profileData?['bio'] != null)
@@ -653,6 +720,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isLiked = (post['likes'] as List?)?.any((l) => l['user_id'] == _currentUserId) ?? false;
     final isMe = widget.userId == _currentUserId;
 
+    // ✅ POST İÇİNDEKİ KULLANICI ADMİN Mİ?
+    final bool isPostAdmin = profile['is_admin'] == true;
+
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))),
       child: Container(
@@ -701,9 +771,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                profile['full_name'] ?? 'İsimsiz',
-                                style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                              // 🔥 POST ÜZERİNDE YENİ ALTIN ROZET 🔥
+                              Row(
+                                children: [
+                                  Text(
+                                    profile['full_name'] ?? 'İsimsiz',
+                                    style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                                  ),
+                                  // ✅ EĞER POST SAHİBİ ADMIN İSE (Küçük Boy)
+                                  if (isPostAdmin) ...[
+                                    const AdminBadge(size: 16),
+                                  ]
+                                ],
                               ),
                               Text(
                                 '@${profile['username']}',
