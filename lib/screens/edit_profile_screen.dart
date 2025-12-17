@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+import 'package:video_player/video_player.dart'; // Önizleme için
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> currentProfile;
@@ -27,6 +28,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
 
   bool _isLoading = false;
   File? _imageFile;
+  File? _videoFile; // 🎥 Live Video Dosyası
 
   // 🔥 RENK PALETİ
   final Color _colorPurple = const Color(0xFF6C63FF);
@@ -69,22 +71,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
     super.dispose();
   }
 
+  // FOTOĞRAF SEÇME
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image != null) setState(() => _imageFile = File(image.path));
   }
 
+  // 🎥 VİDEO (LIVE PHOTO) SEÇME
+  Future<void> _pickVideo() async {
+    final ImagePicker picker = ImagePicker();
+    // Live photo'nun video kısmını seçtirmek için
+    final XFile? video = await picker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(seconds: 10) // Çok uzun videoları engelle
+    );
+
+    if (video != null) {
+      setState(() => _videoFile = File(video.path));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Live Video Seçildi! 🎬", style: GoogleFonts.poppins()), backgroundColor: _colorGreen)
+        );
+      }
+    }
+  }
+
   // --- 2FA İŞLEMLERİ ---
 
-  // 1. Telefon Numarası İste (Gelişmiş Seçicili)
+  // 1. Telefon Numarası İste
   void _showPhoneInputDialog() {
     final phoneController = TextEditingController();
     String tempCountryCode = _selectedCountryCode;
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder( // Dialog içinde state değişimi için
+      builder: (context) => StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
               backgroundColor: const Color(0xFF1A1A1A),
@@ -114,7 +136,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
                             tempCountryCode = country.dialCode!;
                           },
                           initialSelection: 'TR', // Varsayılan Türkiye
-                          favorite: const ['+90', 'US', 'GB'], // En üstte çıkacaklar
+                          favorite: const ['+90', 'US', 'GB'],
                           showCountryOnly: false,
                           showOnlyCountryWhenClosed: false,
                           alignLeft: false,
@@ -123,7 +145,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
                           barrierColor: Colors.black87,
                           searchDecoration: InputDecoration(
                             hintText: "Ülke Ara...",
-                            hintStyle: TextStyle(color: Colors.white30),
+                            hintStyle: const TextStyle(color: Colors.white30),
                             fillColor: const Color(0xFF1A1A1A),
                             filled: true,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
@@ -163,15 +185,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
-                    // Başındaki 0'ı temizle
                     String rawNumber = phoneController.text.trim();
                     if (rawNumber.startsWith('0')) {
                       rawNumber = rawNumber.substring(1);
                     }
-
-                    // Tam numarayı oluştur: +90555...
                     final fullNumber = "$tempCountryCode$rawNumber";
-
                     Navigator.pop(context);
                     _sendSmsCode(fullNumber);
                   },
@@ -184,18 +202,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
     );
   }
 
-  // 2. SMS Gönder (GÜNCELLENDİ: updateUser kullanıyor) ✅
+  // 2. SMS Gönder
   Future<void> _sendSmsCode(String fullPhone) async {
     setState(() => _isLoading = true);
     try {
-      // ⚠️ ARTIK SİZİ LOGOUT YAPMAZ. Mevcut kullanıcının telefonunu günceller.
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(phone: fullPhone),
       );
 
       if (mounted) {
         setState(() => _isLoading = false);
-        _showOtpInputDialog(fullPhone); // Kod girme ekranına geç
+        _showOtpInputDialog(fullPhone);
       }
     } catch (e) {
       setState(() => _isLoading = false);
@@ -231,7 +248,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
               style: const TextStyle(color: Colors.white, fontSize: 24, letterSpacing: 5),
               decoration: InputDecoration(
                 hintText: "------",
-                hintStyle: TextStyle(color: Colors.white24),
+                hintStyle: const TextStyle(color: Colors.white24),
                 counterText: "",
                 filled: true,
                 fillColor: Colors.black26,
@@ -259,22 +276,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
     );
   }
 
-  // 4. Kodu Doğrula ve 2FA'yı Aç (GÜNCELLENDİ: phoneChange kullanıyor) ✅
+  // 4. Kodu Doğrula ve 2FA'yı Aç
   Future<void> _verifyOtpAndEnable2FA(String phone, String token) async {
     setState(() => _isLoading = true);
     try {
-      // ⚠️ OtpType.sms değil, OtpType.phoneChange kullanıyoruz!
       final response = await Supabase.instance.client.auth.verifyOTP(
         phone: phone,
         token: token,
         type: OtpType.phoneChange,
       );
 
-      // Kullanıcı değişmedi, sadece session güncellendi.
       if (response.user != null) {
         final userId = Supabase.instance.client.auth.currentUser!.id;
 
-        // Veritabanına kaydet
         await Supabase.instance.client.from('profiles').update({
           'is_2fa_enabled': true,
           'phone': phone,
@@ -288,7 +302,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("2FA ve Telefon Başarıyla Eklendi! 🔒"), backgroundColor: _colorGreen)
+              SnackBar(content: const Text("2FA ve Telefon Başarıyla Eklendi! 🔒"), backgroundColor: _colorGreen)
           );
         }
       }
@@ -321,7 +335,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
     }
   }
 
-  // PROFİLİ KAYDET
+  // PROFİLİ KAYDET (VİDEO YÜKLEME DAHİL)
   Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
     final userId = Supabase.instance.client.auth.currentUser!.id;
@@ -331,7 +345,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
       if (_nameController.text.isEmpty) throw 'İsim alanı boş bırakılamaz.';
 
       String? avatarUrl = widget.currentProfile['avatar_url'];
+      String? videoUrl = widget.currentProfile['avatar_video_url'];
 
+      // Resim Yükleme
       if (_imageFile != null) {
         final fileExt = _imageFile!.path.split('.').last;
         final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
@@ -340,11 +356,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
         avatarUrl = Supabase.instance.client.storage.from('uploads').getPublicUrl(filePath);
       }
 
+      // 🎥 Video Yükleme
+      if (_videoFile != null) {
+        final fileExt = _videoFile!.path.split('.').last;
+        final fileName = 'live_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final filePath = 'avatars/$fileName';
+        await Supabase.instance.client.storage.from('uploads').upload(filePath, _videoFile!);
+        videoUrl = Supabase.instance.client.storage.from('uploads').getPublicUrl(filePath);
+      }
+
       await Supabase.instance.client.from('profiles').update({
         'full_name': _nameController.text.trim(),
         'username': _usernameController.text.trim(),
         'bio': _bioController.text.trim(),
         'avatar_url': avatarUrl,
+        'avatar_video_url': videoUrl, // Veritabanına video linkini yaz
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', userId);
 
@@ -407,21 +433,53 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
               children: [
                 const SizedBox(height: 20),
                 Center(
-                  child: Stack(
+                  child: Column(
                     children: [
                       GestureDetector(
                         onTap: _pickImage,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [_colorPurple, _colorBlue]), boxShadow: [BoxShadow(color: _colorPurple.withOpacity(0.3), blurRadius: 20)]),
-                          child: CircleAvatar(radius: 60, backgroundColor: const Color(0xFF1F1F1F), backgroundImage: bgImage, child: bgImage == null ? const Icon(Icons.person, size: 60, color: Colors.white24) : null),
+                        child: Stack(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [_colorPurple, _colorBlue]), boxShadow: [BoxShadow(color: _colorPurple.withOpacity(0.3), blurRadius: 20)]),
+                              child: CircleAvatar(radius: 60, backgroundColor: const Color(0xFF1F1F1F), backgroundImage: bgImage, child: bgImage == null ? const Icon(Icons.person, size: 60, color: Colors.white24) : null),
+                            ),
+                            Positioned(bottom: 5, right: 5, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: _colorGreen, shape: BoxShape.circle, border: Border.all(color: Colors.black, width: 2)), child: const Icon(Icons.camera_alt, color: Colors.black, size: 18))),
+                          ],
                         ),
                       ),
-                      Positioned(bottom: 5, right: 5, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: _colorGreen, shape: BoxShape.circle, border: Border.all(color: Colors.black, width: 2)), child: const Icon(Icons.camera_alt, color: Colors.black, size: 18))),
+                      const SizedBox(height: 16),
+
+                      // 🔥 LIVE VIDEO SEÇME BUTONU (AYRI BUTON AMA GEREKLİ) 🔥
+                      InkWell(
+                        onTap: _pickVideo,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _videoFile != null ? _colorGreen.withOpacity(0.2) : Colors.white10,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: _videoFile != null ? _colorGreen : Colors.white24),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(_videoFile != null ? Icons.check_circle : Icons.slow_motion_video,
+                                  color: _videoFile != null ? _colorGreen : Colors.white, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                _videoFile != null ? "Live Video Seçildi" : "Live Video Ekle (Canlı Foto)",
+                                style: GoogleFonts.poppins(color: _videoFile != null ? _colorGreen : Colors.white, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 40),
+
+                const SizedBox(height: 30),
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.symmetric(horizontal: 16),
