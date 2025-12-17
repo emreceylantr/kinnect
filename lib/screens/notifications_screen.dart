@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,6 +11,16 @@ import 'profile_screen.dart';
 import 'post_detail_screen.dart';
 import 'user_list_screen.dart';
 import 'messages_screen.dart';
+
+// 🎨 TEMA RENKLERİ
+const Color kBgColor = Color(0xFF0A0A0F);
+const Color kCardColor = Color(0xFF16161F);
+const Color kAccentPurple = Color(0xFF6C63FF);
+const Color kAccentGreen = Color(0xFF69F0AE);
+const Color kAccentRed = Color(0xFFFF5252);
+const Color kAccentBlue = Color(0xFF448AFF);
+const Color kAccentOrange = Color(0xFFFF9800);
+const Color kAccentCyan = Color(0xFF00E5FF);
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -29,29 +40,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _friendService = FriendService();
   }
 
-  // 🔥 GRUPLAMA MANTIĞI GÜNCELLENDİ 🔥
-  List<GroupedNotification> _groupNotifications(List<FollowNotification> rawList) {
+  List<GroupedNotification> _groupNotifications(
+      List<FollowNotification> rawList) {
     List<GroupedNotification> grouped = [];
-
-    // Post Grupları: "postId_type"
     Map<String, List<FollowNotification>> postGroups = {};
-    // Mesaj Grupları: "userId"
     Map<String, List<FollowNotification>> messageGroups = {};
-    // Diğerleri
     List<FollowNotification> others = [];
 
     for (var n in rawList) {
-      if (n.postId != null && (n.type == 'like' || n.type == 'comment' || n.type == 'fuel')) {
+      if (n.postId != null &&
+          (n.type == 'like' || n.type == 'comment' || n.type == 'fuel')) {
         String key = "${n.postId}_${n.type}";
         if (!postGroups.containsKey(key)) postGroups[key] = [];
         postGroups[key]!.add(n);
-      }
-      else if (n.type == 'message') {
+      } else if (n.type == 'message') {
         String key = n.userId;
         if (!messageGroups.containsKey(key)) messageGroups[key] = [];
         messageGroups[key]!.add(n);
-      }
-      else {
+      } else {
         others.add(n);
       }
     }
@@ -86,68 +92,503 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return grouped;
   }
 
-  Future<void> _refresh() async { setState(() {}); }
+  Future<void> _refresh() async {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF050505),
-      appBar: AppBar(
-          backgroundColor: const Color(0xFF050505),
-          elevation: 0,
-          title: Text("Bildirimler", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
-          leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white), onPressed: () => Navigator.pop(context))
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        color: const Color(0xFF6C63FF),
-        backgroundColor: const Color(0xFF1E1E1E),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FutureBuilder<List<Map<String, dynamic>>>(
-                future: _friendService.getPendingRequests(_currentUserId),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox();
-                  final requests = snapshot.data!;
-                  final firstUser = requests[0];
-                  return GestureDetector(
-                    onTap: () async {
-                      await Navigator.push(context, MaterialPageRoute(builder: (_) => UserListScreen(title: 'Takip İstekleri', users: requests, listType: 'requests', isOwnList: true)));
-                      setState(() {});
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white10)),
-                      child: Row(children: [
-                        SizedBox(width: 44, child: Stack(children: [if (requests.length > 1) Positioned(left: 12, child: CircleAvatar(radius: 16, backgroundColor: Colors.grey[800], backgroundImage: requests[1]['avatar_url'] != null ? NetworkImage(requests[1]['avatar_url']) : null)), CircleAvatar(radius: 16, backgroundColor: const Color(0xFF6C63FF), backgroundImage: firstUser['avatar_url'] != null ? NetworkImage(firstUser['avatar_url']) : null, child: firstUser['avatar_url'] == null ? const Icon(Icons.person, size: 16, color: Colors.white) : null)])),
-                        const SizedBox(width: 12),
-                        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Takip İstekleri", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)), Text(requests.length == 1 ? "${firstUser['username']}" : "${firstUser['username']} + ${requests.length - 1} diğer", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12))]),
-                        const Spacer(), const Icon(Icons.circle, size: 8, color: Color(0xFF6C63FF)), const SizedBox(width: 8), const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white38)
-                      ]),
+      backgroundColor: kBgColor,
+      body: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // 🔥 PREMIUM APP BAR
+          SliverAppBar(
+            backgroundColor: kBgColor,
+            elevation: 0,
+            pinned: true,
+            expandedHeight: 120,
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.arrow_back_ios_new,
+                    color: Colors.white, size: 18),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          kAccentPurple.withOpacity(0.3),
+                          kAccentPurple.withOpacity(0.1)
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  );
-                },
+                    child: const Icon(FontAwesomeIcons.bell,
+                        color: kAccentPurple, size: 16),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "Bildirimler",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      kAccentPurple.withOpacity(0.15),
+                      kBgColor,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // 🔔 TAKİP İSTEKLERİ
+          SliverToBoxAdapter(
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _friendService.getPendingRequests(_currentUserId),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || snapshot.data!.isEmpty)
+                  return const SizedBox();
+                final requests = snapshot.data!;
+                final firstUser = requests[0];
+
+                return GestureDetector(
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => UserListScreen(
+                          title: 'Takip İstekleri',
+                          users: requests,
+                          listType: 'requests',
+                          isOwnList: true,
+                        ),
+                      ),
+                    );
+                    setState(() {});
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          kAccentPurple.withOpacity(0.2),
+                          kAccentPurple.withOpacity(0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: kAccentPurple.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        // Avatar Stack
+                        SizedBox(
+                          width: 56,
+                          height: 40,
+                          child: Stack(
+                            children: [
+                              if (requests.length > 1)
+                                Positioned(
+                                  left: 20,
+                                  child: _buildMiniAvatar(
+                                      requests[1]['avatar_url'], 18),
+                                ),
+                              _buildMiniAvatar(firstUser['avatar_url'], 20,
+                                  hasBorder: true),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    "Takip İstekleri",
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: kAccentPurple,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      "${requests.length}",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                requests.length == 1
+                                    ? "${firstUser['username']} seni takip etmek istiyor"
+                                    : "${firstUser['username']} ve ${requests.length - 1} diğer kişi",
+                                style: GoogleFonts.poppins(
+                                    color: Colors.white54, fontSize: 12),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: kAccentPurple.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.arrow_forward_ios,
+                              size: 14, color: kAccentPurple),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // 📋 BİLDİRİM LİSTESİ
+          StreamBuilder<List<FollowNotification>>(
+            stream: _friendService.getNotificationsStream(_currentUserId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SliverFillRemaining(
+                  child: Center(
+                      child: CircularProgressIndicator(color: kAccentPurple)),
+                );
+              }
+
+              final rawList = snapshot.data ?? [];
+              final filteredList = rawList
+                  .where((n) =>
+                      !(n.type == 'follow' && n.friendshipStatus == 'pending'))
+                  .toList();
+
+              if (filteredList.isEmpty) {
+                return SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(FontAwesomeIcons.bellSlash,
+                              size: 40, color: Colors.white24),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Henüz bildirim yok",
+                          style: GoogleFonts.poppins(
+                              color: Colors.white38, fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Yeni etkileşimler burada görünecek",
+                          style: GoogleFonts.poppins(
+                              color: Colors.white24, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              final groupedList = _groupNotifications(filteredList);
+
+              return SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      return _NotificationCard(
+                        group: groupedList[index],
+                        index: index,
+                        onTap: () => _handleNotificationTap(groupedList[index]),
+                      );
+                    },
+                    childCount: groupedList.length,
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // Alt boşluk
+          const SliverToBoxAdapter(child: SizedBox(height: 40)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniAvatar(String? avatarUrl, double radius,
+      {bool hasBorder = false}) {
+    return Container(
+      decoration: hasBorder
+          ? BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: kBgColor, width: 2),
+            )
+          : null,
+      child: CircleAvatar(
+        radius: radius,
+        backgroundColor: kCardColor,
+        backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+        child: avatarUrl == null
+            ? Icon(Icons.person, size: radius, color: Colors.white54)
+            : null,
+      ),
+    );
+  }
+
+  void _handleNotificationTap(GroupedNotification group) async {
+    final notif = group.notifications.first;
+
+    if (group.type == 'message' || group.type == 'call') {
+      try {
+        final roomId = await ChatService().createOrGetChatRoom(notif.userId);
+        if (mounted) {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => ChatScreen(
+                      roomId: roomId, otherUser: notif.userProfile)));
+        }
+      } catch (_) {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const MessagesScreen()));
+      }
+    } else if (group.postId != null) {
+      final postRes = await Supabase.instance.client
+          .from('posts')
+          .select('*, profiles(*), likes(user_id), comments(id)')
+          .eq('id', group.postId!)
+          .maybeSingle();
+      if (postRes != null && mounted) {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => PostDetailScreen(post: postRes)));
+      }
+    } else {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => ProfileScreen(userId: notif.userId)));
+    }
+  }
+}
+
+// 🔥 PREMIUM BİLDİRİM KARTI
+class _NotificationCard extends StatelessWidget {
+  final GroupedNotification group;
+  final int index;
+  final VoidCallback onTap;
+
+  const _NotificationCard({
+    required this.group,
+    required this.index,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final notif = group.notifications.first;
+    final username = notif.userProfile['username'] ?? 'anonim';
+    final fullName = notif.userProfile['full_name'] ?? username;
+    final avatarUrl = notif.userProfile['avatar_url'];
+    final uniqueUserIds = group.notifications.map((n) => n.userId).toSet();
+    final count = uniqueUserIds.length;
+
+    // Bildirim tipine göre ayarlar
+    final config = _getNotificationConfig(group.type, count);
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 400 + (index * 50)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 20 * (1 - value)),
+          child: Opacity(opacity: value, child: child),
+        );
+      },
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: kCardColor,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: config.color.withOpacity(0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: config.color.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Avatar ve ikon badge
+              Stack(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [config.color, config.color.withOpacity(0.5)],
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 24,
+                      backgroundColor: kCardColor,
+                      backgroundImage:
+                          avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                      child: avatarUrl == null
+                          ? const Icon(Icons.person,
+                              color: Colors.white54, size: 24)
+                          : null,
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: config.color,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: kCardColor, width: 2),
+                      ),
+                      child: Icon(config.icon, size: 10, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 14),
+
+              // İçerik
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            fullName,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          "• ${timeago.format(group.createdAt, locale: 'en_short')}",
+                          style: GoogleFonts.poppins(
+                              color: Colors.white30, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      config.text,
+                      style: GoogleFonts.poppins(
+                          color: Colors.white60, fontSize: 13),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
 
-              Padding(padding: const EdgeInsets.only(left: 16, top: 10, bottom: 6), child: Text("Bildirimler", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
-
-              StreamBuilder<List<FollowNotification>>(
-                stream: _friendService.getNotificationsStream(_currentUserId),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) return const Padding(padding: EdgeInsets.only(top: 20), child: Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF))));
-                  final rawList = snapshot.data ?? [];
-                  final filteredList = rawList.where((n) => !(n.type == 'follow' && n.friendshipStatus == 'pending')).toList();
-                  if (filteredList.isEmpty) return Padding(padding: const EdgeInsets.all(40), child: Center(child: Column(children: [const Icon(Icons.notifications_none, size: 48, color: Colors.white24), const SizedBox(height: 8), Text("Henüz bildirim yok.", style: GoogleFonts.poppins(color: Colors.white54))])));
-
-                  final groupedList = _groupNotifications(filteredList);
-
-                  return ListView.separated(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: groupedList.length, separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.white10), itemBuilder: (context, index) => _buildGroupCard(groupedList[index]));
-                },
-              ),
+              // Trailing (post resmi veya ikon)
+              if (group.postImage != null) ...[
+                const SizedBox(width: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    group.postImage!,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white10,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.image,
+                          color: Colors.white24, size: 20),
+                    ),
+                  ),
+                ),
+              ] else if (group.type == 'message' ||
+                  group.type == 'call' ||
+                  group.type == 'follow') ...[
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: config.color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child:
+                      Icon(config.trailingIcon, size: 18, color: config.color),
+                ),
+              ],
             ],
           ),
         ),
@@ -155,78 +596,79 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildGroupCard(GroupedNotification group) {
-    final notif = group.notifications.first;
-    final username = notif.userProfile['username'] ?? 'anonim';
-    final avatarUrl = notif.userProfile['avatar_url'];
-
-    final uniqueUserIds = group.notifications.map((n) => n.userId).toSet();
-    final count = uniqueUserIds.length;
-
-    String text = "";
-    Widget? trailing;
-
-    if (group.type == 'fuel') {
-      text = count == 1 ? "gönderini harladı 🔥" : "ve ${count - 1} diğer kişi gönderini harladı 🔥";
-      if (group.postImage != null) {
-        trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
-      }
-    } else if (group.type == 'like') {
-      text = count == 1 ? "gönderini beğendi." : "ve ${count - 1} diğer kişi gönderini beğendi.";
-      if (group.postImage != null) {
-        trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
-      }
-    } else if (group.type == 'comment') {
-      text = count == 1 ? "yorum yaptı." : "ve ${count - 1} diğer kişi yorum yaptı.";
-      if (group.postImage != null) {
-        trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
-      }
-    } else if (group.type == 'message') {
-      // 🔥 DÜZELTİLEN KISIM: Sayı kaldırıldı ve metin sadeleştirildi.
-      text = "sana mesaj gönderdi 💬";
-      trailing = const Icon(Icons.mail_outline, color: Colors.cyanAccent);
-    } else if (group.type == 'follow') {
-      text = "seni takip etmeye başladı.";
-      trailing = SizedBox(height: 30, child: ElevatedButton(onPressed: (){ Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: notif.userId))); }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1E1E), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(horizontal: 12)), child: const Text("Profili Gör", style: TextStyle(fontSize: 12, color: Colors.white70))));
-    } else if (group.type == 'call') {
-      text = "sohbet odasına katıldı 📞";
-      trailing = const Icon(Icons.phone_in_talk, color: Colors.greenAccent);
+  _NotificationConfig _getNotificationConfig(String type, int count) {
+    switch (type) {
+      case 'like':
+        return _NotificationConfig(
+          icon: FontAwesomeIcons.heart,
+          trailingIcon: FontAwesomeIcons.heart,
+          color: kAccentRed,
+          text: count == 1
+              ? "Gönderini beğendi"
+              : "ve ${count - 1} kişi daha beğendi",
+        );
+      case 'comment':
+        return _NotificationConfig(
+          icon: FontAwesomeIcons.comment,
+          trailingIcon: FontAwesomeIcons.comment,
+          color: kAccentBlue,
+          text: count == 1
+              ? "Yorum yaptı"
+              : "ve ${count - 1} kişi daha yorum yaptı",
+        );
+      case 'fuel':
+        return _NotificationConfig(
+          icon: FontAwesomeIcons.fire,
+          trailingIcon: FontAwesomeIcons.fire,
+          color: kAccentOrange,
+          text: count == 1
+              ? "Gönderini harladı 🔥"
+              : "ve ${count - 1} kişi daha harladı 🔥",
+        );
+      case 'follow':
+        return _NotificationConfig(
+          icon: FontAwesomeIcons.userPlus,
+          trailingIcon: FontAwesomeIcons.arrowRight,
+          color: kAccentPurple,
+          text: "Seni takip etmeye başladı",
+        );
+      case 'message':
+        return _NotificationConfig(
+          icon: FontAwesomeIcons.envelope,
+          trailingIcon: FontAwesomeIcons.arrowRight,
+          color: kAccentCyan,
+          text: "Sana mesaj gönderdi",
+        );
+      case 'call':
+        return _NotificationConfig(
+          icon: FontAwesomeIcons.phone,
+          trailingIcon: FontAwesomeIcons.arrowRight,
+          color: kAccentGreen,
+          text: "Seni aramaya çalıştı",
+        );
+      default:
+        return _NotificationConfig(
+          icon: FontAwesomeIcons.bell,
+          trailingIcon: FontAwesomeIcons.bell,
+          color: Colors.grey,
+          text: "Yeni bildirim",
+        );
     }
-
-    final dt = group.createdAt;
-    String timeStr = timeago.format(dt, locale: 'en_short');
-
-    return InkWell(
-      onTap: () async {
-        if (group.type == 'message' || group.type == 'call') {
-          try {
-            final roomId = await ChatService().createOrGetChatRoom(notif.userId);
-            if (mounted) {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(roomId: roomId, otherUser: notif.userProfile)));
-            }
-          } catch (_) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const MessagesScreen()));
-          }
-        } else if (group.postId != null) {
-          final postRes = await Supabase.instance.client.from('posts').select('*, profiles(*), likes(user_id), comments(id)').eq('id', group.postId!).maybeSingle();
-          if (postRes != null && mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: postRes)));
-        } else {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: notif.userId)));
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(children: [
-          CircleAvatar(radius: 22, backgroundColor: const Color(0xFF333333), backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null, child: avatarUrl == null ? const Icon(Icons.person, color: Colors.white) : null),
-          const SizedBox(width: 12),
-          Expanded(child: RichText(text: TextSpan(style: GoogleFonts.poppins(color: Colors.white, fontSize: 14), children: [TextSpan(text: username, style: const TextStyle(fontWeight: FontWeight.bold)), TextSpan(text: " $text", style: const TextStyle(color: Colors.white70))]))),
-          const SizedBox(width: 8),
-          Text(timeStr, style: GoogleFonts.poppins(color: Colors.grey, fontSize: 11)),
-          if (trailing != null) ...[const SizedBox(width: 8), trailing],
-        ]),
-      ),
-    );
   }
+}
+
+class _NotificationConfig {
+  final IconData icon;
+  final IconData trailingIcon;
+  final Color color;
+  final String text;
+
+  _NotificationConfig({
+    required this.icon,
+    required this.trailingIcon,
+    required this.color,
+    required this.text,
+  });
 }
 
 class GroupedNotification {
@@ -236,5 +678,11 @@ class GroupedNotification {
   final String? postImage;
   final DateTime createdAt;
 
-  GroupedNotification({required this.type, required this.notifications, required this.createdAt, this.postId, this.postImage});
+  GroupedNotification({
+    required this.type,
+    required this.notifications,
+    required this.createdAt,
+    this.postId,
+    this.postImage,
+  });
 }
