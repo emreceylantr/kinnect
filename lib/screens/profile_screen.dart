@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:video_player/video_player.dart'; // 🎥 LIVE VIDEO OYNATICI
 
 // --- SERVİSLER ---
 import '../services/feed_service.dart';
@@ -23,7 +24,7 @@ import 'follow_list_screen.dart';
 import 'edit_profile_screen.dart';
 import 'login_screen.dart';
 
-// 🔥🔥🔥 YENİ ÖZEL "ALTIN NEON TAÇ" ADMIN ROZETİ WIDGET'I 🔥🔥🔥
+// 🔥🔥🔥 ÖZEL "ALTIN NEON TAÇ" ADMIN ROZETİ WIDGET'I 🔥🔥🔥
 class AdminBadge extends StatelessWidget {
   final double size;
   const AdminBadge({super.key, this.size = 24});
@@ -31,37 +32,31 @@ class AdminBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // Metnin yanına boşluk bırak
       margin: const EdgeInsets.only(left: 8),
       width: size,
       height: size,
       decoration: BoxDecoration(
-        // Tam daire şekli
         shape: BoxShape.circle,
-        // 🔥 Altın -> Turuncu Gradyan Arka Plan
         gradient: const LinearGradient(
-          colors: [Color(0xFFFFD700), Color(0xFFFF6D00)], // Altın sarısından turuncuya
+          colors: [Color(0xFFFFD700), Color(0xFFFF6D00)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        // 🔥 İnce Beyaz Çerçeve (%80 opaklık)
         border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.2),
-        // 🔥 Turuncu Neon Parlama Efekti (Glow Shadow)
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFAB00).withOpacity(0.6), // Parlama rengi
-            blurRadius: 12.0, // Ne kadar yayılacağı
-            spreadRadius: 2.0, // Ne kadar genişleyeceği
-            offset: const Offset(0, 0), // Tam arkasında
+            color: const Color(0xFFFFAB00).withOpacity(0.6),
+            blurRadius: 12.0,
+            spreadRadius: 2.0,
+            offset: const Offset(0, 0),
           ),
         ],
       ),
-      // 🔥 İçindeki Beyaz Taç İkonu
       child: Center(
         child: Icon(
-          FontAwesomeIcons.crown, // Kral tacı ikonu
+          FontAwesomeIcons.crown,
           color: Colors.white,
-          size: size * 0.55, // Boyutu kutuya oranla ayarla
+          size: size * 0.55,
         ),
       ),
     );
@@ -106,6 +101,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _friendshipStatus = 'none';
   bool _isBlockedByMe = false;
 
+  // 🎥 LIVE VIDEO DEĞİŞKENLERİ
+  VideoPlayerController? _videoController;
+  bool _isPlayingLiveVideo = false; // Ekrana basılı tutuluyor mu?
+  bool _hasLiveVideo = false; // Video yüklenmiş mi?
+
   // Auth Dinleyicisi
   late final StreamSubscription<AuthState> _authSubscription;
   final Color _accentBlue = const Color(0xFF1E88E5);
@@ -145,7 +145,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     _authSubscription.cancel();
+    _videoController?.dispose(); // Videoyu temizle
     super.dispose();
+  }
+
+  // 🎥 VİDEO YÜKLEME VE HAZIRLAMA
+  void _initializeVideo(String videoUrl) {
+    print("🎥 LIVE VIDEO URL BULUNDU: $videoUrl");
+    // Eski controller varsa temizle
+    _videoController?.dispose();
+
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() {
+            _hasLiveVideo = true;
+            _videoController!.setLooping(true); // Döngü
+            _videoController!.setVolume(0); // Ses kapalı
+          });
+          print("✅ VİDEO HAZIRLANDI!");
+        }
+      }).catchError((e) {
+        print("❌ VİDEO YÜKLEME HATASI: $e");
+      });
   }
 
   // --- 1. VERİ YÜKLEME ---
@@ -207,7 +229,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .select()
           .eq('id', widget.userId)
           .single();
-      if (mounted) setState(() => _profileData = data);
+
+      if (mounted) {
+        setState(() => _profileData = data);
+
+        // 🎥 EĞER PROFİLDE VİDEO VARSA YÜKLE
+        if (data['avatar_video_url'] != null && data['avatar_video_url'].toString().isNotEmpty) {
+          _initializeVideo(data['avatar_video_url']);
+        }
+      }
     } catch (_) {}
   }
 
@@ -493,7 +523,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isMe = widget.userId == _currentUserId;
     final isFriend = _friendshipStatus == 'accepted';
 
-    // ✅ ADMIN KONTROLÜ (Veritabanında is_admin true ise)
+    // ✅ ADMIN KONTROLÜ
     final bool isAdmin = _profileData?['is_admin'] == true;
 
     final visiblePosts = _userPosts.where((post) {
@@ -578,14 +608,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF6C63FF), Color(0xFF1DB954)], begin: Alignment.topLeft, end: Alignment.bottomRight)),
-                          child: CircleAvatar(radius: 45, backgroundColor: const Color(0xFF1F1F1F), backgroundImage: _profileData?['avatar_url'] != null ? NetworkImage(_profileData!['avatar_url']) : null, child: _profileData?['avatar_url'] == null ? const Icon(Icons.person, size: 40, color: Colors.white54) : null),
+
+                        // 🔥 LIVE PHOTO MANTIĞI: BASILI TUT OYNAT 🔥
+                        GestureDetector(
+                          onLongPressStart: (_) {
+                            // Video varsa ve hazırsa oynat
+                            if (_hasLiveVideo && _videoController != null && _videoController!.value.isInitialized) {
+                              setState(() => _isPlayingLiveVideo = true);
+                              _videoController!.play();
+                            }
+                          },
+                          onLongPressEnd: (_) {
+                            // Bıraktığı an videoyu gizle ve durdur
+                            if (_hasLiveVideo && _videoController != null) {
+                              _videoController!.pause();
+                              _videoController!.seekTo(Duration.zero);
+                              setState(() => _isPlayingLiveVideo = false);
+                            }
+                          },
+                          child: Container(
+                            width: 100, // Boyut önemli
+                            height: 100,
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                    colors: [Color(0xFF6C63FF), Color(0xFF1DB954)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight
+                                )
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              fit: StackFit.expand, // İçeriği tam doldur
+                              children: [
+                                // 1. KATMAN: STATİK RESİM (Her zaman altta)
+                                CircleAvatar(
+                                    radius: 45,
+                                    backgroundColor: const Color(0xFF1F1F1F),
+                                    backgroundImage: _profileData?['avatar_url'] != null ? NetworkImage(_profileData!['avatar_url']) : null,
+                                    child: _profileData?['avatar_url'] == null ? const Icon(Icons.person, size: 40, color: Colors.white54) : null
+                                ),
+
+                                // 2. KATMAN: VİDEO (Sadece basılı tutunca görünür)
+                                if (_hasLiveVideo && _isPlayingLiveVideo && _videoController!.value.isInitialized)
+                                  ClipOval(
+                                    child: FittedBox(
+                                      fit: BoxFit.cover, // Videoyu yuvarlağın içine yay
+                                      child: SizedBox(
+                                        width: _videoController!.value.size.width,
+                                        height: _videoController!.value.size.height,
+                                        child: VideoPlayer(_videoController!),
+                                      ),
+                                    ),
+                                  ),
+
+                                // 🔥 İKON KATMANI TAMAMEN KALDIRILDI 🔥
+                                // Artık burada hiçbir görsel yok.
+                                // Video varsa basılı tutunca çalışır, ama normalde sadece resim görünür.
+                              ],
+                            ),
+                          ),
                         ),
+                        // 🔥 LIVE PHOTO BİTİŞ 🔥
+
                         const SizedBox(height: 10),
 
-                        // 🔥 PROFİL İSMİ VE YENİ ALTIN TAÇ ROZETİ 🔥
+                        // 🔥 PROFİL İSMİ VE ADMIN ROZETİ
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -595,7 +684,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])
                             ),
 
-                            // ✅ EĞER ADMIN İSE ALTIN ROZETİ GÖSTER (Büyük Boy)
                             if (isAdmin) ...[
                               const AdminBadge(size: 24),
                             ]
@@ -632,7 +720,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     isMe ? _buildMyProfileButtons() : _buildOtherProfileButtons(),
                     const SizedBox(height: 5),
 
-                    // 🔥 MÜZİK OYNATICI KARTI 🔥
+                    // 🔥 MÜZİK OYNATICI KARTI
                     MusicPlayerCard(userId: widget.userId, isMe: isMe),
 
                     const SizedBox(height: 10),
@@ -640,7 +728,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-              // GÖNDERİ LİSTESİ VEYA KİLİT EKRANI
+              // GÖNDERİ LİSTESİ
               showLockScreen
                   ? Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [const Icon(Icons.lock_outline, size: 40, color: Colors.white24), const SizedBox(height: 10), Text("Bu hesap gizli.", style: GoogleFonts.poppins(color: Colors.white24))]))
                   : (visiblePosts.isEmpty
@@ -708,7 +796,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 🔥 GÜNCELLENEN MODERN VE BUZLU CAM EFEKTLİ POST KARTI 🔥
+  // 🔥 GÜNCELLENEN MODERN VE BUZLU CAM EFEKTLİ POST KARTI
   Widget _buildHomeStylePost(Map<String, dynamic> post, int index) {
     final profile = post['profiles'] ?? {};
     final content = post['content'] ?? '';
@@ -727,21 +815,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))),
       child: Container(
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 20),
-        color: Colors.transparent, // Arka plan şeffaf çünkü efekt aşağıda
+        color: Colors.transparent, // Arka plan şeffaf
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0), // 🔥 Buzlanma Miktarı
+            filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08), // Yarı saydam beyaz
+                color: Colors.white.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.1), width: 1), // İnce cam çerçeve
+                border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- HEADER (Avatar ve İsim) ---
+                  // --- HEADER
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
                     child: Row(
@@ -771,14 +859,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // 🔥 POST ÜZERİNDE YENİ ALTIN ROZET 🔥
                               Row(
                                 children: [
                                   Text(
                                     profile['full_name'] ?? 'İsimsiz',
                                     style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
                                   ),
-                                  // ✅ EĞER POST SAHİBİ ADMIN İSE (Küçük Boy)
                                   if (isPostAdmin) ...[
                                     const AdminBadge(size: 16),
                                   ]
@@ -786,7 +872,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               Text(
                                 '@${profile['username']}',
-                                style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 13), // Renk biraz açıldı (cam üstünde okunabilirlik)
+                                style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 13),
                               ),
                             ],
                           ),
@@ -819,7 +905,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  // --- İÇERİK ---
+                  // --- İÇERİK
                   if (content.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -829,7 +915,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
 
-                  // --- GÖRSEL ---
+                  // --- GÖRSEL
                   if (imageUrl != null)
                     Container(
                       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -841,12 +927,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
 
-                  // --- AKSİYON BAR (Alt Kısım) ---
+                  // --- AKSİYON BAR
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        // BEĞEN BUTONU
                         Container(
                           color: Colors.transparent,
                           child: Row(
@@ -870,8 +955,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         const SizedBox(width: 24),
-
-                        // YORUM BUTONU
                         Container(
                           color: Colors.transparent,
                           child: Row(
