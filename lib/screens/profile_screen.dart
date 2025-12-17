@@ -11,7 +11,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/feed_service.dart';
 import '../services/chat_service.dart';
 import '../services/safety_service.dart';
-import '../services/spotify_service.dart'; // 🔥 Spotify Token işlemleri için şart
+import '../services/spotify_service.dart';
 
 // --- WIDGET IMPORTU ---
 import '../widgets/music_player_card.dart';
@@ -78,24 +78,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _restoreSessionIfAny();
     _loadProfileData();
 
-    // Blok kontrolü (UI çizildikten sonra)
+    // Blok kontrolü
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkBlockStatusBg();
     });
 
-    // 🔥 KRİTİK KISIM: Auth Listener 🔥
-    // Kullanıcı Spotify uygulamasından döndüğünde veya uygulama açıldığında çalışır.
-    // Spam mesajı engellemek için SnackBar kaldırıldı, sessizce güncelleme yapılır.
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-      // Eğer giriş işlemi, token yenileme veya kullanıcı güncellemesi olduysa
       if (data.event == AuthChangeEvent.signedIn ||
           data.event == AuthChangeEvent.tokenRefreshed ||
           data.event == AuthChangeEvent.userUpdated) {
-
-        // 1. Token'ı sessizce veritabanına kaydet/güncelle
         await SpotifyService().updateTokenFromSession();
-
-        // 2. Arayüzü yenile (Böylece Müzik Kartı "Bağla" durumundan "Müzik" durumuna geçer)
         if (mounted) {
           _loadProfileData();
         }
@@ -111,7 +103,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // --- 1. VERİ YÜKLEME ---
   Future<void> _loadProfileData() async {
-    // Sadece ilk yüklemede loading göster (Sayfa her yenilendiğinde kararmasın)
     if (_profileData == null) setState(() => _isLoading = true);
 
     try {
@@ -650,6 +641,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // 🔥 GÜNCELLENEN MODERN POST KARTI 🔥
   Widget _buildHomeStylePost(Map<String, dynamic> post, int index) {
     final profile = post['profiles'] ?? {};
     final content = post['content'] ?? '';
@@ -663,108 +655,167 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E), // Modern, yumuşak siyah
+          borderRadius: BorderRadius.circular(24), // Oval köşeler
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- HEADER (Avatar ve İsim) ---
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+              child: Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                  GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        // 🔥 Kinnect Gradient Halka
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF6C63FF), Color(0xFF4834D4)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: const Color(0xFF121212),
+                        backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
+                        child: profile['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white54, size: 20) : null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: const Color(0xFF1F1F1F),
-                          backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
-                          child: profile['avatar_url'] == null ? const Icon(Icons.person, size: 20, color: Colors.white54) : null,
+                        Text(
+                          profile['full_name'] ?? 'İsimsiz',
+                          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(profile['full_name'] ?? 'İsimsiz', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                              Text('@${profile['username']}', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12)),
-                            ],
-                          ),
-                        ),
-
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(dateStr, style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
-                            if (isMe) ...[
-                              const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: () => _confirmDelete(post['id']),
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: _accentBlue.withOpacity(0.15),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.delete_outline,
-                                    color: _accentBlue,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                            ]
-                          ],
+                        Text(
+                          '@${profile['username']}',
+                          style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13),
                         ),
                       ],
                     ),
                   ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 12)),
+                      if (isMe) ...[
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => _confirmDelete(post['id']),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: _accentBlue.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.delete_outline,
+                              color: _accentBlue,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ]
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
-                  if (content.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: Text(content, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, height: 1.4)),
-                    ),
+            // --- İÇERİK ---
+            if (content.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Text(
+                  content,
+                  style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 14, height: 1.5),
+                ),
+              ),
 
-                  if (imageUrl != null)
-                    Container(
-                      margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                      width: double.infinity,
-                      constraints: const BoxConstraints(maxHeight: 350),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(imageUrl, fit: BoxFit.cover),
-                      ),
-                    ),
+            // --- GÖRSEL ---
+            if (imageUrl != null)
+              Container(
+                margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                width: double.infinity,
+                constraints: const BoxConstraints(maxHeight: 400),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: Image.network(imageUrl, fit: BoxFit.cover),
+                ),
+              ),
 
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            // --- AKSİYON BAR (Alt Kısım) ---
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // BEĞEN BUTONU
+                  Container(
+                    color: Colors.transparent,
                     child: Row(
                       children: [
-                        Icon(isLiked ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
-                            color: isLiked ? Colors.redAccent : Colors.white60, size: 20),
-                        const SizedBox(width: 8),
-                        if (likeCount > 0) Text("$likeCount", style: GoogleFonts.poppins(color: Colors.white60, fontSize: 13)),
-                        const SizedBox(width: 20),
-                        const Icon(FontAwesomeIcons.comment, color: Colors.white60, size: 20),
-                        const SizedBox(width: 8),
-                        if (commentCount > 0) Text("$commentCount", style: GoogleFonts.poppins(color: Colors.white60, fontSize: 13)),
+                        Icon(
+                          isLiked ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
+                          color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400, // Kinnect Rengi
+                          size: 22,
+                        ),
+                        if (likeCount > 0) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            "$likeCount",
+                            style: GoogleFonts.poppins(
+                                color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
+                                fontWeight: FontWeight.w600
+                            ),
+                          ),
+                        ]
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+
+                  // YORUM BUTONU
+                  Container(
+                    color: Colors.transparent,
+                    child: Row(
+                      children: [
+                        Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
+                        if (commentCount > 0) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            "$commentCount",
+                            style: GoogleFonts.poppins(
+                                color: Colors.grey.shade400,
+                                fontWeight: FontWeight.w600
+                            ),
+                          ),
+                        ]
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
