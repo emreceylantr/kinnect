@@ -63,7 +63,8 @@ class _HomeScreenState extends State<HomeScreen> {
         const begin = Offset(1.0, 0.0);
         const end = Offset.zero;
         const curve = Curves.easeOutQuart;
-        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         return SlideTransition(position: animation.drive(tween), child: child);
       },
     );
@@ -74,24 +75,24 @@ class _HomeScreenState extends State<HomeScreen> {
     _notificationChannel = Supabase.instance.client
         .channel('public:notifications')
         .onPostgresChanges(
-      event: PostgresChangeEvent.insert,
-      schema: 'public',
-      table: 'notifications',
-      filter: PostgresChangeFilter(
-        type: PostgresChangeFilterType.eq,
-        column: 'user_id',
-        value: _currentUserId,
-      ),
-      callback: (payload) {
-        if (mounted) {
-          // Bildirim geldiğinde sayacı artır
-          setState(() {
-            _unreadCount++;
-          });
-          _handleNewNotification(payload.newRecord);
-        }
-      },
-    )
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'notifications',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: _currentUserId,
+          ),
+          callback: (payload) {
+            if (mounted) {
+              // Bildirim geldiğinde sayacı artır
+              setState(() {
+                _unreadCount++;
+              });
+              _handleNewNotification(payload.newRecord);
+            }
+          },
+        )
         .subscribe();
   }
 
@@ -118,92 +119,35 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.85),
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              CircleAvatar(
-                radius: 45,
-                backgroundImage: callerProfile['avatar_url'] != null
-                    ? NetworkImage(callerProfile['avatar_url'])
-                    : null,
-                backgroundColor: const Color(0xFF6C63FF),
-                child: callerProfile['avatar_url'] == null
-                    ? const Icon(Icons.person, size: 40, color: Colors.white)
-                    : null,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                "${callerProfile['full_name'] ?? 'Biri'} seni bekliyor...",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Sohbet odasına katılmak ister misin?",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-          actionsAlignment: MainAxisAlignment.spaceEvenly,
-          actions: [
-            Column(
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  iconSize: 50,
-                  icon: const CircleAvatar(
-                    radius: 25,
-                    backgroundColor: Colors.redAccent,
-                    child: Icon(Icons.call_end, color: Colors.white, size: 28),
-                  ),
-                ),
-                Text("Reddet", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12))
-              ],
-            ),
-            Column(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    final myId = _currentUserId;
-                    final otherId = callerProfile['id'].toString();
-                    List<String> ids = [myId, otherId];
-                    ids.sort();
-                    final callId = ids.join("_");
+        return _IncomingCallPopup(
+          callerProfile: callerProfile,
+          onAccept: () {
+            Navigator.pop(context);
+            final myId = _currentUserId;
+            final otherId = callerProfile['id'].toString();
+            List<String> ids = [myId, otherId];
+            ids.sort();
+            final callId = ids.join("_");
 
-                    Navigator.push(
-                      context,
-                      _createSlideRoute(CallScreen(
-                        callId: callId,
-                        otherUserName: callerProfile['full_name'] ?? 'Kullanıcı',
-                        isVideo: false,
-                      )),
-                    );
-                  },
-                  iconSize: 50,
-                  icon: const CircleAvatar(
-                    radius: 25,
-                    backgroundColor: Colors.greenAccent,
-                    child: Icon(Icons.phone, color: Colors.white, size: 28),
-                  ),
-                ),
-                Text("Katıl", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12))
-              ],
-            ),
-          ],
+            Navigator.push(
+              context,
+              _createSlideRoute(CallScreen(
+                callId: callId,
+                otherUserName: callerProfile['full_name'] ?? 'Kullanıcı',
+                isVideo: false,
+              )),
+            );
+          },
+          onDecline: () => Navigator.pop(context),
         );
       },
     );
   }
 
-  void _showTopNotification(Map<String, dynamic> data, Map<String, dynamic> userProfile) {
+  void _showTopNotification(
+      Map<String, dynamic> data, Map<String, dynamic> userProfile) {
     final type = data['type'];
     final postId = data['post_id'];
 
@@ -259,24 +203,32 @@ class _HomeScreenState extends State<HomeScreen> {
                     removeOverlay();
                     if (type == 'message') {
                       try {
-                        final roomId = await ChatService().createOrGetChatRoom(userProfile['id'].toString());
+                        final roomId = await ChatService()
+                            .createOrGetChatRoom(userProfile['id'].toString());
                         if (mounted) {
-                          Navigator.push(context, _createSlideRoute(ChatScreen(roomId: roomId, otherUser: userProfile)));
+                          Navigator.push(
+                              context,
+                              _createSlideRoute(ChatScreen(
+                                  roomId: roomId, otherUser: userProfile)));
                         }
                       } catch (e) {
-                        Navigator.push(context, _createSlideRoute(const MessagesScreen()));
+                        Navigator.push(
+                            context, _createSlideRoute(const MessagesScreen()));
                       }
                     } else if (postId != null) {
                       final postRes = await Supabase.instance.client
                           .from('posts')
-                          .select('*, profiles(*), likes(user_id), comments(id)')
+                          .select(
+                              '*, profiles(*), likes(user_id), comments(id)')
                           .eq('id', postId)
                           .maybeSingle();
                       if (postRes != null && mounted) {
-                        Navigator.push(context, _createSlideRoute(PostDetailScreen(post: postRes)));
+                        Navigator.push(context,
+                            _createSlideRoute(PostDetailScreen(post: postRes)));
                       }
                     } else {
-                      Navigator.push(context, _createSlideRoute(const NotificationsScreen()));
+                      Navigator.push(context,
+                          _createSlideRoute(const NotificationsScreen()));
                     }
                   },
                   child: Container(
@@ -284,7 +236,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF1E1E1E).withOpacity(0.95),
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, 5))],
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.5),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5))
+                      ],
                       border: Border.all(color: Colors.white12, width: 1),
                     ),
                     child: Row(
@@ -292,8 +249,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         CircleAvatar(
                           radius: 18,
                           backgroundColor: const Color(0xFF333333),
-                          backgroundImage: userProfile['avatar_url'] != null ? NetworkImage(userProfile['avatar_url']) : null,
-                          child: userProfile['avatar_url'] == null ? Icon(icon, size: 14, color: iconColor) : null,
+                          backgroundImage: userProfile['avatar_url'] != null
+                              ? NetworkImage(userProfile['avatar_url'])
+                              : null,
+                          child: userProfile['avatar_url'] == null
+                              ? Icon(icon, size: 14, color: iconColor)
+                              : null,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -301,8 +262,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(userProfile['username'] ?? 'Birisi', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                              Text(message, style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12)),
+                              Text(userProfile['username'] ?? 'Birisi',
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13)),
+                              Text(message,
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.white70, fontSize: 12)),
                             ],
                           ),
                         ),
@@ -318,16 +285,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     overlay.insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 4), () { if (mounted && !isRemoved) removeOverlay(); });
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted && !isRemoved) removeOverlay();
+    });
   }
 
   String _getAppBarTitle() {
     switch (_currentIndex) {
-      case 0: return 'Ana Akış';
-      case 1: return 'Keşfet';
-      case 3: return 'AI Asistan';
-      case 4: return 'Profilim';
-      default: return 'Kinnect';
+      case 0:
+        return 'Ana Akış';
+      case 1:
+        return 'Keşfet';
+      case 3:
+        return 'AI Asistan';
+      case 4:
+        return 'Profilim';
+      default:
+        return 'Kinnect';
     }
   }
 
@@ -342,38 +316,44 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: hideAppBar
             ? null
             : AppBar(
-          backgroundColor: const Color(0xFF050505),
-          elevation: 0,
-          title: Text(
-            _getAppBarTitle(),
-            style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -0.5),
-          ),
-          actions: [
-            // --- HİZALI KAWAII ÇAN ---
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 4.0),
-                child: KawaiiBellIcon(
-                  notificationCount: _unreadCount,
-                  onTap: () {
-                    setState(() => _unreadCount = 0);
-                    Navigator.of(context).push(_createSlideRoute(const NotificationsScreen()));
-                  },
+                backgroundColor: const Color(0xFF050505),
+                elevation: 0,
+                title: Text(
+                  _getAppBarTitle(),
+                  style: GoogleFonts.poppins(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: -0.5),
                 ),
-              ),
-            ),
+                actions: [
+                  // --- HİZALI KAWAII ÇAN ---
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 4.0),
+                      child: KawaiiBellIcon(
+                        notificationCount: _unreadCount,
+                        onTap: () {
+                          setState(() => _unreadCount = 0);
+                          Navigator.of(context).push(
+                              _createSlideRoute(const NotificationsScreen()));
+                        },
+                      ),
+                    ),
+                  ),
 
-            // 🔥 YENİ: PARLAMAYAN, DÜZ YEŞİL MESAJ İKONU 🔥
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0, left: 4.0),
-              child: CyberMessageButton(
-                onTap: () {
-                  Navigator.of(context).push(_createSlideRoute(const MessagesScreen()));
-                },
+                  // 🔥 YENİ: PARLAMAYAN, DÜZ YEŞİL MESAJ İKONU 🔥
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0, left: 4.0),
+                    child: CyberMessageButton(
+                      onTap: () {
+                        Navigator.of(context)
+                            .push(_createSlideRoute(const MessagesScreen()));
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
         body: _buildBody(),
         bottomNavigationBar: _buildBottomNavBar(),
       ),
@@ -382,11 +362,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBody() {
     switch (_currentIndex) {
-      case 0: return _buildFeed();
-      case 1: return const SearchScreen();
-      case 3: return _buildAiTab();
-      case 4: return ProfileScreen(userId: _currentUserId, showBackButton: false);
-      default: return _buildFeed();
+      case 0:
+        return _buildFeed();
+      case 1:
+        return const SearchScreen();
+      case 3:
+        return _buildAiTab();
+      case 4:
+        return ProfileScreen(userId: _currentUserId, showBackButton: false);
+      default:
+        return _buildFeed();
     }
   }
 
@@ -395,7 +380,8 @@ class _HomeScreenState extends State<HomeScreen> {
       future: _feedFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF)));
+          return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF6C63FF)));
         }
         final posts = snapshot.data ?? [];
         if (posts.isEmpty) {
@@ -432,11 +418,18 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(FontAwesomeIcons.wandMagicSparkles, size: 60, color: Color(0xFF6C63FF)),
+          const Icon(FontAwesomeIcons.wandMagicSparkles,
+              size: 60, color: Color(0xFF6C63FF)),
           const SizedBox(height: 20),
-          Text('Yapay Zeka Asistanı', style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text('Yapay Zeka Asistanı',
+              style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          Text('Yakında burada senin için\nöneriler hazırlayacağım!', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.white54)),
+          Text('Yakında burada senin için\nöneriler hazırlayacağım!',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(color: Colors.white54)),
         ],
       ),
     );
@@ -455,7 +448,8 @@ class _HomeScreenState extends State<HomeScreen> {
       elevation: 0,
       onTap: (index) {
         if (index == 2) {
-          Navigator.of(context).push(_createSlideRoute(const CreatePostScreen()));
+          Navigator.of(context)
+              .push(_createSlideRoute(const CreatePostScreen()));
           return;
         }
         setState(() {
@@ -465,29 +459,30 @@ class _HomeScreenState extends State<HomeScreen> {
       items: const [
         BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.house),
-            activeIcon: Icon(FontAwesomeIcons.house, shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
-            label: ''
-        ),
+            activeIcon: Icon(FontAwesomeIcons.house,
+                shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
+            label: ''),
         BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.fire),
-            activeIcon: Icon(FontAwesomeIcons.fire, shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
-            label: ''
-        ),
+            activeIcon: Icon(FontAwesomeIcons.fire,
+                shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
+            label: ''),
         BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.circlePlus, size: 32),
-            activeIcon: Icon(FontAwesomeIcons.circlePlus, size: 32, shadows: [Shadow(blurRadius: 15, color: Color(0xFF6C63FF))]),
-            label: ''
-        ),
+            activeIcon: Icon(FontAwesomeIcons.circlePlus,
+                size: 32,
+                shadows: [Shadow(blurRadius: 15, color: Color(0xFF6C63FF))]),
+            label: ''),
         BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.wandMagicSparkles),
-            activeIcon: Icon(FontAwesomeIcons.wandMagicSparkles, shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
-            label: ''
-        ),
+            activeIcon: Icon(FontAwesomeIcons.wandMagicSparkles,
+                shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
+            label: ''),
         BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.user),
-            activeIcon: Icon(FontAwesomeIcons.user, shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
-            label: ''
-        ),
+            activeIcon: Icon(FontAwesomeIcons.user,
+                shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
+            label: ''),
       ],
     );
   }
@@ -508,7 +503,8 @@ class KawaiiBellIcon extends StatefulWidget {
   State<KawaiiBellIcon> createState() => _KawaiiBellIconState();
 }
 
-class _KawaiiBellIconState extends State<KawaiiBellIcon> with SingleTickerProviderStateMixin {
+class _KawaiiBellIconState extends State<KawaiiBellIcon>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -561,7 +557,10 @@ class _KawaiiBellIconState extends State<KawaiiBellIcon> with SingleTickerProvid
                         scale: 0.6 + (_controller.value * 0.4),
                         child: Text(
                           "zZz",
-                          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.poppins(
+                              color: Colors.white70,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -586,10 +585,16 @@ class _KawaiiBellIconState extends State<KawaiiBellIcon> with SingleTickerProvid
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.black, width: 1.5),
                   ),
-                  constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                  constraints:
+                      const BoxConstraints(minWidth: 14, minHeight: 14),
                   child: Text(
-                    widget.notificationCount > 9 ? '9+' : widget.notificationCount.toString(),
-                    style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                    widget.notificationCount > 9
+                        ? '9+'
+                        : widget.notificationCount.toString(),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -628,7 +633,10 @@ class _KawaiiBellIconState extends State<KawaiiBellIcon> with SingleTickerProvid
           child: Container(
             width: 5,
             height: 5,
-            decoration: BoxDecoration(color: color.withOpacity(0.5), shape: BoxShape.circle, border: Border.all(color: color, width: 0.8)),
+            decoration: BoxDecoration(
+                color: color.withOpacity(0.5),
+                shape: BoxShape.circle,
+                border: Border.all(color: color, width: 0.8)),
           ),
         );
       },
@@ -651,7 +659,11 @@ class _KawaiiBellIconState extends State<KawaiiBellIcon> with SingleTickerProvid
         Container(
           width: 9,
           height: 4,
-          decoration: BoxDecoration(color: Colors.transparent, border: Border(bottom: BorderSide(color: color, width: 1.5)), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8))),
+          decoration: BoxDecoration(
+              color: Colors.transparent,
+              border: Border(bottom: BorderSide(color: color, width: 1.5)),
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(8))),
         ),
       ],
     );
@@ -661,8 +673,16 @@ class _KawaiiBellIconState extends State<KawaiiBellIcon> with SingleTickerProvid
     return Stack(
       alignment: Alignment.center,
       children: [
-        Container(width: 5.5, height: 5.5, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
-        Container(width: 3, height: 3, decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle)),
+        Container(
+            width: 5.5,
+            height: 5.5,
+            decoration: const BoxDecoration(
+                color: Colors.white, shape: BoxShape.circle)),
+        Container(
+            width: 3,
+            height: 3,
+            decoration: const BoxDecoration(
+                color: Colors.black, shape: BoxShape.circle)),
       ],
     );
   }
@@ -724,7 +744,8 @@ class _ChatBubblePainter extends CustomPainter {
 
     path.moveTo(padding + cornerRadius, padding);
     path.lineTo(size.width - padding - cornerRadius, padding);
-    path.arcToPoint(Offset(size.width - padding, padding + cornerRadius), radius: const Radius.circular(cornerRadius));
+    path.arcToPoint(Offset(size.width - padding, padding + cornerRadius),
+        radius: const Radius.circular(cornerRadius));
     path.lineTo(size.width - padding, size.height - padding - 6);
 
     // 🔥 KUYRUK
@@ -732,9 +753,11 @@ class _ChatBubblePainter extends CustomPainter {
     path.lineTo(size.width - padding - 5, size.height - padding);
 
     path.lineTo(padding + cornerRadius, size.height - padding);
-    path.arcToPoint(Offset(padding, size.height - padding - cornerRadius), radius: const Radius.circular(cornerRadius));
+    path.arcToPoint(Offset(padding, size.height - padding - cornerRadius),
+        radius: const Radius.circular(cornerRadius));
     path.lineTo(padding, padding + cornerRadius);
-    path.arcToPoint(Offset(padding + cornerRadius, padding), radius: const Radius.circular(cornerRadius));
+    path.arcToPoint(Offset(padding + cornerRadius, padding),
+        radius: const Radius.circular(cornerRadius));
 
     canvas.drawPath(path, paint);
 
@@ -792,7 +815,8 @@ class _PostCardState extends State<PostCard> {
         const begin = Offset(1.0, 0.0);
         const end = Offset.zero;
         const curve = Curves.easeOutQuart;
-        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         return SlideTransition(position: animation.drive(tween), child: child);
       },
     );
@@ -804,7 +828,8 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _goToDetail() async {
-    final result = await Navigator.push(context, _createSlideRoute(PostDetailScreen(post: widget.post)));
+    final result = await Navigator.push(
+        context, _createSlideRoute(PostDetailScreen(post: widget.post)));
     if (result == true || mounted) {
       widget.onRefresh();
     }
@@ -815,7 +840,16 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _openFullScreen(String url) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(backgroundColor: Colors.black, appBar: AppBar(backgroundColor: Colors.transparent, leading: const BackButton(color: Colors.white)), body: Center(child: InteractiveViewer(child: Image.network(url))))));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => Scaffold(
+                backgroundColor: Colors.black,
+                appBar: AppBar(
+                    backgroundColor: Colors.transparent,
+                    leading: const BackButton(color: Colors.white)),
+                body: Center(
+                    child: InteractiveViewer(child: Image.network(url))))));
   }
 
   @override
@@ -840,7 +874,8 @@ class _PostCardState extends State<PostCard> {
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                border:
+                    Border.all(color: Colors.white.withOpacity(0.1), width: 1),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -864,8 +899,13 @@ class _PostCardState extends State<PostCard> {
                             child: CircleAvatar(
                               radius: 20,
                               backgroundColor: const Color(0xFF121212),
-                              backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
-                              child: profile['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white54, size: 20) : null,
+                              backgroundImage: profile['avatar_url'] != null
+                                  ? NetworkImage(profile['avatar_url'])
+                                  : null,
+                              child: profile['avatar_url'] == null
+                                  ? const Icon(Icons.person,
+                                      color: Colors.white54, size: 20)
+                                  : null,
                             ),
                           ),
                         ),
@@ -878,26 +918,37 @@ class _PostCardState extends State<PostCard> {
                                 onTap: () => _goToProfile(p['user_id']),
                                 child: Text(
                                   profile['full_name'] ?? 'Bilinmiyor',
-                                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15),
                                 ),
                               ),
                               Text(
                                 '@${profile['username']}',
-                                style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 13),
+                                style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade400, fontSize: 13),
                               ),
                             ],
                           ),
                         ),
-                        Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12)),
+                        Text(dateStr,
+                            style: GoogleFonts.poppins(
+                                color: Colors.grey.shade400, fontSize: 12)),
                       ],
                     ),
                   ),
-                  if (p['content'] != null && p['content'].toString().isNotEmpty)
+                  if (p['content'] != null &&
+                      p['content'].toString().isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
                       child: Text(
                         p['content'],
-                        style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.95), fontSize: 14, height: 1.5),
+                        style: GoogleFonts.poppins(
+                            color: Colors.white.withOpacity(0.95),
+                            fontSize: 14,
+                            height: 1.5),
                       ),
                     ),
                   if (p['image_url'] != null)
@@ -914,7 +965,8 @@ class _PostCardState extends State<PostCard> {
                           tag: p['image_url'],
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(18),
-                            child: Image.network(p['image_url'], fit: BoxFit.cover),
+                            child: Image.network(p['image_url'],
+                                fit: BoxFit.cover),
                           ),
                         ),
                       ),
@@ -930,13 +982,22 @@ class _PostCardState extends State<PostCard> {
                             child: Row(
                               children: [
                                 Icon(
-                                  isLiked ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
-                                  color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
+                                  isLiked
+                                      ? FontAwesomeIcons.solidHeart
+                                      : FontAwesomeIcons.heart,
+                                  color: isLiked
+                                      ? const Color(0xFF6C63FF)
+                                      : Colors.grey.shade400,
                                   size: 22,
                                 ),
                                 if (likeCount > 0) ...[
                                   const SizedBox(width: 6),
-                                  Text("$likeCount", style: GoogleFonts.poppins(color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400, fontWeight: FontWeight.w600)),
+                                  Text("$likeCount",
+                                      style: GoogleFonts.poppins(
+                                          color: isLiked
+                                              ? const Color(0xFF6C63FF)
+                                              : Colors.grey.shade400,
+                                          fontWeight: FontWeight.w600)),
                                 ]
                               ],
                             ),
@@ -949,10 +1010,14 @@ class _PostCardState extends State<PostCard> {
                             color: Colors.transparent,
                             child: Row(
                               children: [
-                                Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
+                                Icon(FontAwesomeIcons.comment,
+                                    color: Colors.grey.shade400, size: 22),
                                 if (commentCount > 0) ...[
                                   const SizedBox(width: 6),
-                                  Text("$commentCount", style: GoogleFonts.poppins(color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
+                                  Text("$commentCount",
+                                      style: GoogleFonts.poppins(
+                                          color: Colors.grey.shade400,
+                                          fontWeight: FontWeight.w600)),
                                 ]
                               ],
                             ),
@@ -967,6 +1032,335 @@ class _PostCardState extends State<PostCard> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// 🔥🔥🔥 PREMIUM GELEN ARAMA POPUP'I 🔥🔥🔥
+class _IncomingCallPopup extends StatefulWidget {
+  final Map<String, dynamic> callerProfile;
+  final VoidCallback onAccept;
+  final VoidCallback onDecline;
+
+  const _IncomingCallPopup({
+    required this.callerProfile,
+    required this.onAccept,
+    required this.onDecline,
+  });
+
+  @override
+  State<_IncomingCallPopup> createState() => _IncomingCallPopupState();
+}
+
+class _IncomingCallPopupState extends State<_IncomingCallPopup>
+    with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late AnimationController _ringController;
+  late Animation<double> _pulseAnimation;
+  late Animation<double> _ringAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Pulse animasyonu (avatar etrafındaki halkalar)
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeOut),
+    );
+
+    // Ring animasyonu (telefon titremesi)
+    _ringController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    )..repeat(reverse: true);
+
+    _ringAnimation = Tween<double>(begin: -0.05, end: 0.05).animate(
+      CurvedAnimation(parent: _ringController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _ringController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final callerName = widget.callerProfile['full_name'] ?? 'Biri';
+    final callerAvatar = widget.callerProfile['avatar_url'];
+    final callerUsername = widget.callerProfile['username'] ?? '';
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(32),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF2D2638).withOpacity(0.95),
+                  const Color(0xFF1A1525).withOpacity(0.98),
+                ],
+              ),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF6C63FF).withOpacity(0.2),
+                  blurRadius: 40,
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 📞 Üst başlık
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    AnimatedBuilder(
+                      animation: _ringAnimation,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _ringAnimation.value,
+                          child: const Icon(
+                            Icons.phone_in_talk_rounded,
+                            color: Color(0xFF69F0AE),
+                            size: 20,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Gelen Arama",
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFF69F0AE),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+
+                // 🎯 Avatar ve animasyonlu halkalar
+                SizedBox(
+                  width: 140,
+                  height: 140,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Pulsing halkalar
+                      ...List.generate(3, (index) {
+                        return AnimatedBuilder(
+                          animation: _pulseAnimation,
+                          builder: (context, child) {
+                            final delay = index * 0.3;
+                            final value = (_pulseAnimation.value - 1.0 + delay)
+                                .clamp(0.0, 0.5);
+                            return Container(
+                              width: 100 + (value * 100),
+                              height: 100 + (value * 100),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF6C63FF)
+                                      .withOpacity(0.5 - value),
+                                  width: 2,
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      }),
+
+                      // Gradient border
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFF6C63FF),
+                              Color(0xFF9D89D9),
+                              Color(0xFF6C63FF),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF6C63FF).withOpacity(0.4),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(3),
+                        child: CircleAvatar(
+                          radius: 47,
+                          backgroundColor: const Color(0xFF1A1525),
+                          backgroundImage: callerAvatar != null
+                              ? NetworkImage(callerAvatar)
+                              : null,
+                          child: callerAvatar == null
+                              ? const Icon(Icons.person,
+                                  size: 45, color: Colors.white54)
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 👤 İsim ve kullanıcı adı
+                Text(
+                  callerName,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                if (callerUsername.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    "@$callerUsername",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white38,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+
+                // 💬 Alt metin
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "Sohbet odasına katılmak istiyor",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white60,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 36),
+
+                // 🔘 Butonlar
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // ❌ Reddet butonu
+                    _buildActionButton(
+                      icon: Icons.call_end_rounded,
+                      label: "Reddet",
+                      gradientColors: [
+                        const Color(0xFFFF5252),
+                        const Color(0xFFD32F2F),
+                      ],
+                      shadowColor: const Color(0xFFFF5252),
+                      onTap: widget.onDecline,
+                    ),
+
+                    // ✅ Kabul et butonu
+                    _buildActionButton(
+                      icon: Icons.phone_rounded,
+                      label: "Katıl",
+                      gradientColors: [
+                        const Color(0xFF69F0AE),
+                        const Color(0xFF00C853),
+                      ],
+                      shadowColor: const Color(0xFF69F0AE),
+                      onTap: widget.onAccept,
+                      isAccept: true,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required List<Color> gradientColors,
+    required Color shadowColor,
+    required VoidCallback onTap,
+    bool isAccept = false,
+  }) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: isAccept ? 70 : 60,
+            height: isAccept ? 70 : 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: gradientColors,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: shadowColor.withOpacity(0.4),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: isAccept ? 32 : 28,
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            color: Colors.white60,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }
