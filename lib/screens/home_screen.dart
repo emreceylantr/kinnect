@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui'; // 🔥 BUZLU CAM EFEKTİ İÇİN GEREKLİ KÜTÜPHANE EKLENDİ
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,6 +26,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final FeedService _feedService = FeedService();
   int _currentIndex = 0;
+
+  int _unreadCount = 0;
 
   late Future<List<Map<String, dynamic>>> _feedFuture;
 
@@ -78,6 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       callback: (payload) {
         if (mounted) {
+          setState(() {
+            _unreadCount++;
+          });
           _handleNewNotification(payload.newRecord);
         }
       },
@@ -339,6 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -0.5),
           ),
           actions: [
+            // Eski Çan İkonuna Döndük
             IconButton(
               icon: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 20),
               onPressed: () {
@@ -351,7 +358,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.of(context).push(_createSlideRoute(const MessagesScreen()));
               },
             ),
-            // 🔥 ÇIKIŞ YAP BUTONU KALDIRILDI
           ],
         ),
         body: _buildBody(),
@@ -473,6 +479,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// 🔥 BUZLU CAM (GLASSMORPHISM) EFEKTLİ POST KARTI 🔥
 class PostCard extends StatefulWidget {
   final Map<String, dynamic> post;
   final VoidCallback onRefresh;
@@ -538,147 +545,151 @@ class _PostCardState extends State<PostCard> {
       onTap: _goToDetail,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ÜST KISIM
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-              child: Row(
+        // Container'ı şeffaf yapıyoruz çünkü asıl efekt aşağıda
+        color: Colors.transparent,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24), // Oval Köşeler
+          child: BackdropFilter(
+            // 🔥 BULANIKLIK (BLUR) AYARI
+            filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+            child: Container(
+              decoration: BoxDecoration(
+                // Yarı saydam beyaz/gri arka plan
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(24),
+                // İnce çerçeve cam hissini artırır
+                border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  GestureDetector(
-                    onTap: () => _goToProfile(p['user_id']),
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF6C63FF), Color(0xFF4834D4)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: CircleAvatar(
-                        radius: 20,
-                        backgroundColor: const Color(0xFF121212),
-                        backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
-                        child: profile['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white54, size: 20) : null,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // ÜST KISIM (HEADER)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                    child: Row(
                       children: [
                         GestureDetector(
                           onTap: () => _goToProfile(p['user_id']),
-                          child: Text(
-                            profile['full_name'] ?? 'Bilinmiyor',
-                            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF6C63FF), Color(0xFF4834D4)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              radius: 20,
+                              backgroundColor: const Color(0xFF121212),
+                              backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
+                              child: profile['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white54, size: 20) : null,
+                            ),
                           ),
                         ),
-                        Text(
-                          '@${profile['username']}',
-                          style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              GestureDetector(
+                                onTap: () => _goToProfile(p['user_id']),
+                                child: Text(
+                                  profile['full_name'] ?? 'Bilinmiyor',
+                                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                                ),
+                              ),
+                              Text(
+                                '@${profile['username']}',
+                                style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+
+                  // İÇERİK METNİ
+                  if (p['content'] != null && p['content'].toString().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: Text(
+                        p['content'],
+                        style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.95), fontSize: 14, height: 1.5),
+                      ),
+                    ),
+
+                  // GÖRSEL
+                  if (p['image_url'] != null)
+                    GestureDetector(
+                      onTap: () => _openFullScreen(p['image_url']),
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                        width: double.infinity,
+                        constraints: const BoxConstraints(maxHeight: 400),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Hero(
+                          tag: p['image_url'],
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: Image.network(p['image_url'], fit: BoxFit.cover),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // AKSİYON BUTONLARI
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _toggleLike,
+                          child: Container(
+                            color: Colors.transparent,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isLiked ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
+                                  color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
+                                  size: 22,
+                                ),
+                                if (likeCount > 0) ...[
+                                  const SizedBox(width: 6),
+                                  Text("$likeCount", style: GoogleFonts.poppins(color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400, fontWeight: FontWeight.w600)),
+                                ]
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        GestureDetector(
+                          onTap: _goToDetail,
+                          child: Container(
+                            color: Colors.transparent,
+                            child: Row(
+                              children: [
+                                Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
+                                if (commentCount > 0) ...[
+                                  const SizedBox(width: 6),
+                                  Text("$commentCount", style: GoogleFonts.poppins(color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
+                                ]
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 12)),
                 ],
               ),
             ),
-
-            // İÇERİK METNİ
-            if (p['content'] != null && p['content'].toString().isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Text(
-                  p['content'],
-                  style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 14, height: 1.5),
-                ),
-              ),
-
-            // GÖRSEL
-            if (p['image_url'] != null)
-              GestureDetector(
-                onTap: () => _openFullScreen(p['image_url']),
-                child: Container(
-                  margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                  width: double.infinity,
-                  constraints: const BoxConstraints(maxHeight: 400),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Hero(
-                    tag: p['image_url'],
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: Image.network(p['image_url'], fit: BoxFit.cover),
-                    ),
-                  ),
-                ),
-              ),
-
-            // AKSİYON BUTONLARI (PAYLAŞ VE SPACER SİLİNDİ)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  // Beğen
-                  GestureDetector(
-                    onTap: _toggleLike,
-                    child: Container(
-                      color: Colors.transparent,
-                      child: Row(
-                        children: [
-                          Icon(
-                            isLiked ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
-                            color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
-                            size: 22,
-                          ),
-                          if (likeCount > 0) ...[
-                            const SizedBox(width: 6),
-                            Text("$likeCount", style: GoogleFonts.poppins(color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400, fontWeight: FontWeight.w600)),
-                          ]
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  // Yorum
-                  GestureDetector(
-                    onTap: _goToDetail,
-                    child: Container(
-                      color: Colors.transparent,
-                      child: Row(
-                        children: [
-                          Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
-                          if (commentCount > 0) ...[
-                            const SizedBox(width: 6),
-                            Text("$commentCount", style: GoogleFonts.poppins(color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
-                          ]
-                        ],
-                      ),
-                    ),
-                  ),
-                  // 🔥 PAYLAŞ BUTONU VE SPACER KALDIRILDI
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
