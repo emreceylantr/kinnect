@@ -5,7 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'home_screen.dart';
 import 'create_profile_screen.dart';
-import 'forgot_password_screen.dart'; // ✅ UNUTULMAMASI GEREKEN IMPORT
+import 'forgot_password_screen.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final AuthService _authService = AuthService();
 
-  // --- GİRİŞ YAP FONKSİYONU ---
+  // --- GİRİŞ YAP FONKSİYONU (GÜNCELLENDİ 🔥) ---
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -36,6 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
+      // 1. E-posta ve şifre ile giriş yap
       await _authService.signInWithEmail(email, password);
 
       final user = Supabase.instance.client.auth.currentUser;
@@ -45,16 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
         throw 'Giriş yapıldı ama kullanıcı bilgisi alınamadı.';
       }
 
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Giriş Başarılı!"),
-          backgroundColor: Color(0xFF6C63FF),
-          duration: Duration(seconds: 1),
-        ),
-      );
-
+      // 2. Kullanıcının profilini ve 2FA durumunu çek
       final profileData = await Supabase.instance.client
           .from('profiles')
           .select()
@@ -64,13 +56,31 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (profileData != null) {
-        // Profil var, ana sayfaya git
+        final bool is2FaEnabled = profileData['is_2fa_enabled'] ?? false;
+        final String? phone = profileData['phone'];
+
+        // 🔥 2FA KONTROLÜ BAŞLANGIÇ 🔥
+        if (is2FaEnabled && phone != null && phone.isNotEmpty) {
+          // Eğer 2FA açıksa:
+          // A. Kullanıcıya SMS gönder
+          await Supabase.instance.client.auth.signInWithOtp(phone: phone);
+
+          setState(() => _isLoading = false); // Loading'i durdur ki dialog açılsın
+
+          // B. Kod girme pencresini aç
+          _showOtpDialog(phone);
+
+          return; // 🛑 Fonksiyonu burada durdur, gerisini Dialog halledecek.
+        }
+        // 🔥 2FA KONTROLÜ BİTİŞ 🔥
+
+        // Eğer 2FA kapalıysa normal akışa devam et:
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const HomeScreen()),
               (route) => false,
         );
       } else {
-        // Profil yok, oluşturmaya git
+        // Profil yoksa oluşturmaya git
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const CreateProfileScreen()),
               (route) => false,
@@ -100,8 +110,113 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      // Sadece 2FA devreye girmediyse loading'i kapat (2FA girerse dialog içinde kapanır)
+      if (mounted && _isLoading) setState(() => _isLoading = false);
     }
+  }
+
+  // --- 🔥 YENİ EKLENEN 2FA KOD DOĞRULAMA PENCERESİ ---
+  void _showOtpDialog(String phone) {
+    final otpController = TextEditingController();
+    bool isVerifying = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Boşluğa basınca kapanmasın
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1A1A1A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text(
+                "Güvenlik Doğrulaması",
+                style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Hesabınızda 2 Adımlı Doğrulama aktif. Telefonunuza ($phone) gelen 6 haneli kodu giriniz.",
+                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    style: const TextStyle(color: Colors.white, fontSize: 18, letterSpacing: 4),
+                    textAlign: TextAlign.center,
+                    decoration: InputDecoration(
+                      hintText: "000000",
+                      hintStyle: const TextStyle(color: Colors.white24),
+                      counterText: "",
+                      filled: true,
+                      fillColor: const Color(0xFF2A2A2A),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isVerifying ? null : () => Navigator.pop(context),
+                  child: const Text("İptal", style: TextStyle(color: Colors.redAccent)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6C63FF),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: isVerifying
+                      ? null
+                      : () async {
+                    final code = otpController.text.trim();
+                    if (code.length != 6) return;
+
+                    setStateDialog(() => isVerifying = true);
+
+                    try {
+                      // Kodu Doğrula
+                      final response = await Supabase.instance.client.auth.verifyOTP(
+                        phone: phone,
+                        token: code,
+                        type: OtpType.sms,
+                      );
+
+                      if (response.session != null && mounted) {
+                        Navigator.pop(context); // Dialogu kapat
+
+                        // Ana Sayfaya Yönlendir
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const HomeScreen()),
+                              (route) => false,
+                        );
+                      }
+                    } catch (e) {
+                      setStateDialog(() => isVerifying = false);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Hatalı kod: $e"), backgroundColor: Colors.red)
+                      );
+                    }
+                  },
+                  child: isVerifying
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text("Doğrula", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -188,7 +303,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      // 🔥 Şifremi unuttum ekranına geçiş
                       Navigator.push(
                         context,
                         MaterialPageRoute(
