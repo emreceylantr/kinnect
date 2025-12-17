@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'dart:ui'; // 🔥 BUZLU CAM EFEKTİ İÇİN GEREKLİ KÜTÜPHANE EKLENDİ
+import 'dart:io';
+import 'dart:math'; // 🔥 Matematiksel çizimler için
+import 'dart:ui'; // 🔥 Buzlu Cam için
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final FeedService _feedService = FeedService();
   int _currentIndex = 0;
 
+  // 🔥 Bildirim Sayacı
   int _unreadCount = 0;
 
   late Future<List<Map<String, dynamic>>> _feedFuture;
@@ -81,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       callback: (payload) {
         if (mounted) {
+          // Bildirim geldiğinde sayacı artır
           setState(() {
             _unreadCount++;
           });
@@ -345,18 +349,28 @@ class _HomeScreenState extends State<HomeScreen> {
             style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -0.5),
           ),
           actions: [
-            // Eski Çan İkonuna Döndük
-            IconButton(
-              icon: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 20),
-              onPressed: () {
-                Navigator.of(context).push(_createSlideRoute(const NotificationsScreen()));
-              },
+            // --- HİZALI KAWAII ÇAN ---
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4.0),
+                child: KawaiiBellIcon(
+                  notificationCount: _unreadCount,
+                  onTap: () {
+                    setState(() => _unreadCount = 0);
+                    Navigator.of(context).push(_createSlideRoute(const NotificationsScreen()));
+                  },
+                ),
+              ),
             ),
-            IconButton(
-              icon: const Icon(FontAwesomeIcons.paperPlane, color: Colors.white, size: 20),
-              onPressed: () {
-                Navigator.of(context).push(_createSlideRoute(const MessagesScreen()));
-              },
+
+            // 🔥 YENİ: PARLAMAYAN, DÜZ YEŞİL MESAJ İKONU 🔥
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0, left: 4.0),
+              child: CyberMessageButton(
+                onTap: () {
+                  Navigator.of(context).push(_createSlideRoute(const MessagesScreen()));
+                },
+              ),
             ),
           ],
         ),
@@ -479,6 +493,278 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// 🔔 KAWAII ÇAN WIDGET 🔔
+class KawaiiBellIcon extends StatefulWidget {
+  final int notificationCount;
+  final VoidCallback onTap;
+
+  const KawaiiBellIcon({
+    super.key,
+    required this.notificationCount,
+    required this.onTap,
+  });
+
+  @override
+  State<KawaiiBellIcon> createState() => _KawaiiBellIconState();
+}
+
+class _KawaiiBellIconState extends State<KawaiiBellIcon> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    bool hasNotification = widget.notificationCount > 0;
+
+    if (hasNotification) {
+      _controller.stop();
+    } else {
+      if (!_controller.isAnimating) _controller.repeat();
+    }
+
+    final Color bellColor = const Color(0xFF6C63FF); // TEMA MORU
+    final Color faceColor = Colors.white; // BEYAZ YÜZ
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        color: Colors.transparent,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (!hasNotification)
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return Positioned(
+                    top: 0 + (3 * (1 - _controller.value)),
+                    right: 2 + (3 * _controller.value),
+                    child: Opacity(
+                      opacity: 1 - _controller.value,
+                      child: Transform.scale(
+                        scale: 0.6 + (_controller.value * 0.4),
+                        child: Text(
+                          "zZz",
+                          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            Icon(FontAwesomeIcons.solidBell, size: 26, color: bellColor),
+            Positioned(
+              top: hasNotification ? 18 : 16,
+              child: hasNotification
+                  ? _buildAwakeFace(faceColor)
+                  : _buildSleepingFace(faceColor),
+            ),
+            if (hasNotification)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.black, width: 1.5),
+                  ),
+                  constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                  child: Text(
+                    widget.notificationCount > 9 ? '9+' : widget.notificationCount.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSleepingFace(Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.keyboard_arrow_down_rounded, size: 9, color: color),
+            const SizedBox(width: 2),
+            Icon(Icons.keyboard_arrow_down_rounded, size: 9, color: color),
+          ],
+        ),
+        const SizedBox(height: 1),
+        _buildSnoreBubble(color),
+      ],
+    );
+  }
+
+  Widget _buildSnoreBubble(Color color) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        double scale = 0.6 + (sin(_controller.value * pi) * 0.4);
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            width: 5,
+            height: 5,
+            decoration: BoxDecoration(color: color.withOpacity(0.5), shape: BoxShape.circle, border: Border.all(color: color, width: 0.8)),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAwakeFace(Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildEye(color),
+            const SizedBox(width: 6),
+            _buildEye(color),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Container(
+          width: 9,
+          height: 4,
+          decoration: BoxDecoration(color: Colors.transparent, border: Border(bottom: BorderSide(color: color, width: 1.5)), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8))),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEye(Color color) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(width: 5.5, height: 5.5, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+        Container(width: 3, height: 3, decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle)),
+      ],
+    );
+  }
+}
+
+// 🔥🔥 YENİ: PARLAMAYAN, YEŞİL CYBER MESAJ İKONU 🔥🔥
+class CyberMessageButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const CyberMessageButton({
+    super.key,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // 🔥 RENK: Neon Yeşil
+    const neonGreen = Color(0xFF69F0AE);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            // 🔥 SHADOW/GLOW KALDIRILDI
+          ),
+          child: CustomPaint(
+            painter: _ChatBubblePainter(neonGreen),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChatBubblePainter extends CustomPainter {
+  final Color color;
+
+  _ChatBubblePainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.3
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..color = color; // 🔥 YEŞİL RENK
+
+    // --- 1. BALONCUK ŞEKLİ (KÜÇÜK) ---
+    const double padding = 7.0;
+    const double cornerRadius = 6.0;
+
+    final Path path = Path();
+
+    path.moveTo(padding + cornerRadius, padding);
+    path.lineTo(size.width - padding - cornerRadius, padding);
+    path.arcToPoint(Offset(size.width - padding, padding + cornerRadius), radius: const Radius.circular(cornerRadius));
+    path.lineTo(size.width - padding, size.height - padding - 6);
+
+    // 🔥 KUYRUK
+    path.lineTo(size.width - padding + 1.5, size.height - padding + 1.5);
+    path.lineTo(size.width - padding - 5, size.height - padding);
+
+    path.lineTo(padding + cornerRadius, size.height - padding);
+    path.arcToPoint(Offset(padding, size.height - padding - cornerRadius), radius: const Radius.circular(cornerRadius));
+    path.lineTo(padding, padding + cornerRadius);
+    path.arcToPoint(Offset(padding + cornerRadius, padding), radius: const Radius.circular(cornerRadius));
+
+    canvas.drawPath(path, paint);
+
+    // --- 2. İÇERİK ÇİZGİLERİ ---
+    final linePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.3
+      ..strokeCap = StrokeCap.round
+      ..color = color;
+
+    final centerX = size.width / 2;
+    final centerY = (padding + (size.height - padding)) / 2 - 1;
+
+    canvas.drawLine(
+      Offset(centerX - 5, centerY - 2.5),
+      Offset(centerX + 5, centerY - 2.5),
+      linePaint,
+    );
+
+    canvas.drawLine(
+      Offset(centerX - 5, centerY + 2.5),
+      Offset(centerX, centerY + 2.5),
+      linePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
 // 🔥 BUZLU CAM (GLASSMORPHISM) EFEKTLİ POST KARTI 🔥
 class PostCard extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -545,25 +831,20 @@ class _PostCardState extends State<PostCard> {
       onTap: _goToDetail,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 12),
-        // Container'ı şeffaf yapıyoruz çünkü asıl efekt aşağıda
         color: Colors.transparent,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24), // Oval Köşeler
+          borderRadius: BorderRadius.circular(24),
           child: BackdropFilter(
-            // 🔥 BULANIKLIK (BLUR) AYARI
             filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
             child: Container(
               decoration: BoxDecoration(
-                // Yarı saydam beyaz/gri arka plan
                 color: Colors.white.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(24),
-                // İnce çerçeve cam hissini artırır
                 border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ÜST KISIM (HEADER)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
                     child: Row(
@@ -611,8 +892,6 @@ class _PostCardState extends State<PostCard> {
                       ],
                     ),
                   ),
-
-                  // İÇERİK METNİ
                   if (p['content'] != null && p['content'].toString().isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -621,8 +900,6 @@ class _PostCardState extends State<PostCard> {
                         style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.95), fontSize: 14, height: 1.5),
                       ),
                     ),
-
-                  // GÖRSEL
                   if (p['image_url'] != null)
                     GestureDetector(
                       onTap: () => _openFullScreen(p['image_url']),
@@ -642,8 +919,6 @@ class _PostCardState extends State<PostCard> {
                         ),
                       ),
                     ),
-
-                  // AKSİYON BUTONLARI
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
