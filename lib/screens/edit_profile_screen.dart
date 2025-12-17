@@ -1,9 +1,10 @@
 import 'dart:io';
-import 'dart:ui'; // Blur efekti için gerekli
+import 'dart:ui'; // Blur efekti için
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:country_code_picker/country_code_picker.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> currentProfile;
@@ -19,10 +20,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
   final _usernameController = TextEditingController();
   final _bioController = TextEditingController();
 
+  // 2FA Değişkenleri
+  bool _is2FAEnabled = false;
+  String? _verifiedPhone;
+  String _selectedCountryCode = "+90"; // Varsayılan Türkiye
+
   bool _isLoading = false;
   File? _imageFile;
 
-  // 🔥 RENK PALETİN
+  // 🔥 RENK PALETİ
   final Color _colorPurple = const Color(0xFF6C63FF);
   final Color _colorBlue = const Color(0xFF448AFF);
   final Color _colorGreen = const Color(0xFF69F0AE);
@@ -40,27 +46,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
     _usernameController.text = widget.currentProfile['username'] ?? '';
     _bioController.text = widget.currentProfile['bio'] ?? '';
 
-    // 1. Mor Işık Animasyonu
-    _animController1 = AnimationController(
-        vsync: this,
-        duration: const Duration(seconds: 5)
-    )..repeat(reverse: true);
+    _is2FAEnabled = widget.currentProfile['is_2fa_enabled'] ?? false;
+    _verifiedPhone = widget.currentProfile['phone'];
 
-    _animOffset1 = Tween<Offset>(
-        begin: const Offset(-0.2, -0.2),
-        end: const Offset(0.2, 0.2)
-    ).animate(CurvedAnimation(parent: _animController1, curve: Curves.easeInOut));
+    // Animasyonlar
+    _animController1 = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat(reverse: true);
+    _animOffset1 = Tween<Offset>(begin: const Offset(-0.2, -0.2), end: const Offset(0.2, 0.2))
+        .animate(CurvedAnimation(parent: _animController1, curve: Curves.easeInOut));
 
-    // 2. Mavi Işık Animasyonu
-    _animController2 = AnimationController(
-        vsync: this,
-        duration: const Duration(seconds: 4)
-    )..repeat(reverse: true);
-
-    _animOffset2 = Tween<Offset>(
-        begin: const Offset(0.2, 0.2),
-        end: const Offset(-0.2, -0.2)
-    ).animate(CurvedAnimation(parent: _animController2, curve: Curves.easeInOut));
+    _animController2 = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat(reverse: true);
+    _animOffset2 = Tween<Offset>(begin: const Offset(0.2, 0.2), end: const Offset(-0.2, -0.2))
+        .animate(CurvedAnimation(parent: _animController2, curve: Curves.easeInOut));
   }
 
   @override
@@ -76,25 +72,263 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (image != null) setState(() => _imageFile = File(image.path));
+  }
 
-    if (image != null) {
-      setState(() {
-        _imageFile = File(image.path);
-      });
+  // --- 2FA İŞLEMLERİ ---
+
+  // 1. Telefon Numarası İste (Gelişmiş Seçicili)
+  void _showPhoneInputDialog() {
+    final phoneController = TextEditingController();
+    String tempCountryCode = _selectedCountryCode;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder( // Dialog içinde state değişimi için
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1A1A1A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text("Telefon Doğrulama", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Lütfen telefon numaranızı girin. Giriş yaparken bu numaraya kod gönderilecektir.",
+                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // 🔥 ÜLKE KODU VE NUMARA ALANI 🔥
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: Row(
+                      children: [
+                        // Sol Taraf: Ülke Seçici
+                        CountryCodePicker(
+                          onChanged: (country) {
+                            tempCountryCode = country.dialCode!;
+                          },
+                          initialSelection: 'TR', // Varsayılan Türkiye
+                          favorite: const ['+90', 'US', 'GB'], // En üstte çıkacaklar
+                          showCountryOnly: false,
+                          showOnlyCountryWhenClosed: false,
+                          alignLeft: false,
+                          textStyle: GoogleFonts.poppins(color: Colors.white),
+                          dialogBackgroundColor: const Color(0xFF2A2A2A),
+                          barrierColor: Colors.black87,
+                          searchDecoration: InputDecoration(
+                            hintText: "Ülke Ara...",
+                            hintStyle: TextStyle(color: Colors.white30),
+                            fillColor: const Color(0xFF1A1A1A),
+                            filled: true,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          ),
+                        ),
+
+                        // Dikey Çizgi
+                        Container(width: 1, height: 30, color: Colors.white24),
+
+                        // Sağ Taraf: Numara Girişi
+                        Expanded(
+                          child: TextField(
+                            controller: phoneController,
+                            keyboardType: TextInputType.phone,
+                            style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
+                            decoration: InputDecoration(
+                              hintText: "555 123 45 67",
+                              hintStyle: GoogleFonts.poppins(color: Colors.white30),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("İptal", style: TextStyle(color: Colors.redAccent)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _colorGreen,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    // Başındaki 0'ı temizle
+                    String rawNumber = phoneController.text.trim();
+                    if (rawNumber.startsWith('0')) {
+                      rawNumber = rawNumber.substring(1);
+                    }
+
+                    // Tam numarayı oluştur: +90555...
+                    final fullNumber = "$tempCountryCode$rawNumber";
+
+                    Navigator.pop(context);
+                    _sendSmsCode(fullNumber);
+                  },
+                  child: const Text("Kod Gönder", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          }
+      ),
+    );
+  }
+
+  // 2. SMS Gönder (GÜNCELLENDİ: updateUser kullanıyor) ✅
+  Future<void> _sendSmsCode(String fullPhone) async {
+    setState(() => _isLoading = true);
+    try {
+      // ⚠️ ARTIK SİZİ LOGOUT YAPMAZ. Mevcut kullanıcının telefonunu günceller.
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(phone: fullPhone),
+      );
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showOtpInputDialog(fullPhone); // Kod girme ekranına geç
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("SMS Gönderilemedi: $e"),
+          backgroundColor: Colors.redAccent,
+        ));
+      }
     }
   }
 
+  // 3. Kodu İste
+  void _showOtpInputDialog(String phone) {
+    final otpController = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text("Doğrulama Kodu", style: GoogleFonts.poppins(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("$phone numarasına gelen kodu girin.", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13)),
+            const SizedBox(height: 20),
+            TextField(
+              controller: otpController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 24, letterSpacing: 5),
+              decoration: InputDecoration(
+                hintText: "------",
+                hintStyle: TextStyle(color: Colors.white24),
+                counterText: "",
+                filled: true,
+                fillColor: Colors.black26,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _colorGreen)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("İptal", style: TextStyle(color: Colors.redAccent))
+          ),
+          ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: _colorGreen),
+              onPressed: () {
+                Navigator.pop(context);
+                _verifyOtpAndEnable2FA(phone, otpController.text.trim());
+              },
+              child: const Text("Onayla", style: TextStyle(color: Colors.black))
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 4. Kodu Doğrula ve 2FA'yı Aç (GÜNCELLENDİ: phoneChange kullanıyor) ✅
+  Future<void> _verifyOtpAndEnable2FA(String phone, String token) async {
+    setState(() => _isLoading = true);
+    try {
+      // ⚠️ OtpType.sms değil, OtpType.phoneChange kullanıyoruz!
+      final response = await Supabase.instance.client.auth.verifyOTP(
+        phone: phone,
+        token: token,
+        type: OtpType.phoneChange,
+      );
+
+      // Kullanıcı değişmedi, sadece session güncellendi.
+      if (response.user != null) {
+        final userId = Supabase.instance.client.auth.currentUser!.id;
+
+        // Veritabanına kaydet
+        await Supabase.instance.client.from('profiles').update({
+          'is_2fa_enabled': true,
+          'phone': phone,
+        }).eq('id', userId);
+
+        setState(() {
+          _is2FAEnabled = true;
+          _verifiedPhone = phone;
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("2FA ve Telefon Başarıyla Eklendi! 🔒"), backgroundColor: _colorGreen)
+          );
+        }
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Hatalı Kod: $e"), backgroundColor: Colors.red));
+      }
+    }
+  }
+
+  // 5. 2FA Kapatma
+  Future<void> _disable2FA() async {
+    setState(() => _isLoading = true);
+    try {
+      final userId = Supabase.instance.client.auth.currentUser!.id;
+      await Supabase.instance.client.from('profiles').update({
+        'is_2fa_enabled': false,
+      }).eq('id', userId);
+
+      setState(() {
+        _is2FAEnabled = false;
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("2FA Kapatıldı.")));
+      }
+    } catch(e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // PROFİLİ KAYDET
   Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
     final userId = Supabase.instance.client.auth.currentUser!.id;
 
     try {
-      if (_usernameController.text.contains(' ')) {
-        throw 'Kullanıcı adında boşluk olamaz.';
-      }
-      if (_nameController.text.isEmpty) {
-        throw 'İsim alanı boş bırakılamaz.';
-      }
+      if (_usernameController.text.contains(' ')) throw 'Kullanıcı adında boşluk olamaz.';
+      if (_nameController.text.isEmpty) throw 'İsim alanı boş bırakılamaz.';
 
       String? avatarUrl = widget.currentProfile['avatar_url'];
 
@@ -102,7 +336,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
         final fileExt = _imageFile!.path.split('.').last;
         final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
         final filePath = 'avatars/$fileName';
-
         await Supabase.instance.client.storage.from('uploads').upload(filePath, _imageFile!);
         avatarUrl = Supabase.instance.client.storage.from('uploads').getPublicUrl(filePath);
       }
@@ -116,20 +349,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
       }).eq('id', userId);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Profil başarıyla güncellendi! 🚀', style: GoogleFonts.poppins()),
-              backgroundColor: _colorGreen.withOpacity(0.8),
-              behavior: SnackBarBehavior.floating,
-            )
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Profil güncellendi! 🚀', style: GoogleFonts.poppins()),
+          backgroundColor: _colorGreen,
+        ));
         Navigator.pop(context, true);
       }
-
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.redAccent));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -139,7 +366,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
   Widget build(BuildContext context) {
     final currentAvatarUrl = widget.currentProfile['avatar_url'];
     ImageProvider? bgImage;
-
     if (_imageFile != null) {
       bgImage = FileImage(_imageFile!);
     } else if (currentAvatarUrl != null) {
@@ -148,40 +374,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
 
     return Stack(
       children: [
-        // 1. Arka Plan
         Container(color: const Color(0xFF050505)),
-
-        // 2. Hareketli Mor Işık
-        SlideTransition(
-          position: _animOffset1,
-          child: Align(
-            alignment: Alignment.topLeft,
-            child: Container(
-              width: 300, height: 300,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: _colorPurple.withOpacity(0.25)),
-            ),
-          ),
-        ),
-
-        // 3. Hareketli Mavi Işık
-        SlideTransition(
-          position: _animOffset2,
-          child: Align(
-            alignment: Alignment.bottomRight,
-            child: Container(
-              width: 300, height: 300,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: _colorBlue.withOpacity(0.25)),
-            ),
-          ),
-        ),
-
-        // 4. Blur
-        BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 60.0, sigmaY: 60.0),
-          child: Container(color: Colors.transparent),
-        ),
-
-        // 5. İçerik
+        SlideTransition(position: _animOffset1, child: Align(alignment: Alignment.topLeft, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: _colorPurple.withOpacity(0.25))))),
+        SlideTransition(position: _animOffset2, child: Align(alignment: Alignment.bottomRight, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: _colorBlue.withOpacity(0.25))))),
+        BackdropFilter(filter: ImageFilter.blur(sigmaX: 60.0, sigmaY: 60.0), child: Container(color: Colors.transparent)),
         Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
@@ -191,31 +387,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
             centerTitle: true,
             title: Text('Profili Düzenle', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
             actions: [
-              // 🔥 YENİLENMİŞ KAYDET BUTONU
               Padding(
-                padding: const EdgeInsets.only(right: 16), // Sağdan boşluk
+                padding: const EdgeInsets.only(right: 16),
                 child: Center(
                   child: SizedBox(
-                    height: 32, // Buton yüksekliği (Küçültüldü)
+                    height: 32,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _saveProfile,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _colorGreen, // Neon Yeşil Arka Plan
-                        foregroundColor: Colors.black, // Siyah Yazı (Okunabilirlik için)
-                        elevation: 0, // Gölge yok (Flat tasarım)
-                        padding: const EdgeInsets.symmetric(horizontal: 16), // Yatay dolgu
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // Tam yuvarlak köşeler
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                          : Text(
-                          'Kaydet',
-                          style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600, // Biraz kalın
-                              fontSize: 13, // Font boyutu küçültüldü
-                              letterSpacing: 0.5 // Harf aralığı
-                          )
-                      ),
+                      style: ElevatedButton.styleFrom(backgroundColor: _colorGreen, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                      child: _isLoading ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)) : Text('Kaydet', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
                   ),
                 ),
@@ -226,8 +406,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
             child: Column(
               children: [
                 const SizedBox(height: 20),
-
-                // --- AVATAR ---
                 Center(
                   child: Stack(
                     children: [
@@ -235,55 +413,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
                         onTap: _pickImage,
                         child: Container(
                           padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(colors: [_colorPurple, _colorBlue], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                              boxShadow: [BoxShadow(color: _colorPurple.withOpacity(0.3), blurRadius: 20, spreadRadius: 2)]
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
-                            child: CircleAvatar(
-                              radius: 60,
-                              backgroundColor: const Color(0xFF1F1F1F),
-                              backgroundImage: bgImage,
-                              child: bgImage == null ? const Icon(Icons.person, size: 60, color: Colors.white24) : null,
-                            ),
-                          ),
+                          decoration: BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [_colorPurple, _colorBlue]), boxShadow: [BoxShadow(color: _colorPurple.withOpacity(0.3), blurRadius: 20)]),
+                          child: CircleAvatar(radius: 60, backgroundColor: const Color(0xFF1F1F1F), backgroundImage: bgImage, child: bgImage == null ? const Icon(Icons.person, size: 60, color: Colors.white24) : null),
                         ),
                       ),
-                      Positioned(
-                        bottom: 5, right: 5,
-                        child: GestureDetector(
-                          onTap: _pickImage,
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                                color: _colorGreen,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.black, width: 3),
-                                boxShadow: [BoxShadow(color: _colorGreen.withOpacity(0.4), blurRadius: 8, spreadRadius: 2)]
-                            ),
-                            child: const Icon(Icons.camera_alt, color: Colors.black, size: 20),
-                          ),
-                        ),
-                      ),
+                      Positioned(bottom: 5, right: 5, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: _colorGreen, shape: BoxShape.circle, border: Border.all(color: Colors.black, width: 2)), child: const Icon(Icons.camera_alt, color: Colors.black, size: 18))),
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 40),
-
-                // --- FORM ---
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.fromLTRB(24, 30, 24, 40),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
-                  ),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.08))),
                   child: Column(
                     children: [
                       _buildTextField("Adın Soyadın", _nameController, icon: Icons.person_outline),
@@ -292,18 +435,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
                       const SizedBox(height: 24),
                       _buildTextField("Biyografi", _bioController, maxLines: 3, maxLength: 150, icon: Icons.short_text),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 30),
+                      // 🔥 GÜVENLİK BÖLÜMÜ 🔥
+                      const Divider(color: Colors.white10),
+                      const SizedBox(height: 10),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.info_outline, color: _colorBlue.withOpacity(0.5), size: 14),
-                          const SizedBox(width: 6),
-                          Text(
-                              "Profilin herkese açık olacaktır.",
-                              style: GoogleFonts.poppins(color: Colors.white30, fontSize: 12)
+                          Icon(Icons.shield_outlined, color: _colorGreen, size: 24),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("İki Adımlı Doğrulama (2FA)", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+                                Text(_is2FAEnabled ? "Aktif: $_verifiedPhone" : "Kapalı - Güvenliği artır", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 11)),
+                              ],
+                            ),
                           ),
+                          Switch(
+                            value: _is2FAEnabled,
+                            activeColor: Colors.black,
+                            activeTrackColor: _colorGreen,
+                            inactiveThumbColor: Colors.grey,
+                            inactiveTrackColor: Colors.white10,
+                            onChanged: (val) {
+                              if (val) _showPhoneInputDialog();
+                              else _disable2FA();
+                            },
+                          )
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -320,33 +481,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-              label,
-              style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)
-          ),
-        ),
+        Padding(padding: const EdgeInsets.only(left: 4, bottom: 8), child: Text(label, style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500))),
         TextField(
-          controller: controller,
-          maxLines: maxLines,
-          maxLength: maxLength,
+          controller: controller, maxLines: maxLines, maxLength: maxLength,
           style: GoogleFonts.poppins(color: Colors.white, fontSize: 15),
-          cursorColor: _colorGreen,
           decoration: InputDecoration(
-            filled: true,
-            fillColor: const Color(0xFF1A1A1A),
-            counterStyle: GoogleFonts.poppins(color: Colors.white24),
+            filled: true, fillColor: const Color(0xFF1A1A1A),
             prefixIcon: icon != null ? Icon(icon, color: _colorBlue.withOpacity(0.7)) : null,
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.05), width: 1),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: _colorPurple, width: 1.5),
-            ),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.05))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: _colorPurple, width: 1.5)),
           ),
         ),
       ],
