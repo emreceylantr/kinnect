@@ -25,7 +25,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   late AnimationController _pulseController;
   late AnimationController _rotateController;
-  late AnimationController _floatController;
+  late AnimationController _scannerController;
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
@@ -34,27 +34,31 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           "Sadece fotoğraf değil, anlam paylaş.\nSeni gerçekten anlayan kabileleri keşfet.",
       icon: FontAwesomeIcons.circleNodes,
       color: kAccentPurple,
+      type: PageType.glow,
     ),
     OnboardingPage(
       title: "Görsel Zeka",
       subtitle:
           "Paylaştığın karelerdeki gizli hobileri\nve tarzını yapay zeka ile analiz ediyoruz.",
-      icon: FontAwesomeIcons.wandMagicSparkles,
+      icon: FontAwesomeIcons.images,
       color: kAccentCyan,
+      type: PageType.scanner,
     ),
     OnboardingPage(
       title: "Kelimelerin Gücü",
       subtitle:
           "Yazılarının satır aralarındaki 'seni' okuyoruz.\nYüzeysel değil, derin bağlar kur.",
-      icon: FontAwesomeIcons.brain,
+      icon: FontAwesomeIcons.wandMagicSparkles,
       color: kAccentPink,
+      type: PageType.textAnalysis,
     ),
     OnboardingPage(
       title: "Kabileni Bul",
       subtitle:
           "AI destekli eşleştirme ile sana en uygun\ninsanları keşfet ve bağlan.",
       icon: FontAwesomeIcons.userGroup,
-      color: Color(0xFFFF9800),
+      color: const Color(0xFFFF9800),
+      type: PageType.glow,
     ),
   ];
 
@@ -72,9 +76,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       duration: const Duration(seconds: 20),
     )..repeat();
 
-    _floatController = AnimationController(
+    _scannerController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3000),
+      duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
   }
 
@@ -83,7 +87,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     _pageController.dispose();
     _pulseController.dispose();
     _rotateController.dispose();
-    _floatController.dispose();
+    _scannerController.dispose();
     super.dispose();
   }
 
@@ -125,7 +129,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             onPageChanged: (index) => setState(() => _currentPage = index),
             itemCount: _pages.length,
             itemBuilder: (context, index) {
-              return _buildPageContent(_pages[index], index);
+              return _buildPageContent(_pages[index]);
             },
           ),
 
@@ -143,44 +147,23 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   // 🌌 ARKA PLAN EFEKTLERİ
   Widget _buildBackgroundEffects() {
+    final currentColor = _pages[_currentPage].color;
+
     return AnimatedBuilder(
       animation: _rotateController,
       builder: (context, child) {
-        final currentColor = _pages[_currentPage].color;
-
         return Stack(
           children: [
-            // Dönen gradient orb - sol üst
+            // Merkez glow (sabit, hareket etmiyor)
             Positioned(
-              top: -100,
-              left: -100,
-              child: Transform.rotate(
-                angle: _rotateController.value * 2 * pi,
-                child: Container(
-                  width: 300,
-                  height: 300,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        currentColor.withOpacity(0.3),
-                        currentColor.withOpacity(0.0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Dönen gradient orb - sağ alt
-            Positioned(
-              bottom: -150,
-              right: -150,
-              child: Transform.rotate(
-                angle: -_rotateController.value * 2 * pi,
-                child: Container(
-                  width: 400,
-                  height: 400,
+              top: MediaQuery.of(context).size.height * 0.22,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 500),
+                  width: 250,
+                  height: 250,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
@@ -193,33 +176,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 ),
               ),
             ),
-
-            // Merkez glow
-            Positioned(
-              top: MediaQuery.of(context).size.height * 0.25,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: AnimatedBuilder(
-                  animation: _pulseController,
-                  builder: (context, child) {
-                    return Container(
-                      width: 200 + (_pulseController.value * 50),
-                      height: 200 + (_pulseController.value * 50),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            currentColor.withOpacity(0.15),
-                            currentColor.withOpacity(0.0),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
           ],
         );
       },
@@ -227,70 +183,70 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   // 📄 SAYFA İÇERİĞİ
-  Widget _buildPageContent(OnboardingPage page, int index) {
+  Widget _buildPageContent(OnboardingPage page) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           children: [
-            const Spacer(flex: 2),
+            const SizedBox(height: 80),
 
-            // 🎯 MERKEZ İKON
-            AnimatedBuilder(
-              animation: _floatController,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0, sin(_floatController.value * pi) * 10),
-                  child: _buildCenterIcon(page),
-                );
-              },
+            // 🎯 MERKEZ İKON (animasyonlu)
+            SizedBox(
+              height: 220,
+              child: _buildCenterWidget(page),
             ),
 
-            const Spacer(flex: 1),
+            const SizedBox(height: 50),
 
-            // 📝 BAŞLIK
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
-              child: Text(
-                page.title,
-                key: ValueKey(page.title),
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: -0.5,
-                  height: 1.2,
-                ),
+            // 📝 BAŞLIK (SABİT - animasyon yok)
+            Text(
+              page.title,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: -0.5,
+                height: 1.2,
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            // 📝 ALT YAZI
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
-              child: Text(
-                page.subtitle,
-                key: ValueKey(page.subtitle),
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: Colors.white60,
-                  height: 1.6,
-                ),
+            // 📝 ALT YAZI (SABİT - animasyon yok)
+            Text(
+              page.subtitle,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                color: Colors.white60,
+                height: 1.6,
               ),
             ),
 
-            const Spacer(flex: 3),
+            const Spacer(),
           ],
         ),
       ),
     );
   }
 
-  // 🎯 MERKEZ İKON
-  Widget _buildCenterIcon(OnboardingPage page) {
+  // 🎯 MERKEZ WİDGET (Tipine göre farklı)
+  Widget _buildCenterWidget(OnboardingPage page) {
+    switch (page.type) {
+      case PageType.scanner:
+        return _buildScannerWidget(page);
+      case PageType.textAnalysis:
+        return _buildTextAnalysisWidget(page);
+      case PageType.glow:
+      default:
+        return _buildGlowWidget(page);
+    }
+  }
+
+  // 🔆 GLOW WİDGET (Sayfa 1 ve 4)
+  Widget _buildGlowWidget(OnboardingPage page) {
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -303,8 +259,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               final value = (_pulseController.value + delay) % 1.0;
 
               return Container(
-                width: 120 + (value * 60) + (index * 30),
-                height: 120 + (value * 60) + (index * 30),
+                width: 100 + (value * 50) + (index * 25),
+                height: 100 + (value * 50) + (index * 25),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -319,26 +275,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
         // Gradient halka
         Container(
-          width: 140,
-          height: 140,
+          width: 130,
+          height: 130,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                page.color.withOpacity(0.2),
-                page.color.withOpacity(0.05),
-              ],
-            ),
-            border: Border.all(
-              color: page.color.withOpacity(0.5),
-              width: 2,
-            ),
+            color: page.color.withOpacity(0.08),
             boxShadow: [
               BoxShadow(
                 color: page.color.withOpacity(0.3),
-                blurRadius: 40,
+                blurRadius: 50,
                 spreadRadius: 5,
               ),
             ],
@@ -348,16 +293,177 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         // İkon
         Icon(
           page.icon,
-          size: 50,
+          size: 55,
           color: page.color,
         ),
       ],
     );
   }
 
+  // 🔍 SCANNER WİDGET (Sayfa 2 - Görsel Zeka)
+  Widget _buildScannerWidget(OnboardingPage page) {
+    return SizedBox(
+      width: 200,
+      height: 200,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Arka plan glow
+          Container(
+            width: 160,
+            height: 160,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: page.color.withOpacity(0.08),
+              boxShadow: [
+                BoxShadow(
+                  color: page.color.withOpacity(0.15),
+                  blurRadius: 50,
+                ),
+              ],
+            ),
+          ),
+
+          // İkon
+          Icon(page.icon, size: 70, color: page.color),
+
+          // Tarama çizgisi
+          AnimatedBuilder(
+            animation: _scannerController,
+            builder: (context, child) {
+              return Positioned(
+                top: 30 + (_scannerController.value * 140),
+                child: Container(
+                  width: 120,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(2),
+                    gradient: LinearGradient(
+                      colors: [
+                        page.color.withOpacity(0.0),
+                        page.color.withOpacity(0.8),
+                        page.color.withOpacity(0.0),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: page.color.withOpacity(0.5),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 📝 TEXT ANALYSIS WİDGET (Sayfa 3 - Kelimeler)
+  Widget _buildTextAnalysisWidget(OnboardingPage page) {
+    return SizedBox(
+      width: 200,
+      height: 200,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Arka plan glow
+          Container(
+            width: 160,
+            height: 160,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: page.color.withOpacity(0.08),
+              boxShadow: [
+                BoxShadow(
+                  color: page.color.withOpacity(0.15),
+                  blurRadius: 50,
+                ),
+              ],
+            ),
+          ),
+
+          // Belge kartı
+          Container(
+            width: 110,
+            height: 130,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A24),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: page.color.withOpacity(0.3)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 20,
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Başlık satırı
+                Container(
+                  width: 35,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: page.color,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Animasyonlu satırlar
+                ...List.generate(3, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: AnimatedBuilder(
+                      animation: _pulseController,
+                      builder: (context, child) {
+                        final widths = [55.0, 70.0, 45.0];
+                        final offset = index * 0.3;
+                        final value = (_pulseController.value + offset) % 1.0;
+                        final width = widths[index] + (value * 15) - 7.5;
+
+                        return Container(
+                          width: width,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.white30,
+                            borderRadius: BorderRadius.circular(2.5),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+
+          // AI ikonu
+          Positioned(
+            top: 25,
+            right: 35,
+            child: Icon(
+              FontAwesomeIcons.wandMagicSparkles,
+              size: 18,
+              color: page.color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // 🔘 ALT KONTROLLER
   Widget _buildBottomControls() {
     final isLast = _currentPage == _pages.length - 1;
+    final currentColor = _pages[_currentPage].color;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -368,7 +474,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           GestureDetector(
             onTap: _goToAuth,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Text(
                 "Atla",
                 style: GoogleFonts.poppins(
@@ -390,12 +496,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 width: isActive ? 28 : 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: isActive ? _pages[_currentPage].color : Colors.white24,
+                  color: isActive ? currentColor : Colors.white24,
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: isActive
                       ? [
                           BoxShadow(
-                            color: _pages[_currentPage].color.withOpacity(0.5),
+                            color: currentColor.withOpacity(0.5),
                             blurRadius: 8,
                           ),
                         ]
@@ -411,56 +517,37 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               padding: EdgeInsets.symmetric(
-                horizontal: isLast ? 28 : 24,
-                vertical: 14,
+                horizontal: isLast ? 24 : 20,
+                vertical: 12,
               ),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isLast
-                      ? [
-                          _pages[_currentPage].color,
-                          _pages[_currentPage].color.withOpacity(0.7)
-                        ]
-                      : [
-                          Colors.white.withOpacity(0.1),
-                          Colors.white.withOpacity(0.05)
-                        ],
-                ),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: isLast
-                      ? Colors.transparent
-                      : _pages[_currentPage].color.withOpacity(0.5),
-                ),
+                gradient: isLast
+                    ? LinearGradient(
+                        colors: [currentColor, currentColor.withOpacity(0.7)],
+                      )
+                    : null,
+                color: isLast ? null : currentColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(25),
+                border: isLast
+                    ? null
+                    : Border.all(color: currentColor.withOpacity(0.5)),
                 boxShadow: isLast
                     ? [
                         BoxShadow(
-                          color: _pages[_currentPage].color.withOpacity(0.4),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          color: currentColor.withOpacity(0.4),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
                         ),
                       ]
                     : [],
               ),
-              child: Row(
-                children: [
-                  Text(
-                    isLast ? "Başla" : "İleri",
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                  if (!isLast) ...[
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: _pages[_currentPage].color,
-                      size: 18,
-                    ),
-                  ],
-                ],
+              child: Text(
+                isLast ? "Başla" : "İleri",
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
@@ -470,17 +557,22 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 }
 
+// 📦 SAYFA TİPLERİ
+enum PageType { glow, scanner, textAnalysis }
+
 // 📦 ONBOARDING SAYFA MODELİ
 class OnboardingPage {
   final String title;
   final String subtitle;
   final IconData icon;
   final Color color;
+  final PageType type;
 
   OnboardingPage({
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.color,
+    required this.type,
   });
 }
