@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui'; // 🔥 BUZLU CAM İÇİN GEREKLİ
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -470,7 +471,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         title: Text(
           widget.isExploreMode ? "Ateşin Başı 🔥" : "Gönderi",
           style: GoogleFonts.poppins(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
       body: Column(
@@ -491,6 +492,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
+  // 🔥 BUZLU CAM (GLASSMORPHISM) VE MOR KALP TEMALI DETAY KARTI 🔥
   Widget _buildPostCard() {
     final profile = widget.post["profiles"] ?? {};
     final text = widget.post["content"] ?? "";
@@ -502,215 +504,205 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+      color: Colors.transparent, // Efekt için şeffaf
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // --- HEADER KISMI ---
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) =>
-                              ProfileScreen(userId: widget.post["user_id"]))),
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF6C63FF), Color(0xFF4834D4)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: const Color(0xFF121212),
-                      backgroundImage: profile["avatar_url"] != null
-                          ? NetworkImage(profile["avatar_url"])
-                          : null,
-                      child: profile["avatar_url"] == null
-                          ? const Icon(Icons.person, color: Colors.white54, size: 20)
-                          : null,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(profile["full_name"] ?? "İsimsiz",
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15)),
-                      Text("@${profile["username"]}",
-                          style: GoogleFonts.poppins(
-                              color: Colors.grey.shade500, fontSize: 13)),
-                    ],
-                  ),
-                ),
-
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 12)),
-                    if (!isMyPost) ...[
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 24, height: 24,
-                        child: PopupMenuButton<String>(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(Icons.more_horiz, color: Colors.grey.shade400, size: 20),
-                          color: const Color(0xFF2C2C2C),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          onSelected: (value) {
-                            if (value == 'report') _showReportDialog();
-                          },
-                          itemBuilder: (BuildContext context) {
-                            return [
-                              PopupMenuItem(
-                                value: 'report',
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.flag_outlined, color: Colors.white70, size: 18),
-                                    const SizedBox(width: 10),
-                                    Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13)),
-                                  ],
-                                ),
-                              ),
-                            ];
-                          },
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0), // 🔥 Buzlanma
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.08), // Yarı saydam
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withOpacity(0.1), width: 1), // İnce çerçeve
             ),
-          ),
-
-          // --- İÇERİK METNİ ---
-          if (text.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Text(text,
-                  style:
-                  GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 14, height: 1.5)),
-            ),
-
-          // --- GÖRSEL ---
-          if (image != null)
-            Container(
-              margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-              width: double.infinity,
-              constraints: const BoxConstraints(maxHeight: 400),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Image.network(image, fit: BoxFit.cover),
-              ),
-            ),
-
-          const SizedBox(height: 8),
-
-          // --- AKSİYON BAR (Alt Kısım) ---
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: widget.isExploreMode
-                ? Row(
-              // 🔥 KEŞFET MODU (ODUN) - DEĞİŞMEDİ
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                FuelButton(
-                  isFueled: isFueled,
-                  count: fuelCount,
-                  isExpired: !isAlive,
-                  onTap: _toggleFuel,
-                  size: 30,
-                ),
-                const SizedBox(width: 10),
-                Flexible(
-                  child: Text(
-                    "$fuelCount Odun",
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(width: 24),
-                Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
-                const SizedBox(width: 6),
-                Text("$commentCount",
-                    style: GoogleFonts.poppins(
-                        color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
-              ],
-            )
-                : Row(
-              // 🔥 NORMAL MOD (KALP) - HOMESCREEN İLE AYNI STİL
-              children: [
-                GestureDetector(
-                  onTap: _toggleLike,
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Row(
-                      children: [
-                        Icon(
-                          isLiked
-                              ? FontAwesomeIcons.solidHeart
-                              : FontAwesomeIcons.heart,
-                          color:
-                          isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400, // Kinnect Rengi
-                          size: 22,
-                        ),
-                        if (likeCount > 0) ...[
-                          const SizedBox(width: 6),
-                          Text("$likeCount",
-                              style: GoogleFonts.poppins(
-                                  color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
-                                  fontWeight: FontWeight.w600)),
-                        ]
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 24),
-                Container(
-                  color: Colors.transparent,
+                // --- HEADER ---
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
                   child: Row(
                     children: [
-                      Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
-                      if (commentCount > 0) ...[
-                        const SizedBox(width: 6),
-                        Text("$commentCount",
-                            style: GoogleFonts.poppins(
-                                color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
-                      ]
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    ProfileScreen(userId: widget.post["user_id"]))),
+                        child: CircleAvatar(
+                          radius: 22,
+                          backgroundImage: profile["avatar_url"] != null
+                              ? NetworkImage(profile["avatar_url"])
+                              : null,
+                          backgroundColor: Colors.grey[900],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(profile["full_name"] ?? "İsimsiz",
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold)),
+                            Text("@${profile["username"]}",
+                                style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade400, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12)),
+                          if (!isMyPost) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 28, height: 28,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.05),
+                                shape: BoxShape.circle,
+                              ),
+                              child: PopupMenuButton<String>(
+                                padding: EdgeInsets.zero,
+                                icon: const Icon(Icons.more_horiz, color: Colors.white70, size: 18),
+                                color: const Color(0xFF2C2C2C),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                onSelected: (value) {
+                                  if (value == 'report') _showReportDialog();
+                                },
+                                itemBuilder: (BuildContext context) {
+                                  return [
+                                    PopupMenuItem(
+                                      value: 'report',
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.flag_outlined, color: Colors.white70, size: 18),
+                                          const SizedBox(width: 10),
+                                          Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13)),
+                                        ],
+                                      ),
+                                    ),
+                                  ];
+                                },
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // --- İÇERİK ---
+                if (text.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(text,
+                        style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.95), fontSize: 15)),
+                  ),
+                ],
+
+                // --- GÖRSEL ---
+                if (image != null) ...[
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(image),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 14),
+
+                // --- AKSİYON BAR ---
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: widget.isExploreMode
+                      ? Row(
+                    children: [
+                      FuelButton(
+                        isFueled: isFueled,
+                        count: fuelCount,
+                        isExpired: !isAlive,
+                        onTap: _toggleFuel,
+                        size: 30,
+                      ),
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: Text(
+                          "$fuelCount Odun",
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                              color: Colors.orange,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(FontAwesomeIcons.comment,
+                          color: Colors.grey, size: 22),
+                      const SizedBox(width: 6),
+                      Text("$commentCount",
+                          style: GoogleFonts.poppins(
+                              color: Colors.grey, fontSize: 14)),
+                    ],
+                  )
+                      : Row(
+                    // 🔥 NORMAL MOD: MOR KALP VE HİZALAMA
+                    children: [
+                      GestureDetector(
+                        onTap: _toggleLike,
+                        child: Container(
+                          color: Colors.transparent,
+                          child: Row(
+                            children: [
+                              Icon(
+                                isLiked
+                                    ? FontAwesomeIcons.solidHeart
+                                    : FontAwesomeIcons.heart,
+                                color:
+                                isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400, // Mor Kalp
+                                size: 22,
+                              ),
+                              if (likeCount > 0) ...[
+                                const SizedBox(width: 6),
+                                Text("$likeCount",
+                                    style: GoogleFonts.poppins(
+                                        color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
+                                        fontWeight: FontWeight.w600)),
+                              ]
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Container(
+                        color: Colors.transparent,
+                        child: Row(
+                          children: [
+                            Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
+                            if (commentCount > 0) ...[
+                              const SizedBox(width: 6),
+                              Text("$commentCount",
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
+                            ]
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
