@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
+import 'dart:ui'; // 🔥 BUZLU CAM İÇİN GEREKLİ
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -641,7 +641,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 🔥 GÜNCELLENEN MODERN POST KARTI 🔥
+  // 🔥 GÜNCELLENEN MODERN VE BUZLU CAM EFEKTLİ POST KARTI 🔥
   Widget _buildHomeStylePost(Map<String, dynamic> post, int index) {
     final profile = post['profiles'] ?? {};
     final content = post['content'] ?? '';
@@ -657,165 +657,167 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))),
       child: Container(
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E), // Modern, yumuşak siyah
-          borderRadius: BorderRadius.circular(24), // Oval köşeler
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- HEADER (Avatar ve İsim) ---
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-              child: Row(
+        color: Colors.transparent, // Arka plan şeffaf çünkü efekt aşağıda
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0), // 🔥 Buzlanma Miktarı
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08), // Yarı saydam beyaz
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withOpacity(0.1), width: 1), // İnce cam çerçeve
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        // 🔥 Kinnect Gradient Halka
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF6C63FF), Color(0xFF4834D4)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: CircleAvatar(
-                        radius: 20,
-                        backgroundColor: const Color(0xFF121212),
-                        backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
-                        child: profile['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white54, size: 20) : null,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // --- HEADER (Avatar ve İsim) ---
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                    child: Row(
                       children: [
-                        Text(
-                          profile['full_name'] ?? 'İsimsiz',
-                          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
-                        ),
-                        Text(
-                          '@${profile['username']}',
-                          style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 12)),
-                      if (isMe) ...[
-                        const SizedBox(width: 8),
                         GestureDetector(
-                          onTap: () => _confirmDelete(post['id']),
+                          onTap: () {},
                           child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: _accentBlue.withOpacity(0.15),
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
                               shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF6C63FF), Color(0xFF4834D4)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                             ),
-                            child: Icon(
-                              Icons.delete_outline,
-                              color: _accentBlue,
-                              size: 18,
+                            child: CircleAvatar(
+                              radius: 20,
+                              backgroundColor: const Color(0xFF121212),
+                              backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
+                              child: profile['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white54, size: 20) : null,
                             ),
                           ),
                         ),
-                      ]
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                profile['full_name'] ?? 'İsimsiz',
+                                style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                              ),
+                              Text(
+                                '@${profile['username']}',
+                                style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 13), // Renk biraz açıldı (cam üstünde okunabilirlik)
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12)),
+                            if (isMe) ...[
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => _confirmDelete(post['id']),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: _accentBlue.withOpacity(0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.delete_outline,
+                                    color: _accentBlue,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                            ]
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ),
 
-            // --- İÇERİK ---
-            if (content.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Text(
-                  content,
-                  style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 14, height: 1.5),
-                ),
-              ),
+                  // --- İÇERİK ---
+                  if (content.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: Text(
+                        content,
+                        style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.95), fontSize: 14, height: 1.5),
+                      ),
+                    ),
 
-            // --- GÖRSEL ---
-            if (imageUrl != null)
-              Container(
-                margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                width: double.infinity,
-                constraints: const BoxConstraints(maxHeight: 400),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: Image.network(imageUrl, fit: BoxFit.cover),
-                ),
-              ),
+                  // --- GÖRSEL ---
+                  if (imageUrl != null)
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      width: double.infinity,
+                      constraints: const BoxConstraints(maxHeight: 400),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Image.network(imageUrl, fit: BoxFit.cover),
+                      ),
+                    ),
 
-            // --- AKSİYON BAR (Alt Kısım) ---
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  // BEĞEN BUTONU
-                  Container(
-                    color: Colors.transparent,
+                  // --- AKSİYON BAR (Alt Kısım) ---
+                  Padding(
+                    padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        Icon(
-                          isLiked ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
-                          color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400, // Kinnect Rengi
-                          size: 22,
-                        ),
-                        if (likeCount > 0) ...[
-                          const SizedBox(width: 6),
-                          Text(
-                            "$likeCount",
-                            style: GoogleFonts.poppins(
+                        // BEĞEN BUTONU
+                        Container(
+                          color: Colors.transparent,
+                          child: Row(
+                            children: [
+                              Icon(
+                                isLiked ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
                                 color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
-                                fontWeight: FontWeight.w600
-                            ),
+                                size: 22,
+                              ),
+                              if (likeCount > 0) ...[
+                                const SizedBox(width: 6),
+                                Text(
+                                  "$likeCount",
+                                  style: GoogleFonts.poppins(
+                                      color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
+                                      fontWeight: FontWeight.w600
+                                  ),
+                                ),
+                              ]
+                            ],
                           ),
-                        ]
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 24),
+                        ),
+                        const SizedBox(width: 24),
 
-                  // YORUM BUTONU
-                  Container(
-                    color: Colors.transparent,
-                    child: Row(
-                      children: [
-                        Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
-                        if (commentCount > 0) ...[
-                          const SizedBox(width: 6),
-                          Text(
-                            "$commentCount",
-                            style: GoogleFonts.poppins(
-                                color: Colors.grey.shade400,
-                                fontWeight: FontWeight.w600
-                            ),
+                        // YORUM BUTONU
+                        Container(
+                          color: Colors.transparent,
+                          child: Row(
+                            children: [
+                              Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
+                              if (commentCount > 0) ...[
+                                const SizedBox(width: 6),
+                                Text(
+                                  "$commentCount",
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.grey.shade400,
+                                      fontWeight: FontWeight.w600
+                                  ),
+                                ),
+                              ]
+                            ],
                           ),
-                        ]
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
