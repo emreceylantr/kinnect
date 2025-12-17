@@ -13,7 +13,7 @@ import 'profile_screen.dart';
 import 'post_detail_screen.dart';
 import 'messages_screen.dart';
 import 'call_screen.dart';
-import 'search_screen.dart'; // 🔥 YENİ EKRANI İMPORT ETTİK
+import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final FeedService _feedService = FeedService();
   int _currentIndex = 0;
 
+  late Future<List<Map<String, dynamic>>> _feedFuture;
+
   late final RealtimeChannel _notificationChannel;
   String get _currentUserId => Supabase.instance.client.auth.currentUser!.id;
 
@@ -33,12 +35,32 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _setupRealtimeSubscription();
+    _refreshFeed();
+  }
+
+  void _refreshFeed() {
+    setState(() {
+      _feedFuture = _feedService.getFriendsFeed();
+    });
   }
 
   @override
   void dispose() {
     Supabase.instance.client.removeChannel(_notificationChannel);
     super.dispose();
+  }
+
+  Route _createSlideRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+        const curve = Curves.easeOutQuart;
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+    );
   }
 
   // --- BİLDİRİM VE ARAMA DİNLEME ---
@@ -121,7 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           actionsAlignment: MainAxisAlignment.spaceEvenly,
           actions: [
-            // REDDET
             Column(
               children: [
                 IconButton(
@@ -136,7 +157,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text("Reddet", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12))
               ],
             ),
-            // KATIL
             Column(
               children: [
                 IconButton(
@@ -150,13 +170,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => CallScreen(
-                          callId: callId,
-                          otherUserName: callerProfile['full_name'] ?? 'Kullanıcı',
-                          isVideo: false,
-                        ),
-                      ),
+                      _createSlideRoute(CallScreen(
+                        callId: callId,
+                        otherUserName: callerProfile['full_name'] ?? 'Kullanıcı',
+                        isVideo: false,
+                      )),
                     );
                   },
                   iconSize: 50,
@@ -233,10 +251,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       try {
                         final roomId = await ChatService().createOrGetChatRoom(userProfile['id'].toString());
                         if (mounted) {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(roomId: roomId, otherUser: userProfile)));
+                          Navigator.push(context, _createSlideRoute(ChatScreen(roomId: roomId, otherUser: userProfile)));
                         }
                       } catch (e) {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const MessagesScreen()));
+                        Navigator.push(context, _createSlideRoute(const MessagesScreen()));
                       }
                     } else if (postId != null) {
                       final postRes = await Supabase.instance.client
@@ -245,10 +263,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           .eq('id', postId)
                           .maybeSingle();
                       if (postRes != null && mounted) {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: postRes)));
+                        Navigator.push(context, _createSlideRoute(PostDetailScreen(post: postRes)));
                       }
                     } else {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                      Navigator.push(context, _createSlideRoute(const NotificationsScreen()));
                     }
                   },
                   child: Container(
@@ -296,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _getAppBarTitle() {
     switch (_currentIndex) {
       case 0: return 'Ana Akış';
-      case 1: return 'Keşfet'; // Artık SearchScreen'in kendi Appbar'ı var ama burası title döndürüyor, sorun değil
+      case 1: return 'Keşfet';
       case 3: return 'AI Asistan';
       case 4: return 'Profilim';
       default: return 'Kinnect';
@@ -305,14 +323,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 2. Tab (Keşfet) ve 4. Tab (Profil) kendi Appbar'ını kullanır
     final bool hideAppBar = _currentIndex == 1 || _currentIndex == 4;
 
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
         backgroundColor: const Color(0xFF050505),
-        // Eğer Keşfet (1) veya Profil (4) ise AppBar'ı gizle
         appBar: hideAppBar
             ? null
             : AppBar(
@@ -320,27 +336,22 @@ class _HomeScreenState extends State<HomeScreen> {
           elevation: 0,
           title: Text(
             _getAppBarTitle(),
-            style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+            style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -0.5),
           ),
           actions: [
             IconButton(
-              icon: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 22),
+              icon: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 20),
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                Navigator.of(context).push(_createSlideRoute(const NotificationsScreen()));
               },
             ),
             IconButton(
-              icon: const Icon(FontAwesomeIcons.paperPlane, color: Colors.white, size: 22),
+              icon: const Icon(FontAwesomeIcons.paperPlane, color: Colors.white, size: 20),
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MessagesScreen()));
+                Navigator.of(context).push(_createSlideRoute(const MessagesScreen()));
               },
             ),
-            IconButton(
-              icon: const Icon(FontAwesomeIcons.arrowRightFromBracket, color: Colors.white, size: 22),
-              onPressed: () async {
-                await Supabase.instance.client.auth.signOut();
-              },
-            ),
+            // 🔥 ÇIKIŞ YAP BUTONU KALDIRILDI
           ],
         ),
         body: _buildBody(),
@@ -349,11 +360,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- BURASI DÜZELTİLDİ: ARTIK ESKİ KOD YOK, DİREKT SEARCH SCREEN VAR ---
   Widget _buildBody() {
     switch (_currentIndex) {
-      case 0: return _buildFeed(); // Ana Sayfa
-      case 1: return const SearchScreen(); // 🔥 İŞTE BURASI! Yeni ekranı bağlıyoruz.
+      case 0: return _buildFeed();
+      case 1: return const SearchScreen();
       case 3: return _buildAiTab();
       case 4: return ProfileScreen(userId: _currentUserId, showBackButton: false);
       default: return _buildFeed();
@@ -362,7 +372,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFeed() {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _feedService.getFriendsFeed(),
+      future: _feedFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF)));
@@ -376,12 +386,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         }
-        return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 20, top: 10),
-          itemCount: posts.length,
-          itemBuilder: (context, index) => PostCard(
-            post: posts[index],
-            onRefresh: () => setState(() {}),
+        return RefreshIndicator(
+          color: const Color(0xFF6C63FF),
+          backgroundColor: const Color(0xFF1E1E1E),
+          onRefresh: () async {
+            _refreshFeed();
+            await _feedFuture;
+          },
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(0, 10, 0, 30),
+            itemCount: posts.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) => PostCard(
+              post: posts[index],
+              onRefresh: _refreshFeed,
+            ),
           ),
         );
       },
@@ -409,12 +428,14 @@ class _HomeScreenState extends State<HomeScreen> {
       type: BottomNavigationBarType.fixed,
       currentIndex: _currentIndex,
       selectedItemColor: const Color(0xFF6C63FF),
-      unselectedItemColor: Colors.white54,
+      unselectedItemColor: Colors.grey.shade700,
       showSelectedLabels: false,
       showUnselectedLabels: false,
+      iconSize: 24,
+      elevation: 0,
       onTap: (index) {
         if (index == 2) {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CreatePostScreen()));
+          Navigator.of(context).push(_createSlideRoute(const CreatePostScreen()));
           return;
         }
         setState(() {
@@ -423,28 +444,28 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       items: const [
         BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.house, size: 22),
-            activeIcon: Icon(FontAwesomeIcons.house, size: 24),
+            icon: Icon(FontAwesomeIcons.house),
+            activeIcon: Icon(FontAwesomeIcons.house, shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
             label: ''
         ),
         BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.fire, size: 22), // İkonu ATEŞ yaptık
-            activeIcon: Icon(FontAwesomeIcons.fire, size: 24),
+            icon: Icon(FontAwesomeIcons.fire),
+            activeIcon: Icon(FontAwesomeIcons.fire, shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
             label: ''
         ),
         BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.circlePlus, size: 30),
-            activeIcon: Icon(FontAwesomeIcons.circlePlus, size: 30),
+            icon: Icon(FontAwesomeIcons.circlePlus, size: 32),
+            activeIcon: Icon(FontAwesomeIcons.circlePlus, size: 32, shadows: [Shadow(blurRadius: 15, color: Color(0xFF6C63FF))]),
             label: ''
         ),
         BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.wandMagicSparkles, size: 22),
-            activeIcon: Icon(FontAwesomeIcons.wandMagicSparkles, size: 24),
+            icon: Icon(FontAwesomeIcons.wandMagicSparkles),
+            activeIcon: Icon(FontAwesomeIcons.wandMagicSparkles, shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
             label: ''
         ),
         BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.user, size: 22),
-            activeIcon: Icon(FontAwesomeIcons.user, size: 24),
+            icon: Icon(FontAwesomeIcons.user),
+            activeIcon: Icon(FontAwesomeIcons.user, shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
             label: ''
         ),
       ],
@@ -452,7 +473,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// --- POST CARD (Aynı kalıyor) ---
 class PostCard extends StatefulWidget {
   final Map<String, dynamic> post;
   final VoidCallback onRefresh;
@@ -472,16 +492,33 @@ class _PostCardState extends State<PostCard> {
     isLiked = likes.any((l) => l['user_id'] == myId);
   }
 
+  Route _createSlideRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+        const curve = Curves.easeOutQuart;
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+    );
+  }
+
   void _toggleLike() async {
     setState(() => isLiked = !isLiked);
     await FeedService().toggleLike(widget.post['id']);
   }
 
   void _goToDetail() async {
-    final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: widget.post)));
+    final result = await Navigator.push(context, _createSlideRoute(PostDetailScreen(post: widget.post)));
     if (result == true || mounted) {
       widget.onRefresh();
     }
+  }
+
+  void _goToProfile(String userId) {
+    Navigator.push(context, _createSlideRoute(ProfileScreen(userId: userId)));
   }
 
   void _openFullScreen(String url) {
@@ -500,91 +537,144 @@ class _PostCardState extends State<PostCard> {
     return GestureDetector(
       onTap: _goToDetail,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        margin: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.5),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              leading: GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: p['user_id']))),
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: const Color(0xFF1F1F1F),
-                  backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
-                  child: profile['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white54) : null,
-                ),
+            // ÜST KISIM
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => _goToProfile(p['user_id']),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF6C63FF), Color(0xFF4834D4)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: const Color(0xFF121212),
+                        backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
+                        child: profile['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white54, size: 20) : null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        GestureDetector(
+                          onTap: () => _goToProfile(p['user_id']),
+                          child: Text(
+                            profile['full_name'] ?? 'Bilinmiyor',
+                            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                          ),
+                        ),
+                        Text(
+                          '@${profile['username']}',
+                          style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 12)),
+                ],
               ),
-              title: GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: p['user_id']))),
-                child: Text(profile['full_name'] ?? 'Bilinmiyor', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-              ),
-              subtitle: Text('@${profile['username']}', style: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 13)),
-              trailing: Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
             ),
+
+            // İÇERİK METNİ
             if (p['content'] != null && p['content'].toString().isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Text(p['content'], style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, height: 1.4)),
+                child: Text(
+                  p['content'],
+                  style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 14, height: 1.5),
+                ),
               ),
+
+            // GÖRSEL
             if (p['image_url'] != null)
               GestureDetector(
                 onTap: () => _openFullScreen(p['image_url']),
                 child: Container(
-                  margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                   width: double.infinity,
-                  constraints: const BoxConstraints(maxHeight: 350),
+                  constraints: const BoxConstraints(maxHeight: 400),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                   child: Hero(
                     tag: p['image_url'],
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(18),
                       child: Image.network(p['image_url'], fit: BoxFit.cover),
                     ),
                   ),
                 ),
               ),
+
+            // AKSİYON BUTONLARI (PAYLAŞ VE SPACER SİLİNDİ)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
+                  // Beğen
                   GestureDetector(
                     onTap: _toggleLike,
-                    child: Row(
-                      children: [
-                        Icon(isLiked ? FontAwesomeIcons.heart : FontAwesomeIcons.heart,
-                            color: isLiked ? Colors.redAccent : Colors.grey,
-                            size: 20
-                        ),
-                        const SizedBox(width: 6),
-                        if (likeCount > 0) Text("$likeCount", style: GoogleFonts.poppins(color: Colors.grey, fontSize: 13)),
-                      ],
+                    child: Container(
+                      color: Colors.transparent,
+                      child: Row(
+                        children: [
+                          Icon(
+                            isLiked ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
+                            color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
+                            size: 22,
+                          ),
+                          if (likeCount > 0) ...[
+                            const SizedBox(width: 6),
+                            Text("$likeCount", style: GoogleFonts.poppins(color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400, fontWeight: FontWeight.w600)),
+                          ]
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 24),
+                  // Yorum
                   GestureDetector(
                     onTap: _goToDetail,
-                    child: Row(
-                      children: [
-                        const Icon(FontAwesomeIcons.comment, color: Colors.grey, size: 20),
-                        const SizedBox(width: 6),
-                        if (commentCount > 0) Text("$commentCount", style: GoogleFonts.poppins(color: Colors.grey, fontSize: 13)),
-                      ],
+                    child: Container(
+                      color: Colors.transparent,
+                      child: Row(
+                        children: [
+                          Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
+                          if (commentCount > 0) ...[
+                            const SizedBox(width: 6),
+                            Text("$commentCount", style: GoogleFonts.poppins(color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
+                          ]
+                        ],
+                      ),
                     ),
                   ),
-                  const Spacer(),
-                  const Icon(FontAwesomeIcons.shareFromSquare, color: Colors.grey, size: 20),
+                  // 🔥 PAYLAŞ BUTONU VE SPACER KALDIRILDI
                 ],
               ),
             ),
