@@ -10,17 +10,17 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # --- MÜZİK SERVİSLERİ (YENİ EKLENENLER) ---
+  # --- MÜZİK SERVİSLERİ ---
   http: ^1.2.0           # Spotify & Apple Music API istekleri için
   url_launcher: ^6.2.5   # Spotify uygulamasını açmak için
-  app_links: ^6.3.0
+  app_links: ^6.3.0      # Deep linking
 
-
-  # --- SESLİ MESAJ İÇİN GEREKLİLER ---
-  record: ^6.0.0
-  audioplayers: ^6.0.0   # Apple Music 30sn önizleme burada çalacak
+  # --- SES VE VİDEO (MEDYA) ---
+  record: ^6.0.0         # Ses kaydı (Zego ile uyumlu olması için senin sürümüne döndüm)
+  audioplayers: ^6.0.0   # Ses çalma
+  video_player: ^2.9.0   # 🎥 YENİ: Live Video oynatmak için gerekli!
   path_provider: ^2.1.2
-  permission_handler: ^12.0.1
+  permission_handler: ^12.0.1 # ✅ DÜZELTİLDİ: Zego için sürüm yükseltildi
 
   # --- KİMLİK DOĞRULAMA ---
   google_sign_in: ^6.2.1
@@ -40,7 +40,7 @@ dependencies:
   # --- EKRANLAR ---
   introduction_screen: ^3.1.14
 
-  # --- MEDYA ---
+  # --- RESİM & DOSYA ---
   image_picker: ^1.0.7
 
   # --- ZEGO CLOUD (ARAMA & GÖRÜNTÜLÜ SOHBET) ---
@@ -59,6 +59,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Resim vb. varlıklar
+  assets:
+    - assets/icon/
 
 # --- İKON AYARLARI ---
 flutter_launcher_icons:
