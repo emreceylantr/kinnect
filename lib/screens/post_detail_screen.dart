@@ -94,10 +94,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   // *********************************************************
-  // 🛡️ ŞİKAYET ETME FONKSİYONLARI (MODERN TASARIM 🔥)
+  // 🛡️ ŞİKAYET ETME FONKSİYONLARI
   // *********************************************************
 
-  // 1. ADIM: SEBEP SEÇME
   void _showReportDialog() {
     showDialog(
       context: context,
@@ -174,7 +173,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  // 2. ADIM: EK AÇIKLAMA YAZMA (GÜNCELLENMİŞ ESTETİK)
   void _showReportDetailsDialog(String reason) {
     final TextEditingController detailsController = TextEditingController();
 
@@ -195,15 +193,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Text("Ek Açıklama", style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600))), // Font büyütüldü
+              Center(child: Text("Ek Açıklama", style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600))),
               const SizedBox(height: 15),
-              Text("Seçilen: $reason", style: GoogleFonts.poppins(color: Colors.orange, fontSize: 12)), // Font büyütüldü
+              Text("Seçilen: $reason", style: GoogleFonts.poppins(color: Colors.orange, fontSize: 12)),
               const SizedBox(height: 5),
-              Text("Detay eklemek istersen aşağıya yazabilirsin.", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)), // Font büyütüldü
+              Text("Detay eklemek istersen aşağıya yazabilirsin.", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
               const SizedBox(height: 15),
               TextField(
                 controller: detailsController,
-                style: GoogleFonts.poppins(color: Colors.white, fontSize: 14), // Font büyütüldü
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: "Buraya yaz...",
@@ -215,15 +213,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // 🔥 HİZALI VE KİBAR BUTONLAR
               Row(
                 children: [
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(ctx),
                       style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 10), // Daha küçük buton
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
                       ),
                       child: Text("Vazgeç", style: GoogleFonts.poppins(color: Colors.white38, fontSize: 13)),
@@ -239,7 +235,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6C63FF),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(vertical: 10), // Daha küçük buton
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           elevation: 0
                       ),
                       child: Text("Gönder", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
@@ -254,7 +250,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  // 3. ADIM: GÖNDERME İŞLEMİ
   Future<void> _submitReport(String reason, String description) async {
     try {
       await _safetyService.reportContent(
@@ -468,14 +463,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF000000),
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.transparent,
         leading: const BackButton(color: Colors.white),
         elevation: 0,
         centerTitle: true,
         title: Text(
           widget.isExploreMode ? "Ateşin Başı 🔥" : "Gönderi",
           style: GoogleFonts.poppins(
-              color: Colors.white, fontWeight: FontWeight.bold),
+              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
         ),
       ),
       body: Column(
@@ -503,173 +498,217 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final date = DateTime.tryParse(widget.post["created_at"] ?? "");
     final dateStr = date != null ? "${date.day}/${date.month}" : "";
 
-    // Post Sahibi miyim?
     final isMyPost = widget.post["user_id"] == myId;
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1A1A1A),
-        border: Border(bottom: BorderSide(color: Colors.white12)),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) =>
-                            ProfileScreen(userId: widget.post["user_id"]))),
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundImage: profile["avatar_url"] != null
-                      ? NetworkImage(profile["avatar_url"])
-                      : null,
-                  backgroundColor: Colors.grey[900],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(profile["full_name"] ?? "İsimsiz",
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)),
-                    Text("@${profile["username"]}",
-                        style: GoogleFonts.poppins(
-                            color: Colors.white54, fontSize: 12)),
-                  ],
-                ),
-              ),
-
-              // 🔥 YENİ MODERN HEADER: Eğer post benimse menü yok, başkasınınsa var.
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(dateStr, style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
-                  // Sadece başkasının postuysa şikayet menüsü göster
-                  if (!isMyPost) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      width: 28, height: 28,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05), // Çok hafif arka plan
-                        shape: BoxShape.circle,
-                      ),
-                      child: PopupMenuButton<String>(
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(Icons.more_horiz, color: Colors.white70, size: 18),
-                        color: const Color(0xFF2C2C2C),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        onSelected: (value) {
-                          if (value == 'report') _showReportDialog();
-                        },
-                        itemBuilder: (BuildContext context) {
-                          return [
-                            PopupMenuItem(
-                              value: 'report',
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.flag_outlined, color: Colors.white70, size: 18),
-                                  const SizedBox(width: 10),
-                                  Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13)),
-                                ],
-                              ),
-                            ),
-                          ];
-                        },
+          // --- HEADER KISMI ---
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              ProfileScreen(userId: widget.post["user_id"]))),
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF6C63FF), Color(0xFF4834D4)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
                     ),
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: const Color(0xFF121212),
+                      backgroundImage: profile["avatar_url"] != null
+                          ? NetworkImage(profile["avatar_url"])
+                          : null,
+                      child: profile["avatar_url"] == null
+                          ? const Icon(Icons.person, color: Colors.white54, size: 20)
+                          : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(profile["full_name"] ?? "İsimsiz",
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15)),
+                      Text("@${profile["username"]}",
+                          style: GoogleFonts.poppins(
+                              color: Colors.grey.shade500, fontSize: 13)),
+                    ],
+                  ),
+                ),
+
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 12)),
+                    if (!isMyPost) ...[
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 24, height: 24,
+                        child: PopupMenuButton<String>(
+                          padding: EdgeInsets.zero,
+                          icon: Icon(Icons.more_horiz, color: Colors.grey.shade400, size: 20),
+                          color: const Color(0xFF2C2C2C),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          onSelected: (value) {
+                            if (value == 'report') _showReportDialog();
+                          },
+                          itemBuilder: (BuildContext context) {
+                            return [
+                              PopupMenuItem(
+                                value: 'report',
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.flag_outlined, color: Colors.white70, size: 18),
+                                    const SizedBox(width: 10),
+                                    Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13)),
+                                  ],
+                                ),
+                              ),
+                            ];
+                          },
+                        ),
+                      ),
+                    ],
                   ],
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
 
-          if (text.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(text,
-                style:
-                GoogleFonts.poppins(color: Colors.white, fontSize: 15)),
-          ],
-
-          if (image != null) ...[
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(image),
+          // --- İÇERİK METNİ ---
+          if (text.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Text(text,
+                  style:
+                  GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 14, height: 1.5)),
             ),
-          ],
 
-          const SizedBox(height: 14),
+          // --- GÖRSEL ---
+          if (image != null)
+            Container(
+              margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+              width: double.infinity,
+              constraints: const BoxConstraints(maxHeight: 400),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Image.network(image, fit: BoxFit.cover),
+              ),
+            ),
 
-          widget.isExploreMode
-              ? Row(
-            children: [
-              FuelButton(
-                isFueled: isFueled,
-                count: fuelCount,
-                isExpired: !isAlive,
-                onTap: _toggleFuel,
-                size: 30,
-              ),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  "$fuelCount Odun",
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                      color: Colors.orange,
-                      fontWeight: FontWeight.bold),
+          const SizedBox(height: 8),
+
+          // --- AKSİYON BAR (Alt Kısım) ---
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: widget.isExploreMode
+                ? Row(
+              // 🔥 KEŞFET MODU (ODUN) - DEĞİŞMEDİ
+              children: [
+                FuelButton(
+                  isFueled: isFueled,
+                  count: fuelCount,
+                  isExpired: !isAlive,
+                  onTap: _toggleFuel,
+                  size: 30,
                 ),
-              ),
-              const Spacer(),
-              const Icon(FontAwesomeIcons.comment,
-                  color: Colors.grey, size: 22),
-              const SizedBox(width: 6),
-              Text("$commentCount",
-                  style: GoogleFonts.poppins(
-                      color: Colors.grey, fontSize: 14)),
-            ],
-          )
-              : Row(
-            children: [
-              GestureDetector(
-                onTap: _toggleLike,
-                child: Icon(
-                  isLiked
-                      ? FontAwesomeIcons.solidHeart
-                      : FontAwesomeIcons.heart,
-                  color:
-                  isLiked ? Colors.redAccent : Colors.white54,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text("$likeCount",
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    "$fuelCount Odun",
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
-                        color: Colors.white54, fontSize: 14)),
-              ),
-
-              const Spacer(),
-              const Icon(FontAwesomeIcons.comment,
-                  color: Colors.grey, size: 22),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text("$commentCount",
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
+                const SizedBox(width: 6),
+                Text("$commentCount",
                     style: GoogleFonts.poppins(
-                        color: Colors.grey, fontSize: 14)),
-              ),
-            ],
+                        color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
+              ],
+            )
+                : Row(
+              // 🔥 NORMAL MOD (KALP) - HOMESCREEN İLE AYNI STİL
+              children: [
+                GestureDetector(
+                  onTap: _toggleLike,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Row(
+                      children: [
+                        Icon(
+                          isLiked
+                              ? FontAwesomeIcons.solidHeart
+                              : FontAwesomeIcons.heart,
+                          color:
+                          isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400, // Kinnect Rengi
+                          size: 22,
+                        ),
+                        if (likeCount > 0) ...[
+                          const SizedBox(width: 6),
+                          Text("$likeCount",
+                              style: GoogleFonts.poppins(
+                                  color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
+                                  fontWeight: FontWeight.w600)),
+                        ]
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Container(
+                  color: Colors.transparent,
+                  child: Row(
+                    children: [
+                      Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
+                      if (commentCount > 0) ...[
+                        const SizedBox(width: 6),
+                        Text("$commentCount",
+                            style: GoogleFonts.poppins(
+                                color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
+                      ]
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -681,7 +720,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       return const Padding(
         padding: EdgeInsets.all(30),
         child: Center(
-            child: CircularProgressIndicator(color: Colors.orange)),
+            child: CircularProgressIndicator(color: Color(0xFF6C63FF))),
       );
     }
 
@@ -770,7 +809,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               vertical: 8, horizontal: 12),
                           decoration: BoxDecoration(
                             color: isPlaying
-                                ? Colors.orange
+                                ? const Color(0xFF6C63FF)
                                 : const Color(0xFF2C2C2C),
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -837,7 +876,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ? "Kaydediliyor... ($recordDuration)"
                       : "Yorum yaz...",
                   hintStyle:
-                  TextStyle(color: Colors.white38, fontSize: 14),
+                  const TextStyle(color: Colors.white38, fontSize: 14),
                   border: InputBorder.none,
                   contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -855,7 +894,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             child: CircleAvatar(
               radius: 22,
               backgroundColor:
-              isRecording ? Colors.redAccent : Colors.orange,
+              isRecording ? Colors.redAccent : const Color(0xFF6C63FF),
               child: Icon(
                 isComposing ? Icons.send : Icons.mic,
                 color: Colors.white,
