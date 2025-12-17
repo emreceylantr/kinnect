@@ -1,13 +1,11 @@
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'auth_screen.dart';
 
 // 🎨 PREMIUM TEMA RENKLERİ
 const Color kBgDark = Color(0xFF06060A);
-const Color kBgCard = Color(0xFF12121A);
 const Color kAccentPurple = Color(0xFF7C3AED);
 const Color kAccentViolet = Color(0xFF8B5CF6);
 const Color kAccentPink = Color(0xFFEC4899);
@@ -38,7 +36,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       subtitle: "Bağlantıların ötesinde",
       description:
           "Sadece fotoğraf değil, anlam paylaş.\nSeni gerçekten anlayan kabileleri keşfet.",
-      icon: FontAwesomeIcons.infinity,
       gradient: [kAccentPurple, kAccentViolet],
     ),
     OnboardingData(
@@ -46,7 +43,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       subtitle: "Görsel zeka",
       description:
           "Paylaştığın karelerdeki gizli hobileri\nve tarzını yapay zeka ile analiz ediyoruz.",
-      icon: FontAwesomeIcons.wandMagicSparkles,
       gradient: [kAccentCyan, kAccentBlue],
     ),
     OnboardingData(
@@ -54,7 +50,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       subtitle: "Kelimelerin gücü",
       description:
           "Yazılarının satır aralarındaki 'seni' okuyoruz.\nYüzeysel değil, gerçek bağlar kur.",
-      icon: FontAwesomeIcons.brain,
       gradient: [kAccentPink, kAccentPurple],
     ),
     OnboardingData(
@@ -62,7 +57,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       subtitle: "Eşleştirme",
       description:
           "AI destekli eşleştirme ile sana en uygun\ninsanları keşfet ve bağlan.",
-      icon: FontAwesomeIcons.peopleGroup,
       gradient: [kAccentGreen, kAccentCyan],
     ),
   ];
@@ -71,25 +65,21 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   void initState() {
     super.initState();
 
-    // Parçacık animasyonu
     _particleController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 10),
     )..repeat();
 
-    // Pulse animasyonu
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
 
-    // Glow animasyonu
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3000),
     )..repeat(reverse: true);
 
-    // Parçacıkları oluştur
     _particles = List.generate(50, (_) => Particle.random());
   }
 
@@ -189,7 +179,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               return _PageContent(
                 data: _pages[index],
                 pulseAnimation: _pulseController,
-                isActive: index == _currentPage,
               );
             },
           ),
@@ -352,16 +341,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 }
 
-// 📄 SAYFA İÇERİĞİ
+// 📄 SAYFA İÇERİĞİ - YAZILAR SABİT
 class _PageContent extends StatelessWidget {
   final OnboardingData data;
   final Animation<double> pulseAnimation;
-  final bool isActive;
 
   const _PageContent({
     required this.data,
     required this.pulseAnimation,
-    required this.isActive,
   });
 
   @override
@@ -371,44 +358,42 @@ class _PageContent extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           children: [
-            const Spacer(flex: 2),
+            const SizedBox(height: 80),
 
-            // 🎯 MERKEZ İKON
+            // 🎯 LOGO (animasyonlu)
             AnimatedBuilder(
               animation: pulseAnimation,
               builder: (context, child) {
-                return _buildIconSection();
+                return _buildLogoSection();
               },
             ),
 
-            const Spacer(),
+            const SizedBox(height: 60),
 
-            // 📝 METİNLER
+            // 📝 METİNLER (SABİT - animasyon yok)
             _buildTextSection(),
 
-            const Spacer(flex: 3),
+            const Spacer(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildIconSection() {
-    final scale = 1.0 + (pulseAnimation.value * 0.05);
-
-    return Transform.scale(
-      scale: scale,
+  Widget _buildLogoSection() {
+    return SizedBox(
+      height: 180,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Dış halkalar
+          // Dış halkalar (sadece bu animasyonlu)
           ...List.generate(3, (index) {
             final delay = index * 0.25;
             final value = ((pulseAnimation.value + delay) % 1.0);
 
             return Container(
-              width: 140 + (value * 40) + (index * 30),
-              height: 140 + (value * 40) + (index * 30),
+              width: 120 + (value * 35) + (index * 25),
+              height: 120 + (value * 35) + (index * 25),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
@@ -419,13 +404,13 @@ class _PageContent extends StatelessWidget {
             );
           }),
 
-          // Glassmorphism container
+          // Glassmorphism container + Logo
           ClipOval(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
-                width: 140,
-                height: 140,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
@@ -448,10 +433,12 @@ class _PageContent extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Icon(
-                  data.icon,
-                  size: 50,
-                  color: Colors.white,
+                child: Center(
+                  child: Image.asset(
+                    'assets/icon/icon.png',
+                    width: 60,
+                    height: 60,
+                  ),
                 ),
               ),
             ),
@@ -461,10 +448,11 @@ class _PageContent extends StatelessWidget {
     );
   }
 
+  // 📝 METİNLER (SABİT - HİÇ ANİMASYON YOK)
   Widget _buildTextSection() {
     return Column(
       children: [
-        // Alt başlık (küçük)
+        // Alt başlık badge
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
@@ -527,14 +515,12 @@ class OnboardingData {
   final String title;
   final String subtitle;
   final String description;
-  final IconData icon;
   final List<Color> gradient;
 
   OnboardingData({
     required this.title,
     required this.subtitle,
     required this.description,
-    required this.icon,
     required this.gradient,
   });
 }

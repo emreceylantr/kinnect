@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'signup_screen.dart';
@@ -32,7 +31,6 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
   final AuthService _authService = AuthService();
 
-  late AnimationController _particleController;
   late AnimationController _pulseController;
   late AnimationController _floatController;
   late List<FloatingOrb> _orbs;
@@ -40,11 +38,6 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-
-    _particleController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 15),
-    )..repeat();
 
     _pulseController = AnimationController(
       vsync: this,
@@ -58,7 +51,6 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
     _orbs = List.generate(5, (_) => FloatingOrb.random());
 
-    // Animasyonlu giriş
     Timer(const Duration(milliseconds: 300), () {
       if (mounted) setState(() => _showContent = true);
     });
@@ -66,7 +58,6 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _particleController.dispose();
     _pulseController.dispose();
     _floatController.dispose();
     super.dispose();
@@ -163,17 +154,17 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                   padding: const EdgeInsets.symmetric(horizontal: 28),
                   child: Column(
                     children: [
-                      const Spacer(flex: 2),
+                      const SizedBox(height: 60),
 
                       // 🎯 LOGO
                       _buildLogo(),
 
-                      const Spacer(),
+                      const SizedBox(height: 50),
 
-                      // 📝 TEXT
+                      // 📝 TEXT (SABİT)
                       _buildTextSection(),
 
-                      const Spacer(flex: 2),
+                      const Spacer(),
 
                       // 🔘 BUTTONS
                       _buildButtonsSection(),
@@ -202,21 +193,19 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     return AnimatedBuilder(
       animation: _pulseController,
       builder: (context, child) {
-        final scale = 1.0 + (_pulseController.value * 0.03);
-
-        return Transform.scale(
-          scale: scale,
+        return SizedBox(
+          height: 180,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Glow rings
+              // Glow rings (sadece halkalar animasyonlu)
               ...List.generate(3, (index) {
                 final delay = index * 0.2;
                 final value = ((_pulseController.value + delay) % 1.0);
 
                 return Container(
-                  width: 120 + (value * 40) + (index * 25),
-                  height: 120 + (value * 40) + (index * 25),
+                  width: 110 + (value * 35) + (index * 22),
+                  height: 110 + (value * 35) + (index * 22),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
@@ -227,13 +216,13 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                 );
               }),
 
-              // Main circle
+              // Main circle + Logo
               ClipOval(
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                   child: Container(
-                    width: 120,
-                    height: 120,
+                    width: 110,
+                    height: 110,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
@@ -256,10 +245,12 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      FontAwesomeIcons.infinity,
-                      size: 42,
-                      color: Colors.white,
+                    child: Center(
+                      child: Image.asset(
+                        'assets/icon/icon.png',
+                        width: 55,
+                        height: 55,
+                      ),
                     ),
                   ),
                 ),
@@ -271,6 +262,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     );
   }
 
+  // 📝 TEXT (SABİT - HİÇ ANİMASYON YOK)
   Widget _buildTextSection() {
     return Column(
       children: [
@@ -284,25 +276,14 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
               color: kAccentPurple.withOpacity(0.3),
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                FontAwesomeIcons.wandMagicSparkles,
-                size: 12,
-                color: kAccentPurple,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                "YENİ NESİL SOSYAL AĞ",
-                style: GoogleFonts.poppins(
-                  color: kAccentPurple,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
+          child: Text(
+            "YENİ NESİL SOSYAL AĞ",
+            style: GoogleFonts.poppins(
+              color: kAccentPurple,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.5,
+            ),
           ),
         ),
 
@@ -347,17 +328,18 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       children: [
         // Google Button
         _buildAuthButton(
-          icon: FontAwesomeIcons.google,
+          icon: 'assets/icon/icon.png',
           text: "Google ile Devam Et",
           onTap: _isLoading ? null : _googleSignIn,
           isPrimary: false,
+          useGoogleIcon: true,
         ),
 
         const SizedBox(height: 14),
 
         // Email Button
         _buildAuthButton(
-          icon: FontAwesomeIcons.envelope,
+          icon: '',
           text: "E-posta ile Kayıt Ol",
           onTap: () {
             Navigator.of(context).push(
@@ -365,16 +347,18 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             );
           },
           isPrimary: true,
+          useGoogleIcon: false,
         ),
       ],
     );
   }
 
   Widget _buildAuthButton({
-    required IconData icon,
+    required String icon,
     required String text,
     required VoidCallback? onTap,
     required bool isPrimary,
+    required bool useGoogleIcon,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -405,7 +389,26 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.white, size: 18),
+            if (useGoogleIcon)
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                padding: const EdgeInsets.all(3),
+                child: Image.network(
+                  'https://www.google.com/favicon.ico',
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.g_mobiledata,
+                    size: 16,
+                    color: Colors.blue,
+                  ),
+                ),
+              )
+            else
+              const Icon(Icons.email_outlined, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Text(
               text,
@@ -484,7 +487,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 50,
                       height: 50,
                       child: CircularProgressIndicator(
