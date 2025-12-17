@@ -29,40 +29,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _friendService = FriendService();
   }
 
-  // 🔥 GÜNCELLENMİŞ GRUPLAMA MANTIĞI 🔥
-  // Hem post etkileşimlerini hem de mesajları gruplar.
+  // 🔥 GRUPLAMA MANTIĞI GÜNCELLENDİ 🔥
   List<GroupedNotification> _groupNotifications(List<FollowNotification> rawList) {
     List<GroupedNotification> grouped = [];
 
-    // Post Grupları: "postId_type" anahtarı ile (Örn: 123_like)
+    // Post Grupları: "postId_type"
     Map<String, List<FollowNotification>> postGroups = {};
-
-    // Mesaj Grupları: "userId" anahtarı ile (Örn: user_abc_123)
+    // Mesaj Grupları: "userId"
     Map<String, List<FollowNotification>> messageGroups = {};
-
-    // Diğerleri (Takip, Arama vb.)
+    // Diğerleri
     List<FollowNotification> others = [];
 
     for (var n in rawList) {
-      // 1. Post Etkileşimleri (Like, Comment, Fuel)
       if (n.postId != null && (n.type == 'like' || n.type == 'comment' || n.type == 'fuel')) {
         String key = "${n.postId}_${n.type}";
         if (!postGroups.containsKey(key)) postGroups[key] = [];
         postGroups[key]!.add(n);
       }
-      // 2. Mesajlar (Gönderen kişiye göre grupla)
       else if (n.type == 'message') {
-        String key = n.userId; // Gönderen ID
+        String key = n.userId;
         if (!messageGroups.containsKey(key)) messageGroups[key] = [];
         messageGroups[key]!.add(n);
       }
-      // 3. Diğerleri
       else {
         others.add(n);
       }
     }
 
-    // Post gruplarını listeye ekle
     postGroups.forEach((key, list) {
       grouped.add(GroupedNotification(
         type: list.first.type,
@@ -73,16 +66,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ));
     });
 
-    // Mesaj gruplarını listeye ekle
     messageGroups.forEach((key, list) {
       grouped.add(GroupedNotification(
         type: 'message',
         notifications: list,
-        createdAt: list.first.createdAt, // En son mesajın tarihi
+        createdAt: list.first.createdAt,
       ));
     });
 
-    // Diğerlerini ekle
     for (var n in others) {
       grouped.add(GroupedNotification(
         type: n.type,
@@ -91,7 +82,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ));
     }
 
-    // Hepsini tarihe göre yeniden sırala (En yeni en üstte)
     grouped.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return grouped;
   }
@@ -117,7 +107,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // İSTEKLER (Aynen korundu)
               FutureBuilder<List<Map<String, dynamic>>>(
                 future: _friendService.getPendingRequests(_currentUserId),
                 builder: (context, snapshot) {
@@ -144,9 +133,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 },
               ),
 
-              Padding(padding: const EdgeInsets.only(left: 16, top: 10, bottom: 6), child: Text("Bu Hafta", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
+              Padding(padding: const EdgeInsets.only(left: 16, top: 10, bottom: 6), child: Text("Bildirimler", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
 
-              // LİSTE
               StreamBuilder<List<FollowNotification>>(
                 stream: _friendService.getNotificationsStream(_currentUserId),
                 builder: (context, snapshot) {
@@ -172,39 +160,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final username = notif.userProfile['username'] ?? 'anonim';
     final avatarUrl = notif.userProfile['avatar_url'];
 
-    // 🔥 ÖNEMLİ: Gerçek kişi sayısını bulmak için Set kullanıyoruz.
-    // Ebrar beğenip çekip tekrar beğenirse listede 2 bildirim olur ama uniqueUserIds 1 olur.
     final uniqueUserIds = group.notifications.map((n) => n.userId).toSet();
     final count = uniqueUserIds.length;
-
-    // Mesajlar için toplam sayı (aynı kişi 5 mesaj atarsa 5 görünür)
-    final msgCount = group.notifications.length;
 
     String text = "";
     Widget? trailing;
 
-    // --- TİP BELİRLEME (GÜNCELLENDİ) ---
     if (group.type == 'fuel') {
-      // 🔥 HARLAMA
       text = count == 1 ? "gönderini harladı 🔥" : "ve ${count - 1} diğer kişi gönderini harladı 🔥";
       if (group.postImage != null) {
         trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
       }
     } else if (group.type == 'like') {
-      // BEĞENİ
       text = count == 1 ? "gönderini beğendi." : "ve ${count - 1} diğer kişi gönderini beğendi.";
       if (group.postImage != null) {
         trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
       }
     } else if (group.type == 'comment') {
-      // YORUM
       text = count == 1 ? "yorum yaptı." : "ve ${count - 1} diğer kişi yorum yaptı.";
       if (group.postImage != null) {
         trailing = Container(width: 44, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10), image: DecorationImage(image: NetworkImage(group.postImage!), fit: BoxFit.cover)));
       }
     } else if (group.type == 'message') {
-      // 💬 MESAJ (Gruplanmış)
-      text = msgCount == 1 ? "sana mesaj gönderdi 💬" : "sana $msgCount mesaj gönderdi 💬";
+      // 🔥 DÜZELTİLEN KISIM: Sayı kaldırıldı ve metin sadeleştirildi.
+      text = "sana mesaj gönderdi 💬";
       trailing = const Icon(Icons.mail_outline, color: Colors.cyanAccent);
     } else if (group.type == 'follow') {
       text = "seni takip etmeye başladı.";
@@ -219,7 +198,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     return InkWell(
       onTap: () async {
-        // TIKLAMA AKSİYONLARI
         if (group.type == 'message' || group.type == 'call') {
           try {
             final roomId = await ChatService().createOrGetChatRoom(notif.userId);

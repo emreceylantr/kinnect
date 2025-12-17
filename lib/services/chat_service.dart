@@ -27,6 +27,7 @@ class ChatService {
 
       final newRoom = await client.from('chat_rooms').insert({
         'participants': [_myId, otherUserId],
+        'updated_at': DateTime.now().toIso8601String(),
       }).select().single();
 
       return newRoom['id'];
@@ -36,28 +37,28 @@ class ChatService {
     }
   }
 
-  // 2. MESAJ GÖNDER (GÜNCELLENDİ: receiverId eklendi ve Bildirim Atıyor ✅)
+  // 2. MESAJ GÖNDER
   Future<void> sendMessage(String roomId, String content, String receiverId) async {
     try {
       // a. Mesajı Kaydet
       await client.from('messages').insert({
         'room_id': roomId,
         'sender_id': _myId,
+        'receiver_id': receiverId,
         'content': content,
       });
 
-      // b. Odayı Güncelle
+      // b. Odayı Güncelle (Sıralama tetikleyici)
       await client.from('chat_rooms').update({
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', roomId);
 
-      // c. BİLDİRİM GÖNDER (Yeni)
-      // Kendimize bildirim atmayalım
+      // c. BİLDİRİM GÖNDER
       if (receiverId != _myId) {
         await client.from('notifications').insert({
-          'user_id': receiverId, // Kime
-          'actor_id': _myId,     // Kimden
-          'type': 'message',     // Tip: Mesaj
+          'user_id': receiverId,
+          'actor_id': _myId,
+          'type': 'message',
           'is_read': false,
         });
       }
@@ -66,36 +67,95 @@ class ChatService {
     }
   }
 
-  // 3. MESAJLARI İZLE
-  Stream<List<Map<String, dynamic>>> getMessagesStream(String roomId) {
-    return client.from('messages').stream(primaryKey: ['id']).eq('room_id', roomId).order('created_at', ascending: true).map((maps) => List<Map<String, dynamic>>.from(maps));
+  // 🔥 YENİ: TEK MESAJ SİLME FONKSİYONU
+  Future<void> deleteSingleMessage(String messageId) async {
+    try {
+      await client.from('messages').delete().eq('id', messageId);
+    } catch (e) {
+      print('Mesaj Silme Hatası: $e');
+      rethrow;
+    }
   }
 
-  // 4. SOHBET LİSTESİ
+  // 3. MESAJLARI İZLE
+  Stream<List<Map<String, dynamic>>> getMessagesStream(String roomId) {
+    return client
+        .from('messages')
+        .stream(primaryKey: ['id'])
+        .eq('room_id', roomId)
+        .order('created_at', ascending: true)
+        .map((maps) => List<Map<String, dynamic>>.from(maps));
+  }
+
+  // 4. SOHBET LİSTESİ (Sıralama ve Saat Garantili ✅)
   Future<List<Map<String, dynamic>>> getMyChats() async {
     try {
-      final roomsResponse = await client.from('chat_rooms').select().contains('participants', [_myId]).order('updated_at', ascending: false);
+      final roomsResponse = await client
+          .from('chat_rooms')
+          .select()
+          .contains('participants', [_myId]);
+
       final rooms = List<Map<String, dynamic>>.from(roomsResponse as List);
       if (rooms.isEmpty) return [];
 
-      final otherUserIds = <String>{};
-      for (var room in rooms) {
-        final participants = List<String>.from(room['participants']);
-        final otherId = participants.firstWhere((id) => id != _myId, orElse: () => '');
-        if (otherId.isNotEmpty) otherUserIds.add(otherId);
-      }
-      if (otherUserIds.isEmpty) return [];
+      List<Map<String, dynamic>> finalChats = [];
+      Set<String> otherUserIds = {};
 
-      final profilesResponse = await client.from('profiles').select().inFilter('id', otherUserIds.toList());
+      for (var room in rooms) {
+        // Her odanın içindeki SON mesajı çekiyoruz
+        final lastMessageResponse = await client
+            .from('messages')
+            .select('created_at, content')
+            .eq('room_id', room['id'])
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle();
+
+        // SADECE İÇİNDE MESAJ OLANLARI LİSTEYE AL
+        if (lastMessageResponse != null) {
+          final participants = List<String>.from(room['participants']);
+          final otherId = participants.firstWhere((id) => id != _myId, orElse: () => '');
+
+          if (otherId.isNotEmpty) {
+            otherUserIds.add(otherId);
+
+            finalChats.add({
+              ...room,
+              'other_user_id': otherId,
+              'actual_last_message_at': lastMessageResponse['created_at'],
+            });
+          }
+        }
+      }
+
+      if (finalChats.isEmpty) return [];
+
+      final profilesResponse = await client
+          .from('profiles')
+          .select()
+          .inFilter('id', otherUserIds.toList());
+
       final profilesMap = {for (var p in profilesResponse) p['id'] as String: p};
 
-      return rooms.map((room) {
-        final participants = List<String>.from(room['participants']);
-        final otherId = participants.firstWhere((id) => id != _myId, orElse: () => '');
-        final profile = profilesMap[otherId];
-        return {...room, 'other_user': profile};
+      List<Map<String, dynamic>> result = finalChats.map((chat) {
+        return {
+          ...chat,
+          'other_user': profilesMap[chat['other_user_id']],
+          'updated_at': chat['actual_last_message_at'], // Görüntülenecek saat artık son mesaj saati
+        };
       }).toList();
+
+      // 🔥 EN SON MESAJ ATILAN EN ÜSTE (Tarih bazlı manuel sort)
+      result.sort((a, b) {
+        DateTime dateA = DateTime.parse(a['updated_at']);
+        DateTime dateB = DateTime.parse(b['updated_at']);
+        return dateB.compareTo(dateA);
+      });
+
+      return result;
+
     } catch (e) {
+      print("Chat Listesi Hatası: $e");
       return [];
     }
   }
