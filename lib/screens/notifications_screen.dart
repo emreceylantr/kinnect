@@ -45,6 +45,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     List<GroupedNotification> grouped = [];
     Map<String, List<FollowNotification>> postGroups = {};
     Map<String, List<FollowNotification>> messageGroups = {};
+    Map<String, List<FollowNotification>> callGroups = {}; // 🔥 ARAMA GRUBU
     List<FollowNotification> others = [];
 
     for (var n in rawList) {
@@ -57,6 +58,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         String key = n.userId;
         if (!messageGroups.containsKey(key)) messageGroups[key] = [];
         messageGroups[key]!.add(n);
+      } else if (n.type == 'call') {
+        // 🔥 ARAMALARI DA GRUPLA (Aynı kişiden gelen aramalar)
+        String key = n.userId;
+        if (!callGroups.containsKey(key)) callGroups[key] = [];
+        callGroups[key]!.add(n);
       } else {
         others.add(n);
       }
@@ -75,6 +81,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     messageGroups.forEach((key, list) {
       grouped.add(GroupedNotification(
         type: 'message',
+        notifications: list,
+        createdAt: list.first.createdAt,
+      ));
+    });
+
+    // 🔥 ARAMA GRUPLARINI EKLE
+    callGroups.forEach((key, list) {
+      grouped.add(GroupedNotification(
+        type: 'call',
         notifications: list,
         createdAt: list.first.createdAt,
       ));
@@ -644,7 +659,9 @@ class _NotificationCard extends StatelessWidget {
           icon: FontAwesomeIcons.phone,
           trailingIcon: FontAwesomeIcons.arrowRight,
           color: kAccentGreen,
-          text: "Seni aramaya çalıştı",
+          text: count == 1
+              ? "Seni aramaya çalıştı"
+              : "Seni $count kez aramaya çalıştı",
         );
       default:
         return _NotificationConfig(
