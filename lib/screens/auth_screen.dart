@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'signup_screen.dart';
@@ -11,7 +12,7 @@ import 'home_screen.dart';
 
 import '../services/auth_service.dart';
 
-// 🎨 PREMIUM TEMA RENKLERİ
+// 🎨 PREMIUM TEMA
 const Color kBgDark = Color(0xFF06060A);
 const Color kBgCard = Color(0xFF12121A);
 const Color kAccentPurple = Color(0xFF7C3AED);
@@ -41,17 +42,17 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2500),
+      duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
 
     _floatController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 8),
+      duration: const Duration(seconds: 10),
     )..repeat();
 
-    _orbs = List.generate(5, (_) => FloatingOrb.random());
+    _orbs = List.generate(6, (_) => FloatingOrb.random());
 
-    Timer(const Duration(milliseconds: 300), () {
+    Timer(const Duration(milliseconds: 200), () {
       if (mounted) setState(() => _showContent = true);
     });
   }
@@ -107,30 +108,27 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             builder: (context, child) {
               return CustomPaint(
                 size: size,
-                painter: OrbPainter(
-                  orbs: _orbs,
-                  progress: _floatController.value,
-                ),
+                painter:
+                    OrbPainter(orbs: _orbs, progress: _floatController.value),
               );
             },
           ),
 
-          // 🔮 TOP GRADIENT
+          // 🔮 TOP GLOW
           Positioned(
-            top: -200,
+            top: -180,
             left: -100,
             right: -100,
             child: AnimatedBuilder(
               animation: _pulseController,
               builder: (context, child) {
                 return Container(
-                  height: 500,
+                  height: 450,
                   decoration: BoxDecoration(
                     gradient: RadialGradient(
-                      center: Alignment.center,
-                      radius: 0.8 + _pulseController.value * 0.1,
+                      radius: 0.7 + _pulseController.value * 0.1,
                       colors: [
-                        kAccentPurple.withOpacity(0.2),
+                        kAccentPurple.withOpacity(0.25),
                         kAccentViolet.withOpacity(0.1),
                         Colors.transparent,
                       ],
@@ -144,11 +142,11 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           // 📄 CONTENT
           SafeArea(
             child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 800),
+              duration: const Duration(milliseconds: 600),
               opacity: _showContent ? 1.0 : 0.0,
               child: AnimatedSlide(
-                duration: const Duration(milliseconds: 800),
-                offset: _showContent ? Offset.zero : const Offset(0, 0.1),
+                duration: const Duration(milliseconds: 600),
+                offset: _showContent ? Offset.zero : const Offset(0, 0.05),
                 curve: Curves.easeOutCubic,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -159,9 +157,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                       // 🎯 LOGO
                       _buildLogo(),
 
-                      const SizedBox(height: 50),
+                      const SizedBox(height: 40),
 
-                      // 📝 TEXT (SABİT)
+                      // 📝 TEXT
                       _buildTextSection(),
 
                       const Spacer(),
@@ -169,12 +167,12 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                       // 🔘 BUTTONS
                       _buildButtonsSection(),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
                       // LOGIN LINK
                       _buildLoginLink(),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -190,79 +188,62 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildLogo() {
-    return AnimatedBuilder(
-      animation: _pulseController,
-      builder: (context, child) {
-        return SizedBox(
-          height: 180,
-          child: Stack(
+    return SizedBox(
+      height: 180,
+      child: AnimatedBuilder(
+        animation: _pulseController,
+        builder: (context, child) {
+          return Stack(
             alignment: Alignment.center,
             children: [
-              // Glow rings (sadece halkalar animasyonlu)
+              // Pulsing rings
               ...List.generate(3, (index) {
                 final delay = index * 0.2;
                 final value = ((_pulseController.value + delay) % 1.0);
 
                 return Container(
-                  width: 110 + (value * 35) + (index * 22),
-                  height: 110 + (value * 35) + (index * 22),
+                  width: 100 + (value * 40) + (index * 25),
+                  height: 100 + (value * 40) + (index * 25),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: kAccentPurple.withOpacity(0.25 - (value * 0.25)),
+                      color: kAccentPurple.withOpacity(0.3 - value * 0.3),
                       width: 1.5,
                     ),
                   ),
                 );
               }),
 
-              // Main circle + Logo
-              ClipOval(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                  child: Container(
-                    width: 110,
-                    height: 110,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          kAccentPurple.withOpacity(0.25),
-                          kAccentViolet.withOpacity(0.15),
-                        ],
-                      ),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.15),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: kAccentPurple.withOpacity(0.35),
-                          blurRadius: 50,
-                          spreadRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Image.asset(
-                        'assets/icon/icon.png',
-                        width: 55,
-                        height: 55,
-                      ),
-                    ),
+              // Main logo
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [kAccentPurple, kAccentViolet],
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: kAccentPurple.withOpacity(0.4),
+                      blurRadius: 35,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  FontAwesomeIcons.infinity,
+                  size: 40,
+                  color: Colors.white,
                 ),
               ),
             ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
-  // 📝 TEXT (SABİT - HİÇ ANİMASYON YOK)
   Widget _buildTextSection() {
     return Column(
       children: [
@@ -272,38 +253,39 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             color: kAccentPurple.withOpacity(0.15),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: kAccentPurple.withOpacity(0.3),
-            ),
+            border: Border.all(color: kAccentPurple.withOpacity(0.4)),
           ),
-          child: Text(
-            "YENİ NESİL SOSYAL AĞ",
-            style: GoogleFonts.poppins(
-              color: kAccentPurple,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.5,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(FontAwesomeIcons.wandMagicSparkles,
+                  size: 12, color: kAccentPurple),
+              const SizedBox(width: 8),
+              Text(
+                "YAPAY ZEKA DESTEKLİ",
+                style: GoogleFonts.spaceGrotesk(
+                  color: kAccentPurple,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
           ),
         ),
 
         const SizedBox(height: 24),
 
         // Title
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [kAccentPurple, kAccentViolet, kAccentPink],
-          ).createShader(bounds),
-          child: Text(
-            "Kabileye\nKatıl",
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontSize: 44,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: -1,
-              height: 1.1,
-            ),
+        Text(
+          "Kabileye\nKatıl",
+          textAlign: TextAlign.center,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 46,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            letterSpacing: -1,
+            height: 1.1,
           ),
         ),
 
@@ -313,8 +295,8 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         Text(
           "Gerçek bağlar kurmak için\nşimdi aramıza katıl.",
           textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
-            color: Colors.white.withOpacity(0.5),
+          style: GoogleFonts.inter(
+            color: Colors.white.withOpacity(0.55),
             fontSize: 16,
             height: 1.6,
           ),
@@ -327,100 +309,89 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     return Column(
       children: [
         // Google Button
-        _buildAuthButton(
-          icon: 'assets/icon/icon.png',
-          text: "Google ile Devam Et",
+        GestureDetector(
           onTap: _isLoading ? null : _googleSignIn,
-          isPrimary: false,
-          useGoogleIcon: true,
+          child: Container(
+            width: double.infinity,
+            height: 58,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.12)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  padding: const EdgeInsets.all(4),
+                  child: Image.network(
+                    'https://www.google.com/favicon.ico',
+                    errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata,
+                        size: 16, color: Colors.blue),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  "Google ile Devam Et",
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
 
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
 
         // Email Button
-        _buildAuthButton(
-          icon: '',
-          text: "E-posta ile Kayıt Ol",
+        GestureDetector(
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SignUpScreen()),
             );
           },
-          isPrimary: true,
-          useGoogleIcon: false,
+          child: Container(
+            width: double.infinity,
+            height: 58,
+            decoration: BoxDecoration(
+              gradient:
+                  const LinearGradient(colors: [kAccentPurple, kAccentViolet]),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: kAccentPurple.withOpacity(0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.email_outlined, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  "E-posta ile Kayıt Ol",
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
-    );
-  }
-
-  Widget _buildAuthButton({
-    required String icon,
-    required String text,
-    required VoidCallback? onTap,
-    required bool isPrimary,
-    required bool useGoogleIcon,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 60,
-        decoration: BoxDecoration(
-          gradient: isPrimary
-              ? const LinearGradient(
-                  colors: [kAccentPurple, kAccentViolet],
-                )
-              : null,
-          color: isPrimary ? null : Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(18),
-          border: isPrimary
-              ? null
-              : Border.all(color: Colors.white.withOpacity(0.1)),
-          boxShadow: isPrimary
-              ? [
-                  BoxShadow(
-                    color: kAccentPurple.withOpacity(0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ]
-              : [],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (useGoogleIcon)
-              Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                padding: const EdgeInsets.all(3),
-                child: Image.network(
-                  'https://www.google.com/favicon.ico',
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.g_mobiledata,
-                    size: 16,
-                    color: Colors.blue,
-                  ),
-                ),
-              )
-            else
-              const Icon(Icons.email_outlined, color: Colors.white, size: 20),
-            const SizedBox(width: 12),
-            Text(
-              text,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -430,7 +401,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       children: [
         Text(
           "Zaten hesabın var mı? ",
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.inter(
             color: Colors.white.withOpacity(0.4),
             fontSize: 14,
           ),
@@ -441,17 +412,12 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
               MaterialPageRoute(builder: (_) => const LoginScreen()),
             );
           },
-          child: ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [kAccentPurple, kAccentPink],
-            ).createShader(bounds),
-            child: Text(
-              "Giriş Yap",
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+          child: Text(
+            "Giriş Yap",
+            style: GoogleFonts.inter(
+              color: kAccentPurple,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
             ),
           ),
         ),
@@ -463,50 +429,38 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       child: Container(
-        color: kBgDark.withOpacity(0.8),
+        color: kBgDark.withOpacity(0.85),
         child: Center(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                padding: const EdgeInsets.all(40),
-                decoration: BoxDecoration(
-                  color: kBgCard.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
+          child: Container(
+            padding: const EdgeInsets.all(36),
+            decoration: BoxDecoration(
+              color: kBgCard,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              boxShadow: [
+                BoxShadow(
+                  color: kAccentPurple.withOpacity(0.2),
+                  blurRadius: 40,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation<Color>(kAccentPurple),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: kAccentPurple.withOpacity(0.2),
-                      blurRadius: 40,
-                    ),
-                  ],
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(
-                      width: 50,
-                      height: 50,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(kAccentPurple),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Giriş yapılıyor...",
-                      style: GoogleFonts.poppins(
-                        color: Colors.white70,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 20),
+                Text(
+                  "Giriş yapılıyor...",
+                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 15),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -537,8 +491,8 @@ class FloatingOrb {
     return FloatingOrb(
       x: random.nextDouble(),
       y: random.nextDouble(),
-      size: random.nextDouble() * 150 + 80,
-      speed: random.nextDouble() * 0.2 + 0.05,
+      size: random.nextDouble() * 120 + 60,
+      speed: random.nextDouble() * 0.15 + 0.05,
       color: colors[random.nextInt(colors.length)],
     );
   }
@@ -559,7 +513,7 @@ class OrbPainter extends CustomPainter {
       final paint = Paint()
         ..shader = RadialGradient(
           colors: [
-            orb.color.withOpacity(0.15),
+            orb.color.withOpacity(0.12),
             orb.color.withOpacity(0.0),
           ],
         ).createShader(Rect.fromCircle(center: Offset(x, y), radius: orb.size));
