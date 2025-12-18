@@ -118,15 +118,26 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             decoration: BoxDecoration(
                 color: const Color(0xFF252525),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, spreadRadius: 5)]
-            ),
+                border:
+                    Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 20,
+                      spreadRadius: 5)
+                ]),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                Text("Şikayet Et",
+                    style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
-                Text("Bu gönderiyi neden bildiriyorsun?", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 11)),
+                Text("Bu gönderiyi neden bildiriyorsun?",
+                    style: GoogleFonts.poppins(
+                        color: Colors.white54, fontSize: 11)),
                 const SizedBox(height: 20),
                 Flexible(
                   child: SingleChildScrollView(
@@ -141,13 +152,21 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             },
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.03), borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.03),
+                                  borderRadius: BorderRadius.circular(12)),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(reasons[index], style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12.5)),
-                                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 12),
+                                  Text(reasons[index],
+                                      style: GoogleFonts.poppins(
+                                          color: Colors.white70,
+                                          fontSize: 12.5)),
+                                  const Icon(Icons.arrow_forward_ios_rounded,
+                                      color: Colors.white24, size: 12),
                                 ],
                               ),
                             ),
@@ -162,8 +181,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   width: double.infinity,
                   child: TextButton(
                     onPressed: () => Navigator.pop(ctx),
-                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                    child: Text("Vazgeç", style: GoogleFonts.poppins(color: Colors.white38, fontSize: 13)),
+                    style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12))),
+                    child: Text("Vazgeç",
+                        style: GoogleFonts.poppins(
+                            color: Colors.white38, fontSize: 13)),
                   ),
                 )
               ],
@@ -187,18 +211,32 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           decoration: BoxDecoration(
               color: const Color(0xFF252525),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, spreadRadius: 5)]
-          ),
+              border:
+                  Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 20,
+                    spreadRadius: 5)
+              ]),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Text("Ek Açıklama", style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600))),
+              Center(
+                  child: Text("Ek Açıklama",
+                      style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600))),
               const SizedBox(height: 15),
-              Text("Seçilen: $reason", style: GoogleFonts.poppins(color: Colors.orange, fontSize: 12)),
+              Text("Seçilen: $reason",
+                  style:
+                      GoogleFonts.poppins(color: Colors.orange, fontSize: 12)),
               const SizedBox(height: 5),
-              Text("Detay eklemek istersen aşağıya yazabilirsin.", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
+              Text("Detay eklemek istersen aşağıya yazabilirsin.",
+                  style:
+                      GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
               const SizedBox(height: 15),
               TextField(
                 controller: detailsController,
@@ -206,11 +244,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: "Buraya yaz...",
-                  hintStyle: GoogleFonts.poppins(color: Colors.white24, fontSize: 14),
+                  hintStyle:
+                      GoogleFonts.poppins(color: Colors.white24, fontSize: 14),
                   filled: true,
                   fillColor: Colors.black26,
                   contentPadding: const EdgeInsets.all(12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: 20),
@@ -221,9 +262,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       onPressed: () => Navigator.pop(ctx),
                       style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
-                      ),
-                      child: Text("Vazgeç", style: GoogleFonts.poppins(color: Colors.white38, fontSize: 13)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                      child: Text("Vazgeç",
+                          style: GoogleFonts.poppins(
+                              color: Colors.white38, fontSize: 13)),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -235,11 +278,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6C63FF),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 10),
-                          elevation: 0
-                      ),
-                      child: Text("Gönder", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                          elevation: 0),
+                      child: Text("Gönder",
+                          style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13)),
                     ),
                   ),
                 ],
@@ -271,12 +318,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Hata: $e"), backgroundColor: Colors.redAccent),
+          SnackBar(
+              content: Text("Hata: $e"), backgroundColor: Colors.redAccent),
         );
       }
     }
   }
-
 
   // *********************************************************
   // 🔥 YORUMLAR VE DİĞER İŞLEMLER
@@ -324,9 +371,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         comments.removeWhere((c) => c['id'] == commentId);
         commentCount--;
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Yorum silindi.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Yorum silindi.')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Silinemedi.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Silinemedi.')));
     }
   }
 
@@ -336,7 +385,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
         title: const Text("Yorumu Sil", style: TextStyle(color: Colors.white)),
-        content: const Text("Bu yorumu silmek istediğine emin misin?", style: TextStyle(color: Colors.white70)),
+        content: const Text("Bu yorumu silmek istediğine emin misin?",
+            style: TextStyle(color: Colors.white70)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -378,11 +428,27 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             'post_id': widget.post['id'],
             'is_read': false,
           });
+
+          // 🔔 PUSH BİLDİRİM GÖNDER
+          final myProfile = await client
+              .from('profiles')
+              .select('username')
+              .eq('id', myId)
+              .single();
+          final username = myProfile['username'] ?? 'Birisi';
+
+          await client.functions.invoke('send-push-notification', body: {
+            'target_user_id': widget.post['user_id'],
+            'title': '💬 Yeni Yorum',
+            'body': '$username gönderine yorum yaptı',
+            'type': 'comment',
+            'target_id': widget.post['id'],
+          });
         } catch (_) {}
       }
 
       _fetchComments();
-    } catch(e) {
+    } catch (e) {
       debugPrint("Yorum hatası: $e");
     }
   }
@@ -390,7 +456,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Future<void> _startRecording() async {
     if (await audioRecorder.hasPermission()) {
       final dir = await getApplicationDocumentsDirectory();
-      final path = "${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
+      final path =
+          "${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
 
       await audioRecorder.start(const RecordConfig(), path: path);
 
@@ -423,13 +490,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       final file = File(filePath);
       final name = "comment_${DateTime.now().millisecondsSinceEpoch}.m4a";
 
-      await client.storage
-          .from("uploads")
-          .upload("comment_audio/$name", file);
+      await client.storage.from("uploads").upload("comment_audio/$name", file);
 
-      final url = client.storage
-          .from("uploads")
-          .getPublicUrl("comment_audio/$name");
+      final url =
+          client.storage.from("uploads").getPublicUrl("comment_audio/$name");
 
       await client.from("comments").insert({
         "post_id": widget.post["id"],
@@ -513,7 +577,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.08), // Yarı saydam
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.1), width: 1), // İnce çerçeve
+              border: Border.all(
+                  color: Colors.white.withOpacity(0.1),
+                  width: 1), // İnce çerçeve
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -527,8 +593,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) =>
-                                    ProfileScreen(userId: widget.post["user_id"]))),
+                                builder: (_) => ProfileScreen(
+                                    userId: widget.post["user_id"]))),
                         child: CircleAvatar(
                           radius: 22,
                           backgroundImage: profile["avatar_url"] != null
@@ -553,24 +619,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ],
                         ),
                       ),
-
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12)),
+                          Text(dateStr,
+                              style: GoogleFonts.poppins(
+                                  color: Colors.grey.shade400, fontSize: 12)),
                           if (!isMyPost) ...[
                             const SizedBox(width: 6),
                             Container(
-                              width: 28, height: 28,
+                              width: 28,
+                              height: 28,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.05),
                                 shape: BoxShape.circle,
                               ),
                               child: PopupMenuButton<String>(
                                 padding: EdgeInsets.zero,
-                                icon: const Icon(Icons.more_horiz, color: Colors.white70, size: 18),
+                                icon: const Icon(Icons.more_horiz,
+                                    color: Colors.white70, size: 18),
                                 color: const Color(0xFF2C2C2C),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
                                 onSelected: (value) {
                                   if (value == 'report') _showReportDialog();
                                 },
@@ -580,9 +650,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       value: 'report',
                                       child: Row(
                                         children: [
-                                          const Icon(Icons.flag_outlined, color: Colors.white70, size: 18),
+                                          const Icon(Icons.flag_outlined,
+                                              color: Colors.white70, size: 18),
                                           const SizedBox(width: 10),
-                                          Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13)),
+                                          Text("Şikayet Et",
+                                              style: GoogleFonts.poppins(
+                                                  color: Colors.white,
+                                                  fontSize: 13)),
                                         ],
                                       ),
                                     ),
@@ -603,7 +677,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(text,
-                        style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.95), fontSize: 15)),
+                        style: GoogleFonts.poppins(
+                            color: Colors.white.withOpacity(0.95),
+                            fontSize: 15)),
                   ),
                 ],
 
@@ -626,78 +702,83 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: widget.isExploreMode
                       ? Row(
-                    children: [
-                      FuelButton(
-                        isFueled: isFueled,
-                        count: fuelCount,
-                        isExpired: !isAlive,
-                        onTap: _toggleFuel,
-                        size: 30,
-                      ),
-                      const SizedBox(width: 10),
-                      Flexible(
-                        child: Text(
-                          "$fuelCount Odun",
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                              color: Colors.orange,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      const Spacer(),
-                      const Icon(FontAwesomeIcons.comment,
-                          color: Colors.grey, size: 22),
-                      const SizedBox(width: 6),
-                      Text("$commentCount",
-                          style: GoogleFonts.poppins(
-                              color: Colors.grey, fontSize: 14)),
-                    ],
-                  )
-                      : Row(
-                    // 🔥 NORMAL MOD: MOR KALP VE HİZALAMA
-                    children: [
-                      GestureDetector(
-                        onTap: _toggleLike,
-                        child: Container(
-                          color: Colors.transparent,
-                          child: Row(
-                            children: [
-                              Icon(
-                                isLiked
-                                    ? FontAwesomeIcons.solidHeart
-                                    : FontAwesomeIcons.heart,
-                                color:
-                                isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400, // Mor Kalp
-                                size: 22,
-                              ),
-                              if (likeCount > 0) ...[
-                                const SizedBox(width: 6),
-                                Text("$likeCount",
-                                    style: GoogleFonts.poppins(
-                                        color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
-                                        fontWeight: FontWeight.w600)),
-                              ]
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      Container(
-                        color: Colors.transparent,
-                        child: Row(
                           children: [
-                            Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
-                            if (commentCount > 0) ...[
-                              const SizedBox(width: 6),
-                              Text("$commentCount",
-                                  style: GoogleFonts.poppins(
-                                      color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
-                            ]
+                            FuelButton(
+                              isFueled: isFueled,
+                              count: fuelCount,
+                              isExpired: !isAlive,
+                              onTap: _toggleFuel,
+                              size: 30,
+                            ),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Text(
+                                "$fuelCount Odun",
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const Spacer(),
+                            const Icon(FontAwesomeIcons.comment,
+                                color: Colors.grey, size: 22),
+                            const SizedBox(width: 6),
+                            Text("$commentCount",
+                                style: GoogleFonts.poppins(
+                                    color: Colors.grey, fontSize: 14)),
+                          ],
+                        )
+                      : Row(
+                          // 🔥 NORMAL MOD: MOR KALP VE HİZALAMA
+                          children: [
+                            GestureDetector(
+                              onTap: _toggleLike,
+                              child: Container(
+                                color: Colors.transparent,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      isLiked
+                                          ? FontAwesomeIcons.solidHeart
+                                          : FontAwesomeIcons.heart,
+                                      color: isLiked
+                                          ? const Color(0xFF6C63FF)
+                                          : Colors.grey.shade400, // Mor Kalp
+                                      size: 22,
+                                    ),
+                                    if (likeCount > 0) ...[
+                                      const SizedBox(width: 6),
+                                      Text("$likeCount",
+                                          style: GoogleFonts.poppins(
+                                              color: isLiked
+                                                  ? const Color(0xFF6C63FF)
+                                                  : Colors.grey.shade400,
+                                              fontWeight: FontWeight.w600)),
+                                    ]
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            Container(
+                              color: Colors.transparent,
+                              child: Row(
+                                children: [
+                                  Icon(FontAwesomeIcons.comment,
+                                      color: Colors.grey.shade400, size: 22),
+                                  if (commentCount > 0) ...[
+                                    const SizedBox(width: 6),
+                                    Text("$commentCount",
+                                        style: GoogleFonts.poppins(
+                                            color: Colors.grey.shade400,
+                                            fontWeight: FontWeight.w600)),
+                                  ]
+                                ],
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -711,8 +792,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     if (loadingComments) {
       return const Padding(
         padding: EdgeInsets.all(30),
-        child: Center(
-            child: CircularProgressIndicator(color: Color(0xFF6C63FF))),
+        child:
+            Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF))),
       );
     }
 
@@ -721,7 +802,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         padding: const EdgeInsets.all(40),
         child: Center(
           child: Text(
-            widget.isExploreMode ? "İlk odunu sen at 🔥" : "İlk yorumu sen yap!",
+            widget.isExploreMode
+                ? "İlk odunu sen at 🔥"
+                : "İlk yorumu sen yap!",
             style: GoogleFonts.poppins(color: Colors.white54),
           ),
         ),
@@ -746,7 +829,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: c['user_id']))),
+                onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => ProfileScreen(userId: c['user_id']))),
                 child: CircleAvatar(
                   radius: 18,
                   backgroundImage: p["avatar_url"] != null
@@ -755,9 +841,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   backgroundColor: Colors.grey[900],
                 ),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -772,8 +856,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         Row(
                           children: [
                             Text(
-                              timeago.format(
-                                  DateTime.parse(c["created_at"]),
+                              timeago.format(DateTime.parse(c["created_at"]),
                                   locale: "en_short"),
                               style: GoogleFonts.poppins(
                                   color: Colors.white38, fontSize: 11),
@@ -783,16 +866,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 onTap: () => _confirmDelete(id),
                                 child: Padding(
                                   padding: const EdgeInsets.only(left: 10),
-                                  child: Icon(Icons.delete_outline, color: Colors.white30, size: 16),
+                                  child: Icon(Icons.delete_outline,
+                                      color: Colors.white30, size: 16),
                                 ),
                               )
                           ],
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 6),
-
                     if (isAudio)
                       GestureDetector(
                         onTap: () => _playPause(c["audio_url"], id),
@@ -814,14 +896,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               const SizedBox(width: 8),
                               Text(
                                 isPlaying ? "Çalıyor..." : "Sesli Yorum",
-                                style: GoogleFonts.poppins(
-                                    color: Colors.white),
+                                style: GoogleFonts.poppins(color: Colors.white),
                               ),
                             ],
                           ),
                         ),
                       )
-
                     else
                       Text(
                         c["content"] ?? "",
@@ -868,17 +948,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ? "Kaydediliyor... ($recordDuration)"
                       : "Yorum yaz...",
                   hintStyle:
-                  const TextStyle(color: Colors.white38, fontSize: 14),
+                      const TextStyle(color: Colors.white38, fontSize: 14),
                   border: InputBorder.none,
                   contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
             ),
           ),
-
           const SizedBox(width: 10),
-
           GestureDetector(
             onLongPress: isComposing ? null : _startRecording,
             onLongPressUp: _stopRecording,
@@ -886,7 +964,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             child: CircleAvatar(
               radius: 22,
               backgroundColor:
-              isRecording ? Colors.redAccent : const Color(0xFF6C63FF),
+                  isRecording ? Colors.redAccent : const Color(0xFF6C63FF),
               child: Icon(
                 isComposing ? Icons.send : Icons.mic,
                 color: Colors.white,
