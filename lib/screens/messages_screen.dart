@@ -111,7 +111,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
   // 🔥 SOHBETİ SİLME İŞLEMİ
   Future<void> _deleteChat(String roomId) async {
     try {
-      await Supabase.instance.client.from('messages').delete().eq('room_id', roomId);
+      await Supabase.instance.client
+          .from('messages')
+          .delete()
+          .eq('room_id', roomId);
       _refreshChats(); // Listeyi yenile
 
       if (mounted) {
@@ -124,7 +127,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Hata: $e")));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Hata: $e")));
       }
     }
   }
@@ -148,13 +152,15 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 future: _chatsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator(color: kAccentColor));
+                    return const Center(
+                        child: CircularProgressIndicator(color: kAccentColor));
                   }
 
                   final allChats = snapshot.data ?? [];
                   final filteredChats = allChats.where((chat) {
                     final otherUser = chat['other_user'] ?? {};
-                    final name = (otherUser['full_name'] ?? '').toString().toLowerCase();
+                    final name =
+                        (otherUser['full_name'] ?? '').toString().toLowerCase();
                     return name.contains(_searchQuery);
                   }).toList();
 
@@ -163,12 +169,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.chat_bubble_outline, size: 50, color: Colors.grey[700]),
+                          Icon(Icons.chat_bubble_outline,
+                              size: 50, color: Colors.grey[700]),
                           const SizedBox(height: 16),
                           Text(
-                              _searchQuery.isEmpty ? 'Henüz sohbet yok' : 'Sonuç bulunamadı',
-                              style: TextStyle(color: Colors.grey[600])
-                          ),
+                              _searchQuery.isEmpty
+                                  ? 'Henüz sohbet yok'
+                                  : 'Sonuç bulunamadı',
+                              style: TextStyle(color: Colors.grey[600])),
                         ],
                       ),
                     );
@@ -176,7 +184,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
                   return ListView.builder(
                     itemCount: filteredChats.length,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                     itemBuilder: (context, index) {
                       final chat = filteredChats[index];
                       final otherUser = chat['other_user'] ?? {};
@@ -231,61 +240,66 @@ class _MessagesScreenState extends State<MessagesScreen> {
         children: [
           _isSearching
               ? Container(
-            height: 50,
-            decoration: BoxDecoration(
-              color: kSearchBtnColor,
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
-            ),
-            child: TextField(
-              controller: _searchController,
-              autofocus: true,
-              style: const TextStyle(color: Colors.white),
-              onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
-              decoration: InputDecoration(
-                hintText: "Sohbet ara...",
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white70),
-                  onPressed: () {
-                    setState(() {
-                      _isSearching = false;
-                      _searchQuery = "";
-                      _searchController.clear();
-                    });
-                  },
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          )
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: kSearchBtnColor,
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    style: const TextStyle(color: Colors.white),
+                    onChanged: (value) =>
+                        setState(() => _searchQuery = value.toLowerCase()),
+                    decoration: InputDecoration(
+                      hintText: "Sohbet ara...",
+                      hintStyle:
+                          TextStyle(color: Colors.white.withOpacity(0.5)),
+                      prefixIcon:
+                          const Icon(Icons.search, color: Colors.white70),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                        onPressed: () {
+                          setState(() {
+                            _isSearching = false;
+                            _searchQuery = "";
+                            _searchController.clear();
+                          });
+                        },
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                )
               : Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 22),
-                onPressed: () => Navigator.pop(context),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: kSearchBtnColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          color: Colors.white, size: 22),
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: kSearchBtnColor,
+                        shape: BoxShape.circle,
+                        border:
+                            Border.all(color: Colors.white.withOpacity(0.05)),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.search,
+                            color: Colors.white70, size: 20),
+                        onPressed: () => setState(() => _isSearching = true),
+                      ),
+                    ),
+                  ],
                 ),
-                child: IconButton(
-                  icon: const Icon(Icons.search, color: Colors.white70, size: 20),
-                  onPressed: () => setState(() => _isSearching = true),
-                ),
-              ),
-            ],
-          ),
-
           if (!_isSearching) ...[
             const SizedBox(height: 10),
             SizedBox(
@@ -295,31 +309,51 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   duration: const Duration(milliseconds: 800),
                   child: _showGreeting
                       ? Text(
-                    "Merhaba, $_firstName",
-                    key: const ValueKey('greeting'),
-                    style: const TextStyle(color: kTextWhite, fontSize: 24, fontWeight: FontWeight.w300, letterSpacing: 1.0),
-                  )
+                          "Merhaba, $_firstName",
+                          key: const ValueKey('greeting'),
+                          style: const TextStyle(
+                              color: kTextWhite,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w300,
+                              letterSpacing: 1.0),
+                        )
                       : Container(
-                    key: const ValueKey('avatar'),
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: kAccentColor, width: 2),
-                        boxShadow: [BoxShadow(color: kAccentColor.withOpacity(0.3), blurRadius: 15)]
-                    ),
-                    child: CircleAvatar(
-                      radius: 35,
-                      backgroundColor: Colors.grey[800],
-                      backgroundImage: _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
-                      child: _avatarUrl == null ? Text(_firstName.isNotEmpty ? _firstName[0] : "K", style: const TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)) : null,
-                    ),
-                  ),
+                          key: const ValueKey('avatar'),
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: kAccentColor, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                    color: kAccentColor.withOpacity(0.3),
+                                    blurRadius: 15)
+                              ]),
+                          child: CircleAvatar(
+                            radius: 35,
+                            backgroundColor: Colors.grey[800],
+                            backgroundImage: _avatarUrl != null
+                                ? NetworkImage(_avatarUrl!)
+                                : null,
+                            child: _avatarUrl == null
+                                ? Text(
+                                    _firstName.isNotEmpty ? _firstName[0] : "K",
+                                    style: const TextStyle(
+                                        fontSize: 24,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold))
+                                : null,
+                          ),
+                        ),
                 ),
               ),
             ),
             const SizedBox(height: 20),
             const Text(
               'Sohbetler',
-              style: TextStyle(fontFamily: 'Sans', fontWeight: FontWeight.bold, fontSize: 28, color: kTextWhite),
+              style: TextStyle(
+                  fontFamily: 'Sans',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 28,
+                  color: kTextWhite),
             ),
           ]
         ],
@@ -353,7 +387,8 @@ class FlippableChatCard extends StatefulWidget {
   State<FlippableChatCard> createState() => _FlippableChatCardState();
 }
 
-class _FlippableChatCardState extends State<FlippableChatCard> with SingleTickerProviderStateMixin {
+class _FlippableChatCardState extends State<FlippableChatCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isFlipped = false;
@@ -393,8 +428,11 @@ class _FlippableChatCardState extends State<FlippableChatCard> with SingleTicker
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E1E1E),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("Sohbeti Sil", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text("Sohbeti Sil",
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           content: const Text(
             "Bu sohbetin tüm mesajları silinecek. Emin misin?",
             style: TextStyle(color: Colors.white70),
@@ -402,7 +440,8 @@ class _FlippableChatCardState extends State<FlippableChatCard> with SingleTicker
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("İptal", style: TextStyle(color: Colors.white54)),
+              child:
+                  const Text("İptal", style: TextStyle(color: Colors.white54)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -441,10 +480,10 @@ class _FlippableChatCardState extends State<FlippableChatCard> with SingleTicker
             alignment: Alignment.center,
             child: isBack
                 ? Transform(
-              transform: Matrix4.identity()..rotateX(pi),
-              alignment: Alignment.center,
-              child: _buildBackSide(),
-            )
+                    transform: Matrix4.identity()..rotateX(pi),
+                    alignment: Alignment.center,
+                    child: _buildBackSide(),
+                  )
                 : _buildFrontSide(),
           );
         },
@@ -478,7 +517,8 @@ class _FlippableChatCardState extends State<FlippableChatCard> with SingleTicker
                       ? NetworkImage(widget.otherUser['avatar_url'])
                       : null,
                   child: widget.otherUser['avatar_url'] == null
-                      ? const Icon(Icons.person, color: Colors.white54, size: 26)
+                      ? const Icon(Icons.person,
+                          color: Colors.white54, size: 26)
                       : null,
                 ),
               ),
@@ -489,14 +529,18 @@ class _FlippableChatCardState extends State<FlippableChatCard> with SingleTicker
                   children: [
                     Text(
                       widget.otherUser['full_name'] ?? 'Kullanıcı',
-                      style: const TextStyle(color: kTextWhite, fontWeight: FontWeight.w600, fontSize: 16),
+                      style: const TextStyle(
+                          color: kTextWhite,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Mesajları görüntülemek için dokun...',
                       style: TextStyle(
                         color: hasUnread ? Colors.white : kTextGrey,
-                        fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            hasUnread ? FontWeight.bold : FontWeight.normal,
                         fontSize: 13,
                       ),
                       maxLines: 1,
@@ -524,7 +568,10 @@ class _FlippableChatCardState extends State<FlippableChatCard> with SingleTicker
                       ),
                       child: Text(
                         widget.unreadCount.toString(),
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                 ],
@@ -564,7 +611,8 @@ class _FlippableChatCardState extends State<FlippableChatCard> with SingleTicker
                         ? NetworkImage(widget.otherUser['avatar_url'])
                         : null,
                     child: widget.otherUser['avatar_url'] == null
-                        ? const Icon(Icons.person, color: Colors.white54, size: 20)
+                        ? const Icon(Icons.person,
+                            color: Colors.white54, size: 20)
                         : null,
                   ),
                   const SizedBox(width: 12),
@@ -574,7 +622,10 @@ class _FlippableChatCardState extends State<FlippableChatCard> with SingleTicker
                     children: [
                       Text(
                         widget.otherUser['full_name'] ?? 'Kullanıcı',
-                        style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 15),
+                        style: const TextStyle(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15),
                       ),
                       const Text(
                         "Silmek için çöp kutusuna bas",
@@ -592,10 +643,13 @@ class _FlippableChatCardState extends State<FlippableChatCard> with SingleTicker
                       color: Colors.redAccent,
                       shape: BoxShape.circle,
                       boxShadow: [
-                        BoxShadow(color: Colors.red.withOpacity(0.4), blurRadius: 8, spreadRadius: 1)
-                      ]
-                  ),
-                  child: const Icon(Icons.delete_forever, color: Colors.white, size: 26),
+                        BoxShadow(
+                            color: Colors.red.withOpacity(0.4),
+                            blurRadius: 8,
+                            spreadRadius: 1)
+                      ]),
+                  child: const Icon(Icons.delete_forever,
+                      color: Colors.white, size: 26),
                 ),
               ),
             ],
@@ -614,7 +668,11 @@ class ChatScreen extends StatefulWidget {
   final Map<String, dynamic> otherUser;
   final String heroTag;
 
-  const ChatScreen({super.key, required this.roomId, required this.otherUser, this.heroTag = 'default_tag'});
+  const ChatScreen(
+      {super.key,
+      required this.roomId,
+      required this.otherUser,
+      this.heroTag = 'default_tag'});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -646,7 +704,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _updateInputState() {
     final isEmpty = _textController.text.trim().isEmpty;
-    if (_isTextFieldEmpty != isEmpty) setState(() => _isTextFieldEmpty = isEmpty);
+    if (_isTextFieldEmpty != isEmpty)
+      setState(() => _isTextFieldEmpty = isEmpty);
   }
 
   void _sendMessage([String? fileUrl]) async {
@@ -658,13 +717,18 @@ class _ChatScreenState extends State<ChatScreen> {
       await _chatService.sendMessage(widget.roomId, content, receiverId);
       _scrollToBottom();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Hata: $e')));
     }
   }
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
-      _scrollController.animateTo(_scrollController.position.maxScrollExtent + 100, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent + 100,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut);
     }
   }
 
@@ -677,7 +741,8 @@ class _ChatScreenState extends State<ChatScreen> {
       } else {
         if (await _audioRecorder.hasPermission()) {
           final dir = await getApplicationDocumentsDirectory();
-          final path = '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+          final path =
+              '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
           await _audioRecorder.start(const RecordConfig(), path: path);
           setState(() => _isRecording = true);
         }
@@ -691,61 +756,118 @@ class _ChatScreenState extends State<ChatScreen> {
       final file = File(path);
       final fileName = 'voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
       final uploadPath = 'chat_audio/$fileName';
-      await Supabase.instance.client.storage.from('uploads').upload(uploadPath, file);
-      final audioUrl = Supabase.instance.client.storage.from('uploads').getPublicUrl(uploadPath);
+      await Supabase.instance.client.storage
+          .from('uploads')
+          .upload(uploadPath, file);
+      final audioUrl = Supabase.instance.client.storage
+          .from('uploads')
+          .getPublicUrl(uploadPath);
       _sendMessage(audioUrl);
-    } catch (_) {} finally { setState(() => _isUploading = false); }
+    } catch (_) {
+    } finally {
+      setState(() => _isUploading = false);
+    }
   }
 
   void _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: source, imageQuality: 70);
+    final XFile? image =
+        await picker.pickImage(source: source, imageQuality: 70);
     if (image == null) return;
     setState(() => _isUploading = true);
     try {
       final fileExt = image.path.split('.').last;
       final fileName = 'chat_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
       final path = 'chat_images/$fileName';
-      await Supabase.instance.client.storage.from('uploads').upload(path, File(image.path));
-      final imageUrl = Supabase.instance.client.storage.from('uploads').getPublicUrl(path);
+      await Supabase.instance.client.storage
+          .from('uploads')
+          .upload(path, File(image.path));
+      final imageUrl =
+          Supabase.instance.client.storage.from('uploads').getPublicUrl(path);
       _sendMessage(imageUrl);
-    } catch (_) {} finally { setState(() => _isUploading = false); }
+    } catch (_) {
+    } finally {
+      setState(() => _isUploading = false);
+    }
   }
 
   void _showAttachmentMenu() {
-    showModalBottomSheet(context: context, backgroundColor: Colors.transparent, builder: (context) {
-      return ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        child: Container(
-          color: kListCardColor,
-          child: SafeArea(child: Wrap(children: [
-            ListTile(leading: const Icon(Icons.camera_alt, color: Colors.white), title: const Text("Kamera", style: TextStyle(color: Colors.white)), onTap: () { Navigator.pop(context); _pickImage(ImageSource.camera); }),
-            ListTile(leading: const Icon(Icons.photo_library, color: Colors.white), title: const Text("Galeri", style: TextStyle(color: Colors.white)), onTap: () { Navigator.pop(context); _pickImage(ImageSource.gallery); }),
-          ])),
-        ),
-      );
-    });
+    showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (context) {
+          return ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            child: Container(
+              color: kListCardColor,
+              child: SafeArea(
+                  child: Wrap(children: [
+                ListTile(
+                    leading: const Icon(Icons.camera_alt, color: Colors.white),
+                    title: const Text("Kamera",
+                        style: TextStyle(color: Colors.white)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.camera);
+                    }),
+                ListTile(
+                    leading:
+                        const Icon(Icons.photo_library, color: Colors.white),
+                    title: const Text("Galeri",
+                        style: TextStyle(color: Colors.white)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.gallery);
+                    }),
+              ])),
+            ),
+          );
+        });
   }
 
   void _startDirectCall(bool isVideo) async {
     final myId = Supabase.instance.client.auth.currentUser!.id;
     final otherId = widget.otherUser['id'].toString();
     final otherName = widget.otherUser['full_name']?.toString() ?? 'Kullanıcı';
-    List<String> ids = [myId, otherId]; ids.sort(); final callId = ids.join("_");
-    
+    List<String> ids = [myId, otherId];
+    ids.sort();
+    final callId = ids.join("_");
+
     // 🔔 ARAMA BİLDİRİMİ GÖNDER
     try {
       await Supabase.instance.client.from('notifications').insert({
-        'user_id': otherId,   // Kime (aranan kişi)
-        'actor_id': myId,     // Kimden (arayan kişi)
-        'type': 'call',       // Tip: Arama
+        'user_id': otherId, // Kime (aranan kişi)
+        'actor_id': myId, // Kimden (arayan kişi)
+        'type': 'call', // Tip: Arama
         'is_read': false,
+      });
+
+      // 🔔 PUSH BİLDİRİM GÖNDER
+      final myProfile = await Supabase.instance.client
+          .from('profiles')
+          .select('username, full_name')
+          .eq('id', myId)
+          .single();
+      final callerName =
+          myProfile['full_name'] ?? myProfile['username'] ?? 'Birisi';
+
+      await Supabase.instance.client.functions
+          .invoke('send-push-notification', body: {
+        'target_user_id': otherId,
+        'title': isVideo ? '📹 Görüntülü Arama' : '📞 Sesli Arama',
+        'body': '$callerName seni arıyor',
+        'type': 'call',
+        'target_id': callId,
       });
     } catch (e) {
       debugPrint('🔔 Arama bildirimi hatası: $e');
     }
-    
-    Navigator.push(context, MaterialPageRoute(builder: (_) => CallScreen(callId: callId, otherUserName: otherName, isVideo: isVideo)));
+
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => CallScreen(
+                callId: callId, otherUserName: otherName, isVideo: isVideo)));
   }
 
   @override
@@ -756,16 +878,43 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(children: [
         // HEADER
         Container(
-          padding: const EdgeInsets.only(top: 40, bottom: 20, left: 10, right: 20),
-          decoration: const BoxDecoration(color: kHeaderColor, borderRadius: BorderRadius.only(bottomLeft: Radius.circular(50))),
+          padding:
+              const EdgeInsets.only(top: 40, bottom: 20, left: 10, right: 20),
+          decoration: const BoxDecoration(
+              color: kHeaderColor,
+              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(50))),
           child: Row(children: [
-            IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
-            Hero(tag: widget.heroTag, child: CircleAvatar(radius: 22, backgroundImage: widget.otherUser['avatar_url'] != null ? NetworkImage(widget.otherUser['avatar_url']) : null, backgroundColor: Colors.grey[800], child: widget.otherUser['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white70) : null)),
+            IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.pop(context)),
+            Hero(
+                tag: widget.heroTag,
+                child: CircleAvatar(
+                    radius: 22,
+                    backgroundImage: widget.otherUser['avatar_url'] != null
+                        ? NetworkImage(widget.otherUser['avatar_url'])
+                        : null,
+                    backgroundColor: Colors.grey[800],
+                    child: widget.otherUser['avatar_url'] == null
+                        ? const Icon(Icons.person, color: Colors.white70)
+                        : null)),
             const SizedBox(width: 12),
-            Expanded(child: Align(alignment: Alignment.centerLeft, child: Text(targetName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white), overflow: TextOverflow.ellipsis))),
-            _buildHeaderButton(Icons.videocam_outlined, () => _startDirectCall(true), iconSize: 20),
+            Expanded(
+                child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(targetName,
+                        style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                        overflow: TextOverflow.ellipsis))),
+            _buildHeaderButton(
+                Icons.videocam_outlined, () => _startDirectCall(true),
+                iconSize: 20),
             const SizedBox(width: 10),
-            _buildHeaderButton(Icons.phone_outlined, () => _startDirectCall(false), iconSize: 18),
+            _buildHeaderButton(
+                Icons.phone_outlined, () => _startDirectCall(false),
+                iconSize: 18),
           ]),
         ),
         // MESAJ LİSTESİ
@@ -773,40 +922,95 @@ class _ChatScreenState extends State<ChatScreen> {
           child: StreamBuilder<List<Map<String, dynamic>>>(
             stream: _chatService.getMessagesStream(widget.roomId),
             builder: (context, snapshot) {
-              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: kAccentColor));
+              if (!snapshot.hasData)
+                return const Center(
+                    child: CircularProgressIndicator(color: kAccentColor));
               final messages = snapshot.data!;
-              WidgetsBinding.instance.addPostFrameCallback((_) { if (_scrollController.hasClients && _scrollController.offset == 0) _scrollToBottom(); });
-              if (messages.isEmpty) return Center(child: Text("Henüz mesaj yok.", style: TextStyle(color: Colors.white.withOpacity(0.3))));
-
-              return ListView.builder(controller: _scrollController, itemCount: messages.length, padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 20), itemBuilder: (context, index) {
-                final msg = messages[index];
-                final isMe = msg['sender_id'] == Supabase.instance.client.auth.currentUser!.id;
-                bool showAvatar = true;
-                if (!isMe && index > 0) {
-                  final prevMsg = messages[index - 1];
-                  if (prevMsg['sender_id'] == msg['sender_id']) showAvatar = false;
-                }
-                return _buildMessageBubble(msg['content'], isMe, msg['created_at'], showAvatar);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_scrollController.hasClients &&
+                    _scrollController.offset == 0) _scrollToBottom();
               });
+              if (messages.isEmpty)
+                return Center(
+                    child: Text("Henüz mesaj yok.",
+                        style:
+                            TextStyle(color: Colors.white.withOpacity(0.3))));
+
+              return ListView.builder(
+                  controller: _scrollController,
+                  itemCount: messages.length,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 20),
+                  itemBuilder: (context, index) {
+                    final msg = messages[index];
+                    final isMe = msg['sender_id'] ==
+                        Supabase.instance.client.auth.currentUser!.id;
+                    bool showAvatar = true;
+                    if (!isMe && index > 0) {
+                      final prevMsg = messages[index - 1];
+                      if (prevMsg['sender_id'] == msg['sender_id'])
+                        showAvatar = false;
+                    }
+                    return _buildMessageBubble(
+                        msg['content'], isMe, msg['created_at'], showAvatar);
+                  });
             },
           ),
         ),
-        if (_isUploading) const LinearProgressIndicator(color: kAccentColor, backgroundColor: Colors.transparent),
+        if (_isUploading)
+          const LinearProgressIndicator(
+              color: kAccentColor, backgroundColor: Colors.transparent),
         // INPUT
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 30),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(color: kInputBackgroundColor, borderRadius: BorderRadius.circular(40), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))]),
+            decoration: BoxDecoration(
+                color: kInputBackgroundColor,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5))
+                ]),
             child: Row(children: [
-              IconButton(onPressed: _showAttachmentMenu, icon: const Icon(Icons.attach_file, color: Colors.white54)),
-              Expanded(child: TextField(controller: _textController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(hintText: 'Mesaj yaz...', hintStyle: TextStyle(color: Colors.white38), border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 10)))),
+              IconButton(
+                  onPressed: _showAttachmentMenu,
+                  icon: const Icon(Icons.attach_file, color: Colors.white54)),
+              Expanded(
+                  child: TextField(
+                      controller: _textController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                          hintText: 'Mesaj yaz...',
+                          hintStyle: TextStyle(color: Colors.white38),
+                          border: InputBorder.none,
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 10)))),
               GestureDetector(
-                onTap: _isTextFieldEmpty ? _toggleRecording : () => _sendMessage(),
+                onTap:
+                    _isTextFieldEmpty ? _toggleRecording : () => _sendMessage(),
                 child: Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(shape: BoxShape.circle, gradient: const LinearGradient(colors: [Color(0xFF9D89D9), Color(0xFF335FA1)], begin: Alignment.topLeft, end: Alignment.bottomRight), boxShadow: [BoxShadow(color: const Color(0xFF335FA1).withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 4))]),
-                  child: Icon(_isRecording ? Icons.stop : (_isTextFieldEmpty ? Icons.mic : Icons.send), color: Colors.white, size: 20),
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                          colors: [Color(0xFF9D89D9), Color(0xFF335FA1)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight),
+                      boxShadow: [
+                        BoxShadow(
+                            color: const Color(0xFF335FA1).withOpacity(0.4),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4))
+                      ]),
+                  child: Icon(
+                      _isRecording
+                          ? Icons.stop
+                          : (_isTextFieldEmpty ? Icons.mic : Icons.send),
+                      color: Colors.white,
+                      size: 20),
                 ),
               ),
             ]),
@@ -816,21 +1020,61 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildHeaderButton(IconData icon, VoidCallback onTap, {double iconSize = 18}) {
-    return Container(width: 36, height: 36, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white12), color: Colors.white.withOpacity(0.05)), child: IconButton(icon: Icon(icon, color: Colors.white, size: iconSize), onPressed: onTap, padding: EdgeInsets.zero, constraints: const BoxConstraints()));
+  Widget _buildHeaderButton(IconData icon, VoidCallback onTap,
+      {double iconSize = 18}) {
+    return Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white12),
+            color: Colors.white.withOpacity(0.05)),
+        child: IconButton(
+            icon: Icon(icon, color: Colors.white, size: iconSize),
+            onPressed: onTap,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints()));
   }
 
-  Widget _buildMessageBubble(String content, bool isMe, String createdAtRaw, bool showAvatar) {
-    final time = DateFormat('HH:mm').format(DateTime.parse(createdAtRaw).toLocal());
-    bool isImage = content.startsWith('http') && (content.contains('.jpg') || content.contains('.png') || content.contains('image_picker'));
-    bool isAudio = content.startsWith('http') && (content.contains('.m4a') || content.contains('.mp3') || content.contains('audio_'));
+  Widget _buildMessageBubble(
+      String content, bool isMe, String createdAtRaw, bool showAvatar) {
+    final time =
+        DateFormat('HH:mm').format(DateTime.parse(createdAtRaw).toLocal());
+    bool isImage = content.startsWith('http') &&
+        (content.contains('.jpg') ||
+            content.contains('.png') ||
+            content.contains('image_picker'));
+    bool isAudio = content.startsWith('http') &&
+        (content.contains('.m4a') ||
+            content.contains('.mp3') ||
+            content.contains('audio_'));
     Widget? contentWidget;
     bool isImg = false;
     if (isImage) {
       isImg = true;
-      contentWidget = GestureDetector(onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => FullScreenImage(imageUrl: content, heroTag: content))); }, child: Hero(tag: content, child: Image.network(content, fit: BoxFit.cover, height: 250, width: 220)));
-    } else if (isAudio) { contentWidget = _AudioMessagePlayer(url: content, isMe: isMe); }
-    return ModernMessageBubble(content: content, isMe: isMe, time: time, contentWidget: contentWidget, isImage: isImg, otherUserAvatar: widget.otherUser['avatar_url'], showAvatar: showAvatar);
+      contentWidget = GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) =>
+                        FullScreenImage(imageUrl: content, heroTag: content)));
+          },
+          child: Hero(
+              tag: content,
+              child: Image.network(content,
+                  fit: BoxFit.cover, height: 250, width: 220)));
+    } else if (isAudio) {
+      contentWidget = _AudioMessagePlayer(url: content, isMe: isMe);
+    }
+    return ModernMessageBubble(
+        content: content,
+        isMe: isMe,
+        time: time,
+        contentWidget: contentWidget,
+        isImage: isImg,
+        otherUserAvatar: widget.otherUser['avatar_url'],
+        showAvatar: showAvatar);
   }
 }
 
@@ -841,13 +1085,24 @@ class _ChatScreenState extends State<ChatScreen> {
 class FullScreenImage extends StatelessWidget {
   final String imageUrl;
   final String heroTag;
-  const FullScreenImage({super.key, required this.imageUrl, required this.heroTag});
+  const FullScreenImage(
+      {super.key, required this.imageUrl, required this.heroTag});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const BackButton(color: Colors.white)),
-      body: Center(child: Hero(tag: heroTag, child: InteractiveViewer(panEnabled: true, minScale: 0.5, maxScale: 4, child: Image.network(imageUrl)))),
+      appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: const BackButton(color: Colors.white)),
+      body: Center(
+          child: Hero(
+              tag: heroTag,
+              child: InteractiveViewer(
+                  panEnabled: true,
+                  minScale: 0.5,
+                  maxScale: 4,
+                  child: Image.network(imageUrl)))),
     );
   }
 }
@@ -861,7 +1116,15 @@ class ModernMessageBubble extends StatelessWidget {
   final String? otherUserAvatar;
   final bool showAvatar;
 
-  const ModernMessageBubble({super.key, required this.content, required this.isMe, required this.time, this.contentWidget, this.isImage = false, this.otherUserAvatar, this.showAvatar = true});
+  const ModernMessageBubble(
+      {super.key,
+      required this.content,
+      required this.isMe,
+      required this.time,
+      this.contentWidget,
+      this.isImage = false,
+      this.otherUserAvatar,
+      this.showAvatar = true});
 
   @override
   Widget build(BuildContext context) {
@@ -869,29 +1132,68 @@ class ModernMessageBubble extends StatelessWidget {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: EdgeInsets.symmetric(vertical: showAvatar ? 6 : 2, horizontal: 16),
+        margin:
+            EdgeInsets.symmetric(vertical: showAvatar ? 6 : 2, horizontal: 16),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (!isMe) ...[
               if (showAvatar)
-                CircleAvatar(radius: 14, backgroundColor: Colors.grey[800], backgroundImage: otherUserAvatar != null ? NetworkImage(otherUserAvatar!) : null, child: otherUserAvatar == null ? const Icon(Icons.person, size: 16, color: Colors.white) : null)
+                CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.grey[800],
+                    backgroundImage: otherUserAvatar != null
+                        ? NetworkImage(otherUserAvatar!)
+                        : null,
+                    child: otherUserAvatar == null
+                        ? const Icon(Icons.person,
+                            size: 16, color: Colors.white)
+                        : null)
               else
                 const SizedBox(width: 28),
               const SizedBox(width: 8),
             ],
             Flexible(
               child: Container(
-                padding: isImage ? const EdgeInsets.all(4) : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: isImage
+                    ? const EdgeInsets.all(4)
+                    : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  gradient: isMe ? const LinearGradient(colors: [Color(0xFF9D89D9), Color(0xFF899DD9), Color(0xFF335FA1)], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
+                  gradient: isMe
+                      ? const LinearGradient(colors: [
+                          Color(0xFF9D89D9),
+                          Color(0xFF899DD9),
+                          Color(0xFF335FA1)
+                        ], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                      : null,
                   color: isMe ? null : kReceivedBubbleColor,
-                  borderRadius: BorderRadius.only(topLeft: const Radius.circular(20), topRight: const Radius.circular(20), bottomLeft: isMe ? const Radius.circular(20) : (showAvatar ? Radius.zero : const Radius.circular(20)), bottomRight: isMe ? (showAvatar ? Radius.zero : const Radius.circular(20)) : const Radius.circular(20)),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))],
+                  borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(20),
+                      topRight: const Radius.circular(20),
+                      bottomLeft: isMe
+                          ? const Radius.circular(20)
+                          : (showAvatar
+                              ? Radius.zero
+                              : const Radius.circular(20)),
+                      bottomRight: isMe
+                          ? (showAvatar
+                              ? Radius.zero
+                              : const Radius.circular(20))
+                          : const Radius.circular(20)),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2))
+                  ],
                 ),
                 constraints: BoxConstraints(maxWidth: maxWidth),
-                child: isImage ? ClipRRect(borderRadius: BorderRadius.circular(16), child: _buildImageContent(context)) : _buildTextOrAudioContent(),
+                child: isImage
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: _buildImageContent(context))
+                    : _buildTextOrAudioContent(),
               ),
             ),
           ],
@@ -901,11 +1203,43 @@ class ModernMessageBubble extends StatelessWidget {
   }
 
   Widget _buildImageContent(BuildContext context) {
-    return Stack(alignment: Alignment.bottomRight, children: [contentWidget!, Positioned(bottom: 6, right: 6, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), borderRadius: BorderRadius.circular(10)), child: Text(time, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))))]);
+    return Stack(alignment: Alignment.bottomRight, children: [
+      contentWidget!,
+      Positioned(
+          bottom: 6,
+          right: 6,
+          child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(10)),
+              child: Text(time,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold))))
+    ]);
   }
 
   Widget _buildTextOrAudioContent() {
-    return Wrap(alignment: WrapAlignment.end, crossAxisAlignment: WrapCrossAlignment.end, runSpacing: 4, children: [contentWidget ?? Text(content, style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.4)), const SizedBox(width: 8), Padding(padding: const EdgeInsets.only(bottom: 2), child: Text(time, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10, fontWeight: FontWeight.w500)))]);
+    return Wrap(
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.end,
+        runSpacing: 4,
+        children: [
+          contentWidget ??
+              Text(content,
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 15, height: 1.4)),
+          const SizedBox(width: 8),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(time,
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500)))
+        ]);
   }
 }
 
@@ -921,10 +1255,44 @@ class _AudioMessagePlayerState extends State<_AudioMessagePlayer> {
   final AudioPlayer _player = AudioPlayer();
   bool isPlaying = false;
   @override
-  void dispose() { _player.dispose(); super.dispose(); }
-  void _togglePlay() async { if (isPlaying) { await _player.pause(); } else { await _player.play(UrlSource(widget.url)); } setState(() => isPlaying = !isPlaying); _player.onPlayerComplete.listen((event) { if (mounted) setState(() => isPlaying = false); }); }
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  void _togglePlay() async {
+    if (isPlaying) {
+      await _player.pause();
+    } else {
+      await _player.play(UrlSource(widget.url));
+    }
+    setState(() => isPlaying = !isPlaying);
+    _player.onPlayerComplete.listen((event) {
+      if (mounted) setState(() => isPlaying = false);
+    });
+  }
+
   @override
-  Widget build(BuildContext context) { return Row(mainAxisSize: MainAxisSize.min, children: [IconButton(icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, color: Colors.white, size: 35), onPressed: _togglePlay, padding: EdgeInsets.zero, constraints: const BoxConstraints()), const SizedBox(width: 8), Container(height: 3, width: 100, decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(10))), const SizedBox(width: 8), const Text("Ses", style: TextStyle(color: Colors.white70, fontSize: 12))]); }
+  Widget build(BuildContext context) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      IconButton(
+          icon: Icon(
+              isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
+              color: Colors.white,
+              size: 35),
+          onPressed: _togglePlay,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints()),
+      const SizedBox(width: 8),
+      Container(
+          height: 3,
+          width: 100,
+          decoration: BoxDecoration(
+              color: Colors.white54, borderRadius: BorderRadius.circular(10))),
+      const SizedBox(width: 8),
+      const Text("Ses", style: TextStyle(color: Colors.white70, fontSize: 12))
+    ]);
+  }
 }
 
 class _SlideFadeTransition extends StatefulWidget {
@@ -935,20 +1303,36 @@ class _SlideFadeTransition extends StatefulWidget {
   State<_SlideFadeTransition> createState() => _SlideFadeTransitionState();
 }
 
-class _SlideFadeTransitionState extends State<_SlideFadeTransition> with SingleTickerProviderStateMixin {
+class _SlideFadeTransitionState extends State<_SlideFadeTransition>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<Offset> _offsetAnim;
   late Animation<double> _fadeAnim;
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
-    _offsetAnim = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
-    _fadeAnim = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
-    Future.delayed(Duration(milliseconds: widget.index * 80), () { if (mounted) _animController.forward(); });
+    _animController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 400));
+    _offsetAnim = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+        .animate(
+            CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+    Future.delayed(Duration(milliseconds: widget.index * 80), () {
+      if (mounted) _animController.forward();
+    });
   }
+
   @override
-  void dispose() { _animController.dispose(); super.dispose(); }
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
   @override
-  Widget build(BuildContext context) { return FadeTransition(opacity: _fadeAnim, child: SlideTransition(position: _offsetAnim, child: widget.child)); }
+  Widget build(BuildContext context) {
+    return FadeTransition(
+        opacity: _fadeAnim,
+        child: SlideTransition(position: _offsetAnim, child: widget.child));
+  }
 }
