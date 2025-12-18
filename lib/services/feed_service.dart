@@ -36,7 +36,8 @@ class FeedService {
           .eq('user_id', _myId)
           .eq('status', 'accepted');
 
-      final targetIds = (following as List).map((e) => e['friend_id'] as String).toList();
+      final targetIds =
+          (following as List).map((e) => e['friend_id'] as String).toList();
 
       // Kendi gönderilerimi de ana akışta göreyim
       targetIds.add(_myId);
@@ -76,7 +77,8 @@ class FeedService {
           .order('created_at', ascending: false)
           .limit(50);
 
-      final List<Map<String, dynamic>> allPosts = List<Map<String, dynamic>>.from(response as List);
+      final List<Map<String, dynamic>> allPosts =
+          List<Map<String, dynamic>>.from(response as List);
 
       // 🔥 B. GİZLİ KULLANICILARI FİLTRELE
       // Post sahibi bu "yasaklı listede" ise postu gösterme
@@ -116,18 +118,22 @@ class FeedService {
         .eq('post_id', postId)
         .order('created_at', ascending: true)
         .asyncMap((rows) async {
-      if (rows.isEmpty) return [];
+          if (rows.isEmpty) return [];
 
-      final userIds = rows.map((r) => r['user_id'] as String).toSet().toList();
-      final profiles = await client.from('profiles').select().inFilter('id', userIds);
+          final userIds =
+              rows.map((r) => r['user_id'] as String).toSet().toList();
+          final profiles =
+              await client.from('profiles').select().inFilter('id', userIds);
 
-      final profileMap = { for (final p in profiles) p['id'] as String: p };
+          final profileMap = {for (final p in profiles) p['id'] as String: p};
 
-      return rows.map((r) => {
-        ...r,
-        'profile': profileMap[r['user_id']] ?? <String, dynamic>{},
-      }).toList();
-    });
+          return rows
+              .map((r) => {
+                    ...r,
+                    'profile': profileMap[r['user_id']] ?? <String, dynamic>{},
+                  })
+              .toList();
+        });
   }
 
   // --- 5. YORUM EKLEME ---
@@ -161,12 +167,13 @@ class FeedService {
         // Bildirimi de temizle
         final typeToDelete = isFuel ? 'fuel' : 'like';
         try {
-          await client.from('notifications').delete()
+          await client
+              .from('notifications')
+              .delete()
               .eq('post_id', postId)
               .eq('actor_id', _myId)
               .eq('type', typeToDelete);
         } catch (_) {}
-
       } else {
         // --- EKLEME İŞLEMİ (HARLAMA / BEĞENME) ---
         await client.from('likes').insert({
@@ -175,7 +182,11 @@ class FeedService {
         });
 
         // Bildirim Gönder (Post sahibi ben değilsem)
-        final post = await client.from('posts').select('user_id').eq('id', postId).single();
+        final post = await client
+            .from('posts')
+            .select('user_id')
+            .eq('id', postId)
+            .single();
         if (post['user_id'] != _myId) {
           final notifType = isFuel ? 'fuel' : 'like';
 
@@ -186,6 +197,26 @@ class FeedService {
             'post_id': postId,
             'is_read': false,
           });
+
+          // 🔔 PUSH BİLDİRİM GÖNDER
+          try {
+            final myProfile = await client
+                .from('profiles')
+                .select('username')
+                .eq('id', _myId)
+                .single();
+            final username = myProfile['username'] ?? 'Birisi';
+
+            await client.functions.invoke('send-push-notification', body: {
+              'target_user_id': post['user_id'],
+              'title': isFuel ? '🔥 Yeni Harlama!' : '❤️ Yeni Beğeni!',
+              'body': '$username gönderini ${isFuel ? "harladı" : "beğendi"}',
+              'type': notifType,
+              'target_id': postId,
+            });
+          } catch (e) {
+            debugPrint('Push bildirim hatası: $e');
+          }
         }
       }
     } catch (e) {

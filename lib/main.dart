@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'services/notification_service.dart';
 
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
@@ -16,10 +19,16 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Firebase başlat
+  await Firebase.initializeApp();
+
   await Supabase.initialize(
     url: 'https://vxrvudcafkgqusjrawme.supabase.co',
     anonKey: 'sb_publishable_tSqnWtXnUhEog3MIx5ajRw_PZeTlwuG',
   );
+
+  // Push Notification başlat
+  await NotificationService().initialize();
 
   runApp(const MyApp());
 }
@@ -65,23 +74,23 @@ class _MyAppState extends State<MyApp> {
   void _initAuthListener() {
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-          final event = data.event;
+      final event = data.event;
 
-          debugPrint("🔥 Auth Event Main: $event");
+      debugPrint("🔥 Auth Event Main: $event");
 
-          // Şifre sıfırlama ekranına yönlendirme
-          if (event == AuthChangeEvent.passwordRecovery) {
-            _navigateToResetScreen();
-          }
+      // Şifre sıfırlama ekranına yönlendirme
+      if (event == AuthChangeEvent.passwordRecovery) {
+        _navigateToResetScreen();
+      }
 
-          // Çıkış yapılırsa Welcome'a at
-          if (event == AuthChangeEvent.signedOut) {
-            navigatorKey.currentState?.pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                  (route) => false,
-            );
-          }
-        });
+      // Çıkış yapılırsa Welcome'a at
+      if (event == AuthChangeEvent.signedOut) {
+        navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          (route) => false,
+        );
+      }
+    });
   }
 
   // 🔍 Deep Link Analizi
@@ -97,7 +106,7 @@ class _MyAppState extends State<MyApp> {
   void _navigateToResetScreen() {
     navigatorKey.currentState?.pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
-          (route) => false,
+      (route) => false,
     );
   }
 
@@ -154,7 +163,8 @@ class _AuthGateState extends State<AuthGate> {
 
     // 🔥 GÜNCELLEME: Login/Logout olaylarını anlık dinle
     // Kullanıcı WelcomeScreen'den giriş yaparsa burası tetiklenir ve profili tekrar kontrol eder.
-    _gateAuthSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    _gateAuthSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       _checkUserStatus();
     });
   }
