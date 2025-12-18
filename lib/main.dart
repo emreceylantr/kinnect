@@ -19,16 +19,24 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase başlat
-  await Firebase.initializeApp();
+  // Firebase başlat (opsiyonel - config yoksa devam et)
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('⚠️ Firebase başlatılamadı: $e');
+  }
 
   await Supabase.initialize(
     url: 'https://vxrvudcafkgqusjrawme.supabase.co',
     anonKey: 'sb_publishable_tSqnWtXnUhEog3MIx5ajRw_PZeTlwuG',
   );
 
-  // Push Notification başlat
-  await NotificationService().initialize();
+  // Push Notification başlat (Firebase varsa çalışır)
+  try {
+    await NotificationService().initialize();
+  } catch (e) {
+    debugPrint('⚠️ Notification service başlatılamadı: $e');
+  }
 
   runApp(const MyApp());
 }
