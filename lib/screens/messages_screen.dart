@@ -727,11 +727,24 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  void _startDirectCall(bool isVideo) {
+  void _startDirectCall(bool isVideo) async {
     final myId = Supabase.instance.client.auth.currentUser!.id;
     final otherId = widget.otherUser['id'].toString();
     final otherName = widget.otherUser['full_name']?.toString() ?? 'Kullanıcı';
     List<String> ids = [myId, otherId]; ids.sort(); final callId = ids.join("_");
+    
+    // 🔔 ARAMA BİLDİRİMİ GÖNDER
+    try {
+      await Supabase.instance.client.from('notifications').insert({
+        'user_id': otherId,   // Kime (aranan kişi)
+        'actor_id': myId,     // Kimden (arayan kişi)
+        'type': 'call',       // Tip: Arama
+        'is_read': false,
+      });
+    } catch (e) {
+      debugPrint('🔔 Arama bildirimi hatası: $e');
+    }
+    
     Navigator.push(context, MaterialPageRoute(builder: (_) => CallScreen(callId: callId, otherUserName: otherName, isVideo: isVideo)));
   }
 
