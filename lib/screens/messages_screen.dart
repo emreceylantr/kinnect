@@ -867,7 +867,10 @@ class _ChatScreenState extends State<ChatScreen> {
         context,
         MaterialPageRoute(
             builder: (_) => CallScreen(
-                callId: callId, otherUserName: otherName, isVideo: isVideo)));
+                callId: callId,
+                otherUserName: otherName,
+                isVideo: isVideo,
+                otherUserAvatar: widget.otherUser['avatar_url']?.toString())));
   }
 
   @override
