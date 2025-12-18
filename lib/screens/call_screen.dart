@@ -1,15 +1,16 @@
 import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// 🎨 RENK PALETİ (Uygulama temasıyla uyumlu)
-const Color kCallBgColor = Color(0xFF0A0A0F);
-const Color kCallCardColor = Color(0xFF1F1B24);
-const Color kCallAccentPurple = Color(0xFF6C63FF);
-const Color kCallAccentGreen = Color(0xFF1DB954);
-const Color kCallHeaderColor = Color(0xFF2D2638);
+// 🎨 NEON CYBERPUNK RENK PALETİ
+const Color kNeonPurple = Color(0xFFBF00FF);
+const Color kNeonPink = Color(0xFFFF00FF);
+const Color kNeonBlue = Color(0xFF00D4FF);
+const Color kDarkBg = Color(0xFF0D0D1A);
+const Color kDarkCard = Color(0xFF1A1A2E);
 
 class CallScreen extends StatelessWidget {
   final String callId;
@@ -33,24 +34,22 @@ class CallScreen extends StatelessWidget {
         'Kullanıcı';
     final userId = currentUser?.id ?? 'unknown_user';
 
-    // 🔥 Zego Config'i özelleştir
     final config = isVideo
         ? ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall()
         : ZegoUIKitPrebuiltCallConfig.oneOnOneVoiceCall();
 
-    // 🎨 Arka plan widget'ı - Gradient efektli
-    config.background = _buildGradientBackground();
+    // 🎨 Neon Cyberpunk Arka Plan
+    config.background = _buildCyberpunkBackground();
 
-    // 🎨 Top Menu Bar - Minimal ve modern
+    // 🎨 Top Menu Bar
     config.topMenuBar.isVisible = true;
     config.topMenuBar.backgroundColor = Colors.transparent;
     config.topMenuBar.style = ZegoCallMenuBarStyle.dark;
 
-    // 🎨 Bottom Menu Bar - Glassmorphism efektli
-    config.bottomMenuBar.backgroundColor = kCallCardColor.withOpacity(0.6);
+    // 🎨 Bottom Menu Bar - Neon efektli
+    config.bottomMenuBar.backgroundColor = kDarkCard.withOpacity(0.8);
     config.bottomMenuBar.style = ZegoCallMenuBarStyle.dark;
     
-    // Sesli arama için butonları ayarla
     if (!isVideo) {
       config.bottomMenuBar.buttons = [
         ZegoCallMenuBarButtonName.toggleMicrophoneButton,
@@ -66,34 +65,21 @@ class CallScreen extends StatelessWidget {
       ];
     }
 
-    // 🎨 Avatar Builder - Gradient çerçeveli modern avatar
+    // 🎨 Neon Avatar Builder
     config.avatarBuilder = (context, size, user, extraInfo) {
-      return _buildGradientAvatar(user?.name ?? otherUserName, size);
+      return _buildNeonAvatar(user?.name ?? otherUserName, size);
     };
 
-    // 🎨 Foreground builder - Glassmorphism efektli overlay
-    config.foreground = _buildModernForeground(context, otherUserName, isVideo);
+    // 🎨 Cyberpunk Foreground
+    config.foreground = _buildCyberpunkForeground(context, otherUserName, isVideo);
 
-
-    // 🔊 Ses dalgası ve duration göster
+    // 🔊 Duration göster
     config.duration.isVisible = true;
     
-    // 🎨 Audio/Video View Config
+    // 🎨 Audio View Background
     if (!isVideo) {
       config.audioVideoView.backgroundBuilder = (context, size, user, extraInfo) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                kCallBgColor,
-                kCallCardColor.withOpacity(0.8),
-                kCallBgColor,
-              ],
-            ),
-          ),
-        );
+        return _buildCyberpunkBackground();
       };
     }
 
@@ -107,130 +93,177 @@ class CallScreen extends StatelessWidget {
     );
   }
 
-  // 🎨 Gradient Arka Plan Widget
-  Widget _buildGradientBackground() {
+  // 🎨 CYBERPUNK ARKA PLAN
+  Widget _buildCyberpunkBackground() {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            kCallBgColor,
-            const Color(0xFF1A1625),
-            kCallCardColor.withOpacity(0.5),
-            kCallBgColor,
+            Color(0xFF0D0D1A),
+            Color(0xFF1A0A2E),
+            Color(0xFF16213E),
+            Color(0xFF0D0D1A),
           ],
-          stops: const [0.0, 0.3, 0.7, 1.0],
+          stops: [0.0, 0.3, 0.7, 1.0],
         ),
       ),
       child: Stack(
         children: [
-          // Dekoratif gradient daireler
+          // Grid çizgileri efekti
+          CustomPaint(
+            size: const Size(double.infinity, double.infinity),
+            painter: _GridPainter(),
+          ),
+          // Neon mor ışık - sol üst
           Positioned(
-            top: -100,
+            top: -80,
+            left: -80,
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: kNeonPurple.withOpacity(0.4),
+                    blurRadius: 100,
+                    spreadRadius: 50,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Neon mavi ışık - sağ alt
+          Positioned(
+            bottom: -100,
             right: -100,
             child: Container(
               width: 300,
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    kCallAccentPurple.withOpacity(0.3),
-                    kCallAccentPurple.withOpacity(0.0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -50,
-            left: -50,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    kCallAccentGreen.withOpacity(0.2),
-                    kCallAccentGreen.withOpacity(0.0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Parıltı efekti
-          Positioned(
-            top: 150,
-            left: 50,
-            child: Container(
-              width: 4,
-              height: 4,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.6),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.4),
-                    blurRadius: 10,
-                    spreadRadius: 2,
+                    color: kNeonBlue.withOpacity(0.3),
+                    blurRadius: 120,
+                    spreadRadius: 60,
                   ),
                 ],
               ),
             ),
           ),
+          // Neon pembe ışık - orta
+          Positioned(
+            top: 200,
+            right: 50,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: kNeonPink.withOpacity(0.25),
+                    blurRadius: 60,
+                    spreadRadius: 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Parıltı noktaları
+          ..._buildSparkles(),
         ],
       ),
     );
   }
 
-  // 🎨 Gradient Avatar Widget
-  Widget _buildGradientAvatar(String name, Size size) {
+  // Parıltı noktaları
+  List<Widget> _buildSparkles() {
+    final random = math.Random(42);
+    return List.generate(15, (index) {
+      return Positioned(
+        top: random.nextDouble() * 600,
+        left: random.nextDouble() * 400,
+        child: Container(
+          width: 3,
+          height: 3,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withOpacity(0.6 + random.nextDouble() * 0.4),
+            boxShadow: [
+              BoxShadow(
+                color: (index % 2 == 0 ? kNeonPurple : kNeonBlue).withOpacity(0.8),
+                blurRadius: 6,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  // 🎨 NEON AVATAR
+  Widget _buildNeonAvatar(String name, Size size) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    final avatarSize = size.width * 0.6;
+    final avatarSize = size.width * 0.55;
 
     return Center(
       child: Container(
         width: avatarSize,
         height: avatarSize,
-        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            colors: [kCallAccentPurple, kCallAccentGreen],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
           boxShadow: [
+            // Dış neon glow
             BoxShadow(
-              color: kCallAccentPurple.withOpacity(0.5),
-              blurRadius: 20,
-              spreadRadius: 2,
-            ),
-            BoxShadow(
-              color: kCallAccentGreen.withOpacity(0.3),
+              color: kNeonPurple.withOpacity(0.6),
               blurRadius: 30,
               spreadRadius: 5,
+            ),
+            BoxShadow(
+              color: kNeonPink.withOpacity(0.4),
+              blurRadius: 50,
+              spreadRadius: 10,
             ),
           ],
         ),
         child: Container(
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: kCallCardColor,
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 2,
+            gradient: const LinearGradient(
+              colors: [kNeonPurple, kNeonPink, kNeonBlue],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          child: Center(
-            child: Text(
-              initial,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: avatarSize * 0.4,
-                fontWeight: FontWeight.bold,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: kDarkBg,
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                initial,
+                style: GoogleFonts.orbitron(
+                  color: Colors.white,
+                  fontSize: avatarSize * 0.35,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      color: kNeonPurple,
+                      blurRadius: 20,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -239,101 +272,88 @@ class CallScreen extends StatelessWidget {
     );
   }
 
-  // 🎨 Modern Foreground Overlay
-  Widget _buildModernForeground(BuildContext context, String userName, bool isVideo) {
+  // 🎨 CYBERPUNK FOREGROUND
+  Widget _buildCyberpunkForeground(BuildContext context, String userName, bool isVideo) {
     return SafeArea(
       child: Column(
         children: [
-          // Üst kısım - Kullanıcı bilgisi (sadece sesli aramada göster)
+          // Üst kısım - Kullanıcı bilgisi
           if (!isVideo)
             Padding(
-              padding: const EdgeInsets.only(top: 60),
+              padding: const EdgeInsets.only(top: 80),
               child: Column(
                 children: [
-                  // Kullanıcı adı
+                  // Kullanıcı adı - Neon efektli
                   Text(
-                    userName,
-                    style: GoogleFonts.poppins(
+                    userName.toUpperCase(),
+                    style: GoogleFonts.orbitron(
                       color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 4,
                       shadows: [
                         Shadow(
-                          color: Colors.black.withOpacity(0.5),
-                          blurRadius: 10,
+                          color: kNeonPurple,
+                          blurRadius: 20,
+                        ),
+                        Shadow(
+                          color: kNeonPink.withOpacity(0.5),
+                          blurRadius: 40,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  // Arama durumu
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: kCallAccentGreen,
-                          boxShadow: [
-                            BoxShadow(
-                              color: kCallAccentGreen.withOpacity(0.6),
-                              blurRadius: 8,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Arama devam ediyor',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
+                  const SizedBox(height: 12),
+                  // Arama durumu - Animasyonlu
+                  _NeonStatusIndicator(),
+                  const SizedBox(height: 40),
+                  // Ses dalgaları
+                  _AudioWaveWidget(),
                 ],
               ),
             ),
           const Spacer(),
-          // Alt kısım - Glassmorphism efektli bilgi kartı
+          // Alt bilgi kartı
           if (!isVideo)
             Padding(
-              padding: const EdgeInsets.only(bottom: 120, left: 20, right: 20),
+              padding: const EdgeInsets.only(bottom: 130, left: 24, right: 24),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(20),
+                      color: kDarkCard.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.1),
+                        color: kNeonPurple.withOpacity(0.3),
                         width: 1,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: kNeonPurple.withOpacity(0.1),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.security,
-                          color: kCallAccentPurple.withOpacity(0.8),
+                          Icons.shield_outlined,
+                          color: kNeonBlue,
                           size: 18,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         Text(
-                          'Uçtan uca şifreli arama',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white.withOpacity(0.6),
-                            fontSize: 12,
+                          'ENCRYPTED CONNECTION',
+                          style: GoogleFonts.orbitron(
+                            color: kNeonBlue,
+                            fontSize: 11,
                             fontWeight: FontWeight.w500,
+                            letterSpacing: 2,
                           ),
                         ),
                       ],
@@ -344,6 +364,166 @@ class CallScreen extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+// 🎨 Grid Painter - Cyberpunk grid efekti
+class _GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = kNeonPurple.withOpacity(0.05)
+      ..strokeWidth = 0.5;
+
+    // Yatay çizgiler
+    for (double y = 0; y < size.height; y += 40) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+
+    // Dikey çizgiler
+    for (double x = 0; x < size.width; x += 40) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// 🎨 Neon Status Indicator
+class _NeonStatusIndicator extends StatefulWidget {
+  @override
+  State<_NeonStatusIndicator> createState() => _NeonStatusIndicatorState();
+}
+
+class _NeonStatusIndicatorState extends State<_NeonStatusIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: kNeonPink,
+                boxShadow: [
+                  BoxShadow(
+                    color: kNeonPink.withOpacity(_animation.value),
+                    blurRadius: 15,
+                    spreadRadius: 3,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'CALLING',
+              style: GoogleFonts.orbitron(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 3,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// 🎨 Audio Wave Widget - Animasyonlu ses dalgaları
+class _AudioWaveWidget extends StatefulWidget {
+  @override
+  State<_AudioWaveWidget> createState() => _AudioWaveWidgetState();
+}
+
+class _AudioWaveWidgetState extends State<_AudioWaveWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(7, (index) {
+            final delay = index * 0.1;
+            final animValue = math.sin((_controller.value + delay) * math.pi * 2);
+            final height = 15 + (animValue * 20).abs();
+            
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: 4,
+              height: height,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(2),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    kNeonPink,
+                    kNeonPurple,
+                    kNeonBlue,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: kNeonPurple.withOpacity(0.5),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }
