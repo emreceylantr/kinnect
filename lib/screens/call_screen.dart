@@ -74,10 +74,6 @@ class CallScreen extends StatelessWidget {
     // 🎨 Foreground builder - Glassmorphism efektli overlay
     config.foreground = _buildModernForeground(context, otherUserName, isVideo);
 
-    // 🎨 Arama Sonu Callback
-    config.onCallEnd = (event, defaultAction) {
-      defaultAction.call();
-    };
 
     // 🔊 Ses dalgası ve duration göster
     config.duration.isVisible = true;
