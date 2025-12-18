@@ -11,7 +11,10 @@ class ChatService {
   // 1. SOHBET ODASI BAŞLAT / GETİR
   Future<String> createOrGetChatRoom(String otherUserId) async {
     try {
-      final response = await client.from('chat_rooms').select().contains('participants', [_myId]);
+      final response = await client
+          .from('chat_rooms')
+          .select()
+          .contains('participants', [_myId]);
       final List<dynamic> rooms = response as List<dynamic>;
       Map<String, dynamic>? existingRoom;
 
@@ -25,10 +28,14 @@ class ChatService {
 
       if (existingRoom != null) return existingRoom['id'];
 
-      final newRoom = await client.from('chat_rooms').insert({
-        'participants': [_myId, otherUserId],
-        'updated_at': DateTime.now().toIso8601String(),
-      }).select().single();
+      final newRoom = await client
+          .from('chat_rooms')
+          .insert({
+            'participants': [_myId, otherUserId],
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .select()
+          .single();
 
       return newRoom['id'];
     } catch (e) {
@@ -38,7 +45,8 @@ class ChatService {
   }
 
   // 2. MESAJ GÖNDER
-  Future<void> sendMessage(String roomId, String content, String receiverId) async {
+  Future<void> sendMessage(
+      String roomId, String content, String receiverId) async {
     try {
       // a. Mesajı Kaydet
       await client.from('messages').insert({
@@ -61,6 +69,26 @@ class ChatService {
           'type': 'message',
           'is_read': false,
         });
+
+        // 🔔 PUSH BİLDİRİM GÖNDER
+        try {
+          final myProfile = await client
+              .from('profiles')
+              .select('username')
+              .eq('id', _myId)
+              .single();
+          final username = myProfile['username'] ?? 'Birisi';
+
+          await client.functions.invoke('send-push-notification', body: {
+            'target_user_id': receiverId,
+            'title': '💬 Yeni Mesaj',
+            'body': '$username: $content',
+            'type': 'message',
+            'target_id': roomId,
+          });
+        } catch (e) {
+          print('Push bildirim hatası: $e');
+        }
       }
     } catch (e) {
       print('Mesaj Gönderme Hatası: $e');
@@ -114,7 +142,8 @@ class ChatService {
         // SADECE İÇİNDE MESAJ OLANLARI LİSTEYE AL
         if (lastMessageResponse != null) {
           final participants = List<String>.from(room['participants']);
-          final otherId = participants.firstWhere((id) => id != _myId, orElse: () => '');
+          final otherId =
+              participants.firstWhere((id) => id != _myId, orElse: () => '');
 
           if (otherId.isNotEmpty) {
             otherUserIds.add(otherId);
@@ -135,13 +164,16 @@ class ChatService {
           .select()
           .inFilter('id', otherUserIds.toList());
 
-      final profilesMap = {for (var p in profilesResponse) p['id'] as String: p};
+      final profilesMap = {
+        for (var p in profilesResponse) p['id'] as String: p
+      };
 
       List<Map<String, dynamic>> result = finalChats.map((chat) {
         return {
           ...chat,
           'other_user': profilesMap[chat['other_user_id']],
-          'updated_at': chat['actual_last_message_at'], // Görüntülenecek saat artık son mesaj saati
+          'updated_at': chat[
+              'actual_last_message_at'], // Görüntülenecek saat artık son mesaj saati
         };
       }).toList();
 
@@ -153,7 +185,6 @@ class ChatService {
       });
 
       return result;
-
     } catch (e) {
       print("Chat Listesi Hatası: $e");
       return [];
