@@ -1,5 +1,5 @@
 // Supabase Edge Function: Push Notification Gönderimi
-// Firebase Cloud Messaging API v1 kullanıyor
+// Basitleştirilmiş versiyon - HTTP API ile FCM
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -17,64 +17,6 @@ interface PushPayload {
     target_id?: string
 }
 
-// Google OAuth2 Access Token alma
-async function getAccessToken(): Promise<string> {
-    const serviceAccount = JSON.parse(Deno.env.get('FIREBASE_SERVICE_ACCOUNT') || '{}')
-
-    const now = Math.floor(Date.now() / 1000)
-    const payload = {
-        iss: serviceAccount.client_email,
-        sub: serviceAccount.client_email,
-        aud: 'https://oauth2.googleapis.com/token',
-        iat: now,
-        exp: now + 3600,
-        scope: 'https://www.googleapis.com/auth/firebase.messaging'
-    }
-
-    // JWT oluştur
-    const encoder = new TextEncoder()
-    const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
-    const payloadB64 = btoa(JSON.stringify(payload))
-
-    const key = await crypto.subtle.importKey(
-        'pkcs8',
-        pemToBinary(serviceAccount.private_key),
-        { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-        false,
-        ['sign']
-    )
-
-    const signature = await crypto.subtle.sign(
-        'RSASSA-PKCS1-v1_5',
-        key,
-        encoder.encode(`${header}.${payloadB64}`)
-    )
-
-    const jwt = `${header}.${payloadB64}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`
-
-    // Access token al
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
-    })
-
-    const tokenData = await tokenResponse.json()
-    return tokenData.access_token
-}
-
-function pemToBinary(pem: string): ArrayBuffer {
-    const b64 = pem.replace(/-----BEGIN PRIVATE KEY-----/, '')
-        .replace(/-----END PRIVATE KEY-----/, '')
-        .replace(/\s/g, '')
-    const binary = atob(b64)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i)
-    }
-    return bytes.buffer
-}
-
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
@@ -83,6 +25,8 @@ serve(async (req) => {
     try {
         const payload: PushPayload = await req.json()
         const { target_user_id, title, body, type, target_id } = payload
+
+        console.log('🔔 Push isteği alındı:', { target_user_id, title, body })
 
         // Supabase client
         const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -96,24 +40,104 @@ serve(async (req) => {
             .eq('id', target_user_id)
             .single()
 
+        console.log('👤 Profil:', profile, 'Hata:', error)
+
         if (error || !profile?.fcm_token) {
+            console.log('❌ FCM token bulunamadı')
             return new Response(
                 JSON.stringify({ error: 'FCM token bulunamadı', details: error }),
                 { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }
 
-        // Firebase'e push gönder (v1 API)
-        const projectId = Deno.env.get('FIREBASE_PROJECT_ID') || 'kinnect-8fc6b'
-        const accessToken = await getAccessToken()
+        // Firebase HTTP v1 API için OAuth token al
+        const serviceAccountJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT')
+        if (!serviceAccountJson) {
+            console.log('❌ FIREBASE_SERVICE_ACCOUNT secret bulunamadı')
+            return new Response(
+                JSON.stringify({ error: 'FIREBASE_SERVICE_ACCOUNT secret eksik' }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
 
+        let serviceAccount
+        try {
+            serviceAccount = JSON.parse(serviceAccountJson)
+        } catch (e) {
+            console.log('❌ Service account JSON parse hatası:', e)
+            return new Response(
+                JSON.stringify({ error: 'Service account JSON parse hatası' }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
+        // JWT oluştur
+        const now = Math.floor(Date.now() / 1000)
+        const header = { alg: 'RS256', typ: 'JWT' }
+        const claim = {
+            iss: serviceAccount.client_email,
+            sub: serviceAccount.client_email,
+            aud: 'https://oauth2.googleapis.com/token',
+            iat: now,
+            exp: now + 3600,
+            scope: 'https://www.googleapis.com/auth/firebase.messaging'
+        }
+
+        // Base64 encode
+        const b64Header = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+        const b64Claim = btoa(JSON.stringify(claim)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+        const unsignedToken = `${b64Header}.${b64Claim}`
+
+        // RSA imzalama
+        const privateKeyPem = serviceAccount.private_key
+        const pemContents = privateKeyPem.replace(/-----BEGIN PRIVATE KEY-----/, '').replace(/-----END PRIVATE KEY-----/, '').replace(/\s/g, '')
+        const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0))
+
+        const cryptoKey = await crypto.subtle.importKey(
+            'pkcs8',
+            binaryDer.buffer,
+            { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+            false,
+            ['sign']
+        )
+
+        const signature = await crypto.subtle.sign(
+            'RSASSA-PKCS1-v1_5',
+            cryptoKey,
+            new TextEncoder().encode(unsignedToken)
+        )
+
+        const b64Signature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+            .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+
+        const jwt = `${unsignedToken}.${b64Signature}`
+
+        // Access token al
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
+        })
+
+        const tokenData = await tokenResponse.json()
+        console.log('🔑 Token response:', tokenData.access_token ? 'Alındı' : 'Hata', tokenData.error || '')
+
+        if (!tokenData.access_token) {
+            return new Response(
+                JSON.stringify({ error: 'OAuth token alınamadı', details: tokenData }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
+        // FCM'e push gönder
+        const projectId = serviceAccount.project_id || 'kinnect-8fc6b'
         const fcmResponse = await fetch(
             `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
             {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`,
+                    'Authorization': `Bearer ${tokenData.access_token}`,
                 },
                 body: JSON.stringify({
                     message: {
@@ -140,6 +164,7 @@ serve(async (req) => {
         )
 
         const fcmResult = await fcmResponse.json()
+        console.log('📤 FCM Response:', fcmResult)
 
         return new Response(
             JSON.stringify({ success: true, result: fcmResult }),
@@ -147,6 +172,7 @@ serve(async (req) => {
         )
 
     } catch (error) {
+        console.log('❌ Genel hata:', error.message)
         return new Response(
             JSON.stringify({ error: error.message }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
