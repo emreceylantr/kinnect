@@ -229,13 +229,7 @@ class CallScreen extends StatelessWidget {
       child: Column(
         children: [
           if (!isVideo) ...[
-            const SizedBox(height: 60),
-            // 🖼️ BÜYÜK PROFİL FOTOĞRAFI
-            _AnimatedProfileAvatar(
-              avatarUrl: otherUserAvatar,
-              userName: otherUserName,
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 220), // Avatar Zego SDK tarafından gösteriliyor
             // 👤 KULLANICI ADI
             Text(
               otherUserName,
@@ -255,12 +249,6 @@ class CallScreen extends StatelessWidget {
             _ModernAudioWave(),
           ],
           const Spacer(),
-          // 🔒 GÜVENLİ BAĞLANTI KARTI
-          if (!isVideo)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 140, left: 32, right: 32),
-              child: _buildSecurityCard(),
-            ),
         ],
       ),
     );
