@@ -301,59 +301,8 @@ class CallScreen extends StatelessWidget {
               padding: const EdgeInsets.only(top: 50),
               child: Column(
                 children: [
-                  // Profil fotoğrafı - üstte büyük
-                  Container(
-                    width: 130,
-                    height: 130,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: kSoftPurple.withOpacity(0.3),
-                          blurRadius: 40,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            kSoftPurple.withOpacity(0.8),
-                            kSoftPink.withOpacity(0.6),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: Container(
-                          color: kDarkCard,
-                          child: avatarUrl != null && avatarUrl.isNotEmpty
-                              ? Image.network(
-                                  avatarUrl,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: kSoftPurple.withOpacity(0.5),
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return _buildAvatarInitial(userName);
-                                  },
-                                )
-                              : _buildAvatarInitial(userName),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                  // Avatar Zego SDK tarafından gösteriliyor, burada tekrar eklenmeyecek
+                  const SizedBox(height: 180), // Avatar için boşluk bırak
                   // Kullanıcı adı
                   Text(
                     userName,
