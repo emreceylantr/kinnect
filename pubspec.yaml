@@ -46,6 +46,7 @@ dependencies:
 
   # --- RESİM & DOSYA ---
   image_picker: ^1.0.7
+  cached_network_image: ^3.4.1
 
   # --- ZEGO CLOUD (ARAMA & GÖRÜNTÜLÜ SOHBET) ---
   zego_uikit: ^2.28.35
