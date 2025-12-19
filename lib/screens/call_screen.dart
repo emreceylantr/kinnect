@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-// 🎨 MODERN RENK PALETİ
-const Color kCallPrimary = Color(0xFF6C63FF);
-const Color kCallAccent = Color(0xFF00D4FF);
-const Color kCallPink = Color(0xFFFF6B9D);
-const Color kCallDark = Color(0xFF0A0A0F);
-const Color kCallCard = Color(0xFF1A1A2E);
-const Color kCallSuccess = Color(0xFF00C853);
+// 🎨 MODERN VE SOFT RENK PALETİ
+const Color kCallPrimary = Color(0xFF8E84FF); // Soft mor
+const Color kCallAccent = Color(0xFF4DD0E1);  // Soft turkuaz
+const Color kCallPink = Color(0xFFFF80AB);    // Pastel pembe
+const Color kCallDark = Color(0xFF1F2235);    // Lacivert-Siyah taban
+const Color kCallSuccess = Color(0xFF00E676);
 
 class CallScreen extends StatelessWidget {
   final String callId;
@@ -29,25 +29,102 @@ class CallScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🔍 SUPABASE VERİ Debugging
     final currentUser = Supabase.instance.client.auth.currentUser;
-    final userName = currentUser?.userMetadata?['full_name'] ??
-        currentUser?.email?.split('@')[0] ??
-        'Kullanıcı';
+    final metadata = currentUser?.userMetadata;
+
+    // Konsola yazdırır: Supabase'den ne geldiğini buradan görebilirsin
+    print("--------------------------------------------------");
+    print("GELEN METADATA VERİSİ: $metadata");
+    print("--------------------------------------------------");
+
+    // 🚀 İSİM ÇEKME MANTIĞI (GÜNCELLENDİ)
+    // Sırasıyla hepsini dener, hangisi doluysa onu alır.
+    String userName = 'Misafir';
+
+    if (metadata != null) {
+      if (metadata['full_name'] != null && metadata['full_name'].toString().isNotEmpty) {
+        userName = metadata['full_name'];
+      } else if (metadata['name'] != null && metadata['name'].toString().isNotEmpty) {
+        userName = metadata['name'];
+      } else if (metadata['username'] != null && metadata['username'].toString().isNotEmpty) {
+        userName = metadata['username'];
+      } else if (metadata['display_name'] != null && metadata['display_name'].toString().isNotEmpty) {
+        userName = metadata['display_name'];
+      }
+    }
+
     final userId = currentUser?.id ?? 'unknown_user';
 
+    // Video veya Ses konfigürasyonu
     final config = isVideo
         ? ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall()
         : ZegoUIKitPrebuiltCallConfig.oneOnOneVoiceCall();
 
-    // 🎨 Modern Gradient Arka Plan
+    // 🎨 Arka Plan
     config.background = _buildModernBackground();
 
-    // 🎨 Top Menu Bar
+    // 👥 MEMBER LIST - SADECE İSİM (KÜÇÜK VE KOMPAKT)
+    config.memberListConfig = ZegoMemberListConfig(
+      itemBuilder: (BuildContext context, Size size, user, extraInfo) {
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 15),
+          padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+          height: 48,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          child: Row(
+            children: [
+              // Küçük Avatar
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: kCallPrimary,
+                  boxShadow: [
+                    BoxShadow(color: kCallPrimary.withOpacity(0.3), blurRadius: 4)
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // İsim Alanı
+              Expanded(
+                child: Text(
+                  user.name,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    // 🎨 Menü Barları
     config.topMenuBar.isVisible = true;
     config.topMenuBar.backgroundColor = Colors.transparent;
     config.topMenuBar.style = ZegoCallMenuBarStyle.dark;
 
-    // 🎨 Bottom Menu Bar
     config.bottomMenuBar.backgroundColor = Colors.transparent;
     config.bottomMenuBar.style = ZegoCallMenuBarStyle.dark;
 
@@ -68,16 +145,22 @@ class CallScreen extends StatelessWidget {
 
     // 🎨 Avatar Builder
     config.avatarBuilder = (context, size, user, extraInfo) {
-      return _buildAvatarWithPhoto(user?.name ?? otherUserName, size);
+      return otherUserAvatar != null && !isVideo
+          ? _AnimatedProfileAvatar(
+          avatarUrl: otherUserAvatar,
+          userName: user?.name ?? otherUserName)
+          : _buildAvatarWithPhoto(user?.name ?? otherUserName, size);
     };
 
-    // 🎨 Modern Foreground with Profile Picture
-    config.foreground = _buildModernForeground(context);
+    // 🎨 Foreground
+    if (!isVideo) {
+      config.foreground = _buildModernForeground(context);
+    }
 
-    // 🔊 Duration göster
+    // 🔊 Süre Göstergesi
     config.duration.isVisible = true;
 
-    // 🎨 Audio View Background
+    // 🎨 Audio View Arka Planı
     if (!isVideo) {
       config.audioVideoView.backgroundBuilder =
           (context, size, user, extraInfo) {
@@ -87,63 +170,69 @@ class CallScreen extends StatelessWidget {
 
     return ZegoUIKitPrebuiltCall(
       appID: 1191288890,
-      appSign:
-          "REDACTED_ZEGO_APP_SIGN",
+      appSign: "REDACTED_ZEGO_APP_SIGN",
       userID: userId,
-      userName: userName,
+      userName: userName, // Otomatik bulunan isim
       callID: callId,
       config: config,
+      events: ZegoUIKitPrebuiltCallEvents(
+        onCallEnd: (event, defaultAction) {
+          Navigator.of(context).pop();
+        },
+      ),
     );
   }
 
-  // 🎨 MODERN GRADIENT ARKA PLAN
+  // 🎨 SOFT GRADIENT ARKA PLAN
   Widget _buildModernBackground() {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: [
-            Color(0xFF1A1A2E),
-            Color(0xFF0F0F1A),
-            Color(0xFF0A0A0F),
+            Color(0xFF2B32B2), // Derin mavi
+            Color(0xFF1488CC), // Soft mavi
+            Color(0xFF1F2235), // Koyu taban
           ],
           stops: [0.0, 0.5, 1.0],
         ),
       ),
       child: Stack(
         children: [
-          // Soft glow - top
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.black.withOpacity(0.2)),
+          ),
           Positioned(
-            top: -150,
-            left: -50,
+            top: -100,
+            left: -100,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 400,
+              height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    kCallPrimary.withOpacity(0.3),
-                    kCallPrimary.withOpacity(0.0),
+                    Colors.purpleAccent.withOpacity(0.2),
+                    Colors.transparent,
                   ],
                 ),
               ),
             ),
           ),
-          // Soft glow - bottom right
           Positioned(
             bottom: -100,
             right: -100,
             child: Container(
-              width: 350,
-              height: 350,
+              width: 400,
+              height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    kCallAccent.withOpacity(0.15),
-                    kCallAccent.withOpacity(0.0),
+                    Colors.blueAccent.withOpacity(0.2),
+                    Colors.transparent,
                   ],
                 ),
               ),
@@ -154,7 +243,7 @@ class CallScreen extends StatelessWidget {
     );
   }
 
-  // 🎨 AVATAR WITH PHOTO
+  // 🎨 STANDART AVATAR
   Widget _buildAvatarWithPhoto(String name, Size size) {
     final avatarSize = size.width * 0.55;
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
@@ -167,9 +256,9 @@ class CallScreen extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: kCallPrimary.withOpacity(0.4),
-              blurRadius: 40,
-              spreadRadius: 10,
+              color: kCallPrimary.withOpacity(0.3),
+              blurRadius: 30,
+              spreadRadius: 5,
             ),
           ],
         ),
@@ -178,7 +267,7 @@ class CallScreen extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [kCallPrimary, kCallPink, kCallAccent],
+              colors: [kCallPrimary, kCallPink.withOpacity(0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -190,119 +279,79 @@ class CallScreen extends StatelessWidget {
             ),
             child: otherUserAvatar != null && otherUserAvatar!.isNotEmpty
                 ? ClipOval(
-                    child: Image.network(
-                      otherUserAvatar!,
-                      fit: BoxFit.cover,
-                      width: avatarSize - 8,
-                      height: avatarSize - 8,
-                      errorBuilder: (context, error, stackTrace) => Center(
-                        child: Text(
-                          initial,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: avatarSize * 0.3,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                : Center(
-                    child: Text(
-                      initial,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: avatarSize * 0.3,
-                        fontWeight: FontWeight.bold,
-                      ),
+              child: CachedNetworkImage(
+                imageUrl: otherUserAvatar!,
+                fit: BoxFit.cover,
+                width: avatarSize - 8,
+                height: avatarSize - 8,
+                placeholder: (context, url) => CircularProgressIndicator(
+                  color: kCallPrimary,
+                  strokeWidth: 2,
+                ),
+                errorWidget: (context, url, error) => Center(
+                  child: Text(
+                    initial,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: avatarSize * 0.3,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                ),
+              ),
+            )
+                : Center(
+              child: Text(
+                initial,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: avatarSize * 0.3,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-  // 🎨 MODERN FOREGROUND
+  // 🎨 ÖN YÜZ
   Widget _buildModernForeground(BuildContext context) {
     return SafeArea(
       child: Column(
         children: [
-          if (!isVideo) ...[
-            const SizedBox(height: 220), // Avatar Zego SDK tarafından gösteriliyor
-            // 👤 KULLANICI ADI
-            Text(
-              otherUserName,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
-              textAlign: TextAlign.center,
+          const SizedBox(height: 220),
+          Text(
+            otherUserName,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            // 📞 ARAMA DURUMU
-            _CallStatusIndicator(),
-            const SizedBox(height: 32),
-            // 🎵 SES DALGALARI
-            _ModernAudioWave(),
-          ],
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          _CallStatusIndicator(),
+          const SizedBox(height: 32),
+          _ModernAudioWave(),
           const Spacer(),
+          const SizedBox(height: 50),
         ],
-      ),
-    );
-  }
-
-  // 🔒 GÜVENLİK KARTI
-  Widget _buildSecurityCard() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: kCallSuccess.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.lock_rounded,
-                  color: kCallSuccess,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Uçtan uca şifreli',
-                style: GoogleFonts.poppins(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
 }
 
-// 🖼️ ANİMASYONLU PROFİL AVATARI
+// 🖼️ ANİMASYONLU AVATAR
 class _AnimatedProfileAvatar extends StatefulWidget {
   final String? avatarUrl;
   final String userName;
@@ -324,7 +373,7 @@ class _AnimatedProfileAvatarState extends State<_AnimatedProfileAvatar>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 4),
       vsync: this,
     )..repeat();
   }
@@ -338,7 +387,7 @@ class _AnimatedProfileAvatarState extends State<_AnimatedProfileAvatar>
   @override
   Widget build(BuildContext context) {
     final initial =
-        widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?';
+    widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?';
 
     return AnimatedBuilder(
       animation: _controller,
@@ -349,7 +398,6 @@ class _AnimatedProfileAvatarState extends State<_AnimatedProfileAvatar>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Dönen halka 1
               Transform.rotate(
                 angle: _controller.value * 2 * math.pi,
                 child: Container(
@@ -364,7 +412,6 @@ class _AnimatedProfileAvatarState extends State<_AnimatedProfileAvatar>
                   ),
                 ),
               ),
-              // Dönen halka 2 (ters yön)
               Transform.rotate(
                 angle: -_controller.value * 2 * math.pi,
                 child: Container(
@@ -379,7 +426,6 @@ class _AnimatedProfileAvatarState extends State<_AnimatedProfileAvatar>
                   ),
                 ),
               ),
-              // Profil fotoğrafı
               Container(
                 width: 120,
                 height: 120,
@@ -404,37 +450,40 @@ class _AnimatedProfileAvatarState extends State<_AnimatedProfileAvatar>
                     shape: BoxShape.circle,
                     color: kCallDark,
                   ),
-                  child:
-                      widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                widget.avatarUrl!,
-                                fit: BoxFit.cover,
-                                width: 114,
-                                height: 114,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Center(
-                                  child: Text(
-                                    initial,
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontSize: 48,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            )
-                          : Center(
-                              child: Text(
-                                initial,
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                  child: widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty
+                      ? ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: widget.avatarUrl!,
+                      fit: BoxFit.cover,
+                      width: 114,
+                      height: 114,
+                      placeholder: (context, url) =>
+                          CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                      errorWidget: (context, url, error) => Center(
+                        child: Text(
+                          initial,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                      : Center(
+                    child: Text(
+                      initial,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -445,7 +494,7 @@ class _AnimatedProfileAvatarState extends State<_AnimatedProfileAvatar>
   }
 }
 
-// 📞 ARAMA DURUMU İNDİKATÖRÜ
+// 📞 DURUM İNDİKATÖRÜ
 class _CallStatusIndicator extends StatefulWidget {
   @override
   State<_CallStatusIndicator> createState() => _CallStatusIndicatorState();
@@ -460,10 +509,10 @@ class _CallStatusIndicatorState extends State<_CallStatusIndicator>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.5, end: 1.0).animate(
+    _animation = Tween<double>(begin: 0.3, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
@@ -490,7 +539,7 @@ class _CallStatusIndicatorState extends State<_CallStatusIndicator>
                 color: kCallSuccess,
                 boxShadow: [
                   BoxShadow(
-                    color: kCallSuccess.withOpacity(_animation.value),
+                    color: kCallSuccess.withOpacity(_animation.value * 0.6),
                     blurRadius: 10,
                     spreadRadius: 2,
                   ),
@@ -499,11 +548,12 @@ class _CallStatusIndicatorState extends State<_CallStatusIndicator>
             ),
             const SizedBox(width: 10),
             Text(
-              'Aranıyor...',
+              'Bağlanıyor...',
               style: GoogleFonts.poppins(
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withOpacity(0.8),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
+                letterSpacing: 0.5,
               ),
             ),
           ],
@@ -513,7 +563,7 @@ class _CallStatusIndicatorState extends State<_CallStatusIndicator>
   }
 }
 
-// 🎵 MODERN SES DALGALARI
+// 🎵 SES DALGALARI
 class _ModernAudioWave extends StatefulWidget {
   @override
   State<_ModernAudioWave> createState() => _ModernAudioWaveState();
@@ -527,7 +577,7 @@ class _ModernAudioWaveState extends State<_ModernAudioWave>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..repeat();
   }
@@ -548,27 +598,20 @@ class _ModernAudioWaveState extends State<_ModernAudioWave>
           children: List.generate(5, (index) {
             final delay = index * 0.15;
             final animValue =
-                math.sin((_controller.value + delay) * math.pi * 2);
-            final height = 12 + (animValue * 18).abs();
+            math.sin((_controller.value + delay) * math.pi * 2);
+            final height = 10 + (animValue * 15).abs();
 
             return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 3),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
               width: 4,
               height: height,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(2),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    kCallPrimary,
-                    kCallAccent,
-                  ],
-                ),
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.white.withOpacity(0.8),
                 boxShadow: [
                   BoxShadow(
-                    color: kCallPrimary.withOpacity(0.3),
-                    blurRadius: 6,
+                    color: kCallPrimary.withOpacity(0.4),
+                    blurRadius: 8,
                     spreadRadius: 1,
                   ),
                 ],
