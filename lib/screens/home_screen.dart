@@ -137,6 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 callId: callId,
                 otherUserName: callerProfile['full_name'] ?? 'Kullanıcı',
                 isVideo: false,
+                otherUserAvatar: callerProfile['avatar_url']?.toString(),
               )),
             );
           },

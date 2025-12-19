@@ -3,15 +3,15 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
-import 'package:zego_uikit/zego_uikit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// 🎨 SOFT NEON RENK PALETİ
-const Color kSoftPurple = Color(0xFF8B5CF6);
-const Color kSoftPink = Color(0xFFC084FC);
-const Color kSoftBlue = Color(0xFF38BDF8);
-const Color kDarkBg = Color(0xFF09090B);
-const Color kDarkCard = Color(0xFF18181B);
+// 🎨 MODERN RENK PALETİ
+const Color kCallPrimary = Color(0xFF6C63FF);
+const Color kCallAccent = Color(0xFF00D4FF);
+const Color kCallPink = Color(0xFFFF6B9D);
+const Color kCallDark = Color(0xFF0A0A0F);
+const Color kCallCard = Color(0xFF1A1A2E);
+const Color kCallSuccess = Color(0xFF00C853);
 
 class CallScreen extends StatelessWidget {
   final String callId;
@@ -39,8 +39,8 @@ class CallScreen extends StatelessWidget {
         ? ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall()
         : ZegoUIKitPrebuiltCallConfig.oneOnOneVoiceCall();
 
-    // 🎨 Ultra Soft Arka Plan
-    config.background = _buildUltraSoftBackground();
+    // 🎨 Modern Gradient Arka Plan
+    config.background = _buildModernBackground();
 
     // 🎨 Top Menu Bar
     config.topMenuBar.isVisible = true;
@@ -48,9 +48,9 @@ class CallScreen extends StatelessWidget {
     config.topMenuBar.style = ZegoCallMenuBarStyle.dark;
 
     // 🎨 Bottom Menu Bar
-    config.bottomMenuBar.backgroundColor = kDarkCard.withOpacity(0.6);
+    config.bottomMenuBar.backgroundColor = Colors.transparent;
     config.bottomMenuBar.style = ZegoCallMenuBarStyle.dark;
-    
+
     if (!isVideo) {
       config.bottomMenuBar.buttons = [
         ZegoCallMenuBarButtonName.toggleMicrophoneButton,
@@ -66,32 +66,29 @@ class CallScreen extends StatelessWidget {
       ];
     }
 
-    // 🎨 Member List Config - Küçük ve isimli
-    config.memberList.itemBuilder = (context, size, user, extraInfo) {
-      return _buildCompactMemberItem(user, size);
-    };
-    
-    // 🎨 Profil Fotoğraflı Büyük Avatar
+    // 🎨 Avatar Builder
     config.avatarBuilder = (context, size, user, extraInfo) {
-      return _buildProfilePhotoAvatar(size, otherUserAvatar, otherUserName);
+      return _buildAvatarWithPhoto(user?.name ?? otherUserName, size);
     };
 
-    // 🎨 Minimal Foreground
-    config.foreground = _buildMinimalForeground(context, otherUserName, isVideo, otherUserAvatar);
+    // 🎨 Modern Foreground with Profile Picture
+    config.foreground = _buildModernForeground(context);
 
     // 🔊 Duration göster
     config.duration.isVisible = true;
-    
+
     // 🎨 Audio View Background
     if (!isVideo) {
-      config.audioVideoView.backgroundBuilder = (context, size, user, extraInfo) {
-        return _buildUltraSoftBackground();
+      config.audioVideoView.backgroundBuilder =
+          (context, size, user, extraInfo) {
+        return _buildModernBackground();
       };
     }
 
     return ZegoUIKitPrebuiltCall(
       appID: 1191288890,
-      appSign: "d2dab541744a6fd9318bb74be82c7789f0635d063b774e923afba4249d8a8d4a",
+      appSign:
+          "d2dab541744a6fd9318bb74be82c7789f0635d063b774e923afba4249d8a8d4a",
       userID: userId,
       userName: userName,
       callID: callId,
@@ -99,51 +96,54 @@ class CallScreen extends StatelessWidget {
     );
   }
 
-  // 🎨 ULTRA SOFT ARKA PLAN
-  Widget _buildUltraSoftBackground() {
+  // 🎨 MODERN GRADIENT ARKA PLAN
+  Widget _buildModernBackground() {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF0F0F14),
+            Color(0xFF1A1A2E),
+            Color(0xFF0F0F1A),
             Color(0xFF0A0A0F),
-            kDarkBg,
           ],
+          stops: [0.0, 0.5, 1.0],
         ),
       ),
       child: Stack(
         children: [
-          // Çok hafif mor ışık - üst
+          // Soft glow - top
           Positioned(
-            top: -200,
-            left: 0,
-            right: 0,
+            top: -150,
+            left: -50,
             child: Container(
-              height: 500,
+              width: 300,
+              height: 300,
               decoration: BoxDecoration(
+                shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    kSoftPurple.withOpacity(0.06),
-                    Colors.transparent,
+                    kCallPrimary.withOpacity(0.3),
+                    kCallPrimary.withOpacity(0.0),
                   ],
                 ),
               ),
             ),
           ),
-          // Çok hafif mavi ışık - alt
+          // Soft glow - bottom right
           Positioned(
-            bottom: -250,
-            left: 0,
-            right: 0,
+            bottom: -100,
+            right: -100,
             child: Container(
-              height: 400,
+              width: 350,
+              height: 350,
               decoration: BoxDecoration(
+                shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    kSoftBlue.withOpacity(0.04),
-                    Colors.transparent,
+                    kCallAccent.withOpacity(0.15),
+                    kCallAccent.withOpacity(0.0),
                   ],
                 ),
               ),
@@ -154,9 +154,9 @@ class CallScreen extends StatelessWidget {
     );
   }
 
-  // 🎨 PROFİL FOTOĞRAFLI AVATAR
-  Widget _buildProfilePhotoAvatar(Size size, String? avatarUrl, String name) {
-    final avatarSize = size.width * 0.7;
+  // 🎨 AVATAR WITH PHOTO
+  Widget _buildAvatarWithPhoto(String name, Size size) {
+    final avatarSize = size.width * 0.55;
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     return Center(
@@ -167,8 +167,8 @@ class CallScreen extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: kSoftPurple.withOpacity(0.25),
-              blurRadius: 50,
+              color: kCallPrimary.withOpacity(0.4),
+              blurRadius: 40,
               spreadRadius: 10,
             ),
           ],
@@ -178,177 +178,280 @@ class CallScreen extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [
-                kSoftPurple.withOpacity(0.7),
-                kSoftPink.withOpacity(0.5),
-              ],
+              colors: [kCallPrimary, kCallPink, kCallAccent],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
           ),
-          child: ClipOval(
-            child: Container(
-              color: kDarkCard,
-              child: avatarUrl != null && avatarUrl.isNotEmpty
-                  ? Image.network(
-                      avatarUrl,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: kCallDark,
+            ),
+            child: otherUserAvatar != null && otherUserAvatar!.isNotEmpty
+                ? ClipOval(
+                    child: Image.network(
+                      otherUserAvatar!,
                       fit: BoxFit.cover,
-                      width: avatarSize,
-                      height: avatarSize,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: kSoftPurple.withOpacity(0.5),
+                      width: avatarSize - 8,
+                      height: avatarSize - 8,
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Text(
+                          initial,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: avatarSize * 0.3,
+                            fontWeight: FontWeight.bold,
                           ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Text(
-                            initial,
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: avatarSize * 0.3,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                  : Center(
-                      child: Text(
-                        initial,
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: avatarSize * 0.3,
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-            ),
+                  )
+                : Center(
+                    child: Text(
+                      initial,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: avatarSize * 0.3,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
           ),
         ),
       ),
     );
   }
 
-  // 🎨 KOMPAKT MEMBER LİST ITEM
-  Widget _buildCompactMemberItem(ZegoUIKitUser? user, Size size) {
-    final displayName = user?.name ?? 'Kullanıcı';
-    
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          // Avatar
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  kSoftPurple.withOpacity(0.6),
-                  kSoftPink.withOpacity(0.4),
-                ],
-              ),
-            ),
-            child: Center(
-              child: Text(
-                displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // İsim
-          Expanded(
-            child: Text(
-              displayName,
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          // Mikrofon durumu
-          Icon(
-            Icons.mic,
-            color: Colors.white.withOpacity(0.5),
-            size: 20,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 🎨 MİNİMAL FOREGROUND
-  Widget _buildMinimalForeground(BuildContext context, String userName, bool isVideo, String? avatarUrl) {
+  // 🎨 MODERN FOREGROUND
+  Widget _buildModernForeground(BuildContext context) {
     return SafeArea(
       child: Column(
         children: [
-          if (!isVideo)
-            Padding(
-              padding: const EdgeInsets.only(top: 50),
-              child: Column(
-                children: [
-                  // Avatar Zego SDK tarafından gösteriliyor, burada tekrar eklenmeyecek
-                  const SizedBox(height: 180), // Avatar için boşluk bırak
-                  // Kullanıcı adı
-                  Text(
-                    userName,
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Durum
-                  _MinimalStatusIndicator(),
-                  const SizedBox(height: 35),
-                  // Ses dalgaları
-                  _AudioWaveWidget(),
-                ],
+          if (!isVideo) ...[
+            const SizedBox(height: 220), // Avatar Zego SDK tarafından gösteriliyor
+            // 👤 KULLANICI ADI
+            Text(
+              otherUserName,
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
               ),
+              textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 8),
+            // 📞 ARAMA DURUMU
+            _CallStatusIndicator(),
+            const SizedBox(height: 32),
+            // 🎵 SES DALGALARI
+            _ModernAudioWave(),
+          ],
           const Spacer(),
         ],
       ),
     );
   }
 
-  Widget _buildAvatarInitial(String name) {
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    return Center(
-      child: Text(
-        initial,
-        style: GoogleFonts.inter(
-          color: Colors.white,
-          fontSize: 45,
-          fontWeight: FontWeight.w500,
+  // 🔒 GÜVENLİK KARTI
+  Widget _buildSecurityCard() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: kCallSuccess.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.lock_rounded,
+                  color: kCallSuccess,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Uçtan uca şifreli',
+                style: GoogleFonts.poppins(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// 🎨 Minimal Status Indicator
-class _MinimalStatusIndicator extends StatefulWidget {
+// 🖼️ ANİMASYONLU PROFİL AVATARI
+class _AnimatedProfileAvatar extends StatefulWidget {
+  final String? avatarUrl;
+  final String userName;
+
+  const _AnimatedProfileAvatar({
+    required this.avatarUrl,
+    required this.userName,
+  });
+
   @override
-  State<_MinimalStatusIndicator> createState() => _MinimalStatusIndicatorState();
+  State<_AnimatedProfileAvatar> createState() => _AnimatedProfileAvatarState();
 }
 
-class _MinimalStatusIndicatorState extends State<_MinimalStatusIndicator>
+class _AnimatedProfileAvatarState extends State<_AnimatedProfileAvatar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final initial =
+        widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?';
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Container(
+          width: 160,
+          height: 160,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Dönen halka 1
+              Transform.rotate(
+                angle: _controller.value * 2 * math.pi,
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: kCallPrimary.withOpacity(0.3),
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+              // Dönen halka 2 (ters yön)
+              Transform.rotate(
+                angle: -_controller.value * 2 * math.pi,
+                child: Container(
+                  width: 145,
+                  height: 145,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: kCallAccent.withOpacity(0.2),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+              // Profil fotoğrafı
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [kCallPrimary, kCallPink],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: kCallPrimary.withOpacity(0.4),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(3),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: kCallDark,
+                  ),
+                  child:
+                      widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty
+                          ? ClipOval(
+                              child: Image.network(
+                                widget.avatarUrl!,
+                                fit: BoxFit.cover,
+                                width: 114,
+                                height: 114,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Center(
+                                  child: Text(
+                                    initial,
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                initial,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// 📞 ARAMA DURUMU İNDİKATÖRÜ
+class _CallStatusIndicator extends StatefulWidget {
+  @override
+  State<_CallStatusIndicator> createState() => _CallStatusIndicatorState();
+}
+
+class _CallStatusIndicatorState extends State<_CallStatusIndicator>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -357,10 +460,10 @@ class _MinimalStatusIndicatorState extends State<_MinimalStatusIndicator>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.4, end: 1.0).animate(
+    _animation = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
@@ -380,27 +483,27 @@ class _MinimalStatusIndicatorState extends State<_MinimalStatusIndicator>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 6,
-              height: 6,
+              width: 8,
+              height: 8,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: kSoftPurple,
+                color: kCallSuccess,
                 boxShadow: [
                   BoxShadow(
-                    color: kSoftPurple.withOpacity(_animation.value * 0.5),
-                    blurRadius: 8,
-                    spreadRadius: 1,
+                    color: kCallSuccess.withOpacity(_animation.value),
+                    blurRadius: 10,
+                    spreadRadius: 2,
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Text(
-              'Arama devam ediyor',
-              style: GoogleFonts.inter(
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
+              'Aranıyor...',
+              style: GoogleFonts.poppins(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -410,13 +513,13 @@ class _MinimalStatusIndicatorState extends State<_MinimalStatusIndicator>
   }
 }
 
-// 🎨 Audio Wave Widget
-class _AudioWaveWidget extends StatefulWidget {
+// 🎵 MODERN SES DALGALARI
+class _ModernAudioWave extends StatefulWidget {
   @override
-  State<_AudioWaveWidget> createState() => _AudioWaveWidgetState();
+  State<_ModernAudioWave> createState() => _ModernAudioWaveState();
 }
 
-class _AudioWaveWidgetState extends State<_AudioWaveWidget>
+class _ModernAudioWaveState extends State<_ModernAudioWave>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
@@ -424,7 +527,7 @@ class _AudioWaveWidgetState extends State<_AudioWaveWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     )..repeat();
   }
@@ -443,17 +546,32 @@ class _AudioWaveWidgetState extends State<_AudioWaveWidget>
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(5, (index) {
-            final delay = index * 0.12;
-            final animValue = math.sin((_controller.value + delay) * math.pi * 2);
-            final height = 10 + (animValue * 12).abs();
-            
+            final delay = index * 0.15;
+            final animValue =
+                math.sin((_controller.value + delay) * math.pi * 2);
+            final height = 12 + (animValue * 18).abs();
+
             return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              width: 3,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: 4,
               height: height,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(2),
-                color: kSoftPurple.withOpacity(0.6),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    kCallPrimary,
+                    kCallAccent,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: kCallPrimary.withOpacity(0.3),
+                    blurRadius: 6,
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
             );
           }),
