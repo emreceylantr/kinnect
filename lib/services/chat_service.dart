@@ -44,9 +44,14 @@ class ChatService {
     }
   }
 
-  // 2. MESAJ GÖNDER
+  // 2. MESAJ GÖNDER (Ephemeral destek eklendi)
   Future<void> sendMessage(
-      String roomId, String content, String receiverId) async {
+    String roomId,
+    String content,
+    String receiverId, {
+    bool isEphemeral = false,
+    int ephemeralDuration = 5, // saniye
+  }) async {
     try {
       // a. Mesajı Kaydet
       await client.from('messages').insert({
@@ -54,6 +59,9 @@ class ChatService {
         'sender_id': _myId,
         'receiver_id': receiverId,
         'content': content,
+        'is_ephemeral': isEphemeral,
+        'ephemeral_duration': ephemeralDuration,
+        'is_viewed': false,
       });
 
       // b. Odayı Güncelle (Sıralama tetikleyici)
@@ -79,10 +87,14 @@ class ChatService {
               .single();
           final username = myProfile['username'] ?? 'Birisi';
 
+          String notifBody = isEphemeral
+              ? '$username sana kül olan bir mesaj gönderdi 🔥'
+              : '$username: $content';
+
           await client.functions.invoke('send-push-notification', body: {
             'target_user_id': receiverId,
-            'title': '💬 Yeni Mesaj',
-            'body': '$username: $content',
+            'title': isEphemeral ? '🔥 Kül Olan Mesaj' : '💬 Yeni Mesaj',
+            'body': notifBody,
             'type': 'message',
             'target_id': roomId,
           });
@@ -92,6 +104,28 @@ class ChatService {
       }
     } catch (e) {
       print('Mesaj Gönderme Hatası: $e');
+    }
+  }
+
+  // 🔥 YENİ: MESAJI GÖRÜNTÜLENMIŞ OLARAK İŞARETLE
+  Future<void> markMessageAsViewed(String messageId) async {
+    try {
+      await client.from('messages').update({
+        'is_viewed': true,
+        'viewed_at': DateTime.now().toIso8601String(),
+      }).eq('id', messageId);
+    } catch (e) {
+      print('Mesaj görüntüleme işareti hatası: $e');
+    }
+  }
+
+  // 🔥 YENİ: EPHEMERAL MESAJI SİL (Süre dolunca çağrılır)
+  Future<void> deleteEphemeralMessage(String messageId) async {
+    try {
+      await client.from('messages').delete().eq('id', messageId);
+      print('🔥 Kül olan mesaj silindi: $messageId');
+    } catch (e) {
+      print('Ephemeral mesaj silme hatası: $e');
     }
   }
 
