@@ -81,14 +81,13 @@ flutter_launcher_icons:
   remove_alpha_ios: true
 
 # --- SPLASH SCREEN AYARLARI ---
+# Sadece koyu arka plan - logo Flutter splash'ta gösterilecek
 flutter_native_splash:
-  color: "#06060A"                    # Arka plan rengi (kBgDark)
-  image: assets/icon/icon.png         # Logo
-  color_dark: "#06060A"               # Dark mode arka plan
-  image_dark: assets/icon/icon.png    # Dark mode logo
+  color: "#06060A"
+  color_dark: "#06060A"
   android_12:
     color: "#06060A"
-    image: assets/icon/icon.png
   ios: true
   android: true
   web: false
+  # Logo yok - sadece koyu arka plan
