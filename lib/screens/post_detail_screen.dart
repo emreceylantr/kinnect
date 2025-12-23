@@ -16,6 +16,8 @@ import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../widgets/photo_emoji_picker.dart'; // 📸 Photo Emoji Tepkileri
+
 class PostDetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;
   final bool isExploreMode;
@@ -52,7 +54,33 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   String? playingCommentId;
   bool isComposing = false;
 
+  // 📸 Emoji tepkileri
+  List<Map<String, dynamic>> emojiReactions = [];
+
   String get myId => client.auth.currentUser!.id;
+
+  // 📸 Emoji tipinden varsayılan emoji karakterini al
+  String _getEmojiIcon(String? emojiType) {
+    if (emojiType == null) return '📸';
+
+    // PhotoEmojiType enum değerlerine göre eşleştir
+    switch (emojiType) {
+      case 'smile':
+        return '😊';
+      case 'cry':
+        return '😢';
+      case 'laugh':
+        return '😂';
+      case 'surprise':
+        return '😮';
+      case 'thumbsUp':
+        return '👍';
+      case 'love':
+        return '😍';
+      default:
+        return '📸';
+    }
+  }
 
   @override
   void initState() {
@@ -73,6 +101,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     commentCount = (widget.post['comments'] as List?)?.length ?? 0;
 
     _fetchComments();
+    _fetchEmojiReactions(); // 📸 Emoji tepkilerini yükle
 
     commentController.addListener(() {
       setState(() {
@@ -347,6 +376,26 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     } catch (_) {}
   }
 
+  // 📸 EMOJİ TEPKİLERİNİ ÇEK
+  Future<void> _fetchEmojiReactions() async {
+    try {
+      final res = await client
+          .from("post_reactions")
+          .select(
+              "id, post_id, user_id, emoji_url, emoji_type, created_at, profiles(*)") // Açıkça belirt
+          .eq("post_id", widget.post['id'])
+          .order("created_at", ascending: false);
+
+      if (mounted) {
+        setState(() {
+          emojiReactions = List<Map<String, dynamic>>.from(res as List);
+        });
+      }
+    } catch (e) {
+      debugPrint("Emoji tepkileri yüklenirken hata: $e");
+    }
+  }
+
   void _toggleLike() async {
     setState(() {
       isLiked = !isLiked;
@@ -404,6 +453,70 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
+  // 📸 EMOJİ TEPKİSİNİ SİL
+  Future<void> _deleteReaction(String reactionId) async {
+    try {
+      await client.from('post_reactions').delete().eq('id', reactionId);
+      _fetchEmojiReactions();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tepki silindi! 🗑️'),
+            backgroundColor: Color(0xFF6C63FF),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("Tepki silme hatası: $e");
+    }
+  }
+
+  void _confirmDeleteReaction(Map<String, dynamic> reaction) {
+    // Sadece kendi tepkimizi silebiliriz
+    if (reaction['user_id'] != myId) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("Tepkiyi Sil", style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                image: DecorationImage(
+                  image: NetworkImage(reaction['emoji_url'] ?? ''),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text("Bu tepkiyi silmek istediğine emin misin?",
+                style: TextStyle(color: Colors.white70)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("İptal", style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteReaction(reaction['id']);
+            },
+            child: const Text("Sil", style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _sendTextComment() async {
     final msg = commentController.text.trim();
     if (msg.isEmpty) return;
@@ -451,6 +564,210 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     } catch (e) {
       debugPrint("Yorum hatası: $e");
     }
+  }
+
+  // 📸 YENİ: FOTOĞRAF EMOJİ TEPKİSİ GÖNDER
+  Future<void> _sendEmojiReaction(String emojiPath, String emojiType) async {
+    // Upsert kullanıldığı için buradaki manuel kontrolü kaldırıyoruz.
+    // Böylece kullanıcı tepkisini değiştirebilir/güncelleyebilir.
+
+    try {
+      // Fotoğrafı Supabase Storage'a yükle
+      final file = File(emojiPath);
+      final fileName = 'reaction_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storagePath = 'post_reactions/$fileName';
+
+      await client.storage.from('uploads').upload(storagePath, file);
+      final imageUrl = client.storage.from('uploads').getPublicUrl(storagePath);
+
+      // post_reactions tablosuna kaydet (varsa güncelle - upsert)
+      await client.from("post_reactions").upsert({
+        "post_id": widget.post["id"],
+        "user_id": myId,
+        "emoji_url": imageUrl,
+        "emoji_type": emojiType, // Emoji tipi (happy, sad, love vs.)
+      }, onConflict: 'post_id,user_id');
+
+      // Bildirim gönder
+      if (widget.post['user_id'] != myId) {
+        try {
+          await client.from('notifications').insert({
+            'user_id': widget.post['user_id'],
+            'actor_id': myId,
+            'type': 'reaction',
+            'post_id': widget.post['id'],
+            'is_read': false,
+          });
+
+          final myProfile = await client
+              .from('profiles')
+              .select('username')
+              .eq('id', myId)
+              .single();
+          final username = myProfile['username'] ?? 'Birisi';
+
+          await client.functions.invoke('send-push-notification', body: {
+            'target_user_id': widget.post['user_id'],
+            'title': '📸 Foto Tepki',
+            'body': '$username gönderine tepki verdi',
+            'type': 'reaction',
+            'target_id': widget.post['id'],
+          });
+        } catch (_) {}
+      }
+
+      // Tepkileri yenile
+      _fetchEmojiReactions();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tepki gönderildi! 📸'),
+            backgroundColor: Color(0xFF6C63FF),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("Emoji tepki hatası: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  // 📸 TÜM TEPKİLERİ GÖSTEREN DİALOG
+  void _showAllReactionsDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Başlık
+            Text(
+              '📸 Tepkiler (${emojiReactions.length})',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Grid tepkiler
+            Expanded(
+              child: GridView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.all(12), // Taşma payı için padding
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 16, // Daha geniş aralık
+                  mainAxisSpacing: 24, // Dikeyde daha geniş aralık (taşma için)
+                  childAspectRatio: 0.75, // Daha uzun dikey alan
+                ),
+                itemCount: emojiReactions.length,
+                itemBuilder: (context, index) {
+                  final reaction = emojiReactions[index];
+                  final profile = reaction['profiles'] ?? {};
+                  final isMyReaction = reaction['user_id'] == myId;
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ProfileScreen(userId: reaction['user_id']),
+                        ),
+                      );
+                    },
+                    onLongPress: isMyReaction
+                        ? () {
+                            Navigator.pop(context);
+                            _confirmDeleteReaction(reaction);
+                          }
+                        : null,
+                    child: Column(
+                      children: [
+                        // Fotoğraf ve emoji tipi göstergesi
+                        // Fotoğraf ve emoji tipi göstergesi
+                        Stack(
+                          clipBehavior: Clip
+                              .none, // BeReal efekti için taşmayı serbest bırak
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF6C63FF),
+                                  width: 2,
+                                ),
+                                image: DecorationImage(
+                                  image:
+                                      NetworkImage(reaction['emoji_url'] ?? ''),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            // Emoji tipi göstergesi (sağ alt + taşan)
+                            Positioned(
+                              right: -8,
+                              bottom: -8,
+                              child: Text(
+                                _getEmojiIcon(reaction['emoji_type']),
+                                style: const TextStyle(
+                                    fontSize: 30), // DAHA BÜYÜK EMOJİ
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          profile['username'] ?? 'Kullanıcı',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white70,
+                            fontSize: 10,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _startRecording() async {
@@ -777,6 +1094,98 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 ],
                               ),
                             ),
+                            // 📸 Emoji Tepkileri - Sağda
+                            if (emojiReactions.isNotEmpty) ...[
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: () => _showAllReactionsDialog(),
+                                child: Row(
+                                  children: [
+                                    // Üst üste binen avatarlar (max 3)
+                                    SizedBox(
+                                      width: (emojiReactions.length > 3
+                                                  ? 3
+                                                  : emojiReactions.length) *
+                                              22 +
+                                          10,
+                                      height: 28,
+                                      child: Stack(
+                                        children: [
+                                          for (int i = 0;
+                                              i <
+                                                  (emojiReactions.length > 3
+                                                      ? 3
+                                                      : emojiReactions.length);
+                                              i++)
+                                            Positioned(
+                                              left: i * 18.0,
+                                              child: Stack(
+                                                children: [
+                                                  Container(
+                                                    width: 28,
+                                                    height: 28,
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      border: Border.all(
+                                                          color: Colors.black,
+                                                          width: 2),
+                                                      image: DecorationImage(
+                                                        image: NetworkImage(
+                                                            emojiReactions[i][
+                                                                    'emoji_url'] ??
+                                                                ''),
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    right: 0,
+                                                    bottom: 0,
+                                                    child: Container(
+                                                      width: 12,
+                                                      height: 12,
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(
+                                                            0xFF1A1A24),
+                                                        shape: BoxShape.circle,
+                                                        border: Border.all(
+                                                            color: const Color(
+                                                                0xFF6C63FF),
+                                                            width: 1),
+                                                      ),
+                                                      child: Center(
+                                                        child: Text(
+                                                          _getEmojiIcon(
+                                                              emojiReactions[i][
+                                                                  'emoji_type']),
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 6),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (emojiReactions.length > 3) ...[
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "+${emojiReactions.length - 3}",
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.grey.shade400,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                 ),
@@ -932,6 +1341,31 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ),
       child: Row(
         children: [
+          // 📸 Foto Emoji butonu
+          GestureDetector(
+            onTap: () async {
+              final result = await showPhotoEmojiPicker(context);
+              if (result != null) {
+                _sendEmojiReaction(result['path']!, result['type']!);
+              }
+            },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2A2A2A),
+                shape: BoxShape.circle,
+                border:
+                    Border.all(color: const Color(0xFF6C63FF).withOpacity(0.3)),
+              ),
+              child: const Icon(
+                Icons.face_retouching_natural,
+                color: Color(0xFF6C63FF),
+                size: 22,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Container(
               decoration: BoxDecoration(

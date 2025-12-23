@@ -64,7 +64,6 @@ class AdminBadge extends StatelessWidget {
 }
 // 🔥🔥🔥 ROZET WIDGET SONU 🔥🔥🔥
 
-
 class ProfileScreen extends StatefulWidget {
   final String userId;
   final bool showBackButton;
@@ -130,7 +129,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _checkBlockStatusBg();
     });
 
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
       if (data.event == AuthChangeEvent.signedIn ||
           data.event == AuthChangeEvent.tokenRefreshed ||
           data.event == AuthChangeEvent.userUpdated) {
@@ -214,11 +214,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
-              (route) => false,
+          (route) => false,
         );
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Hata: $e')));
     }
   }
 
@@ -234,7 +236,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() => _profileData = data);
 
         // 🎥 EĞER PROFİLDE VİDEO VARSA YÜKLE
-        if (data['avatar_video_url'] != null && data['avatar_video_url'].toString().isNotEmpty) {
+        if (data['avatar_video_url'] != null &&
+            data['avatar_video_url'].toString().isNotEmpty) {
           _initializeVideo(data['avatar_video_url']);
         }
       }
@@ -250,9 +253,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchStats() async {
     try {
-      final posts = await Supabase.instance.client.from('posts').count(CountOption.exact).eq('user_id', widget.userId);
-      final followers = await Supabase.instance.client.from('friendships').count(CountOption.exact).eq('friend_id', widget.userId).eq('status', 'accepted');
-      final following = await Supabase.instance.client.from('friendships').count(CountOption.exact).eq('user_id', widget.userId).eq('status', 'accepted');
+      final posts = await Supabase.instance.client
+          .from('posts')
+          .count(CountOption.exact)
+          .eq('user_id', widget.userId);
+      final followers = await Supabase.instance.client
+          .from('friendships')
+          .count(CountOption.exact)
+          .eq('friend_id', widget.userId)
+          .eq('status', 'accepted');
+      final following = await Supabase.instance.client
+          .from('friendships')
+          .count(CountOption.exact)
+          .eq('user_id', widget.userId)
+          .eq('status', 'accepted');
 
       if (mounted) {
         setState(() {
@@ -284,37 +298,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _updateCoverPhoto() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final XFile? image =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image == null) return;
 
     try {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kapak yükleniyor...')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Kapak yükleniyor...')));
       final fileExt = image.path.split('.').last;
-      final fileName = 'cover_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final fileName =
+          'cover_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
       final filePath = 'covers/$fileName';
 
-      await Supabase.instance.client.storage.from('uploads').upload(filePath, File(image.path));
-      final imageUrl = Supabase.instance.client.storage.from('uploads').getPublicUrl(filePath);
+      await Supabase.instance.client.storage
+          .from('uploads')
+          .upload(filePath, File(image.path));
+      final imageUrl = Supabase.instance.client.storage
+          .from('uploads')
+          .getPublicUrl(filePath);
 
-      await Supabase.instance.client.from('profiles').update({'cover_url': imageUrl}).eq('id', _currentUserId);
+      await Supabase.instance.client
+          .from('profiles')
+          .update({'cover_url': imageUrl}).eq('id', _currentUserId);
 
       if (!mounted) return;
       setState(() {
         _profileData?['cover_url'] = imageUrl;
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Güncellendi!')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Güncellendi!')));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Hata: $e')));
     }
   }
 
   void _openFollowList(String type, String title) {
-    bool canView = (widget.userId == _currentUserId) || (_friendshipStatus == 'accepted');
+    bool canView =
+        (widget.userId == _currentUserId) || (_friendshipStatus == 'accepted');
     if (canView) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => FollowListScreen(userId: widget.userId, title: title, type: type)))
-          .then((_) => _fetchStats());
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => FollowListScreen(
+                  userId: widget.userId,
+                  title: title,
+                  type: type))).then((_) => _fetchStats());
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Listeyi görmek için takip etmelisin.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Listeyi görmek için takip etmelisin.')));
     }
   }
 
@@ -363,15 +396,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _startMessage() async {
     if (_profileData == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veriler yükleniyor...')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Veriler yükleniyor...')));
       return;
     }
     try {
       final roomId = await _chatService.createOrGetChatRoom(widget.userId);
       if (!mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(roomId: roomId, otherUser: _profileData!)));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) =>
+                  ChatScreen(roomId: roomId, otherUser: _profileData!)));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Hata: $e')));
     }
   }
 
@@ -382,9 +421,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _userPosts.removeWhere((p) => p['id'] == postId);
         _postCount--;
       });
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gönderi silindi.')));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Gönderi silindi.')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Silinemedi.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Silinemedi.')));
     }
   }
 
@@ -394,13 +436,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
         title: const Text("Sil", style: TextStyle(color: Colors.white)),
-        content: const Text("Bu gönderiyi silmek istediğine emin misin?", style: TextStyle(color: Colors.white70)),
+        content: const Text("Bu gönderiyi silmek istediğine emin misin?",
+            style: TextStyle(color: Colors.white70)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("İptal", style: TextStyle(color: Colors.grey))),
-          TextButton(onPressed: () {
-            Navigator.pop(ctx);
-            _deletePost(postId);
-          }, child: Text("Sil", style: TextStyle(color: _accentBlue, fontWeight: FontWeight.bold))),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("İptal", style: TextStyle(color: Colors.grey))),
+          TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _deletePost(postId);
+              },
+              child: Text("Sil",
+                  style: TextStyle(
+                      color: _accentBlue, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -412,11 +461,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) {
-        final reasons = ["Spam veya Yanıltıcı", "Taklit veya Sahte Hesap", "Nefret Söylemi", "Şiddet veya Tehlikeli", "Zorbalık veya Taciz", "Diğer"];
+        final reasons = [
+          "Spam veya Yanıltıcı",
+          "Taklit veya Sahte Hesap",
+          "Nefret Söylemi",
+          "Şiddet veya Tehlikeli",
+          "Zorbalık veya Taciz",
+          "Diğer"
+        ];
         return AlertDialog(
           backgroundColor: const Color(0xFF1E1E1E),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text("Kullanıcıyı Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text("Kullanıcıyı Şikayet Et",
+              style: GoogleFonts.poppins(
+                  color: Colors.white, fontWeight: FontWeight.bold)),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView.separated(
@@ -424,21 +483,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
               itemCount: reasons.length,
               separatorBuilder: (c, i) => const Divider(color: Colors.white12),
               itemBuilder: (c, i) => ListTile(
-                title: Text(reasons[i], style: GoogleFonts.poppins(color: Colors.white70)),
-                onTap: () { Navigator.pop(ctx); _submitReport(widget.userId, 'user', reasons[i]); },
+                title: Text(reasons[i],
+                    style: GoogleFonts.poppins(color: Colors.white70)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _submitReport(widget.userId, 'user', reasons[i]);
+                },
               ),
             ),
           ),
-          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text("İptal", style: GoogleFonts.poppins(color: Colors.grey)))],
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text("İptal",
+                    style: GoogleFonts.poppins(color: Colors.grey)))
+          ],
         );
       },
     );
   }
 
-  Future<void> _submitReport(String targetId, String type, String reason) async {
+  Future<void> _submitReport(
+      String targetId, String type, String reason) async {
     try {
-      await _safetyService.reportContent(targetId: targetId, type: type, reason: reason);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Şikayet edildi."), backgroundColor: Colors.green));
+      await _safetyService.reportContent(
+          targetId: targetId, type: type, reason: reason);
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Şikayet edildi."), backgroundColor: Colors.green));
     } catch (_) {}
   }
 
@@ -448,25 +520,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
-        title: Text(isBlocking ? "Engelle" : "Engeli Kaldır", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: Text(isBlocking ? "Bu kullanıcıyı engellemek istediğine emin misin?" : "Engeli kaldırmak istiyor musun?", style: GoogleFonts.poppins(color: Colors.white70)),
+        title: Text(isBlocking ? "Engelle" : "Engeli Kaldır",
+            style: GoogleFonts.poppins(
+                color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text(
+            isBlocking
+                ? "Bu kullanıcıyı engellemek istediğine emin misin?"
+                : "Engeli kaldırmak istiyor musun?",
+            style: GoogleFonts.poppins(color: Colors.white70)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text("İptal", style: GoogleFonts.poppins(color: Colors.grey))),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text("İptal",
+                  style: GoogleFonts.poppins(color: Colors.grey))),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
               if (isBlocking) {
                 await _safetyService.blockUser(widget.userId);
-                if (mounted) setState(() { _isBlockedByMe = true; _profileData = null; _userPosts = []; _isLoading = false; });
+                if (mounted)
+                  setState(() {
+                    _isBlockedByMe = true;
+                    _profileData = null;
+                    _userPosts = [];
+                    _isLoading = false;
+                  });
               } else {
                 await _safetyService.unblockUser(widget.userId);
                 if (mounted) {
-                  setState(() { _isBlockedByMe = false; _isLoading = true; });
+                  setState(() {
+                    _isBlockedByMe = false;
+                    _isLoading = true;
+                  });
                   _loadProfileData();
                 }
               }
             },
-            child: Text(isBlocking ? "Engelle" : "Kaldır", style: GoogleFonts.poppins(color: isBlocking ? Colors.redAccent : Colors.greenAccent, fontWeight: FontWeight.bold)),
+            child: Text(isBlocking ? "Engelle" : "Kaldır",
+                style: GoogleFonts.poppins(
+                    color: isBlocking ? Colors.redAccent : Colors.greenAccent,
+                    fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -489,15 +582,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          leading: widget.showBackButton ? const BackButton(color: Colors.white) : null,
-          title: Text("Kullanıcı Engellendi", style: GoogleFonts.poppins(color: Colors.white, fontSize: 16)),
+          leading: widget.showBackButton
+              ? const BackButton(color: Colors.white)
+              : null,
+          title: Text("Kullanıcı Engellendi",
+              style: GoogleFonts.poppins(color: Colors.white, fontSize: 16)),
           centerTitle: true,
           actions: [
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.white),
               color: const Color(0xFF2C2C2C),
-              onSelected: (val) { if(val == 'unblock') _confirmUnblockAction(); },
-              itemBuilder: (ctx) => [PopupMenuItem(value: 'unblock', child: Text("Engeli Kaldır", style: GoogleFonts.poppins(color: Colors.white)))],
+              onSelected: (val) {
+                if (val == 'unblock') _confirmUnblockAction();
+              },
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                    value: 'unblock',
+                    child: Text("Engeli Kaldır",
+                        style: GoogleFonts.poppins(color: Colors.white)))
+              ],
             )
           ],
         ),
@@ -507,12 +610,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               const Icon(Icons.block, size: 80, color: Colors.white24),
               const SizedBox(height: 20),
-              Text("Bu kullanıcıyı engelledin.", style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              Text("Bu kullanıcıyı engelledin.",
+                  style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold)),
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: _confirmUnblockAction,
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF262626), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                child: Text("Engeli Kaldır", style: GoogleFonts.poppins(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF262626),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20))),
+                child: Text("Engeli Kaldır",
+                    style: GoogleFonts.poppins(color: Colors.white)),
               )
             ],
           ),
@@ -537,215 +648,383 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF6C63FF)))
           : RefreshIndicator(
-        onRefresh: _loadProfileData,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            children: [
-              Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  // KAPAK FOTOĞRAFI
-                  Container(
-                    height: 380,
-                    width: double.infinity,
-                    foregroundDecoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Colors.transparent, Color(0xAA000000), Color(0xFF000000)],
-                        stops: [0.0, 0.4, 0.7, 1.0],
-                      ),
-                    ),
-                    child: coverUrl != null
-                        ? Image.network(coverUrl, fit: BoxFit.cover)
-                        : Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Colors.grey.shade900, Colors.black]))),
-                  ),
-
-                  // BUTONLAR
-                  if (isMe) ...[
-                    Positioned(top: 50, right: 70, child: GestureDetector(onTap: _updateCoverPhoto, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)), child: const Icon(Icons.add_a_photo, color: Colors.white, size: 18)))),
-                    Positioned(top: 50, right: 16, child: GestureDetector(onTap: _logout, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)), child: const Icon(Icons.logout, color: Colors.white, size: 18)))),
-                  ] else ...[
-                    if (widget.showBackButton)
-                      Positioned(top: 50, left: 16, child: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white), onPressed: () => Navigator.pop(context))),
-
-                    Positioned(
-                      top: 50,
-                      right: 16,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-                          child: Container(
-                            height: 36, width: 36,
-                            decoration: BoxDecoration(color: Colors.black.withOpacity(0.25), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.15), width: 1)),
-                            child: PopupMenuButton<String>(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.more_horiz, color: Colors.white, size: 20),
-                              color: const Color(0xFF2C2C2C),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              onSelected: (value) {
-                                if (value == 'report') _showReportDialog();
-                                if (value == 'block') _confirmBlockAction();
-                              },
-                              itemBuilder: (ctx) => [
-                                PopupMenuItem(value: 'report', child: Row(children: [const Icon(Icons.flag_outlined, color: Colors.white70, size: 18), const SizedBox(width: 10), Text("Şikayet Et", style: GoogleFonts.poppins(color: Colors.white, fontSize: 13))])),
-                                PopupMenuItem(value: 'block', child: Row(children: [const Icon(Icons.block, color: Colors.redAccent, size: 18), const SizedBox(width: 10), Text("Engelle", style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 13))])),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-
-                  // PROFİL DETAYLARI
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+              onRefresh: _loadProfileData,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    Stack(
+                      alignment: Alignment.bottomCenter,
                       children: [
-
-                        // 🔥 LIVE PHOTO MANTIĞI: BASILI TUT OYNAT 🔥
-                        GestureDetector(
-                          onLongPressStart: (_) {
-                            // Video varsa ve hazırsa oynat
-                            if (_hasLiveVideo && _videoController != null && _videoController!.value.isInitialized) {
-                              setState(() => _isPlayingLiveVideo = true);
-                              _videoController!.play();
-                            }
-                          },
-                          onLongPressEnd: (_) {
-                            // Bıraktığı an videoyu gizle ve durdur
-                            if (_hasLiveVideo && _videoController != null) {
-                              _videoController!.pause();
-                              _videoController!.seekTo(Duration.zero);
-                              setState(() => _isPlayingLiveVideo = false);
-                            }
-                          },
-                          child: Container(
-                            width: 100, // Boyut önemli
-                            height: 100,
-                            padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                    colors: [Color(0xFF6C63FF), Color(0xFF1DB954)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight
-                                )
-                            ),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              fit: StackFit.expand, // İçeriği tam doldur
-                              children: [
-                                // 1. KATMAN: STATİK RESİM (Her zaman altta)
-                                CircleAvatar(
-                                    radius: 45,
-                                    backgroundColor: const Color(0xFF1F1F1F),
-                                    backgroundImage: _profileData?['avatar_url'] != null ? NetworkImage(_profileData!['avatar_url']) : null,
-                                    child: _profileData?['avatar_url'] == null ? const Icon(Icons.person, size: 40, color: Colors.white54) : null
-                                ),
-
-                                // 2. KATMAN: VİDEO (Sadece basılı tutunca görünür)
-                                if (_hasLiveVideo && _isPlayingLiveVideo && _videoController!.value.isInitialized)
-                                  ClipOval(
-                                    child: FittedBox(
-                                      fit: BoxFit.cover, // Videoyu yuvarlağın içine yay
-                                      child: SizedBox(
-                                        width: _videoController!.value.size.width,
-                                        height: _videoController!.value.size.height,
-                                        child: VideoPlayer(_videoController!),
-                                      ),
-                                    ),
-                                  ),
-
-                                // 🔥 İKON KATMANI TAMAMEN KALDIRILDI 🔥
-                                // Artık burada hiçbir görsel yok.
-                                // Video varsa basılı tutunca çalışır, ama normalde sadece resim görünür.
+                        // KAPAK FOTOĞRAFI
+                        Container(
+                          height: 380,
+                          width: double.infinity,
+                          foregroundDecoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.transparent,
+                                Color(0xAA000000),
+                                Color(0xFF000000)
                               ],
+                              stops: [0.0, 0.4, 0.7, 1.0],
                             ),
                           ),
+                          child: coverUrl != null
+                              ? Image.network(coverUrl, fit: BoxFit.cover)
+                              : Container(
+                                  decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                      Colors.grey.shade900,
+                                      Colors.black
+                                    ]))),
                         ),
-                        // 🔥 LIVE PHOTO BİTİŞ 🔥
 
-                        const SizedBox(height: 10),
-
-                        // 🔥 PROFİL İSMİ VE ADMIN ROZETİ
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                                _profileData?['full_name'] ?? 'İsimsiz',
-                                style: GoogleFonts.poppins(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])
+                        // BUTONLAR
+                        if (isMe) ...[
+                          Positioned(
+                              top: 50,
+                              right: 70,
+                              child: GestureDetector(
+                                  onTap: _updateCoverPhoto,
+                                  child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                              color: Colors.white24)),
+                                      child: const Icon(Icons.add_a_photo,
+                                          color: Colors.white, size: 18)))),
+                          Positioned(
+                              top: 50,
+                              right: 16,
+                              child: GestureDetector(
+                                  onTap: _logout,
+                                  child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                              color: Colors.white24)),
+                                      child: const Icon(Icons.logout,
+                                          color: Colors.white, size: 18)))),
+                        ] else ...[
+                          if (widget.showBackButton)
+                            Positioned(
+                                top: 50,
+                                left: 16,
+                                child: IconButton(
+                                    icon: const Icon(Icons.arrow_back_ios_new,
+                                        color: Colors.white),
+                                    onPressed: () => Navigator.pop(context))),
+                          Positioned(
+                            top: 50,
+                            right: 16,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(30),
+                              child: BackdropFilter(
+                                filter:
+                                    ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                                child: Container(
+                                  height: 36,
+                                  width: 36,
+                                  decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.25),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: Colors.white.withOpacity(0.15),
+                                          width: 1)),
+                                  child: PopupMenuButton<String>(
+                                    padding: EdgeInsets.zero,
+                                    icon: const Icon(Icons.more_horiz,
+                                        color: Colors.white, size: 20),
+                                    color: const Color(0xFF2C2C2C),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
+                                    onSelected: (value) {
+                                      if (value == 'report')
+                                        _showReportDialog();
+                                      if (value == 'block')
+                                        _confirmBlockAction();
+                                    },
+                                    itemBuilder: (ctx) => [
+                                      PopupMenuItem(
+                                          value: 'report',
+                                          child: Row(children: [
+                                            const Icon(Icons.flag_outlined,
+                                                color: Colors.white70,
+                                                size: 18),
+                                            const SizedBox(width: 10),
+                                            Text("Şikayet Et",
+                                                style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontSize: 13))
+                                          ])),
+                                      PopupMenuItem(
+                                          value: 'block',
+                                          child: Row(children: [
+                                            const Icon(Icons.block,
+                                                color: Colors.redAccent,
+                                                size: 18),
+                                            const SizedBox(width: 10),
+                                            Text("Engelle",
+                                                style: GoogleFonts.poppins(
+                                                    color: Colors.redAccent,
+                                                    fontSize: 13))
+                                          ])),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
+                          ),
+                        ],
 
-                            if (isAdmin) ...[
-                              const AdminBadge(size: 24),
-                            ]
-                          ],
-                        ),
+                        // PROFİL DETAYLARI
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // 🔥 LIVE PHOTO MANTIĞI: BASILI TUT OYNAT 🔥
+                              GestureDetector(
+                                onLongPressStart: (_) {
+                                  // Video varsa ve hazırsa oynat
+                                  if (_hasLiveVideo &&
+                                      _videoController != null &&
+                                      _videoController!.value.isInitialized) {
+                                    setState(() => _isPlayingLiveVideo = true);
+                                    _videoController!.play();
+                                  }
+                                },
+                                onLongPressEnd: (_) {
+                                  // Bıraktığı an videoyu gizle ve durdur
+                                  if (_hasLiveVideo &&
+                                      _videoController != null) {
+                                    _videoController!.pause();
+                                    _videoController!.seekTo(Duration.zero);
+                                    setState(() => _isPlayingLiveVideo = false);
+                                  }
+                                },
+                                child: Container(
+                                  width: 100, // Boyut önemli
+                                  height: 100,
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                          colors: [
+                                            Color(0xFF6C63FF),
+                                            Color(0xFF1DB954)
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight)),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    fit: StackFit.expand, // İçeriği tam doldur
+                                    children: [
+                                      // 1. KATMAN: STATİK RESİM (Her zaman altta)
+                                      CircleAvatar(
+                                          radius: 45,
+                                          backgroundColor:
+                                              const Color(0xFF1F1F1F),
+                                          backgroundImage: _profileData?[
+                                                      'avatar_url'] !=
+                                                  null
+                                              ? NetworkImage(
+                                                  _profileData!['avatar_url'])
+                                              : null,
+                                          child: _profileData?['avatar_url'] ==
+                                                  null
+                                              ? const Icon(Icons.person,
+                                                  size: 40,
+                                                  color: Colors.white54)
+                                              : null),
 
-                        if (_profileData?['username'] != null)
-                          Padding(padding: const EdgeInsets.only(top: 2), child: Text('@${_profileData!['username']}', style: GoogleFonts.poppins(color: Colors.white60, fontSize: 14, fontWeight: FontWeight.w500, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 3, color: Colors.black)]))),
-                        if (_profileData?['bio'] != null)
-                          Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text(_profileData!['bio'], style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 3, color: Colors.black)]), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildStat('Gönderi', _postCount.toString(), null),
-                            Container(width: 1, height: 20, color: Colors.white12),
-                            _buildStat('Takipçi', _followersCount.toString(), () => _openFollowList('followers', 'Takipçiler')),
-                            Container(width: 1, height: 20, color: Colors.white12),
-                            _buildStat('Takip', _followingCount.toString(), () => _openFollowList('following', 'Takip Edilenler')),
-                          ],
+                                      // 2. KATMAN: VİDEO (Sadece basılı tutunca görünür)
+                                      if (_hasLiveVideo &&
+                                          _isPlayingLiveVideo &&
+                                          _videoController!.value.isInitialized)
+                                        ClipOval(
+                                          child: FittedBox(
+                                            fit: BoxFit
+                                                .cover, // Videoyu yuvarlağın içine yay
+                                            child: SizedBox(
+                                              width: _videoController!
+                                                  .value.size.width,
+                                              height: _videoController!
+                                                  .value.size.height,
+                                              child: VideoPlayer(
+                                                  _videoController!),
+                                            ),
+                                          ),
+                                        ),
+
+                                      // 🔥 İKON KATMANI TAMAMEN KALDIRILDI 🔥
+                                      // Artık burada hiçbir görsel yok.
+                                      // Video varsa basılı tutunca çalışır, ama normalde sadece resim görünür.
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // 🔥 LIVE PHOTO BİTİŞ 🔥
+
+                              const SizedBox(height: 10),
+
+                              // 🔥 PROFİL İSMİ VE ADMIN ROZETİ
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(_profileData?['full_name'] ?? 'İsimsiz',
+                                      style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          shadows: [
+                                            const Shadow(
+                                                offset: Offset(0, 1),
+                                                blurRadius: 4,
+                                                color: Colors.black)
+                                          ])),
+                                  if (isAdmin) ...[
+                                    const AdminBadge(size: 24),
+                                  ]
+                                ],
+                              ),
+
+                              if (_profileData?['username'] != null)
+                                Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text('@${_profileData!['username']}',
+                                        style: GoogleFonts.poppins(
+                                            color: Colors.white60,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            shadows: [
+                                              const Shadow(
+                                                  offset: Offset(0, 1),
+                                                  blurRadius: 3,
+                                                  color: Colors.black)
+                                            ]))),
+                              if (_profileData?['bio'] != null)
+                                Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 24, vertical: 8),
+                                    child: Text(_profileData!['bio'],
+                                        style: GoogleFonts.poppins(
+                                            color: Colors.white70,
+                                            fontSize: 13,
+                                            shadows: [
+                                              const Shadow(
+                                                  offset: Offset(0, 1),
+                                                  blurRadius: 3,
+                                                  color: Colors.black)
+                                            ]),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis)),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _buildStat(
+                                      'Gönderi', _postCount.toString(), null),
+                                  Container(
+                                      width: 1,
+                                      height: 20,
+                                      color: Colors.white12),
+                                  _buildStat(
+                                      'Takipçi',
+                                      _followersCount.toString(),
+                                      () => _openFollowList(
+                                          'followers', 'Takipçiler')),
+                                  Container(
+                                      width: 1,
+                                      height: 20,
+                                      color: Colors.white12),
+                                  _buildStat(
+                                      'Takip',
+                                      _followingCount.toString(),
+                                      () => _openFollowList(
+                                          'following', 'Takip Edilenler')),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
 
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 10),
-                    // BUTONLAR (Profili Düzenle vs)
-                    isMe ? _buildMyProfileButtons() : _buildOtherProfileButtons(),
-                    const SizedBox(height: 5),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 10),
+                          // BUTONLAR (Profili Düzenle vs)
+                          isMe
+                              ? _buildMyProfileButtons()
+                              : _buildOtherProfileButtons(),
+                          const SizedBox(height: 5),
 
-                    // 🔥 MÜZİK OYNATICI KARTI
-                    MusicPlayerCard(userId: widget.userId, isMe: isMe),
+                          // 🔥 MÜZİK OYNATICI KARTI
+                          MusicPlayerCard(userId: widget.userId, isMe: isMe),
 
-                    const SizedBox(height: 10),
+                          const SizedBox(height: 10),
+                        ],
+                      ),
+                    ),
+
+                    // GÖNDERİ LİSTESİ
+                    showLockScreen
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: 40),
+                            child: Column(children: [
+                              const Icon(Icons.lock_outline,
+                                  size: 40, color: Colors.white24),
+                              const SizedBox(height: 10),
+                              Text("Bu hesap gizli.",
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.white24))
+                            ]))
+                        : (visiblePosts.isEmpty
+                            ? Padding(
+                                padding: const EdgeInsets.only(top: 40),
+                                child: Column(children: [
+                                  const Icon(Icons.feed_outlined,
+                                      size: 40, color: Colors.white24),
+                                  const SizedBox(height: 10),
+                                  Text("Henüz gönderi yok.",
+                                      style: GoogleFonts.poppins(
+                                          color: Colors.white24))
+                                ]))
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: visiblePosts.length,
+                                itemBuilder: (context, index) =>
+                                    _buildHomeStylePost(
+                                        visiblePosts[index], index),
+                              )),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
-
-              // GÖNDERİ LİSTESİ
-              showLockScreen
-                  ? Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [const Icon(Icons.lock_outline, size: 40, color: Colors.white24), const SizedBox(height: 10), Text("Bu hesap gizli.", style: GoogleFonts.poppins(color: Colors.white24))]))
-                  : (visiblePosts.isEmpty
-                  ? Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [const Icon(Icons.feed_outlined, size: 40, color: Colors.white24), const SizedBox(height: 10), Text("Henüz gönderi yok.", style: GoogleFonts.poppins(color: Colors.white24))]))
-                  : ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: visiblePosts.length,
-                itemBuilder: (context, index) => _buildHomeStylePost(visiblePosts[index], index),
-              )
-              ),
-              const SizedBox(height: 40),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
@@ -754,8 +1033,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onTap,
       child: Column(
         children: [
-          Text(value, style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, shadows: [const Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black)])),
-          Text(label, style: GoogleFonts.poppins(color: Colors.white60, fontSize: 12)),
+          Text(value,
+              style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    const Shadow(
+                        offset: Offset(0, 1),
+                        blurRadius: 4,
+                        color: Colors.black)
+                  ])),
+          Text(label,
+              style: GoogleFonts.poppins(color: Colors.white60, fontSize: 12)),
         ],
       ),
     );
@@ -768,30 +1058,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: ElevatedButton(
         onPressed: () async {
           if (_profileData == null) return;
-          final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => EditProfileScreen(currentProfile: _profileData!)));
+          final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) =>
+                      EditProfileScreen(currentProfile: _profileData!)));
           if (result == true) _loadProfileData();
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF262626),
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
           side: const BorderSide(color: Colors.white12),
         ),
-        child: Text("Profili Düzenle", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+        child: Text("Profili Düzenle",
+            style:
+                GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
       ),
     );
   }
 
   Widget _buildOtherProfileButtons() {
-    String label = "Takip Et"; Color bgColor = const Color(0xFF6C63FF); Color txtColor = Colors.white;
-    if (_friendshipStatus == 'accepted') { label = "Takip Ediliyor"; bgColor = const Color(0xFF262626); }
-    else if (_friendshipStatus == 'pending') { label = "İstek Gönderildi"; bgColor = Colors.grey.shade900; txtColor = Colors.grey; }
+    String label = "Takip Et";
+    Color bgColor = const Color(0xFF6C63FF);
+    Color txtColor = Colors.white;
+    if (_friendshipStatus == 'accepted') {
+      label = "Takip Ediliyor";
+      bgColor = const Color(0xFF262626);
+    } else if (_friendshipStatus == 'pending') {
+      label = "İstek Gönderildi";
+      bgColor = Colors.grey.shade900;
+      txtColor = Colors.grey;
+    }
     return Row(
       children: [
-        Expanded(child: SizedBox(height: 45, child: ElevatedButton(onPressed: _handleFollowAction, style: ElevatedButton.styleFrom(backgroundColor: bgColor, foregroundColor: txtColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0), child: Text(label, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600))))),
+        Expanded(
+            child: SizedBox(
+                height: 45,
+                child: ElevatedButton(
+                    onPressed: _handleFollowAction,
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: bgColor,
+                        foregroundColor: txtColor,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        elevation: 0),
+                    child: Text(label,
+                        style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w600))))),
         const SizedBox(width: 10),
-        Expanded(child: SizedBox(height: 45, child: ElevatedButton(onPressed: _startMessage, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF262626), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0, side: const BorderSide(color: Colors.white12)), child: Text("Mesaj", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600))))),
+        Expanded(
+            child: SizedBox(
+                height: 45,
+                child: ElevatedButton(
+                    onPressed: _startMessage,
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF262626),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                        side: const BorderSide(color: Colors.white12)),
+                    child: Text("Mesaj",
+                        style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w600))))),
       ],
     );
   }
@@ -805,14 +1137,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final dateStr = date != null ? '${date.day}/${date.month}' : '';
     final likeCount = (post['likes'] as List?)?.length ?? 0;
     final commentCount = (post['comments'] as List?)?.length ?? 0;
-    final isLiked = (post['likes'] as List?)?.any((l) => l['user_id'] == _currentUserId) ?? false;
+    final isLiked =
+        (post['likes'] as List?)?.any((l) => l['user_id'] == _currentUserId) ??
+            false;
     final isMe = widget.userId == _currentUserId;
 
     // ✅ POST İÇİNDEKİ KULLANICI ADMİN Mİ?
     final bool isPostAdmin = profile['is_admin'] == true;
 
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))),
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))),
       child: Container(
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 20),
         color: Colors.transparent, // Arka plan şeffaf
@@ -824,7 +1159,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                border:
+                    Border.all(color: Colors.white.withOpacity(0.1), width: 1),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -849,8 +1185,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: CircleAvatar(
                               radius: 20,
                               backgroundColor: const Color(0xFF121212),
-                              backgroundImage: profile['avatar_url'] != null ? NetworkImage(profile['avatar_url']) : null,
-                              child: profile['avatar_url'] == null ? const Icon(Icons.person, color: Colors.white54, size: 20) : null,
+                              backgroundImage: profile['avatar_url'] != null
+                                  ? NetworkImage(profile['avatar_url'])
+                                  : null,
+                              child: profile['avatar_url'] == null
+                                  ? const Icon(Icons.person,
+                                      color: Colors.white54, size: 20)
+                                  : null,
                             ),
                           ),
                         ),
@@ -863,7 +1204,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 children: [
                                   Text(
                                     profile['full_name'] ?? 'İsimsiz',
-                                    style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15),
                                   ),
                                   if (isPostAdmin) ...[
                                     const AdminBadge(size: 16),
@@ -872,7 +1216,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               Text(
                                 '@${profile['username']}',
-                                style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 13),
+                                style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade400, fontSize: 13),
                               ),
                             ],
                           ),
@@ -880,7 +1225,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(dateStr, style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12)),
+                            Text(dateStr,
+                                style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade400, fontSize: 12)),
                             if (isMe) ...[
                               const SizedBox(width: 8),
                               GestureDetector(
@@ -908,10 +1255,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // --- İÇERİK
                   if (content.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
                       child: Text(
                         content,
-                        style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.95), fontSize: 14, height: 1.5),
+                        style: GoogleFonts.poppins(
+                            color: Colors.white.withOpacity(0.95),
+                            fontSize: 14,
+                            height: 1.5),
                       ),
                     ),
 
@@ -937,8 +1288,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Row(
                             children: [
                               Icon(
-                                isLiked ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
-                                color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
+                                isLiked
+                                    ? FontAwesomeIcons.solidHeart
+                                    : FontAwesomeIcons.heart,
+                                color: isLiked
+                                    ? const Color(0xFF6C63FF)
+                                    : Colors.grey.shade400,
                                 size: 22,
                               ),
                               if (likeCount > 0) ...[
@@ -946,9 +1301,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Text(
                                   "$likeCount",
                                   style: GoogleFonts.poppins(
-                                      color: isLiked ? const Color(0xFF6C63FF) : Colors.grey.shade400,
-                                      fontWeight: FontWeight.w600
-                                  ),
+                                      color: isLiked
+                                          ? const Color(0xFF6C63FF)
+                                          : Colors.grey.shade400,
+                                      fontWeight: FontWeight.w600),
                                 ),
                               ]
                             ],
@@ -959,15 +1315,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: Colors.transparent,
                           child: Row(
                             children: [
-                              Icon(FontAwesomeIcons.comment, color: Colors.grey.shade400, size: 22),
+                              Icon(FontAwesomeIcons.comment,
+                                  color: Colors.grey.shade400, size: 22),
                               if (commentCount > 0) ...[
                                 const SizedBox(width: 6),
                                 Text(
                                   "$commentCount",
                                   style: GoogleFonts.poppins(
                                       color: Colors.grey.shade400,
-                                      fontWeight: FontWeight.w600
-                                  ),
+                                      fontWeight: FontWeight.w600),
                                 ),
                               ]
                             ],
