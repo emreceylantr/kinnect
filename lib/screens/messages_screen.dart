@@ -1004,18 +1004,21 @@ class _ChatScreenState extends State<ChatScreen> {
                       messages.length), // Mesaj sayısı değişince rebuild
                   controller: _scrollController,
                   itemCount: messages.length,
-                  reverse: true, // En son mesaj en altta
+                  reverse: true, // En son mesaj en altta, otomatik scroll
                   padding:
                       const EdgeInsets.symmetric(horizontal: 0, vertical: 20),
                   itemBuilder: (context, index) {
-                    // Reverse modda sıralama ters
-                    final reversedIndex = messages.length - 1 - index;
-                    final msg = messages[reversedIndex];
+                    // reverse:true olduğu için son mesaj index 0'da
+                    // Yani messages[length-1-index] değil, doğrudan ters çevirilmiş sıra
+                    final msg = messages[messages.length - 1 - index];
                     final isMe = msg['sender_id'] ==
                         Supabase.instance.client.auth.currentUser!.id;
+
+                    // Avatar için önceki mesaja bak
                     bool showAvatar = true;
-                    if (!isMe && reversedIndex > 0) {
-                      final prevMsg = messages[reversedIndex - 1];
+                    final msgIndex = messages.length - 1 - index;
+                    if (!isMe && msgIndex > 0) {
+                      final prevMsg = messages[msgIndex - 1];
                       if (prevMsg['sender_id'] == msg['sender_id'])
                         showAvatar = false;
                     }
