@@ -19,26 +19,39 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase başlat (opsiyonel - config yoksa devam et)
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    debugPrint('⚠️ Firebase başlatılamadı: $e');
-  }
+  // 🚀 PERFORMANS OPTİMİZASYONU: Firebase'i arka planda başlat
+  // Firebase başlatması UI'ı bloklamamalı
+  _initializeFirebaseInBackground();
 
+  // Supabase kritik - bunu beklemek zorundayız
   await Supabase.initialize(
     url: 'https://vxrvudcafkgqusjrawme.supabase.co',
     anonKey: 'sb_publishable_tSqnWtXnUhEog3MIx5ajRw_PZeTlwuG',
   );
 
-  // Push Notification başlat (Firebase varsa çalışır)
-  try {
-    await NotificationService().initialize();
-  } catch (e) {
-    debugPrint('⚠️ Notification service başlatılamadı: $e');
-  }
-
+  // 🚀 Uygulamayı HEMEN başlat - bildirim servisi arka planda çalışacak
   runApp(const MyApp());
+}
+
+/// 🔥 Firebase ve Push Notification'ı arka planda başlat
+/// Bu sayede uygulama hızlı açılır, bildirimler sonra hazır olur
+void _initializeFirebaseInBackground() {
+  Future.microtask(() async {
+    try {
+      await Firebase.initializeApp();
+      debugPrint('✅ Firebase arka planda başlatıldı');
+
+      // Firebase hazır olduktan sonra notification service'i başlat
+      // Ama sadece kullanıcı giriş yapmışsa
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null) {
+        await NotificationService().initialize();
+        debugPrint('✅ Notification service arka planda başlatıldı');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Arka plan Firebase/Notification hatası: $e');
+    }
+  });
 }
 
 class MyApp extends StatefulWidget {
@@ -162,6 +175,7 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   bool _isLoading = true;
   bool _hasProfile = false;
+  String? _lastCheckedUserId; // Cache için
   StreamSubscription<AuthState>? _gateAuthSubscription;
 
   @override
@@ -170,10 +184,13 @@ class _AuthGateState extends State<AuthGate> {
     _checkUserStatus();
 
     // 🔥 GÜNCELLEME: Login/Logout olaylarını anlık dinle
-    // Kullanıcı WelcomeScreen'den giriş yaparsa burası tetiklenir ve profili tekrar kontrol eder.
     _gateAuthSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      _checkUserStatus();
+      // Sadece gerçek değişikliklerde kontrol et
+      final newUserId = data.session?.user.id;
+      if (newUserId != _lastCheckedUserId) {
+        _checkUserStatus();
+      }
     });
   }
 
@@ -184,13 +201,13 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _checkUserStatus() async {
-    // Yükleniyor durumuna çek ki geçiş anında saçmalamasın
     if (mounted) setState(() => _isLoading = true);
 
     final session = Supabase.instance.client.auth.currentSession;
 
     // 1. Eğer oturum yoksa -> Yükleniyor'u kapat, Profile yok de.
     if (session == null) {
+      _lastCheckedUserId = null;
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -200,19 +217,43 @@ class _AuthGateState extends State<AuthGate> {
       return;
     }
 
+    final userId = session.user.id;
+
+    // Cache kontrolü - aynı kullanıcı için tekrar sorma
+    if (_lastCheckedUserId == userId && _hasProfile) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+
     try {
-      // 2. Oturum var, peki PROFİL var mı?
-      final userId = session.user.id;
+      // 🚀 OPTİMİZASYON: Sadece 'id' sütununu çek (tüm profil yerine)
       final data = await Supabase.instance.client
           .from('profiles')
-          .select()
+          .select('id')
           .eq('id', userId)
           .maybeSingle();
 
+      _lastCheckedUserId = userId;
+
       if (mounted) {
         setState(() {
-          _hasProfile = data != null; // Veri varsa true, yoksa false
+          _hasProfile = data != null;
           _isLoading = false;
+        });
+      }
+
+      // 🔔 Profil varsa notification service'i arka planda başlat
+      if (data != null) {
+        Future.microtask(() async {
+          try {
+            if (!NotificationService().isInitialized) {
+              await NotificationService().initialize();
+              debugPrint(
+                  '✅ NotificationService HomeScreen geçişinde başlatıldı');
+            }
+          } catch (e) {
+            debugPrint('⚠️ NotificationService başlatma hatası: $e');
+          }
         });
       }
     } catch (e) {
@@ -220,7 +261,7 @@ class _AuthGateState extends State<AuthGate> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _hasProfile = false; // Hata varsa güvenli mod: Profil yok say
+          _hasProfile = false;
         });
       }
     }

@@ -11,11 +11,16 @@ class NotificationService {
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   String? _fcmToken;
+  bool _isInitialized = false;
 
   String? get fcmToken => _fcmToken;
+  bool get isInitialized => _isInitialized;
 
   /// Firebase başlatma ve izin isteme
-  Future<void> initialize() async {
+  /// [saveToDatabase] = false yapılırsa token veritabanına kaydedilmez (hızlı başlatma için)
+  Future<void> initialize({bool saveToDatabase = true}) async {
+    if (_isInitialized) return; // Zaten başlatılmışsa tekrar başlatma
+
     try {
       // İzin iste
       NotificationSettings settings = await _messaging.requestPermission(
@@ -33,13 +38,14 @@ class NotificationService {
       if (settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional) {
         // FCM Token al
-        await _getToken();
+        await _getToken(saveToDatabase: saveToDatabase);
 
         // Token yenilendiğinde
         _messaging.onTokenRefresh.listen((newToken) {
           _fcmToken = newToken;
-          _saveTokenToDatabase(newToken);
-          debugPrint('🔄 FCM Token yenilendi: $newToken');
+          // Token yenileme arka planda yapılsın
+          Future.microtask(() => _saveTokenToDatabase(newToken));
+          debugPrint('🔄 FCM Token yenilendi');
         });
 
         // Foreground mesajları dinle
@@ -49,10 +55,18 @@ class NotificationService {
         FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
 
         // Uygulama kapalıyken gelen mesaj ile açıldıysa
-        RemoteMessage? initialMessage = await _messaging.getInitialMessage();
-        if (initialMessage != null) {
-          _handleMessageOpenedApp(initialMessage);
-        }
+        // Bu işlemi arka plana al - blocking olmamalı
+        Future.microtask(() async {
+          try {
+            RemoteMessage? initialMessage =
+                await _messaging.getInitialMessage();
+            if (initialMessage != null) {
+              _handleMessageOpenedApp(initialMessage);
+            }
+          } catch (_) {}
+        });
+
+        _isInitialized = true;
       }
     } catch (e) {
       debugPrint('❌ Notification initialize hatası: $e');
@@ -60,13 +74,14 @@ class NotificationService {
   }
 
   /// FCM Token al
-  Future<void> _getToken() async {
+  Future<void> _getToken({bool saveToDatabase = true}) async {
     try {
       _fcmToken = await _messaging.getToken();
-      debugPrint('🔑 FCM Token: $_fcmToken');
+      debugPrint('🔑 FCM Token alındı');
 
-      if (_fcmToken != null) {
-        await _saveTokenToDatabase(_fcmToken!);
+      if (_fcmToken != null && saveToDatabase) {
+        // Token kaydetmeyi arka plana al - blocking olmamalı
+        Future.microtask(() => _saveTokenToDatabase(_fcmToken!));
       }
     } catch (e) {
       debugPrint('❌ Token alma hatası: $e');
