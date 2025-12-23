@@ -11,7 +11,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 // Diğer ekranlar
 import '../services/chat_service.dart';
@@ -686,6 +685,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isRecording = false;
   bool _isUploading = false;
   bool _isTextFieldEmpty = true;
+  bool _isEphemeralMode = false; // 🔥 Kül Olan Mod
 
   @override
   void initState() {
@@ -714,13 +714,76 @@ class _ChatScreenState extends State<ChatScreen> {
     if (fileUrl == null) _textController.clear();
     try {
       final receiverId = widget.otherUser['id'].toString();
-      await _chatService.sendMessage(widget.roomId, content, receiverId);
+      await _chatService.sendMessage(
+        widget.roomId,
+        content,
+        receiverId,
+        isEphemeral: _isEphemeralMode,
+        ephemeralDuration: 5,
+      );
+
+      // Ephemeral mod'u resetle
+      if (_isEphemeralMode && mounted) {
+        setState(() => _isEphemeralMode = false);
+      }
+
       _scrollToBottom();
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Hata: $e')));
     }
+  }
+
+  // 🔥 TEK MESAJ SİLME DIALOG
+  void _showDeleteMessageDialog(String messageId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_outline, color: Colors.redAccent),
+            SizedBox(width: 8),
+            Text("Mesajı Sil",
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          "Bu mesaj kalıcı olarak silinecek. Devam etmek istiyor musun?",
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("İptal", style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent.withOpacity(0.2),
+              foregroundColor: Colors.redAccent,
+              elevation: 0,
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+              await _chatService.deleteSingleMessage(messageId);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Mesaj silindi"),
+                    backgroundColor: Colors.redAccent,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+            child: const Text("Sil"),
+          ),
+        ],
+      ),
+    );
   }
 
   void _scrollToBottom() {
@@ -954,8 +1017,17 @@ class _ChatScreenState extends State<ChatScreen> {
                       if (prevMsg['sender_id'] == msg['sender_id'])
                         showAvatar = false;
                     }
+
+                    final isEphemeral = msg['is_ephemeral'] == true;
+                    final isViewed = msg['is_viewed'] == true;
+
                     return _buildMessageBubble(
-                        msg['content'], isMe, msg['created_at'], showAvatar);
+                      msg,
+                      isMe,
+                      showAvatar,
+                      isEphemeral: isEphemeral,
+                      isViewed: isViewed,
+                    );
                   });
             },
           ),
@@ -981,16 +1053,47 @@ class _ChatScreenState extends State<ChatScreen> {
               IconButton(
                   onPressed: _showAttachmentMenu,
                   icon: const Icon(Icons.attach_file, color: Colors.white54)),
+              // 🔥 KÜL OLAN MOD BUTONU
+              GestureDetector(
+                onTap: () =>
+                    setState(() => _isEphemeralMode = !_isEphemeralMode),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _isEphemeralMode
+                        ? Colors.orange.withOpacity(0.2)
+                        : Colors.transparent,
+                    border: Border.all(
+                      color:
+                          _isEphemeralMode ? Colors.orange : Colors.transparent,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.local_fire_department,
+                    color: _isEphemeralMode ? Colors.orange : Colors.white38,
+                    size: 22,
+                  ),
+                ),
+              ),
               Expanded(
                   child: TextField(
                       controller: _textController,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                          hintText: 'Mesaj yaz...',
-                          hintStyle: TextStyle(color: Colors.white38),
+                      decoration: InputDecoration(
+                          hintText: _isEphemeralMode
+                              ? '🔥 Kül olan mesaj...'
+                              : 'Mesaj yaz...',
+                          hintStyle: TextStyle(
+                            color: _isEphemeralMode
+                                ? Colors.orange.withOpacity(0.6)
+                                : Colors.white38,
+                          ),
                           border: InputBorder.none,
                           contentPadding:
-                              EdgeInsets.symmetric(horizontal: 10)))),
+                              const EdgeInsets.symmetric(horizontal: 10)))),
               GestureDetector(
                 onTap:
                     _isTextFieldEmpty ? _toggleRecording : () => _sendMessage(),
@@ -998,13 +1101,21 @@ class _ChatScreenState extends State<ChatScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                          colors: [Color(0xFF9D89D9), Color(0xFF335FA1)],
+                      gradient: LinearGradient(
+                          colors: _isEphemeralMode
+                              ? [Colors.orange, Colors.deepOrange]
+                              : [
+                                  const Color(0xFF9D89D9),
+                                  const Color(0xFF335FA1)
+                                ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight),
                       boxShadow: [
                         BoxShadow(
-                            color: const Color(0xFF335FA1).withOpacity(0.4),
+                            color: (_isEphemeralMode
+                                    ? Colors.orange
+                                    : const Color(0xFF335FA1))
+                                .withOpacity(0.4),
                             blurRadius: 10,
                             offset: const Offset(0, 4))
                       ]),
@@ -1040,7 +1151,17 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageBubble(
-      String content, bool isMe, String createdAtRaw, bool showAvatar) {
+    Map<String, dynamic> msg,
+    bool isMe,
+    bool showAvatar, {
+    bool isEphemeral = false,
+    bool isViewed = false,
+  }) {
+    final content = msg['content'] as String;
+    final messageId = msg['id'].toString();
+    final createdAtRaw = msg['created_at'] as String;
+    final ephemeralDuration = msg['ephemeral_duration'] as int? ?? 5;
+
     final time =
         DateFormat('HH:mm').format(DateTime.parse(createdAtRaw).toLocal());
     bool isImage = content.startsWith('http') &&
@@ -1070,14 +1191,40 @@ class _ChatScreenState extends State<ChatScreen> {
     } else if (isAudio) {
       contentWidget = _AudioMessagePlayer(url: content, isMe: isMe);
     }
-    return ModernMessageBubble(
+
+    // 🔥 Ephemeral mesaj ise özel widget kullan
+    if (isEphemeral) {
+      return EphemeralMessageBubble(
+        messageId: messageId,
+        content: content,
+        isMe: isMe,
+        time: time,
+        durationSeconds: ephemeralDuration,
+        isViewed: isViewed,
+        otherUserAvatar: widget.otherUser['avatar_url'],
+        showAvatar: showAvatar,
+        contentWidget: contentWidget,
+        isImage: isImg,
+        chatService: _chatService,
+        onBurned: () {
+          // Mesaj yandığında bir şey yapmaya gerek yok, stream otomatik güncelleyecek
+        },
+      );
+    }
+
+    // Normal mesaj - long press ile silme
+    return GestureDetector(
+      onLongPress: isMe ? () => _showDeleteMessageDialog(messageId) : null,
+      child: ModernMessageBubble(
         content: content,
         isMe: isMe,
         time: time,
         contentWidget: contentWidget,
         isImage: isImg,
         otherUserAvatar: widget.otherUser['avatar_url'],
-        showAvatar: showAvatar);
+        showAvatar: showAvatar,
+      ),
+    );
   }
 }
 
@@ -1337,5 +1484,286 @@ class _SlideFadeTransitionState extends State<_SlideFadeTransition>
     return FadeTransition(
         opacity: _fadeAnim,
         child: SlideTransition(position: _offsetAnim, child: widget.child));
+  }
+}
+
+// ==========================================
+// 🔥 EPHEMERAL MESSAGE BUBBLE (KÜL OLAN MESAJ)
+// ==========================================
+class EphemeralMessageBubble extends StatefulWidget {
+  final String messageId;
+  final String content;
+  final bool isMe;
+  final String time;
+  final int durationSeconds;
+  final bool isViewed;
+  final String? otherUserAvatar;
+  final bool showAvatar;
+  final Widget? contentWidget;
+  final bool isImage;
+  final ChatService chatService;
+  final VoidCallback onBurned;
+
+  const EphemeralMessageBubble({
+    super.key,
+    required this.messageId,
+    required this.content,
+    required this.isMe,
+    required this.time,
+    required this.durationSeconds,
+    required this.isViewed,
+    required this.chatService,
+    required this.onBurned,
+    this.otherUserAvatar,
+    this.showAvatar = true,
+    this.contentWidget,
+    this.isImage = false,
+  });
+
+  @override
+  State<EphemeralMessageBubble> createState() => _EphemeralMessageBubbleState();
+}
+
+class _EphemeralMessageBubbleState extends State<EphemeralMessageBubble>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  Timer? _burnTimer;
+  int _remainingSeconds = 0;
+  bool _isBurning = false;
+  bool _isBurned = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _remainingSeconds = widget.durationSeconds;
+    _animController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: widget.durationSeconds),
+    );
+
+    // Eğer ben gönderdiyseM veya zaten görüntülendiyse yanma başlat
+    if (!widget.isMe && !widget.isViewed) {
+      // Karşı taraf henüz görmedi, görüntüleme başlat
+      _startViewing();
+    } else if (!widget.isMe && widget.isViewed) {
+      // Zaten görüntülenmiş, yanma devam ediyor demek
+      _startBurning();
+    }
+  }
+
+  void _startViewing() async {
+    // Mesajı görüntülenmiş olarak işaretle
+    await widget.chatService.markMessageAsViewed(widget.messageId);
+    _startBurning();
+  }
+
+  void _startBurning() {
+    if (_isBurning || _isBurned) return;
+    setState(() => _isBurning = true);
+
+    _animController.forward();
+
+    _burnTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingSeconds > 0) {
+        setState(() => _remainingSeconds--);
+      } else {
+        timer.cancel();
+        _burnMessage();
+      }
+    });
+  }
+
+  void _burnMessage() async {
+    setState(() => _isBurned = true);
+    await widget.chatService.deleteEphemeralMessage(widget.messageId);
+    widget.onBurned();
+  }
+
+  @override
+  void dispose() {
+    _burnTimer?.cancel();
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isBurned) {
+      // Yandı - duman efekti
+      return _buildBurnedPlaceholder();
+    }
+
+    final maxWidth = MediaQuery.of(context).size.width * 0.70;
+
+    return Align(
+      alignment: widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: EdgeInsets.symmetric(
+            vertical: widget.showAvatar ? 6 : 2, horizontal: 16),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (!widget.isMe) ...[
+              if (widget.showAvatar)
+                CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.grey[800],
+                    backgroundImage: widget.otherUserAvatar != null
+                        ? NetworkImage(widget.otherUserAvatar!)
+                        : null,
+                    child: widget.otherUserAvatar == null
+                        ? const Icon(Icons.person,
+                            size: 16, color: Colors.white)
+                        : null)
+              else
+                const SizedBox(width: 28),
+              const SizedBox(width: 8),
+            ],
+            Flexible(
+              child: Stack(
+                children: [
+                  Container(
+                    padding: widget.isImage
+                        ? const EdgeInsets.all(4)
+                        : const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF6B00), Color(0xFFFF4500)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(20),
+                        topRight: const Radius.circular(20),
+                        bottomLeft: widget.isMe
+                            ? const Radius.circular(20)
+                            : (widget.showAvatar
+                                ? Radius.zero
+                                : const Radius.circular(20)),
+                        bottomRight: widget.isMe
+                            ? (widget.showAvatar
+                                ? Radius.zero
+                                : const Radius.circular(20))
+                            : const Radius.circular(20),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orange.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (widget.isImage && widget.contentWidget != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: widget.contentWidget,
+                          )
+                        else
+                          Text(
+                            widget.content,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 15),
+                          ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.time,
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 10),
+                            ),
+                            const SizedBox(width: 6),
+                            // 🔥 Ateş + Geri Sayım
+                            if (_isBurning) ...[
+                              const Icon(Icons.local_fire_department,
+                                  color: Colors.yellow, size: 14),
+                              const SizedBox(width: 2),
+                              Text(
+                                '${_remainingSeconds}s',
+                                style: const TextStyle(
+                                    color: Colors.yellow,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ] else ...[
+                              const Icon(Icons.local_fire_department,
+                                  color: Colors.white54, size: 14),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // 🔥 Yanma Progress Göstergesi
+                  if (_isBurning)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                        ),
+                        child: AnimatedBuilder(
+                          animation: _animController,
+                          builder: (context, child) {
+                            return LinearProgressIndicator(
+                              value: _animController.value,
+                              backgroundColor: Colors.transparent,
+                              valueColor:
+                                  const AlwaysStoppedAnimation(Colors.yellow),
+                              minHeight: 3,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBurnedPlaceholder() {
+    return Align(
+      alignment: widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey[800]?.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey[700]!, width: 0.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.local_fire_department,
+                color: Colors.grey[600], size: 16),
+            const SizedBox(width: 6),
+            Text(
+              'Mesaj küle döndü 🔥',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
