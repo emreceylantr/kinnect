@@ -993,6 +993,17 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: CircularProgressIndicator(color: kAccentColor));
               final messages = snapshot.data!;
 
+              // Yeni mesaj geldiğinde otomatik scroll
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_scrollController.hasClients) {
+                  _scrollController.animateTo(
+                    _scrollController.position.maxScrollExtent,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
+                  );
+                }
+              });
+
               if (messages.isEmpty)
                 return Center(
                     child: Text("Henüz mesaj yok.",
@@ -1000,25 +1011,19 @@ class _ChatScreenState extends State<ChatScreen> {
                             TextStyle(color: Colors.white.withOpacity(0.3))));
 
               return ListView.builder(
-                  key: ValueKey(
-                      messages.length), // Mesaj sayısı değişince rebuild
                   controller: _scrollController,
                   itemCount: messages.length,
-                  reverse: true, // En son mesaj en altta, otomatik scroll
                   padding:
                       const EdgeInsets.symmetric(horizontal: 0, vertical: 20),
                   itemBuilder: (context, index) {
-                    // reverse:true olduğu için son mesaj index 0'da
-                    // Yani messages[length-1-index] değil, doğrudan ters çevirilmiş sıra
-                    final msg = messages[messages.length - 1 - index];
+                    final msg = messages[index];
                     final isMe = msg['sender_id'] ==
                         Supabase.instance.client.auth.currentUser!.id;
 
                     // Avatar için önceki mesaja bak
                     bool showAvatar = true;
-                    final msgIndex = messages.length - 1 - index;
-                    if (!isMe && msgIndex > 0) {
-                      final prevMsg = messages[msgIndex - 1];
+                    if (!isMe && index > 0) {
+                      final prevMsg = messages[index - 1];
                       if (prevMsg['sender_id'] == msg['sender_id'])
                         showAvatar = false;
                     }
@@ -1026,15 +1031,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     final isEphemeral = msg['is_ephemeral'] == true;
                     final isViewed = msg['is_viewed'] == true;
 
-                    return KeyedSubtree(
-                      key: ValueKey(msg['id']), // Her mesaj için unique key
-                      child: _buildMessageBubble(
-                        msg,
-                        isMe,
-                        showAvatar,
-                        isEphemeral: isEphemeral,
-                        isViewed: isViewed,
-                      ),
+                    return _buildMessageBubble(
+                      msg,
+                      isMe,
+                      showAvatar,
+                      isEphemeral: isEphemeral,
+                      isViewed: isViewed,
                     );
                   });
             },
