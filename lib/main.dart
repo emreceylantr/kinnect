@@ -10,8 +10,12 @@ import 'services/notification_service.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/change_password_screen.dart';
-// 👇 Dosya yolun doğruysa burası kalabilir
 import 'screens/create_profile_screen.dart';
+
+// 🎨 Splash Screen Temaları
+const Color kSplashBg = Color(0xFF06060A);
+const Color kSplashPurple = Color(0xFF7C3AED);
+const Color kSplashViolet = Color(0xFF8B5CF6);
 
 // 🔥 Global Navigator Key
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -271,11 +275,9 @@ class _AuthGateState extends State<AuthGate> {
   Widget build(BuildContext context) {
     final session = Supabase.instance.client.auth.currentSession;
 
-    // 1. Kontrol sürüyorsa Loading göster
+    // 1. Kontrol sürüyorsa Splash Screen göster
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
-      );
+      return const KinnectSplashScreen();
     }
 
     // 2. Oturum yoksa -> Welcome Screen
@@ -290,5 +292,186 @@ class _AuthGateState extends State<AuthGate> {
 
     // 4. Her şey tamamsa -> Home Screen
     return const HomeScreen();
+  }
+}
+
+// 🎨 ANİMASYONLU SPLASH SCREEN
+class KinnectSplashScreen extends StatefulWidget {
+  const KinnectSplashScreen({super.key});
+
+  @override
+  State<KinnectSplashScreen> createState() => _KinnectSplashScreenState();
+}
+
+class _KinnectSplashScreenState extends State<KinnectSplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kSplashBg,
+      body: Stack(
+        children: [
+          // Arka plan glow
+          Positioned(
+            top: -100,
+            left: -100,
+            right: -100,
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return Container(
+                  height: 400,
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      radius: 0.6 + _controller.value * 0.1,
+                      colors: [
+                        kSplashPurple.withOpacity(0.2),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // İçerik
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Pulsing halkalar + Logo
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Halka 1
+                        Container(
+                          width: 140 + _controller.value * 20,
+                          height: 140 + _controller.value * 20,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: kSplashPurple
+                                  .withOpacity(0.3 - _controller.value * 0.2),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        // Halka 2
+                        Container(
+                          width: 110 + _controller.value * 10,
+                          height: 110 + _controller.value * 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: kSplashViolet
+                                  .withOpacity(0.4 - _controller.value * 0.2),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        // Logo Container
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [kSplashPurple, kSplashViolet],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: kSplashPurple.withOpacity(0.4),
+                                blurRadius: 30,
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/icon/icon.png',
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 40),
+
+                // Uygulama adı
+                Text(
+                  'Kinnect',
+                  style: GoogleFonts.spaceGrotesk(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Yükleniyor animasyonu
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: 0.5 + _controller.value * 0.5,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(
+                                kSplashPurple.withOpacity(0.8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Yükleniyor...',
+                            style: GoogleFonts.inter(
+                              color: Colors.white54,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
