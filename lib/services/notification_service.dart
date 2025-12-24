@@ -75,11 +75,28 @@ class NotificationService {
     }
   }
 
-  /// FCM Token al
+  /// FCM Token al (iOS için APNs token'ı bekle)
   Future<void> _getToken({bool saveToDatabase = true}) async {
     try {
+      // iOS'ta APNs token'ı bekle
+      String? apnsToken;
+      int retries = 0;
+      while (apnsToken == null && retries < 10) {
+        apnsToken = await _messaging.getAPNSToken();
+        if (apnsToken == null) {
+          await Future.delayed(const Duration(milliseconds: 500));
+          retries++;
+        }
+      }
+
+      if (apnsToken != null) {
+        debugPrint('🍎 APNs Token alındı');
+      } else {
+        debugPrint('⚠️ APNs Token alınamadı (bu simülatörde normaldir)');
+      }
+
       _fcmToken = await _messaging.getToken();
-      debugPrint('🔑 FCM Token alındı');
+      debugPrint('🔑 FCM Token alındı: ${_fcmToken?.substring(0, 20)}...');
 
       if (_fcmToken != null && saveToDatabase) {
         // Token kaydetmeyi arka plana al - blocking olmamalı
