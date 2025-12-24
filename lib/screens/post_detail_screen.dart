@@ -10,6 +10,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import '../widgets/fuel_button.dart';
 import '../services/feed_service.dart';
 import '../services/safety_service.dart'; // Güvenlik servisi (Şikayet için)
+import '../services/toxicity_service.dart'; // 🤖 AI Toxic yorum kontrolü
 import '../screens/profile_screen.dart';
 
 import 'package:record/record.dart';
@@ -38,6 +39,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   final AudioRecorder audioRecorder = AudioRecorder();
   final AudioPlayer audioPlayer = AudioPlayer();
   final SafetyService _safetyService = SafetyService();
+  final ToxicityService _toxicityService = ToxicityService(); // 🤖 AI servisi
 
   List<Map<String, dynamic>> comments = [];
   bool loadingComments = true;
@@ -520,6 +522,35 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Future<void> _sendTextComment() async {
     final msg = commentController.text.trim();
     if (msg.isEmpty) return;
+
+    // 🤖 AI TOXIC KONTROL
+    final isToxic = await _toxicityService.checkToxicity(msg);
+
+    if (isToxic) {
+      // Yorumu silme ve uyarı göster
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.block, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '⛔ Bu yorum uygunsuz içerik barındırıyor!',
+                    style: GoogleFonts.poppins(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      return; // Yorumu gönderme!
+    }
 
     commentController.clear();
     setState(() => isComposing = false);
