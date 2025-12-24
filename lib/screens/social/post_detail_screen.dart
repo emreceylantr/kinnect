@@ -20,6 +20,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../widgets/photo_emoji_picker.dart'; // 📸 Photo Emoji Tepkileri
+import '../../widgets/taggable_post_image.dart'; // 🆕 Etiketli Fotoğraf Widget'ı
 
 class PostDetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -1078,14 +1079,18 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ),
                 ],
 
-                // --- GÖRSEL ---
+                // --- GÖRSEL (ETİKETLİ) ---
                 if (image != null) ...[
                   const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.network(image),
+                      child: TaggablePostImage(
+                        imageUrl: image,
+                        postId: widget.post['id'],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ],
