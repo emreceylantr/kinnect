@@ -689,6 +689,10 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isTextFieldEmpty = true;
   bool _isEphemeralMode = false; // 🔥 Kül Olan Mod
 
+  // 🎙️ Ses Kaydı Timer
+  int _recordingDuration = 0;
+  Timer? _recordingTimer;
+
   @override
   void initState() {
     super.initState();
@@ -701,6 +705,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _textController.dispose();
     _scrollController.dispose();
     _audioRecorder.dispose();
+    _recordingTimer?.cancel();
     super.dispose();
   }
 
@@ -800,8 +805,13 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _toggleRecording() async {
     try {
       if (_isRecording) {
+        // Kaydı durdur
+        _recordingTimer?.cancel();
         final path = await _audioRecorder.stop();
-        setState(() => _isRecording = false);
+        setState(() {
+          _isRecording = false;
+          _recordingDuration = 0;
+        });
         if (path != null) _uploadAndSendAudio(path);
       } else {
         if (await _audioRecorder.hasPermission()) {
@@ -809,7 +819,16 @@ class _ChatScreenState extends State<ChatScreen> {
           final path =
               '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
           await _audioRecorder.start(const RecordConfig(), path: path);
-          setState(() => _isRecording = true);
+          setState(() {
+            _isRecording = true;
+            _recordingDuration = 0;
+          });
+          // Timer başlat
+          _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+            if (mounted) {
+              setState(() => _recordingDuration++);
+            }
+          });
         }
       }
     } catch (_) {}
@@ -1012,20 +1031,29 @@ class _ChatScreenState extends State<ChatScreen> {
                         style:
                             TextStyle(color: Colors.white.withOpacity(0.3))));
 
+              // 🔥 Duplicate mesajları filtrele
+              final seenIds = <String>{};
+              final uniqueMessages = messages.where((m) {
+                final id = m['id']?.toString() ?? '';
+                if (seenIds.contains(id)) return false;
+                seenIds.add(id);
+                return true;
+              }).toList();
+
               return ListView.builder(
                   controller: _scrollController,
-                  itemCount: messages.length,
+                  itemCount: uniqueMessages.length,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 0, vertical: 20),
                   itemBuilder: (context, index) {
-                    final msg = messages[index];
+                    final msg = uniqueMessages[index];
                     final isMe = msg['sender_id'] ==
                         Supabase.instance.client.auth.currentUser!.id;
 
                     // Avatar için önceki mesaja bak
                     bool showAvatar = true;
                     if (!isMe && index > 0) {
-                      final prevMsg = messages[index - 1];
+                      final prevMsg = uniqueMessages[index - 1];
                       if (prevMsg['sender_id'] == msg['sender_id'])
                         showAvatar = false;
                     }
@@ -1131,12 +1159,20 @@ class _ChatScreenState extends State<ChatScreen> {
                             blurRadius: 10,
                             offset: const Offset(0, 4))
                       ]),
-                  child: Icon(
-                      _isRecording
-                          ? Icons.stop
-                          : (_isTextFieldEmpty ? Icons.mic : Icons.send),
-                      color: Colors.white,
-                      size: 20),
+                  child: _isRecording
+                      ? Text(
+                          '$_recordingDuration',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        )
+                      : Icon(
+                          _isTextFieldEmpty ? Icons.mic : Icons.send,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                 ),
               ),
             ]),
