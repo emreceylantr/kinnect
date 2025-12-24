@@ -59,6 +59,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   String? playingCommentId;
   bool isComposing = false;
 
+  // 🆕 Yanıtla özelliği
+  Map<String, dynamic>? replyingToComment;
+
   // 📸 Emoji tepkileri
   List<Map<String, dynamic>> emojiReactions = [];
 
@@ -561,13 +564,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
 
     commentController.clear();
-    setState(() => isComposing = false);
+
+    // 🆕 Yanıt bilgisini önce kaydet (setState'ten önce)
+    final replyToUsername = replyingToComment?['profiles']?['username'];
+
+    setState(() {
+      isComposing = false;
+      replyingToComment = null; // 🆕 Yanıt state'ini temizle
+    });
+
+    // 🆕 Yanıt varsa @mention ekle
+    final String finalMsg =
+        replyToUsername != null ? "@$replyToUsername $msg" : msg;
 
     try {
       await client.from("comments").insert({
         "post_id": widget.post["id"],
         "user_id": myId,
-        "content": msg,
+        "content": finalMsg, // 🆕 Mention'lı içerik
         "audio_url": null,
       });
 
@@ -1271,6 +1285,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         final id = c["id"].toString();
         final isAudio = c["audio_url"] != null;
         final isMine = c["user_id"] == myId;
+        final isPostOwner =
+            widget.post["user_id"] == myId; // 🆕 Post sahibi mi?
+        final canDelete = isMine ||
+            isPostOwner; // 🆕 Hem yorum sahibi hem post sahibi silebilir
         final isPlaying = playingCommentId == id;
 
         return Padding(
@@ -1311,7 +1329,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               style: GoogleFonts.poppins(
                                   color: Colors.white38, fontSize: 11),
                             ),
-                            if (isMine)
+                            if (canDelete) // 🆕 Post sahibi veya yorum sahibi silebilir
                               GestureDetector(
                                 onTap: () => _confirmDelete(id),
                                 child: Padding(
@@ -1357,7 +1375,26 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         c["content"] ?? "",
                         style: GoogleFonts.poppins(
                             color: Colors.white, fontSize: 14),
-                      )
+                      ),
+                    // 🆕 YANITLA BUTONU
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          replyingToComment = c;
+                        });
+                        // Input'a focus ver
+                        FocusScope.of(context).requestFocus(FocusNode());
+                      },
+                      child: Text(
+                        "Yanıtla",
+                        style: GoogleFonts.poppins(
+                          color: const Color(0xFF6C63FF),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               )
@@ -1380,75 +1417,113 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         color: Color(0xFF111111),
         border: Border(top: BorderSide(color: Colors.white12)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // 📸 Foto Emoji butonu
-          GestureDetector(
-            onTap: () async {
-              final result = await showPhotoEmojiPicker(context);
-              if (result != null) {
-                _sendEmojiReaction(result['path']!, result['type']!);
-              }
-            },
-            child: Container(
-              width: 44,
-              height: 44,
+          // 🆕 YANITLA GÖSTERGESİ
+          if (replyingToComment != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF2A2A2A),
-                shape: BoxShape.circle,
+                color: const Color(0xFF6C63FF).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
                 border:
                     Border.all(color: const Color(0xFF6C63FF).withOpacity(0.3)),
               ),
-              child: const Icon(
-                Icons.face_retouching_natural,
-                color: Color(0xFF6C63FF),
-                size: 22,
+              child: Row(
+                children: [
+                  const Icon(Icons.reply, color: Color(0xFF6C63FF), size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "@${replyingToComment!['profiles']?['username'] ?? 'kullanıcı'} yanıtlıyorsun",
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFF6C63FF),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => setState(() => replyingToComment = null),
+                    child: const Icon(Icons.close,
+                        color: Colors.white54, size: 18),
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF2A2A2A),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: TextField(
-                controller: commentController,
-                style: const TextStyle(color: Colors.white),
-                maxLines: null,
-                keyboardType: TextInputType.multiline,
-                decoration: InputDecoration(
-                  hintText: isRecording
-                      ? "Kaydediliyor... ($recordDuration)"
-                      : "Yorum yaz...",
-                  hintStyle:
-                      const TextStyle(color: Colors.white38, fontSize: 14),
-                  border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          Row(
+            children: [
+              // 📸 Foto Emoji butonu
+              GestureDetector(
+                onTap: () async {
+                  final result = await showPhotoEmojiPicker(context);
+                  if (result != null) {
+                    _sendEmojiReaction(result['path']!, result['type']!);
+                  }
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2A2A2A),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: const Color(0xFF6C63FF).withOpacity(0.3)),
+                  ),
+                  child: const Icon(
+                    Icons.face_retouching_natural,
+                    color: Color(0xFF6C63FF),
+                    size: 22,
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onLongPress: isComposing ? null : _startRecording,
-            onLongPressUp: _stopRecording,
-            onTap: isComposing ? _sendTextComment : null,
-            child: CircleAvatar(
-              radius: 22,
-              backgroundColor:
-                  isRecording ? Colors.redAccent : const Color(0xFF6C63FF),
-              child: Icon(
-                isComposing ? Icons.send : Icons.mic,
-                color: Colors.white,
-                size: 20,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2A2A2A),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: TextField(
+                    controller: commentController,
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: null,
+                    keyboardType: TextInputType.multiline,
+                    decoration: InputDecoration(
+                      hintText: isRecording
+                          ? "Kaydediliyor... ($recordDuration)"
+                          : "Yorum yaz...",
+                      hintStyle:
+                          const TextStyle(color: Colors.white38, fontSize: 14),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
+              const SizedBox(width: 10),
+              GestureDetector(
+                onLongPress: isComposing ? null : _startRecording,
+                onLongPressUp: _stopRecording,
+                onTap: isComposing ? _sendTextComment : null,
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor:
+                      isRecording ? Colors.redAccent : const Color(0xFF6C63FF),
+                  child: Icon(
+                    isComposing ? Icons.send : Icons.mic,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ), // Row kapanışı
         ],
-      ),
+      ), // Column kapanışı
     );
   }
 }
