@@ -1,3 +1,5 @@
+// Kinnect - Kimlik doğrulama ana ekranı
+
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui';

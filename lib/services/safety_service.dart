@@ -1,3 +1,5 @@
+// Kinnect - Guvenlik servisi (engelleme, sikayet)
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SafetyService {

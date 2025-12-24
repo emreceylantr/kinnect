@@ -1,3 +1,5 @@
+// Kinnect - Takipçi listesi ekranı
+
 import 'dart:ui'; // Buzlu cam efekti için gerekli
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

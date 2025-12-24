@@ -1,3 +1,5 @@
+// Kinnect - Foto emoji modeli
+
 // ==========================================
 // 📸 PHOTO EMOJI MODEL
 // BeReal RealMoji benzeri fotoğraf-emoji sistemi

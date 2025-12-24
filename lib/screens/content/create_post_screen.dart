@@ -1,3 +1,5 @@
+// Kinnect - Yeni gönderi oluşturma
+
 import 'dart:io';
 import 'dart:ui';
 import 'dart:math';

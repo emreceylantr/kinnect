@@ -1,3 +1,5 @@
+// Kinnect - Ana sayfa ve feed ekranı
+
 import 'dart:async';
 import 'dart:math'; // 🔥 Matematiksel çizimler için
 import 'dart:ui'; // 🔥 Buzlu Cam için

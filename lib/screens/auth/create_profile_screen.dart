@@ -1,3 +1,5 @@
+// Kinnect - Profil oluşturma ekranı
+
 // lib/screens/auth/create_profile_screen.dart
 
 import 'dart:io';
