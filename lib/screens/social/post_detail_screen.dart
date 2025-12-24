@@ -1,3 +1,5 @@
+// Kinnect - Post detay ve yorumlar
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui'; // 🔥 BUZLU CAM İÇİN GEREKLİ

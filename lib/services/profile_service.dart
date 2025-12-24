@@ -1,3 +1,5 @@
+// Kinnect - Profil servisi
+
 import 'dart:io';
 
 import 'package:kinnect/repositories/profile_repository.dart';

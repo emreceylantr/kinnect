@@ -1,3 +1,5 @@
+// Kinnect - Kullanıcı listesi ekranı
+
 // lib/screens/user_list_screen.dart
 
 import 'package:flutter/material.dart';

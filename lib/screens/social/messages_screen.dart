@@ -1,3 +1,5 @@
+// Kinnect - Mesajlaşma ekranı
+
 import 'dart:async'; // Timer için gerekli
 import 'dart:io';
 import 'dart:ui'; // Glassmorphism ve ImageFilter için gerekli

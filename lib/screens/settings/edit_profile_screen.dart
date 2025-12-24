@@ -1,3 +1,7 @@
+// Kinnect - Profil düzenleme ekranı
+
+// Kinnect - Profil düzenleme ekranı
+
 import 'dart:io';
 import 'dart:ui'; // Blur efekti için
 import 'package:flutter/material.dart';

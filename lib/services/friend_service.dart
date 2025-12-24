@@ -1,3 +1,5 @@
+// Kinnect - Arkadaslik servisi
+
 // lib/services/friend_service.dart
 
 import 'package:supabase_flutter/supabase_flutter.dart';
