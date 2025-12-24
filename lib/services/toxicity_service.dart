@@ -1,49 +1,122 @@
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
 class ToxicityService {
-  // Flask API'nin local network IP adresi
-  static const String baseUrl = 'http://192.168.1.26:5001';
+  // Kötü kelimeler listesi - 40k+ toxic yorumdan çıkarıldı (Hugging Face Dataset)
+  static final Set<String> _toxicKeywords = {
+    'adam',
+    'allah',
+    'amk',
+    'amq',
+    'amına',
+    'amını',
+    'anne',
+    'aptal',
+    'artık',
+    'bak',
+    'bark',
+    'başka',
+    'becer',
+    'beni',
+    'benim',
+    'berbat',
+    'bile',
+    'biz',
+    'bok',
+    'bunu',
+    'böyle',
+    'büyük',
+    'cunt',
+    'devam',
+    'değil',
+    'dick',
+    'diye',
+    'domuz',
+    'ediyorum',
+    'emmek',
+    'ermeni',
+    'eğer',
+    'fagot',
+    'fuck',
+    'fucker',
+    'gay',
+    'geri',
+    'gerçek',
+    'gerçekten',
+    'göt',
+    'hakkında',
+    'her',
+    'hey',
+    'hiç',
+    'hiçbir',
+    'homo',
+    'horoz',
+    'ibne',
+    'iyi',
+    'içinde',
+    'kahretsin',
+    'kaltak',
+    'kendi',
+    'kendini',
+    'kim',
+    'koduğumun',
+    'kullanıcı',
+    'kötü',
+    'küçük',
+    'lan',
+    'lanet',
+    'lütfen',
+    'neden',
+    'nefret',
+    'olarak',
+    'olsun',
+    'olur',
+    'onu',
+    'orospu',
+    'penis',
+    'pislik',
+    'sadece',
+    'sana',
+    'saçma',
+    'senden',
+    'seni',
+    'senin',
+    'sikeyim',
+    'siktir',
+    'siz',
+    'sizi',
+    'sizin',
+    'sonra',
+    'suck',
+    'tek',
+    'tüm',
+    'türk',
+    'veya',
+    'wanker',
+    'wikipedia',
+    'yahudi',
+    'yüzden',
+    'zaman',
+    'zaten',
+    'zenci',
+    'çocuğu',
+    'çünkü',
+    'önce',
+    'şey',
+    'şimdi',
+  };
 
-  /// Verilen metni toxicity (zehirli içerik) kontrolünden geçirir
-  ///
-  /// Returns:
-  /// - `true` eğer metin uygunsuz/zehirli içerik içeriyorsa
-  /// - `false` eğer metin temiz/uygunsa veya API'ye ulaşılamazsa
-  Future<bool> checkToxicity(String text) async {
-    try {
-      final response = await http
-          .post(
-        Uri.parse('$baseUrl/analiz'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'text': text}),
-      )
-          .timeout(
-        const Duration(seconds: 5), // 5 saniye timeout
-        onTimeout: () {
-          // Timeout durumunda yorumu engelleme (API yanıt vermiyorsa)
-          throw Exception('API timeout');
-        },
-      );
+  /// Verilen metni toxicity kontrolünden geçirir
+  /// Basit kelime eşleştirme yaklaşımı - daha güvenilir
+  bool checkToxicity(String text) {
+    final lowerText = text.toLowerCase().trim();
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final isToxic = data['is_toxic'] ?? false;
-
-        print(isToxic
-            ? '⛔ Toxic yorum engellendi: "${text.substring(0, text.length > 30 ? 30 : text.length)}..."'
-            : '✅ Yorum onaylandı');
-
-        return isToxic;
+    // Kötü kelime kontrolü
+    for (final keyword in _toxicKeywords) {
+      if (lowerText.contains(keyword)) {
+        print('⛔ Toxic kelime bulundu: "$keyword" in "$text"');
+        return true;
       }
-
-      // API hata döndü, yorumu engelleme
-      print('⚠️ Toxicity API hata döndü: ${response.statusCode}');
-      return false;
-    } catch (e) {
-      // Hata durumunda yorumu engelleme (ağ sorunu vs.)
-      print('❌ Toxicity check error: $e');
-      return false;
     }
+
+    print('✅ Yorum temiz: "$text"');
+    return false;
   }
 }
