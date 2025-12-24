@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Kullanıcı profil operasyonlarını yöneten repository.
+/// Supabase 'profiles' tablosuyla iletişim kurar.
 class ProfileRepository {
   final SupabaseClient _client;
 
@@ -10,11 +12,8 @@ class ProfileRepository {
   // 1) Profil getirme
   // --------------------------------------------------
   Future<Map<String, dynamic>?> getProfileById(String userId) async {
-    final res = await _client
-        .from('profiles')
-        .select()
-        .eq('id', userId)
-        .maybeSingle();
+    final res =
+        await _client.from('profiles').select().eq('id', userId).maybeSingle();
 
     if (res == null) return null;
     return Map<String, dynamic>.from(res);
@@ -25,14 +24,15 @@ class ProfileRepository {
   // --------------------------------------------------
   Future<String?> _uploadAvatar(String userId, File file) async {
     final fileExt = file.path.split('.').last;
-    final fileName = '$userId-${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final fileName =
+        '$userId-${DateTime.now().millisecondsSinceEpoch}.$fileExt';
     final filePath = 'avatars/$fileName';
 
     await _client.storage.from('avatars').upload(
-      filePath,
-      file,
-      fileOptions: const FileOptions(upsert: true),
-    );
+          filePath,
+          file,
+          fileOptions: const FileOptions(upsert: true),
+        );
 
     final publicUrl = _client.storage.from('avatars').getPublicUrl(filePath);
     return publicUrl;
@@ -72,36 +72,30 @@ class ProfileRepository {
   // --------------------------------------------------
   // 4) Profil istatistikleri
   // --------------------------------------------------
+  /// Kullanıcının toplam gönderi sayısını döndürür.
   Future<int> getPostCount(String userId) async {
-    final res = await _client
-        .from('posts')
-        .select('id')
-        .eq('user_id', userId);
-
-    if (res is List) return res.length;
-    return 0;
+    final res = await _client.from('posts').select('id').eq('user_id', userId);
+    return res.length;
   }
 
+  /// Kullanıcının takipçi sayısını döndürür.
   Future<int> getFollowersCount(String userId) async {
     final res = await _client
         .from('friendships')
         .select('user_id')
         .eq('friend_id', userId)
         .eq('status', 'accepted');
-
-    if (res is List) return res.length;
-    return 0;
+    return res.length;
   }
 
+  /// Kullanıcının takip ettiği kişi sayısını döndürür.
   Future<int> getFollowingCount(String userId) async {
     final res = await _client
         .from('friendships')
         .select('friend_id')
         .eq('user_id', userId)
         .eq('status', 'accepted');
-
-    if (res is List) return res.length;
-    return 0;
+    return res.length;
   }
 
   Future<(int, int, int)> getProfileStats(String userId) async {
@@ -115,23 +109,18 @@ class ProfileRepository {
   // 5) Kullanıcı adı ile arama (SELECT + Stream.fromFuture)
   //    -> .stream() kullanmıyoruz, ilike hatasından kaçıyoruz
   // --------------------------------------------------
-  Stream<List<Map<String, dynamic>>> searchProfilesByUsername(
-      String query) {
+  Stream<List<Map<String, dynamic>>> searchProfilesByUsername(String query) {
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
       return const Stream.empty();
     }
 
     return Stream.fromFuture(
-      _client
-          .from('profiles')
-          .select()
-          .ilike('username', '%$trimmed%'),
+      _client.from('profiles').select().ilike('username', '%$trimmed%'),
     ).map((rows) {
       final list = rows as List<dynamic>;
       return list
-          .map<Map<String, dynamic>>(
-              (e) => Map<String, dynamic>.from(e as Map))
+          .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e as Map))
           .toList();
     });
   }

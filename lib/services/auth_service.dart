@@ -1,4 +1,5 @@
-// lib/services/auth_service.dart
+// Kinnect - Authentication Service
+// Handles Google OAuth and Email/Password authentication
 
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/profile_repository.dart';
 
+/// Giriş sonucu - kullanıcı ID ve profil durumu.
 class AuthResult {
   final String userId;
   final bool hasProfile;
@@ -16,6 +18,8 @@ class AuthResult {
   });
 }
 
+/// Kullanıcı kimlik doğrulama servisi.
+/// Google OAuth ve E-posta/Şifre destekler.
 class AuthService {
   final AuthRepository _authRepository;
   final ProfileRepository _profileRepository;
@@ -24,11 +28,11 @@ class AuthService {
   AuthService({SupabaseClient? client, GoogleSignIn? googleSignIn})
       : _authRepository = AuthRepository(client ?? Supabase.instance.client),
         _profileRepository =
-        ProfileRepository(client ?? Supabase.instance.client),
+            ProfileRepository(client ?? Supabase.instance.client),
         _googleSignIn = googleSignIn ??
             GoogleSignIn(
               serverClientId:
-              '71608708372-c01lic0b0jlojeqvaou65j8me28h4n99.apps.googleusercontent.com',
+                  '71608708372-c01lic0b0jlojeqvaou65j8me28h4n99.apps.googleusercontent.com',
             );
 
   // --- 🔥 GÜNCELLENEN FONKSİYON ---

@@ -1,6 +1,11 @@
+// Kinnect - ML Toxicity Detection Service
+// Cloud-hosted ML model for Turkish toxic comment detection
+
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+/// ML tabanlı toxic yorum tespit servisi.
+/// 90%+ doğrulukla Türkçe hakaret/küfür tespiti yapar.
 class ToxicityService {
   // Flask ML API - Production (Render)
   static const String baseUrl = 'https://kinnect-toxic-api.onrender.com';

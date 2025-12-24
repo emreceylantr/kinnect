@@ -1,7 +1,12 @@
+// Kinnect - Feed Service
+// Manages post feeds, comments, likes, and social interactions
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'safety_service.dart'; // 🔥 GÜVENLİK SERVİSİ DAHİL EDİLDİ
+import 'safety_service.dart';
 
+/// Ana akış ve keşfet sayfası için post yönetim servisi.
+/// Engelleme filtreleri ve görünürlük kurallarını uygular.
 class FeedService {
   final SupabaseClient client;
   final SafetyService _safetyService = SafetyService(); // 🔥 Servis örneği
