@@ -9,6 +9,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'photo_tag_screen.dart'; // 🆕 Fotoğrafa kişi etiketleme
+
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
 
@@ -26,6 +28,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   String _visibility = 'public';
   String? _avatarUrl;
   String _currentHint = "";
+
+  // 🆕 Fotoğrafa etiketlenen kişiler
+  List<Map<String, dynamic>> _photoTags = [];
 
   // --- ANİMASYON STATE'LERİ ---
   bool _isShareButtonPressed = false;
@@ -115,7 +120,24 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     final ImagePicker picker = ImagePicker();
     final XFile? image =
         await picker.pickImage(source: source, imageQuality: 70);
-    if (image != null) setState(() => _imageFile = File(image.path));
+    if (image != null) {
+      final file = File(image.path);
+
+      // 🆕 Etiketleme ekranına yönlendir
+      if (mounted) {
+        final tags = await Navigator.push<List<Map<String, dynamic>>>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PhotoTagScreen(imageFile: file),
+          ),
+        );
+
+        setState(() {
+          _imageFile = file;
+          _photoTags = tags ?? [];
+        });
+      }
+    }
   }
 
   Future<void> _sharePost() async {
@@ -144,12 +166,41 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             .getPublicUrl(fileName);
       }
 
-      await Supabase.instance.client.from('posts').insert({
-        'user_id': _currentUserId,
-        'content': content,
-        'image_url': imageUrl,
-        'visibility': _visibility,
-      });
+      final postResponse = await Supabase.instance.client
+          .from('posts')
+          .insert({
+            'user_id': _currentUserId,
+            'content': content,
+            'image_url': imageUrl,
+            'visibility': _visibility,
+          })
+          .select('id')
+          .single();
+
+      final postId = postResponse['id'];
+
+      // 🆕 Etiketleri kaydet
+      if (_photoTags.isNotEmpty && imageUrl != null) {
+        for (final tag in _photoTags) {
+          try {
+            await Supabase.instance.client.from('post_tags').insert({
+              'post_id': postId,
+              'tagged_user_id': tag['user']['id'],
+              'x_position': tag['x'],
+              'y_position': tag['y'],
+            });
+
+            // Etiketlenen kişiye bildirim gönder
+            await Supabase.instance.client.from('notifications').insert({
+              'user_id': tag['user']['id'],
+              'actor_id': _currentUserId,
+              'type': 'tag',
+              'post_id': postId,
+              'is_read': false,
+            });
+          } catch (_) {}
+        }
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
