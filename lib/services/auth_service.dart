@@ -31,23 +31,23 @@ class AuthService {
             ProfileRepository(client ?? Supabase.instance.client),
         _googleSignIn = googleSignIn ??
             GoogleSignIn(
+              clientId:
+                  '71608708372-9dvs03siqhcg5o9g8f7q6haatc1ismcn.apps.googleusercontent.com', // iOS
               serverClientId:
-                  '71608708372-c01lic0b0jlojeqvaou65j8me28h4n99.apps.googleusercontent.com',
+                  '71608708372-c01lic0b0jlojeqvaou65j8me28h4n99.apps.googleusercontent.com', // Web
             );
 
-  // --- 🔥 GÜNCELLENEN FONKSİYON ---
   /// Şifre sıfırlama e-postası gönder
   Future<void> sendPasswordResetEmail(String email) async {
     try {
       await Supabase.instance.client.auth.resetPasswordForEmail(
         email,
-        redirectTo: 'kinnect://reset-callback', // 🔥 KRİTİK NOKTA BURASI
+        redirectTo: 'kinnect://reset-callback',
       );
     } catch (e) {
       throw Exception("Sıfırlama maili gönderilemedi: $e");
     }
   }
-  // ---------------------------------
 
   /// E-posta ile giriş
   Future<AuthResult> signInWithEmail(String email, String password) async {
@@ -67,8 +67,9 @@ class AuthService {
     return _authRepository.signUpWithEmail(email, password);
   }
 
-  /// Google ile giriş
+  /// Google ile giriş (Native - Skip nonce checks enabled on Supabase)
   Future<AuthResult> signInWithGoogle() async {
+    // Native Google Sign-In
     final googleUser = await _googleSignIn.signIn();
     if (googleUser == null) {
       throw Exception('Google oturumu iptal edildi.');
@@ -76,14 +77,17 @@ class AuthService {
 
     final googleAuth = await googleUser.authentication;
     final idToken = googleAuth.idToken;
+    final accessToken = googleAuth.accessToken;
 
     if (idToken == null) {
       throw Exception('Google ID Token alınamadı.');
     }
 
-    final res = await _authRepository.signInWithIdToken(
+    // Supabase'e gönder - Skip nonce checks açık olduğu için nonce gerekmiyor
+    final res = await Supabase.instance.client.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
       idToken: idToken,
-      accessToken: googleAuth.accessToken,
+      accessToken: accessToken,
     );
 
     final userId = res.user!.id;

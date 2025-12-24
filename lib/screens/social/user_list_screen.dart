@@ -49,7 +49,9 @@ class _UserListScreenState extends State<UserListScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
       appBar: AppBar(
-        title: Text(widget.title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: Text(widget.title,
+            style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: const Color(0xFF050505),
         elevation: 0,
         leading: IconButton(
@@ -58,21 +60,23 @@ class _UserListScreenState extends State<UserListScreen> {
         ),
       ),
       body: _users.isEmpty
-          ? Center(child: Text('Liste boş.', style: GoogleFonts.poppins(color: Colors.white54)))
+          ? Center(
+              child: Text('Liste boş.',
+                  style: GoogleFonts.poppins(color: Colors.white54)))
           : ListView.builder(
-        itemCount: _users.length,
-        itemBuilder: (context, index) {
-          final user = _users[index];
-          return _UserListItem(
-            user: user,
-            currentUserId: _currentUserId,
-            friendService: _friendService,
-            listType: widget.listType,
-            isOwnList: widget.isOwnList,
-            onUserRemoved: () => _removeUserFromList(user['id']),
-          );
-        },
-      ),
+              itemCount: _users.length,
+              itemBuilder: (context, index) {
+                final user = _users[index];
+                return _UserListItem(
+                  user: user,
+                  currentUserId: _currentUserId,
+                  friendService: _friendService,
+                  listType: widget.listType,
+                  isOwnList: widget.isOwnList,
+                  onUserRemoved: () => _removeUserFromList(user['id']),
+                );
+              },
+            ),
     );
   }
 }
@@ -117,32 +121,51 @@ class _UserListItemState extends State<_UserListItem> {
 
   Future<void> _checkStatus() async {
     setState(() => _isLoading = true);
-    final status = await widget.friendService.getFollowStatus(currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
-    if (mounted) setState(() { _status = status; _isLoading = false; _statusChecked = true; });
+    final status = await widget.friendService.getFollowStatus(
+        currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
+    if (mounted)
+      setState(() {
+        _status = status;
+        _isLoading = false;
+        _statusChecked = true;
+      });
   }
 
   // --- İŞLEMLER ---
   Future<void> _acceptRequest() async {
     setState(() => _isLoading = true);
-    await widget.friendService.acceptFollowRequest(currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
-    widget.onUserRemoved(); // Listeden sil (çünkü artık takipçi oldu, istek değil)
+    try {
+      await widget.friendService.acceptFollowRequest(
+          currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
+      widget
+          .onUserRemoved(); // Listeden sil (çünkü artık takipçi oldu, istek değil)
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _declineRequest() async {
     setState(() => _isLoading = true);
-    await widget.friendService.removeFollowerOrDecline(currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
-    widget.onUserRemoved();
+    try {
+      await widget.friendService.removeFollowerOrDecline(
+          currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
+      widget.onUserRemoved();
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _removeFollower() async {
     setState(() => _isLoading = true);
-    await widget.friendService.removeFollower(currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
+    await widget.friendService.removeFollower(
+        currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
     widget.onUserRemoved();
   }
 
   Future<void> _unfollow() async {
     setState(() => _isLoading = true);
-    await widget.friendService.unfollowOrCancel(currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
+    await widget.friendService.unfollowOrCancel(
+        currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
     widget.onUserRemoved();
   }
 
@@ -150,13 +173,21 @@ class _UserListItemState extends State<_UserListItem> {
     setState(() => _isLoading = true);
     try {
       if (_status == FollowStatus.notFollowing) {
-        await widget.friendService.sendFollowRequest(currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
+        await widget.friendService.sendFollowRequest(
+            currentUserId: widget.currentUserId,
+            targetUserId: widget.user['id']);
         _status = FollowStatus.pendingOutgoing;
-      } else if (_status == FollowStatus.following || _status == FollowStatus.pendingOutgoing) {
-        await widget.friendService.unfollowOrCancel(currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
+      } else if (_status == FollowStatus.following ||
+          _status == FollowStatus.pendingOutgoing) {
+        await widget.friendService.unfollowOrCancel(
+            currentUserId: widget.currentUserId,
+            targetUserId: widget.user['id']);
         _status = FollowStatus.notFollowing;
       }
-    } catch (e) {} finally { if (mounted) setState(() => _isLoading = false); }
+    } catch (e) {
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -165,7 +196,8 @@ class _UserListItemState extends State<_UserListItem> {
     final username = widget.user['username'] ?? 'anonim';
     final avatarUrl = widget.user['avatar_url'];
 
-    if (widget.user['id'] == widget.currentUserId) return _buildListTile(fullName, username, avatarUrl, null);
+    if (widget.user['id'] == widget.currentUserId)
+      return _buildListTile(fullName, username, avatarUrl, null);
 
     Widget trailing;
 
@@ -174,27 +206,51 @@ class _UserListItemState extends State<_UserListItem> {
       trailing = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildButton(text: 'Kabul', color: Colors.green, onTap: _acceptRequest),
+          _buildButton(
+              text: 'Kabul', color: Colors.green, onTap: _acceptRequest),
           const SizedBox(width: 8),
-          _buildButton(text: 'Sil', color: Colors.redAccent, isOutline: true, onTap: _declineRequest),
+          _buildButton(
+              text: 'Sil',
+              color: Colors.redAccent,
+              isOutline: true,
+              onTap: _declineRequest),
         ],
       );
     }
     // 2. KENDİ TAKİPÇİLERİM (ÇIKAR)
     else if (widget.isOwnList && widget.listType == 'followers') {
-      trailing = _buildButton(text: 'Çıkar', color: const Color(0xFF1E1E1E), onTap: _removeFollower);
+      trailing = _buildButton(
+          text: 'Çıkar',
+          color: const Color(0xFF1E1E1E),
+          onTap: _removeFollower);
     }
     // 3. KENDİ TAKİP ETTİKLERİM (TAKİPTESİN -> ÇIK)
     else if (widget.isOwnList && widget.listType == 'following') {
-      trailing = _buildButton(text: 'Takiptesin', color: const Color(0xFF1E1E1E), onTap: _unfollow);
+      trailing = _buildButton(
+          text: 'Takiptesin', color: const Color(0xFF1E1E1E), onTap: _unfollow);
     }
     // 4. BAŞKASININ LİSTESİ (GENEL TAKİP BUTONU)
     else {
-      if (!_statusChecked && _isLoading) return _buildListTile(fullName, username, avatarUrl, const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)));
+      if (!_statusChecked && _isLoading)
+        return _buildListTile(
+            fullName,
+            username,
+            avatarUrl,
+            const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white)));
 
-      String t = 'Takip Et'; Color c = const Color(0xFF6C63FF);
-      if (_status == FollowStatus.following) { t = 'Takiptesin'; c = const Color(0xFF1E1E1E); }
-      else if (_status == FollowStatus.pendingOutgoing) { t = 'İstek yollandı'; c = Colors.grey.shade800; }
+      String t = 'Takip Et';
+      Color c = const Color(0xFF6C63FF);
+      if (_status == FollowStatus.following) {
+        t = 'Takiptesin';
+        c = const Color(0xFF1E1E1E);
+      } else if (_status == FollowStatus.pendingOutgoing) {
+        t = 'İstek yollandı';
+        c = Colors.grey.shade800;
+      }
 
       trailing = _buildButton(text: t, color: c, onTap: _toggleFollow);
     }
@@ -202,29 +258,66 @@ class _UserListItemState extends State<_UserListItem> {
     return _buildListTile(fullName, username, avatarUrl, trailing);
   }
 
-  Widget _buildButton({required String text, required Color color, required VoidCallback onTap, bool isOutline = false}) {
+  Widget _buildButton(
+      {required String text,
+      required Color color,
+      required VoidCallback onTap,
+      bool isOutline = false}) {
     return SizedBox(
       height: 32,
       child: isOutline
           ? OutlinedButton(
-        onPressed: _isLoading ? null : onTap,
-        style: OutlinedButton.styleFrom(side: BorderSide(color: color), padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-        child: Text(text, style: GoogleFonts.poppins(fontSize: 12, color: color, fontWeight: FontWeight.w600)),
-      )
+              onPressed: _isLoading ? null : onTap,
+              style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: color),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8))),
+              child: Text(text,
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, color: color, fontWeight: FontWeight.w600)),
+            )
           : ElevatedButton(
-        onPressed: _isLoading ? null : onTap,
-        style: ElevatedButton.styleFrom(backgroundColor: color, padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
-        child: _isLoading ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(text, style: GoogleFonts.poppins(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
-      ),
+              onPressed: _isLoading ? null : onTap,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: color,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  elevation: 0),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : Text(text,
+                      style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600)),
+            ),
     );
   }
 
-  Widget _buildListTile(String name, String username, String? avatarUrl, Widget? trailing) {
+  Widget _buildListTile(
+      String name, String username, String? avatarUrl, Widget? trailing) {
     return ListTile(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: widget.user['id']))),
-      leading: CircleAvatar(backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null, backgroundColor: const Color(0xFF6C63FF), child: avatarUrl == null ? const Icon(Icons.person, color: Colors.white) : null),
-      title: Text(name, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
-      subtitle: Text('@$username', style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => ProfileScreen(userId: widget.user['id']))),
+      leading: CircleAvatar(
+          backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+          backgroundColor: const Color(0xFF6C63FF),
+          child: avatarUrl == null
+              ? const Icon(Icons.person, color: Colors.white)
+              : null),
+      title: Text(name,
+          style: GoogleFonts.poppins(
+              color: Colors.white, fontWeight: FontWeight.w600)),
+      subtitle: Text('@$username',
+          style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
       trailing: trailing,
     );
   }
