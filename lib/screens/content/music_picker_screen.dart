@@ -236,88 +236,96 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
                   final isPlaying = playingTrackId == track['id'];
                   final hasPreview = track['preview_url'] != null;
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: isPlaying
-                          ? const Color(0xFF1DB954).withOpacity(0.15)
-                          : Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(16),
-                      border: isPlaying
-                          ? Border.all(
-                              color: const Color(0xFF1DB954), width: 1.5)
-                          : null,
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                  return GestureDetector(
+                    onTap: () => _selectTrack(
+                        track), // 🆕 Herhangi bir yere tıklayınca seç
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: isPlaying
+                            ? const Color(0xFF1DB954).withOpacity(0.15)
+                            : Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: isPlaying
+                            ? Border.all(
+                                color: const Color(0xFF1DB954), width: 1.5)
+                            : null,
                       ),
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: albumImage != null
-                            ? Image.network(
-                                albumImage,
-                                width: 56,
-                                height: 56,
-                                fit: BoxFit.cover,
-                              )
-                            : Container(
-                                width: 56,
-                                height: 56,
-                                color: Colors.grey[800],
-                                child: const Icon(Icons.music_note,
-                                    color: Colors.white54),
-                              ),
-                      ),
-                      title: Text(
-                        track['name'] ?? 'Bilinmeyen',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Text(
-                        artistName,
-                        style: GoogleFonts.poppins(color: Colors.white54),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Oynat/Durdur
-                          if (hasPreview)
-                            IconButton(
-                              onPressed: () => _togglePlay(track),
-                              icon: Icon(
-                                isPlaying
-                                    ? Icons.pause_circle_filled
-                                    : Icons.play_circle_filled,
-                                color: const Color(0xFF1DB954),
-                                size: 40,
-                              ),
-                            )
-                          else
-                            const Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Icon(Icons.music_off,
-                                  color: Colors.white24, size: 24),
-                            ),
-
-                          // Seç
-                          if (hasPreview)
-                            IconButton(
-                              onPressed: () => _selectTrack(track),
-                              icon: const Icon(
-                                Icons.add_circle_outline,
-                                color: Color(0xFF6C63FF),
-                                size: 32,
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: albumImage != null
+                              ? Image.network(
+                                  albumImage,
+                                  width: 56,
+                                  height: 56,
+                                  fit: BoxFit.cover,
+                                )
+                              : Container(
+                                  width: 56,
+                                  height: 56,
+                                  color: Colors.grey[800],
+                                  child: const Icon(Icons.music_note,
+                                      color: Colors.white54),
+                                ),
+                        ),
+                        title: Text(
+                          track['name'] ?? 'Bilinmeyen',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                artistName,
+                                style:
+                                    GoogleFonts.poppins(color: Colors.white54),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                        ],
+                            if (!hasPreview)
+                              Text(
+                                ' • önizleme yok',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.orange.withOpacity(0.7),
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Oynat/Durdur (sadece preview varsa)
+                            if (hasPreview)
+                              IconButton(
+                                onPressed: () => _togglePlay(track),
+                                icon: Icon(
+                                  isPlaying
+                                      ? Icons.pause_circle_filled
+                                      : Icons.play_circle_filled,
+                                  color: const Color(0xFF1DB954),
+                                  size: 36,
+                                ),
+                              ),
+                            // Seç butonu (herkese göster)
+                            const Icon(
+                              Icons.chevron_right,
+                              color: Colors.white38,
+                              size: 28,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
