@@ -923,6 +923,7 @@ class _ChatScreenState extends State<ChatScreen> {
         'user_id': otherId, // Kime (aranan kişi)
         'actor_id': myId, // Kimden (arayan kişi)
         'type': 'call', // Tip: Arama
+        'is_video': isVideo, // 🆕 Görüntülü mü sesli mi?
         'is_read': false,
       });
 

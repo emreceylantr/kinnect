@@ -100,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _handleNewNotification(Map<String, dynamic> data) async {
     final type = data['type'];
     final actorId = data['actor_id'];
+    final isVideo = data['is_video'] ?? false; // 🆕 Video mu sesli mi?
 
     final userRes = await Supabase.instance.client
         .from('profiles')
@@ -110,13 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (userRes == null || !mounted) return;
 
     if (type == 'call') {
-      _showIncomingCallDialog(userRes);
+      _showIncomingCallDialog(userRes, isVideo); // 🆕 isVideo parametresi
     } else {
       _showTopNotification(data, userRes);
     }
   }
 
-  void _showIncomingCallDialog(Map<String, dynamic> callerProfile) {
+  void _showIncomingCallDialog(
+      Map<String, dynamic> callerProfile, bool isVideo) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -124,6 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) {
         return _IncomingCallPopup(
           callerProfile: callerProfile,
+          isVideo: isVideo, // 🆕 Video mu sesli mi göster
           onAccept: () {
             Navigator.pop(context);
             final myId = _currentUserId;
@@ -137,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _createSlideRoute(CallScreen(
                 callId: callId,
                 otherUserName: callerProfile['full_name'] ?? 'Kullanıcı',
-                isVideo: false,
+                isVideo: isVideo, // 🆕 Artık doğru değer!
                 otherUserAvatar: callerProfile['avatar_url']?.toString(),
               )),
             );
@@ -1041,11 +1044,13 @@ class _PostCardState extends State<PostCard> {
 // 🔥🔥🔥 PREMIUM GELEN ARAMA POPUP'I 🔥🔥🔥
 class _IncomingCallPopup extends StatefulWidget {
   final Map<String, dynamic> callerProfile;
+  final bool isVideo; // 🆕 Görüntülü mü sesli mi?
   final VoidCallback onAccept;
   final VoidCallback onDecline;
 
   const _IncomingCallPopup({
     required this.callerProfile,
+    required this.isVideo,
     required this.onAccept,
     required this.onDecline,
   });
@@ -1142,9 +1147,11 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
                       builder: (context, child) {
                         return Transform.rotate(
                           angle: _ringAnimation.value,
-                          child: const Icon(
-                            Icons.phone_in_talk_rounded,
-                            color: Color(0xFF69F0AE),
+                          child: Icon(
+                            widget.isVideo
+                                ? Icons.videocam_rounded
+                                : Icons.phone_in_talk_rounded,
+                            color: const Color(0xFF69F0AE),
                             size: 20,
                           ),
                         );
@@ -1152,7 +1159,7 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      "Gelen Arama",
+                      widget.isVideo ? "Görüntülü Arama" : "Sesli Arama",
                       style: GoogleFonts.poppins(
                         color: const Color(0xFF69F0AE),
                         fontSize: 14,
