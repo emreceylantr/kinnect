@@ -7,8 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../services/feed_service.dart';
-
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
 
@@ -16,7 +14,8 @@ class CreatePostScreen extends StatefulWidget {
   State<CreatePostScreen> createState() => _CreatePostScreenState();
 }
 
-class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerProviderStateMixin {
+class _CreatePostScreenState extends State<CreatePostScreen>
+    with SingleTickerProviderStateMixin {
   final _textController = TextEditingController();
   final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
 
@@ -112,7 +111,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
 
   Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: source, imageQuality: 70);
+    final XFile? image =
+        await picker.pickImage(source: source, imageQuality: 70);
     if (image != null) setState(() => _imageFile = File(image.path));
   }
 
@@ -128,17 +128,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
 
       if (_imageFile != null) {
         final fileExt = _imageFile!.path.split('.').last;
-        final fileName = '$_currentUserId/${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final fileName =
+            '$_currentUserId/${DateTime.now().millisecondsSinceEpoch}.$fileExt';
 
-        await Supabase.instance.client.storage
+        await Supabase.instance.client.storage.from('uploads').uploadBinary(
+              fileName,
+              await _imageFile!.readAsBytes(),
+              fileOptions: const FileOptions(upsert: true),
+            );
+
+        imageUrl = Supabase.instance.client.storage
             .from('uploads')
-            .uploadBinary(
-          fileName,
-          await _imageFile!.readAsBytes(),
-          fileOptions: const FileOptions(upsert: true),
-        );
-
-        imageUrl = Supabase.instance.client.storage.from('uploads').getPublicUrl(fileName);
+            .getPublicUrl(fileName);
       }
 
       await Supabase.instance.client.from('posts').insert({
@@ -160,7 +161,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Hata: $e"), backgroundColor: Colors.redAccent),
+          SnackBar(
+              content: Text("Hata: $e"), backgroundColor: Colors.redAccent),
         );
       }
     } finally {
@@ -178,21 +180,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     // 🔥 DÜZELTME: Yazı boyutu 16'ya çekildi (Daha dengeli)
-    final TextStyle commonTextStyle = GoogleFonts.poppins(
-        color: Colors.white,
-        fontSize: 16,
-        height: 1.5
-    );
+    final TextStyle commonTextStyle =
+        GoogleFonts.poppins(color: Colors.white, fontSize: 16, height: 1.5);
 
-    final TextStyle hintTextStyle = commonTextStyle.copyWith(
-        color: Colors.white54
-    );
+    final TextStyle hintTextStyle =
+        commonTextStyle.copyWith(color: Colors.white54);
 
     // 🔥 HİZALAMA MATEMATİĞİ:
     // Avatar (Radius 22) => Height 44px
     // Yazı (Font 16 * 1.5) => Height 24px
     // Fark = 20px. Ortalamak için üstten 10px boşluk gerekir.
-    final double topPadding = _centeredHints.contains(_currentHint) ? 10.0 : 0.0;
+    final double topPadding =
+        _centeredHints.contains(_currentHint) ? 10.0 : 0.0;
 
     final bool showAurora = _textController.text.isEmpty && _imageFile == null;
 
@@ -217,7 +216,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
                         end: Alignment(1.0 - t * 0.5, 1.0),
                         colors: [
                           Color.lerp(Colors.black, const Color(0xFF004D40), t)!,
-                          Color.lerp(const Color(0xFF1A237E), const Color(0xFF311B92), t)!,
+                          Color.lerp(const Color(0xFF1A237E),
+                              const Color(0xFF311B92), t)!,
                           Color.lerp(Colors.black, const Color(0xFF4A148C), t)!,
                         ],
                         stops: [0.0 + t * 0.2, 0.5, 1.0 - t * 0.2],
@@ -249,8 +249,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
                             CircleAvatar(
                               radius: 22, // Standart boyut
                               backgroundColor: const Color(0xFF1F1F1F),
-                              backgroundImage: _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
-                              child: _avatarUrl == null ? const Icon(Icons.person, color: Colors.white54) : null,
+                              backgroundImage: _avatarUrl != null
+                                  ? NetworkImage(_avatarUrl!)
+                                  : null,
+                              child: _avatarUrl == null
+                                  ? const Icon(Icons.person,
+                                      color: Colors.white54)
+                                  : null,
                             ),
                             const SizedBox(width: 15),
 
@@ -263,8 +268,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
                                     Padding(
                                       padding: EdgeInsets.zero,
                                       child: AnimatedOpacity(
-                                        opacity: _textController.text.isEmpty ? _hintOpacity : 0.0,
-                                        duration: const Duration(milliseconds: 800),
+                                        opacity: _textController.text.isEmpty
+                                            ? _hintOpacity
+                                            : 0.0,
+                                        duration:
+                                            const Duration(milliseconds: 800),
                                         curve: Curves.easeOut,
                                         child: Text(
                                           _currentHint,
@@ -292,7 +300,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
                             ),
                           ],
                         ),
-
                         if (_imageFile != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 25, left: 60),
@@ -311,22 +318,24 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
                                   top: 10,
                                   right: 10,
                                   child: GestureDetector(
-                                    onTap: () => setState(() => _imageFile = null),
+                                    onTap: () =>
+                                        setState(() => _imageFile = null),
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
                                         color: Colors.black.withOpacity(0.6),
                                         shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.white24, width: 1),
+                                        border: Border.all(
+                                            color: Colors.white24, width: 1),
                                       ),
-                                      child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                      child: const Icon(Icons.close,
+                                          color: Colors.white, size: 18),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-
                         const SizedBox(height: 120),
                       ],
                     ),
@@ -338,10 +347,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
 
           // 3. ÜST BAR (FLOATING)
           Positioned(
-            top: 0, left: 0, right: 0,
+            top: 0,
+            left: 0,
+            right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -353,13 +365,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                           child: Container(
-                            width: 44, height: 44,
+                            width: 44,
+                            height: 44,
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.1),
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withOpacity(0.1)),
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.1)),
                             ),
-                            child: const Icon(Icons.close, color: Colors.white, size: 22),
+                            child: const Icon(Icons.close,
+                                color: Colors.white, size: 22),
                           ),
                         ),
                       ),
@@ -376,7 +391,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white.withOpacity(0.1)),
+                            border: Border.all(
+                                color: Colors.white.withOpacity(0.1)),
                           ),
                           child: Row(
                             children: [
@@ -415,42 +431,50 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
                       children: [
                         IconButton(
                           onPressed: () => _pickImage(ImageSource.gallery),
-                          icon: const Icon(FontAwesomeIcons.image, color: Colors.greenAccent, size: 24),
+                          icon: const Icon(FontAwesomeIcons.image,
+                              color: Colors.greenAccent, size: 24),
                           tooltip: 'Galeri',
                         ),
                         const SizedBox(width: 10),
                         IconButton(
                           onPressed: () => _pickImage(ImageSource.camera),
-                          icon: const Icon(FontAwesomeIcons.camera, color: Colors.blueAccent, size: 24),
+                          icon: const Icon(FontAwesomeIcons.camera,
+                              color: Colors.blueAccent, size: 24),
                           tooltip: 'Kamera',
                         ),
-
                         const Spacer(),
-
                         GestureDetector(
-                          onTapDown: (_) => setState(() => _isShareButtonPressed = true),
+                          onTapDown: (_) =>
+                              setState(() => _isShareButtonPressed = true),
                           onTapUp: (_) {
                             setState(() => _isShareButtonPressed = false);
                             if (!_isLoading) _sharePost();
                           },
-                          onTapCancel: () => setState(() => _isShareButtonPressed = false),
+                          onTapCancel: () =>
+                              setState(() => _isShareButtonPressed = false),
                           child: AnimatedScale(
                             scale: _isShareButtonPressed ? 0.95 : 1.0,
                             duration: const Duration(milliseconds: 100),
                             curve: Curves.easeInOut,
                             child: Container(
                               height: 42,
-                              padding: const EdgeInsets.symmetric(horizontal: 28),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 28),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF6C63FF), Color(0xFF448AFF), Color(0xFF69F0AE)],
+                                  colors: [
+                                    Color(0xFF6C63FF),
+                                    Color(0xFF448AFF),
+                                    Color(0xFF69F0AE)
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 borderRadius: BorderRadius.circular(21),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF6C63FF).withOpacity(0.4),
+                                    color: const Color(0xFF6C63FF)
+                                        .withOpacity(0.4),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -459,9 +483,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> with SingleTickerPr
                               child: Center(
                                 child: _isLoading
                                     ? const SizedBox(
-                                    width: 20, height: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                    : Text("Paylaş", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2))
+                                    : Text("Paylaş",
+                                        style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: Colors.white)),
                               ),
                             ),
                           ),

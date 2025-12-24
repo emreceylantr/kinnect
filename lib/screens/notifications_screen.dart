@@ -107,10 +107,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return grouped;
   }
 
-  Future<void> _refresh() async {
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

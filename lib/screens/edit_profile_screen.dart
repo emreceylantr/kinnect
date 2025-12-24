@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:country_code_picker/country_code_picker.dart';
-import 'package:video_player/video_player.dart'; // Önizleme için
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> currentProfile;
@@ -16,7 +15,8 @@ class EditProfileScreen extends StatefulWidget {
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> with TickerProviderStateMixin {
+class _EditProfileScreenState extends State<EditProfileScreen>
+    with TickerProviderStateMixin {
   final _nameController = TextEditingController();
   final _usernameController = TextEditingController();
   final _bioController = TextEditingController();
@@ -52,13 +52,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
     _verifiedPhone = widget.currentProfile['phone'];
 
     // Animasyonlar
-    _animController1 = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat(reverse: true);
-    _animOffset1 = Tween<Offset>(begin: const Offset(-0.2, -0.2), end: const Offset(0.2, 0.2))
-        .animate(CurvedAnimation(parent: _animController1, curve: Curves.easeInOut));
+    _animController1 =
+        AnimationController(vsync: this, duration: const Duration(seconds: 5))
+          ..repeat(reverse: true);
+    _animOffset1 = Tween<Offset>(
+            begin: const Offset(-0.2, -0.2), end: const Offset(0.2, 0.2))
+        .animate(
+            CurvedAnimation(parent: _animController1, curve: Curves.easeInOut));
 
-    _animController2 = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat(reverse: true);
-    _animOffset2 = Tween<Offset>(begin: const Offset(0.2, 0.2), end: const Offset(-0.2, -0.2))
-        .animate(CurvedAnimation(parent: _animController2, curve: Curves.easeInOut));
+    _animController2 =
+        AnimationController(vsync: this, duration: const Duration(seconds: 4))
+          ..repeat(reverse: true);
+    _animOffset2 = Tween<Offset>(
+            begin: const Offset(0.2, 0.2), end: const Offset(-0.2, -0.2))
+        .animate(
+            CurvedAnimation(parent: _animController2, curve: Curves.easeInOut));
   }
 
   @override
@@ -74,7 +82,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
   // FOTOĞRAF SEÇME
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final XFile? image =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image != null) setState(() => _imageFile = File(image.path));
   }
 
@@ -85,14 +94,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
     final XFile? video = await picker.pickVideo(
         source: ImageSource.gallery,
         maxDuration: const Duration(seconds: 10) // Çok uzun videoları engelle
-    );
+        );
 
     if (video != null) {
       setState(() => _videoFile = File(video.path));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Live Video Seçildi! 🎬", style: GoogleFonts.poppins()), backgroundColor: _colorGreen)
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content:
+                Text("Live Video Seçildi! 🎬", style: GoogleFonts.poppins()),
+            backgroundColor: _colorGreen));
       }
     }
   }
@@ -106,99 +116,108 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFF1A1A1A),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: Text("Telefon Doğrulama", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Lütfen telefon numaranızı girin. Giriş yaparken bu numaraya kod gönderilecektir.",
-                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // 🔥 ÜLKE KODU VE NUMARA ALANI 🔥
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white24),
-                    ),
-                    child: Row(
-                      children: [
-                        // Sol Taraf: Ülke Seçici
-                        CountryCodePicker(
-                          onChanged: (country) {
-                            tempCountryCode = country.dialCode!;
-                          },
-                          initialSelection: 'TR', // Varsayılan Türkiye
-                          favorite: const ['+90', 'US', 'GB'],
-                          showCountryOnly: false,
-                          showOnlyCountryWhenClosed: false,
-                          alignLeft: false,
-                          textStyle: GoogleFonts.poppins(color: Colors.white),
-                          dialogBackgroundColor: const Color(0xFF2A2A2A),
-                          barrierColor: Colors.black87,
-                          searchDecoration: InputDecoration(
-                            hintText: "Ülke Ara...",
-                            hintStyle: const TextStyle(color: Colors.white30),
-                            fillColor: const Color(0xFF1A1A1A),
-                            filled: true,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                          ),
-                        ),
-
-                        // Dikey Çizgi
-                        Container(width: 1, height: 30, color: Colors.white24),
-
-                        // Sağ Taraf: Numara Girişi
-                        Expanded(
-                          child: TextField(
-                            controller: phoneController,
-                            keyboardType: TextInputType.phone,
-                            style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
-                            decoration: InputDecoration(
-                              hintText: "555 123 45 67",
-                              hintStyle: GoogleFonts.poppins(color: Colors.white30),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+      builder: (context) => StatefulBuilder(builder: (context, setStateDialog) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text("Telefon Doğrulama",
+              style: GoogleFonts.poppins(
+                  color: Colors.white, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Lütfen telefon numaranızı girin. Giriş yaparken bu numaraya kod gönderilecektir.",
+                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("İptal", style: TextStyle(color: Colors.redAccent)),
+              const SizedBox(height: 20),
+
+              // 🔥 ÜLKE KODU VE NUMARA ALANI 🔥
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white24),
                 ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _colorGreen,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    String rawNumber = phoneController.text.trim();
-                    if (rawNumber.startsWith('0')) {
-                      rawNumber = rawNumber.substring(1);
-                    }
-                    final fullNumber = "$tempCountryCode$rawNumber";
-                    Navigator.pop(context);
-                    _sendSmsCode(fullNumber);
-                  },
-                  child: const Text("Kod Gönder", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: Row(
+                  children: [
+                    // Sol Taraf: Ülke Seçici
+                    CountryCodePicker(
+                      onChanged: (country) {
+                        tempCountryCode = country.dialCode!;
+                      },
+                      initialSelection: 'TR', // Varsayılan Türkiye
+                      favorite: const ['+90', 'US', 'GB'],
+                      showCountryOnly: false,
+                      showOnlyCountryWhenClosed: false,
+                      alignLeft: false,
+                      textStyle: GoogleFonts.poppins(color: Colors.white),
+                      dialogBackgroundColor: const Color(0xFF2A2A2A),
+                      barrierColor: Colors.black87,
+                      searchDecoration: InputDecoration(
+                        hintText: "Ülke Ara...",
+                        hintStyle: const TextStyle(color: Colors.white30),
+                        fillColor: const Color(0xFF1A1A1A),
+                        filled: true,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none),
+                      ),
+                    ),
+
+                    // Dikey Çizgi
+                    Container(width: 1, height: 30, color: Colors.white24),
+
+                    // Sağ Taraf: Numara Girişi
+                    Expanded(
+                      child: TextField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        style: GoogleFonts.poppins(
+                            color: Colors.white, fontSize: 16),
+                        decoration: InputDecoration(
+                          hintText: "555 123 45 67",
+                          hintStyle: GoogleFonts.poppins(color: Colors.white30),
+                          border: InputBorder.none,
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            );
-          }
-      ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("İptal",
+                  style: TextStyle(color: Colors.redAccent)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _colorGreen,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                String rawNumber = phoneController.text.trim();
+                if (rawNumber.startsWith('0')) {
+                  rawNumber = rawNumber.substring(1);
+                }
+                final fullNumber = "$tempCountryCode$rawNumber";
+                Navigator.pop(context);
+                _sendSmsCode(fullNumber);
+              },
+              child: const Text("Kod Gönder",
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      }),
     );
   }
 
@@ -234,26 +253,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Doğrulama Kodu", style: GoogleFonts.poppins(color: Colors.white)),
+        title: Text("Doğrulama Kodu",
+            style: GoogleFonts.poppins(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("$phone numarasına gelen kodu girin.", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13)),
+            Text("$phone numarasına gelen kodu girin.",
+                style:
+                    GoogleFonts.poppins(color: Colors.white54, fontSize: 13)),
             const SizedBox(height: 20),
             TextField(
               controller: otpController,
               keyboardType: TextInputType.number,
               maxLength: 6,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontSize: 24, letterSpacing: 5),
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 24, letterSpacing: 5),
               decoration: InputDecoration(
                 hintText: "------",
                 hintStyle: const TextStyle(color: Colors.white24),
                 counterText: "",
                 filled: true,
                 fillColor: Colors.black26,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _colorGreen)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _colorGreen)),
               ),
             ),
           ],
@@ -261,16 +288,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("İptal", style: TextStyle(color: Colors.redAccent))
-          ),
+              child: const Text("İptal",
+                  style: TextStyle(color: Colors.redAccent))),
           ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: _colorGreen),
               onPressed: () {
                 Navigator.pop(context);
                 _verifyOtpAndEnable2FA(phone, otpController.text.trim());
               },
-              child: const Text("Onayla", style: TextStyle(color: Colors.black))
-          ),
+              child:
+                  const Text("Onayla", style: TextStyle(color: Colors.black))),
         ],
       ),
     );
@@ -301,15 +328,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
         });
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: const Text("2FA ve Telefon Başarıyla Eklendi! 🔒"), backgroundColor: _colorGreen)
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: const Text("2FA ve Telefon Başarıyla Eklendi! 🔒"),
+              backgroundColor: _colorGreen));
         }
       }
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Hatalı Kod: $e"), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Hatalı Kod: $e"), backgroundColor: Colors.red));
       }
     }
   }
@@ -328,9 +356,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("2FA Kapatıldı.")));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("2FA Kapatıldı.")));
       }
-    } catch(e) {
+    } catch (e) {
       setState(() => _isLoading = false);
     }
   }
@@ -341,7 +370,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
     final userId = Supabase.instance.client.auth.currentUser!.id;
 
     try {
-      if (_usernameController.text.contains(' ')) throw 'Kullanıcı adında boşluk olamaz.';
+      if (_usernameController.text.contains(' '))
+        throw 'Kullanıcı adında boşluk olamaz.';
       if (_nameController.text.isEmpty) throw 'İsim alanı boş bırakılamaz.';
 
       String? avatarUrl = widget.currentProfile['avatar_url'];
@@ -350,19 +380,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
       // Resim Yükleme
       if (_imageFile != null) {
         final fileExt = _imageFile!.path.split('.').last;
-        final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final fileName =
+            'avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
         final filePath = 'avatars/$fileName';
-        await Supabase.instance.client.storage.from('uploads').upload(filePath, _imageFile!);
-        avatarUrl = Supabase.instance.client.storage.from('uploads').getPublicUrl(filePath);
+        await Supabase.instance.client.storage
+            .from('uploads')
+            .upload(filePath, _imageFile!);
+        avatarUrl = Supabase.instance.client.storage
+            .from('uploads')
+            .getPublicUrl(filePath);
       }
 
       // 🎥 Video Yükleme
       if (_videoFile != null) {
         final fileExt = _videoFile!.path.split('.').last;
-        final fileName = 'live_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final fileName =
+            'live_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
         final filePath = 'avatars/$fileName';
-        await Supabase.instance.client.storage.from('uploads').upload(filePath, _videoFile!);
-        videoUrl = Supabase.instance.client.storage.from('uploads').getPublicUrl(filePath);
+        await Supabase.instance.client.storage
+            .from('uploads')
+            .upload(filePath, _videoFile!);
+        videoUrl = Supabase.instance.client.storage
+            .from('uploads')
+            .getPublicUrl(filePath);
       }
 
       await Supabase.instance.client.from('profiles').update({
@@ -382,7 +422,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
         Navigator.pop(context, true);
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -401,9 +443,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
     return Stack(
       children: [
         Container(color: const Color(0xFF050505)),
-        SlideTransition(position: _animOffset1, child: Align(alignment: Alignment.topLeft, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: _colorPurple.withOpacity(0.25))))),
-        SlideTransition(position: _animOffset2, child: Align(alignment: Alignment.bottomRight, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: _colorBlue.withOpacity(0.25))))),
-        BackdropFilter(filter: ImageFilter.blur(sigmaX: 60.0, sigmaY: 60.0), child: Container(color: Colors.transparent)),
+        SlideTransition(
+            position: _animOffset1,
+            child: Align(
+                alignment: Alignment.topLeft,
+                child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _colorPurple.withOpacity(0.25))))),
+        SlideTransition(
+            position: _animOffset2,
+            child: Align(
+                alignment: Alignment.bottomRight,
+                child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _colorBlue.withOpacity(0.25))))),
+        BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 60.0, sigmaY: 60.0),
+            child: Container(color: Colors.transparent)),
         Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
@@ -411,7 +473,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
             elevation: 0,
             leading: const BackButton(color: Colors.white),
             centerTitle: true,
-            title: Text('Profili Düzenle', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+            title: Text('Profili Düzenle',
+                style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18)),
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 16),
@@ -420,8 +486,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
                     height: 32,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _saveProfile,
-                      style: ElevatedButton.styleFrom(backgroundColor: _colorGreen, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                      child: _isLoading ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)) : Text('Kaydet', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: _colorGreen,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20))),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 14,
+                              width: 14,
+                              child: CircularProgressIndicator(
+                                  color: Colors.black, strokeWidth: 2))
+                          : Text('Kaydet',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
                   ),
                 ),
@@ -441,10 +519,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
                           children: [
                             Container(
                               padding: const EdgeInsets.all(3),
-                              decoration: BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [_colorPurple, _colorBlue]), boxShadow: [BoxShadow(color: _colorPurple.withOpacity(0.3), blurRadius: 20)]),
-                              child: CircleAvatar(radius: 60, backgroundColor: const Color(0xFF1F1F1F), backgroundImage: bgImage, child: bgImage == null ? const Icon(Icons.person, size: 60, color: Colors.white24) : null),
+                              decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                      colors: [_colorPurple, _colorBlue]),
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: _colorPurple.withOpacity(0.3),
+                                        blurRadius: 20)
+                                  ]),
+                              child: CircleAvatar(
+                                  radius: 60,
+                                  backgroundColor: const Color(0xFF1F1F1F),
+                                  backgroundImage: bgImage,
+                                  child: bgImage == null
+                                      ? const Icon(Icons.person,
+                                          size: 60, color: Colors.white24)
+                                      : null),
                             ),
-                            Positioned(bottom: 5, right: 5, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: _colorGreen, shape: BoxShape.circle, border: Border.all(color: Colors.black, width: 2)), child: const Icon(Icons.camera_alt, color: Colors.black, size: 18))),
+                            Positioned(
+                                bottom: 5,
+                                right: 5,
+                                child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                        color: _colorGreen,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                            color: Colors.black, width: 2)),
+                                    child: const Icon(Icons.camera_alt,
+                                        color: Colors.black, size: 18))),
                           ],
                         ),
                       ),
@@ -455,21 +559,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
                         onTap: _pickVideo,
                         borderRadius: BorderRadius.circular(20),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: _videoFile != null ? _colorGreen.withOpacity(0.2) : Colors.white10,
+                            color: _videoFile != null
+                                ? _colorGreen.withOpacity(0.2)
+                                : Colors.white10,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: _videoFile != null ? _colorGreen : Colors.white24),
+                            border: Border.all(
+                                color: _videoFile != null
+                                    ? _colorGreen
+                                    : Colors.white24),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(_videoFile != null ? Icons.check_circle : Icons.slow_motion_video,
-                                  color: _videoFile != null ? _colorGreen : Colors.white, size: 20),
+                              Icon(
+                                  _videoFile != null
+                                      ? Icons.check_circle
+                                      : Icons.slow_motion_video,
+                                  color: _videoFile != null
+                                      ? _colorGreen
+                                      : Colors.white,
+                                  size: 20),
                               const SizedBox(width: 8),
                               Text(
-                                _videoFile != null ? "Live Video Seçildi" : "Live Video Ekle (Canlı Foto)",
-                                style: GoogleFonts.poppins(color: _videoFile != null ? _colorGreen : Colors.white, fontSize: 13),
+                                _videoFile != null
+                                    ? "Live Video Seçildi"
+                                    : "Live Video Ekle (Canlı Foto)",
+                                style: GoogleFonts.poppins(
+                                    color: _videoFile != null
+                                        ? _colorGreen
+                                        : Colors.white,
+                                    fontSize: 13),
                               ),
                             ],
                           ),
@@ -478,20 +600,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 30),
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.08))),
+                  decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(30),
+                      border:
+                          Border.all(color: Colors.white.withOpacity(0.08))),
                   child: Column(
                     children: [
-                      _buildTextField("Adın Soyadın", _nameController, icon: Icons.person_outline),
+                      _buildTextField("Adın Soyadın", _nameController,
+                          icon: Icons.person_outline),
                       const SizedBox(height: 24),
-                      _buildTextField("Kullanıcı Adı", _usernameController, icon: Icons.alternate_email),
+                      _buildTextField("Kullanıcı Adı", _usernameController,
+                          icon: Icons.alternate_email),
                       const SizedBox(height: 24),
-                      _buildTextField("Biyografi", _bioController, maxLines: 3, maxLength: 150, icon: Icons.short_text),
+                      _buildTextField("Biyografi", _bioController,
+                          maxLines: 3, maxLength: 150, icon: Icons.short_text),
 
                       const SizedBox(height: 30),
                       // 🔥 GÜVENLİK BÖLÜMÜ 🔥
@@ -499,14 +627,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          Icon(Icons.shield_outlined, color: _colorGreen, size: 24),
+                          Icon(Icons.shield_outlined,
+                              color: _colorGreen, size: 24),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("İki Adımlı Doğrulama (2FA)", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
-                                Text(_is2FAEnabled ? "Aktif: $_verifiedPhone" : "Kapalı - Güvenliği artır", style: GoogleFonts.poppins(color: Colors.white54, fontSize: 11)),
+                                Text("İki Adımlı Doğrulama (2FA)",
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600)),
+                                Text(
+                                    _is2FAEnabled
+                                        ? "Aktif: $_verifiedPhone"
+                                        : "Kapalı - Güvenliği artır",
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.white54, fontSize: 11)),
                               ],
                             ),
                           ),
@@ -517,8 +654,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
                             inactiveThumbColor: Colors.grey,
                             inactiveTrackColor: Colors.white10,
                             onChanged: (val) {
-                              if (val) _showPhoneInputDialog();
-                              else _disable2FA();
+                              if (val)
+                                _showPhoneInputDialog();
+                              else
+                                _disable2FA();
                             },
                           )
                         ],
@@ -535,20 +674,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> with TickerProvid
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, int? maxLength, IconData? icon}) {
+  Widget _buildTextField(String label, TextEditingController controller,
+      {int maxLines = 1, int? maxLength, IconData? icon}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(padding: const EdgeInsets.only(left: 4, bottom: 8), child: Text(label, style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500))),
+        Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(label,
+                style: GoogleFonts.poppins(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500))),
         TextField(
-          controller: controller, maxLines: maxLines, maxLength: maxLength,
+          controller: controller,
+          maxLines: maxLines,
+          maxLength: maxLength,
           style: GoogleFonts.poppins(color: Colors.white, fontSize: 15),
           decoration: InputDecoration(
-            filled: true, fillColor: const Color(0xFF1A1A1A),
-            prefixIcon: icon != null ? Icon(icon, color: _colorBlue.withOpacity(0.7)) : null,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.05))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: _colorPurple, width: 1.5)),
+            filled: true,
+            fillColor: const Color(0xFF1A1A1A),
+            prefixIcon: icon != null
+                ? Icon(icon, color: _colorBlue.withOpacity(0.7))
+                : null,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.05))),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: _colorPurple, width: 1.5)),
           ),
         ),
       ],
