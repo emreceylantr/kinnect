@@ -577,11 +577,33 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final String finalMsg =
         replyToUsername != null ? "@$replyToUsername $msg" : msg;
 
+    // 🆕 OPTİMİSTİK UI - Yorumu hemen göster
+    final myProfile = await client
+        .from('profiles')
+        .select('username, avatar_url, full_name')
+        .eq('id', myId)
+        .single();
+
+    final optimisticComment = {
+      'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      'post_id': widget.post["id"],
+      'user_id': myId,
+      'content': finalMsg,
+      'audio_url': null,
+      'created_at': DateTime.now().toIso8601String(),
+      'profiles': myProfile,
+    };
+
+    setState(() {
+      comments.add(optimisticComment);
+      commentCount++;
+    });
+
     try {
       await client.from("comments").insert({
         "post_id": widget.post["id"],
         "user_id": myId,
-        "content": finalMsg, // 🆕 Mention'lı içerik
+        "content": finalMsg,
         "audio_url": null,
       });
 
@@ -596,11 +618,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           });
 
           // 🔔 PUSH BİLDİRİM GÖNDER
-          final myProfile = await client
-              .from('profiles')
-              .select('username')
-              .eq('id', myId)
-              .single();
           final username = myProfile['username'] ?? 'Birisi';
 
           await client.functions.invoke('send-push-notification', body: {
@@ -613,11 +630,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         } catch (_) {}
       }
 
+      // Arka planda gerçek yorumları senkronize et
       _fetchComments();
     } catch (e) {
       debugPrint("Yorum hatası: $e");
+      // Hata olursa optimistik yorumu kaldır
+      setState(() {
+        comments.removeWhere((c) => c['id'] == optimisticComment['id']);
+        commentCount--;
+      });
     } finally {
-      if (mounted) setState(() => _isSendingComment = false); // 🔒 Reset flag
+      if (mounted) setState(() => _isSendingComment = false);
     }
   }
 
@@ -1285,31 +1308,48 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         final id = c["id"].toString();
         final isAudio = c["audio_url"] != null;
         final isMine = c["user_id"] == myId;
-        final isPostOwner =
-            widget.post["user_id"] == myId; // 🆕 Post sahibi mi?
-        final canDelete = isMine ||
-            isPostOwner; // 🆕 Hem yorum sahibi hem post sahibi silebilir
+        final isPostOwner = widget.post["user_id"] == myId;
+        final canDelete = isMine || isPostOwner;
         final isPlaying = playingCommentId == id;
 
+        // 🆕 Yanıt mı kontrol et (@ile başlıyorsa)
+        final content = c["content"]?.toString() ?? "";
+        final isReply = content.startsWith("@");
+
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          padding: EdgeInsets.fromLTRB(
+            isReply ? 40 : 16, // 🆕 Yanıtlar girintili
+            isReply ? 4 : 10,
+            16,
+            isReply ? 4 : 10,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 🆕 Yanıtlar için küçük ok işareti
+              if (isReply)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8, top: 6),
+                  child: Icon(
+                    Icons.subdirectory_arrow_right,
+                    color: Colors.white24,
+                    size: 14,
+                  ),
+                ),
               GestureDetector(
                 onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (_) => ProfileScreen(userId: c['user_id']))),
                 child: CircleAvatar(
-                  radius: 18,
+                  radius: isReply ? 14 : 18, // 🆕 Yanıtlar küçük avatar
                   backgroundImage: p["avatar_url"] != null
                       ? NetworkImage(p["avatar_url"])
                       : null,
                   backgroundColor: Colors.grey[900],
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: isReply ? 8 : 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
