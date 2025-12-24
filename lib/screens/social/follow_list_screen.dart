@@ -2,7 +2,7 @@ import 'dart:ui'; // Buzlu cam efekti için gerekli
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'profile_screen.dart';
+import '../main/profile_screen.dart';
 
 class FollowListScreen extends StatefulWidget {
   final String userId;

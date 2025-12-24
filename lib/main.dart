@@ -7,10 +7,10 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'services/notification_service.dart';
 
-import 'screens/welcome_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/change_password_screen.dart';
-import 'screens/create_profile_screen.dart';
+import 'screens/auth/welcome_screen.dart';
+import 'screens/main/home_screen.dart';
+import 'screens/auth/change_password_screen.dart';
+import 'screens/auth/create_profile_screen.dart';
 
 // 🎨 Splash Screen Temaları
 const Color kSplashBg = Color(0xFF06060A);

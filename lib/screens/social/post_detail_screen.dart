@@ -7,17 +7,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-import '../widgets/fuel_button.dart';
-import '../services/feed_service.dart';
-import '../services/safety_service.dart'; // Güvenlik servisi (Şikayet için)
-import '../services/toxicity_service.dart'; // 🤖 AI Toxic yorum kontrolü
-import '../screens/profile_screen.dart';
+import '../../widgets/fuel_button.dart';
+import '../../services/feed_service.dart';
+import '../../services/safety_service.dart'; // Güvenlik servisi (Şikayet için)
+import '../../services/toxicity_service.dart'; // 🤖 AI Toxic yorum kontrolü
+import '../main/profile_screen.dart';
 
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../widgets/photo_emoji_picker.dart'; // 📸 Photo Emoji Tepkileri
+import '../../widgets/photo_emoji_picker.dart'; // 📸 Photo Emoji Tepkileri
 
 class PostDetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;

@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
 
 // 🎨 TEMA
 const Color kBgDark = Color(0xFF06060A);

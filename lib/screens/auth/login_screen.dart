@@ -4,10 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import 'home_screen.dart';
+import '../main/home_screen.dart';
 import 'create_profile_screen.dart';
 import 'forgot_password_screen.dart';
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
 
 // 🎨 TEMA
 const Color kBgDark = Color(0xFF06060A);
