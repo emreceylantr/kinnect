@@ -53,6 +53,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   bool isAlive = true;
   bool isRecording = false;
+  bool _isSendingComment = false; // 🔒 Çift yorum engelleme
   Timer? recordTimer;
   int recordDuration = 0;
   String? playingCommentId;
@@ -525,6 +526,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final msg = commentController.text.trim();
     if (msg.isEmpty) return;
 
+    // 🔒 Çift yorum engelleme
+    if (_isSendingComment) return;
+    setState(() => _isSendingComment = true);
+
     // 🤖 ML-BASED TOXIC KONTROL
     final isToxic = await _toxicityService.checkToxicity(msg);
 
@@ -551,6 +556,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           ),
         );
       }
+      setState(() => _isSendingComment = false); // 🔒 Reset flag
       return; // Yorumu gönderme!
     }
 
@@ -596,6 +602,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       _fetchComments();
     } catch (e) {
       debugPrint("Yorum hatası: $e");
+    } finally {
+      if (mounted) setState(() => _isSendingComment = false); // 🔒 Reset flag
     }
   }
 
