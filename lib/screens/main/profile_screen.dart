@@ -1315,76 +1315,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        // 🆕 Keşfet gönderisi için Odun, normal için Kalp
-                        isExplorePost
-                            ? Row(
-                                children: [
-                                  Icon(
-                                    Icons.local_fire_department,
+                        // 🆕 Keşfet gönderisi için FuelButton, normal için Kalp
+                        if (isExplorePost) ...[
+                          // ATEŞ BUTONU (tıklanabilir değil - read-only)
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.local_fire_department,
+                                color: isLiked
+                                    ? Colors.orange
+                                    : Colors.grey.shade400,
+                                size: 26,
+                              ),
+                              if (likeCount > 0) ...[
+                                const SizedBox(width: 6),
+                                Text(
+                                  "$likeCount Odun",
+                                  style: GoogleFonts.poppins(
                                     color: isLiked
                                         ? Colors.orange
                                         : Colors.grey.shade400,
-                                    size: 24,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
                                   ),
-                                  if (likeCount > 0) ...[
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "$likeCount",
-                                      style: GoogleFonts.poppins(
-                                          color: isLiked
-                                              ? Colors.orange
-                                              : Colors.grey.shade400,
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                  ]
-                                ],
-                              )
-                            : Container(
-                                color: Colors.transparent,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      isLiked
-                                          ? FontAwesomeIcons.solidHeart
-                                          : FontAwesomeIcons.heart,
-                                      color: isLiked
-                                          ? const Color(0xFF6C63FF)
-                                          : Colors.grey.shade400,
-                                      size: 22,
-                                    ),
-                                    if (likeCount > 0) ...[
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        "$likeCount",
-                                        style: GoogleFonts.poppins(
-                                            color: isLiked
-                                                ? const Color(0xFF6C63FF)
-                                                : Colors.grey.shade400,
-                                            fontWeight: FontWeight.w600),
-                                      ),
-                                    ]
-                                  ],
                                 ),
-                              ),
-                        const SizedBox(width: 24),
-                        Container(
-                          color: Colors.transparent,
-                          child: Row(
-                            children: [
-                              Icon(FontAwesomeIcons.comment,
-                                  color: Colors.grey.shade400, size: 22),
-                              if (commentCount > 0) ...[
+                              ],
+                            ],
+                          ),
+                          const Spacer(),
+                          // YORUM
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(FontAwesomeIcons.comment,
+                                    color: Colors.grey.shade400, size: 16),
                                 const SizedBox(width: 6),
                                 Text(
                                   "$commentCount",
                                   style: GoogleFonts.poppins(
-                                      color: Colors.grey.shade400,
-                                      fontWeight: FontWeight.w600),
+                                    color: Colors.grey.shade400,
+                                    fontSize: 13,
+                                  ),
                                 ),
-                              ]
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
+                        ] else ...[
+                          // NORMAL GÖNDERİ - KALP VE YORUM
+                          Container(
+                            color: Colors.transparent,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isLiked
+                                      ? FontAwesomeIcons.solidHeart
+                                      : FontAwesomeIcons.heart,
+                                  color: isLiked
+                                      ? const Color(0xFF6C63FF)
+                                      : Colors.grey.shade400,
+                                  size: 22,
+                                ),
+                                if (likeCount > 0) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "$likeCount",
+                                    style: GoogleFonts.poppins(
+                                      color: isLiked
+                                          ? const Color(0xFF6C63FF)
+                                          : Colors.grey.shade400,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 24),
+                          Container(
+                            color: Colors.transparent,
+                            child: Row(
+                              children: [
+                                Icon(FontAwesomeIcons.comment,
+                                    color: Colors.grey.shade400, size: 22),
+                                if (commentCount > 0) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "$commentCount",
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.grey.shade400,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
