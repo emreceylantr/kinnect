@@ -2,8 +2,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ToxicityService {
-  // Flask ML API'nin local network IP adresi
-  static const String baseUrl = 'http://192.168.1.26:5001';
+  // Flask ML API - Production (Render)
+  static const String baseUrl = 'https://kinnect-toxic-api.onrender.com';
 
   /// Verilen metni ML model ile toxicity kontrolünden geçirir
   ///
