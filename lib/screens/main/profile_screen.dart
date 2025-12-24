@@ -1169,9 +1169,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // ✅ POST İÇİNDEKİ KULLANICI ADMİN Mİ?
     final bool isPostAdmin = profile['is_admin'] == true;
 
+    final isExplorePost =
+        post['visibility'] == 'public'; // 🆕 Keşfet gönderisi mi?
+
     return GestureDetector(
-      onTap: () => Navigator.push(context,
-          MaterialPageRoute(builder: (_) => PostDetailScreen(post: post))),
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => PostDetailScreen(
+                    post: post,
+                    isExploreMode: isExplorePost, // 🆕 Explore modunu aktar
+                  ))),
       child: Container(
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 20),
         color: Colors.transparent, // Arka plan şeffaf
@@ -1307,33 +1315,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        Container(
-                          color: Colors.transparent,
-                          child: Row(
-                            children: [
-                              Icon(
-                                isLiked
-                                    ? FontAwesomeIcons.solidHeart
-                                    : FontAwesomeIcons.heart,
-                                color: isLiked
-                                    ? const Color(0xFF6C63FF)
-                                    : Colors.grey.shade400,
-                                size: 22,
-                              ),
-                              if (likeCount > 0) ...[
-                                const SizedBox(width: 6),
-                                Text(
-                                  "$likeCount",
-                                  style: GoogleFonts.poppins(
+                        // 🆕 Keşfet gönderisi için Odun, normal için Kalp
+                        isExplorePost
+                            ? Row(
+                                children: [
+                                  Icon(
+                                    Icons.local_fire_department,
+                                    color: isLiked
+                                        ? Colors.orange
+                                        : Colors.grey.shade400,
+                                    size: 24,
+                                  ),
+                                  if (likeCount > 0) ...[
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      "$likeCount",
+                                      style: GoogleFonts.poppins(
+                                          color: isLiked
+                                              ? Colors.orange
+                                              : Colors.grey.shade400,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                  ]
+                                ],
+                              )
+                            : Container(
+                                color: Colors.transparent,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      isLiked
+                                          ? FontAwesomeIcons.solidHeart
+                                          : FontAwesomeIcons.heart,
                                       color: isLiked
                                           ? const Color(0xFF6C63FF)
                                           : Colors.grey.shade400,
-                                      fontWeight: FontWeight.w600),
+                                      size: 22,
+                                    ),
+                                    if (likeCount > 0) ...[
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        "$likeCount",
+                                        style: GoogleFonts.poppins(
+                                            color: isLiked
+                                                ? const Color(0xFF6C63FF)
+                                                : Colors.grey.shade400,
+                                            fontWeight: FontWeight.w600),
+                                      ),
+                                    ]
+                                  ],
                                 ),
-                              ]
-                            ],
-                          ),
-                        ),
+                              ),
                         const SizedBox(width: 24),
                         Container(
                           color: Colors.transparent,
