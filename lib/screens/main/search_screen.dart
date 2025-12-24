@@ -3,11 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import '../widgets/fuel_button.dart';
-import '../services/feed_service.dart';
-import '../services/safety_service.dart';
+import '../../widgets/fuel_button.dart';
+import '../../services/feed_service.dart';
+import '../../services/safety_service.dart';
 import 'profile_screen.dart';
-import 'post_detail_screen.dart';
+import '../social/post_detail_screen.dart';
 
 // 🎨 TEMA RENKLERİ
 const Color kBgColor = Color(0xFF0A0A0F);

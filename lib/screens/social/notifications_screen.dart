@@ -5,9 +5,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-import '../services/friend_service.dart';
-import '../services/chat_service.dart';
-import 'profile_screen.dart';
+import '../../services/friend_service.dart';
+import '../../services/chat_service.dart';
+import '../main/profile_screen.dart';
 import 'post_detail_screen.dart';
 import 'user_list_screen.dart';
 import 'messages_screen.dart';

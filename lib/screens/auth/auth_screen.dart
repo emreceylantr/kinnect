@@ -8,9 +8,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'signup_screen.dart';
 import 'login_screen.dart';
 import 'create_profile_screen.dart';
-import 'home_screen.dart';
+import '../main/home_screen.dart';
 
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
 
 // 🎨 PREMIUM TEMA
 const Color kBgDark = Color(0xFF06060A);

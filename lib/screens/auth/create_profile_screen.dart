@@ -1,4 +1,4 @@
-// lib/screens/create_profile_screen.dart
+// lib/screens/auth/create_profile_screen.dart
 
 import 'dart:io';
 import 'dart:ui';
@@ -9,9 +9,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:math' as math;
 
-import '../services/profile_service.dart';
-import '../repositories/profile_repository.dart';
-import 'home_screen.dart';
+import '../../services/profile_service.dart';
+import '../../repositories/profile_repository.dart';
+import '../main/home_screen.dart';
 
 class CreateProfileScreen extends StatefulWidget {
   const CreateProfileScreen({super.key});
@@ -50,7 +50,6 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
     )..repeat();
   }
 
-
   @override
   void dispose() {
     _rotationController.dispose();
@@ -86,20 +85,18 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
         avatarFile: _imageFile,
       );
 
-
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content:
-            Text("Kimlik oluşturuldu. Ana sayfaya yönlendiriliyorsun..."),
+                Text("Kimlik oluşturuldu. Ana sayfaya yönlendiriliyorsun..."),
             backgroundColor: Color(0xFF6C63FF),
           ),
         );
 
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const HomeScreen()),
-              (route) => false,
+          (route) => false,
         );
       }
     } catch (e) {
@@ -141,7 +138,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
             decoration: InputDecoration(
               labelText: label,
               labelStyle:
-              GoogleFonts.poppins(color: Colors.white54, fontSize: 14),
+                  GoogleFonts.poppins(color: Colors.white54, fontSize: 14),
               alignLabelWithHint: true,
               prefixIcon: Padding(
                 padding: EdgeInsets.only(
@@ -158,7 +155,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
               ),
               border: InputBorder.none,
               contentPadding:
-              const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                  const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
             ),
           ),
         ),
@@ -204,8 +201,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
           ),
           SafeArea(
             child: SingleChildScrollView(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -278,17 +274,17 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
                                 ],
                                 image: _imageFile != null
                                     ? DecorationImage(
-                                  image: FileImage(_imageFile!),
-                                  fit: BoxFit.cover,
-                                )
+                                        image: FileImage(_imageFile!),
+                                        fit: BoxFit.cover,
+                                      )
                                     : null,
                               ),
                               child: _imageFile == null
                                   ? const Icon(
-                                FontAwesomeIcons.userAstronaut,
-                                color: Colors.white24,
-                                size: 50,
-                              )
+                                      FontAwesomeIcons.userAstronaut,
+                                      color: Colors.white24,
+                                      size: 50,
+                                    )
                                   : null,
                             ),
                             Positioned(
@@ -306,7 +302,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
                                   ),
                                   shape: BoxShape.circle,
                                   border:
-                                  Border.all(color: Colors.black, width: 3),
+                                      Border.all(color: Colors.black, width: 3),
                                 ),
                                 child: const Center(
                                   child: FaIcon(
@@ -326,8 +322,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
                       controller: _usernameController,
                       label: "Kullanıcı Adı",
                       icon: FontAwesomeIcons.at,
-                      validator: (value) =>
-                      (value == null || value.isEmpty)
+                      validator: (value) => (value == null || value.isEmpty)
                           ? 'Kullanıcı adı gerekli'
                           : null,
                     ),
@@ -336,8 +331,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
                       controller: _fullNameController,
                       label: "Görünen İsim",
                       icon: FontAwesomeIcons.idCard,
-                      validator: (value) =>
-                      (value == null || value.isEmpty)
+                      validator: (value) => (value == null || value.isEmpty)
                           ? 'İsim gerekli'
                           : null,
                     ),
@@ -376,24 +370,24 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
                         ),
                         child: _isLoading
                             ? const CircularProgressIndicator(
-                          color: Colors.white,
-                        )
-                            : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Sistemi Başlat",
-                              style: GoogleFonts.orbitron(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
                                 color: Colors.white,
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Sistemi Başlat",
+                                    style: GoogleFonts.orbitron(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Icon(Icons.arrow_forward,
+                                      color: Colors.white),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            const Icon(Icons.arrow_forward,
-                                color: Colors.white),
-                          ],
-                        ),
                       ),
                     ),
                     const SizedBox(height: 30),

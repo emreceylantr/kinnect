@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/friend_service.dart';
-import 'profile_screen.dart';
+import '../../services/friend_service.dart';
+import '../main/profile_screen.dart';
 
 class UserListScreen extends StatefulWidget {
   final String title;

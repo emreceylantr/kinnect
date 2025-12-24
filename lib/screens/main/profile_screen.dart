@@ -9,20 +9,20 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:video_player/video_player.dart'; // 🎥 LIVE VIDEO OYNATICI
 
 // --- SERVİSLER ---
-import '../services/feed_service.dart';
-import '../services/chat_service.dart';
-import '../services/safety_service.dart';
-import '../services/spotify_service.dart';
+import '../../services/feed_service.dart';
+import '../../services/chat_service.dart';
+import '../../services/safety_service.dart';
+import '../../services/spotify_service.dart';
 
 // --- WIDGET IMPORTU ---
-import '../widgets/music_player_card.dart';
+import '../../widgets/music_player_card.dart';
 
 // --- EKRANLAR ---
-import 'messages_screen.dart';
-import 'post_detail_screen.dart';
-import 'follow_list_screen.dart';
-import 'edit_profile_screen.dart';
-import 'login_screen.dart';
+import '../social/messages_screen.dart';
+import '../social/post_detail_screen.dart';
+import '../social/follow_list_screen.dart';
+import '../settings/edit_profile_screen.dart';
+import '../auth/login_screen.dart';
 
 // 🔥🔥🔥 ÖZEL "ALTIN NEON TAÇ" ADMIN ROZETİ WIDGET'I 🔥🔥🔥
 class AdminBadge extends StatelessWidget {

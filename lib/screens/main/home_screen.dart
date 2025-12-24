@@ -7,14 +7,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Servis ve Ekranlar
-import '../services/feed_service.dart';
-import '../services/chat_service.dart';
-import 'create_post_screen.dart';
-import 'notifications_screen.dart';
+import '../../services/feed_service.dart';
+import '../../services/chat_service.dart';
+import '../content/create_post_screen.dart';
+import '../social/notifications_screen.dart';
 import 'profile_screen.dart';
-import 'post_detail_screen.dart';
-import 'messages_screen.dart';
-import 'call_screen.dart';
+import '../social/post_detail_screen.dart';
+import '../social/messages_screen.dart';
+import '../content/call_screen.dart';
 import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {

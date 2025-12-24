@@ -13,8 +13,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 
 // Diğer ekranlar
-import '../services/chat_service.dart';
-import 'call_screen.dart';
+import '../../services/chat_service.dart';
+import '../content/call_screen.dart';
 
 // ==========================================
 // 🎨 RENK PALETİ
