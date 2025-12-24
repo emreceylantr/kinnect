@@ -10,6 +10,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'photo_tag_screen.dart'; // 🆕 Fotoğrafa kişi etiketleme
+import 'music_picker_screen.dart'; // 🌵 Spotify müzik ekle
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -31,6 +32,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   // 🆕 Fotoğrafa etiketlenen kişiler
   List<Map<String, dynamic>> _photoTags = [];
+
+  // 🎧 Müzik bilgileri
+  Map<String, dynamic>? _selectedMusic;
 
   // --- ANİMASYON STATE'LERİ ---
   bool _isShareButtonPressed = false;
@@ -173,6 +177,14 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             'content': content,
             'image_url': imageUrl,
             'visibility': _visibility,
+            // 🎧 Müzik bilgileri
+            if (_selectedMusic != null) ...{
+              'spotify_track_id': _selectedMusic!['id'],
+              'spotify_track_name': _selectedMusic!['name'],
+              'spotify_artist_name': _selectedMusic!['artist'],
+              'spotify_preview_url': _selectedMusic!['preview_url'],
+              'spotify_album_image': _selectedMusic!['album_image'],
+            },
           })
           .select('id')
           .single();
@@ -389,6 +401,91 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                               ],
                             ),
                           ),
+                        // 🎧 Seçilen Müzik Gösterimi
+                        if (_selectedMusic != null)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                top: 15, left: 60, right: 20),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color:
+                                    const Color(0xFF1DB954).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color:
+                                      const Color(0xFF1DB954).withOpacity(0.3),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  // Album art
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: _selectedMusic!['album_image'] !=
+                                            null
+                                        ? Image.network(
+                                            _selectedMusic!['album_image'],
+                                            width: 44,
+                                            height: 44,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Container(
+                                            width: 44,
+                                            height: 44,
+                                            color: Colors.grey[800],
+                                            child: const Icon(Icons.music_note,
+                                                color: Colors.white54),
+                                          ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // Track info
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _selectedMusic!['name'] ?? 'Şarkı',
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          _selectedMusic!['artist'] ??
+                                              'Sanatçı',
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white54,
+                                            fontSize: 12,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Kaldır butonu
+                                  GestureDetector(
+                                    onTap: () =>
+                                        setState(() => _selectedMusic = null),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.close,
+                                          color: Colors.white54, size: 16),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         const SizedBox(height: 120),
                       ],
                     ),
@@ -494,6 +591,29 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                           icon: const Icon(FontAwesomeIcons.camera,
                               color: Colors.blueAccent, size: 24),
                           tooltip: 'Kamera',
+                        ),
+                        const SizedBox(width: 10),
+                        // 🎧 Müzik Butonu
+                        IconButton(
+                          onPressed: () async {
+                            final music =
+                                await Navigator.push<Map<String, dynamic>>(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const MusicPickerScreen()),
+                            );
+                            if (music != null) {
+                              setState(() => _selectedMusic = music);
+                            }
+                          },
+                          icon: Icon(
+                            FontAwesomeIcons.spotify,
+                            color: _selectedMusic != null
+                                ? const Color(0xFF1DB954)
+                                : Colors.white54,
+                            size: 24,
+                          ),
+                          tooltip: 'Müzik Ekle',
                         ),
                         const Spacer(),
                         GestureDetector(
