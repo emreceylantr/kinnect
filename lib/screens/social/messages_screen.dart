@@ -1452,6 +1452,31 @@ class _AudioMessagePlayer extends StatefulWidget {
 class _AudioMessagePlayerState extends State<_AudioMessagePlayer> {
   final AudioPlayer _player = AudioPlayer();
   bool isPlaying = false;
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pozisyon dinleyicisi
+    _player.onPositionChanged.listen((pos) {
+      if (mounted) setState(() => _position = pos);
+    });
+    // Süre dinleyicisi
+    _player.onDurationChanged.listen((dur) {
+      if (mounted) setState(() => _duration = dur);
+    });
+    // Tamamlanma dinleyicisi
+    _player.onPlayerComplete.listen((event) {
+      if (mounted) {
+        setState(() {
+          isPlaying = false;
+          _position = Duration.zero;
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
     _player.dispose();
@@ -1465,13 +1490,21 @@ class _AudioMessagePlayerState extends State<_AudioMessagePlayer> {
       await _player.play(UrlSource(widget.url));
     }
     setState(() => isPlaying = !isPlaying);
-    _player.onPlayerComplete.listen((event) {
-      if (mounted) setState(() => isPlaying = false);
-    });
+  }
+
+  String _formatDuration(Duration d) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(d.inMinutes.remainder(60));
+    final seconds = twoDigits(d.inSeconds.remainder(60));
+    return '$minutes:$seconds';
   }
 
   @override
   Widget build(BuildContext context) {
+    final progress = _duration.inMilliseconds > 0
+        ? _position.inMilliseconds / _duration.inMilliseconds
+        : 0.0;
+
     return Row(mainAxisSize: MainAxisSize.min, children: [
       IconButton(
           icon: Icon(
@@ -1482,13 +1515,35 @@ class _AudioMessagePlayerState extends State<_AudioMessagePlayer> {
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints()),
       const SizedBox(width: 8),
-      Container(
-          height: 3,
-          width: 100,
-          decoration: BoxDecoration(
-              color: Colors.white54, borderRadius: BorderRadius.circular(10))),
-      const SizedBox(width: 8),
-      const Text("Ses", style: TextStyle(color: Colors.white70, fontSize: 12))
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(10)),
+                child: FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: progress.clamp(0.0, 1.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                )),
+            const SizedBox(height: 4),
+            Text(
+              isPlaying || _position.inSeconds > 0
+                  ? '${_formatDuration(_position)} / ${_formatDuration(_duration)}'
+                  : 'Ses',
+              style: const TextStyle(color: Colors.white70, fontSize: 11),
+            ),
+          ],
+        ),
+      ),
     ]);
   }
 }
