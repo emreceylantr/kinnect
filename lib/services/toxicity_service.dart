@@ -1,42 +1,45 @@
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 class ToxicityService {
-  // Kötü kelimeler listesi - Sadece açıkça toxic olanlar (False positive riski düşük)
-  static final Set<String> _toxicKeywords = {
-    // Küfürler
-    'siktir', 'sikeyim', 'amk', 'amq', 'amına', 'amını', 'götünü', 'göt',
-    'bok', 'koduğumun',
+  // Flask ML API'nin local network IP adresi
+  static const String baseUrl = 'http://192.168.1.26:5001';
 
-    // Hakaretler
-    'aptal', 'salak', 'mal', 'ahmak', 'dangalak', 'gerizekalı', 'budala',
-    'ezik', 'yıkık', 'pislik', 'berbat',
+  /// Verilen metni ML model ile toxicity kontrolünden geçirir
+  ///
+  /// Returns:
+  /// - `true` eğer metin toxic ise (model tahmini)
+  /// - `false` eğer metin temiz ise veya API'ye ulaşılamazsa
+  Future<bool> checkToxicity(String text) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/analiz'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'text': text}),
+          )
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () => throw Exception('API timeout'),
+          );
 
-    // Cinsel içerikli
-    'orospu', 'kaltak', 'ibne', 'penis', 'emmek', 'becer', 'horoz', 'fahişe',
-    'kahpe', 'piç',
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final isToxic = data['is_toxic'] ?? false;
+        final toxicScore = data['toxic_score'] ?? 0.0;
 
-    // İngilizce küfürler
-    'fuck', 'fucker', 'shit', 'dick', 'cunt', 'suck', 'wanker', 'fagot',
+        print(isToxic
+            ? '⛔ ML: Toxic (${(toxicScore * 100).toStringAsFixed(1)}%) - "$text"'
+            : '✅ ML: Temiz (${(toxicScore * 100).toStringAsFixed(1)}%) - "$text"');
 
-    // Nefret söylemi
-    'nefret', 'lanet', 'kahretsin',
-
-    // Saldırgan ifadeler
-    'defol', 'kes', 'kapa çeneni',
-  };
-
-  /// Verilen metni toxicity kontrolünden geçirir
-  /// Basit kelime eşleştirme yaklaşımı - daha güvenilir
-  bool checkToxicity(String text) {
-    final lowerText = text.toLowerCase().trim();
-
-    // Kötü kelime kontrolü
-    for (final keyword in _toxicKeywords) {
-      if (lowerText.contains(keyword)) {
-        print('⛔ Toxic kelime bulundu: "$keyword" in "$text"');
-        return true;
+        return isToxic;
       }
-    }
 
-    print('✅ Yorum temiz: "$text"');
-    return false;
+      print('⚠️ API hata: ${response.statusCode}');
+      return false; // API hatası = yorumu geçir
+    } catch (e) {
+      print('❌ ML API error: $e');
+      return false; // API çalışmıyorsa yorumu geçir
+    }
   }
 }

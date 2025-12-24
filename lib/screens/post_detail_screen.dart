@@ -523,8 +523,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final msg = commentController.text.trim();
     if (msg.isEmpty) return;
 
-    // 🤖 KELIME BAZLI TOXIC KONTROL (Artık API yok, lokal)
-    final isToxic = _toxicityService.checkToxicity(msg);
+    // 🤖 ML-BASED TOXIC KONTROL
+    final isToxic = await _toxicityService.checkToxicity(msg);
 
     if (isToxic) {
       // Yorumu silme ve uyarı göster
