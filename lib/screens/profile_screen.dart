@@ -16,6 +16,15 @@ import '../services/spotify_service.dart';
 
 // --- WIDGET IMPORTU ---
 import '../widgets/music_player_card.dart';
+import '../widgets/gamification/level_progress_ring.dart';
+
+// --- GAMIFICATION ---
+import '../services/gamification/gamification_service.dart';
+import '../services/gamification/level_calculator.dart';
+import '../widgets/gamification/featured_badges.dart';
+import '../widgets/gamification/profile_badge_display.dart';
+import '../models/achievement.dart';
+import 'achievements_screen.dart';
 
 // --- EKRANLAR ---
 import 'messages_screen.dart';
@@ -100,6 +109,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _friendshipStatus = 'none';
   bool _isBlockedByMe = false;
 
+  // 🔥 GAMIFICATION DEĞİŞKENLERİ
+  UserProgress? _userProgress;
+  int _userLevel = 1;
+  double _levelProgress = 0.0;
+  Set<String> _unlockedAchievements = {};
+  List<String> _featuredBadges = [];
+
   // 🎥 LIVE VIDEO DEĞİŞKENLERİ
   VideoPlayerController? _videoController;
   bool _isPlayingLiveVideo = false; // Ekrana basılı tutuluyor mu?
@@ -179,6 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _fetchProfile(),
         _checkFollowStatus(),
         _fetchStats(),
+        _fetchUserProgress(),
       ]);
       await _fetchPosts();
 
@@ -276,6 +293,167 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (_) {}
+  }
+
+  // 🔥 GAMIFICATION İLERLEME VERİSİ
+  Future<void> _fetchUserProgress() async {
+    try {
+      // User progress
+      final progressResponse = await Supabase.instance.client
+          .from('user_progress')
+          .select()
+          .eq('user_id', widget.userId)
+          .maybeSingle();
+
+      // Unlocked achievements
+      final achievementsResponse = await Supabase.instance.client
+          .from('user_achievements')
+          .select('achievement_id')
+          .eq('user_id', widget.userId);
+
+      // Featured badges from profile
+      final profileResponse = await Supabase.instance.client
+          .from('profiles')
+          .select('featured_badges')
+          .eq('id', widget.userId)
+          .maybeSingle();
+
+      if (mounted) {
+        setState(() {
+          if (progressResponse != null) {
+            _userProgress = UserProgress.fromJson(progressResponse);
+            _userLevel = _userProgress!.currentLevel;
+            _levelProgress =
+                LevelCalculator.progressToNextLevel(_userProgress!.totalXP);
+          }
+
+          _unlockedAchievements = Set<String>.from(achievementsResponse
+              .map((item) => item['achievement_id'] as String));
+
+          // 🔥 ADMIN: emre kullanıcısı için tüm rozetler açık
+          if (_profileData?['username'] == 'emre') {
+            _unlockedAchievements =
+                kinnectAchievements.map((a) => a.id).toSet();
+          }
+
+          if (profileResponse != null &&
+              profileResponse['featured_badges'] != null) {
+            _featuredBadges =
+                List<String>.from(profileResponse['featured_badges']);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('User progress fetch error: $e');
+    }
+  }
+
+  // 🔥 ROZET EKRANINI AÇ
+  void _openAchievementsScreen() async {
+    final isMe = widget.userId == _currentUserId;
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AchievementsScreen(
+          userId: widget.userId,
+          unlockedIds: _unlockedAchievements,
+          featuredBadgeIds: _featuredBadges,
+          isOwnProfile: isMe,
+        ),
+      ),
+    );
+
+    // Geri dönüşte seçilen rozetleri güncelle
+    if (result != null && mounted) {
+      setState(() {
+        _featuredBadges = result;
+      });
+    }
+  }
+
+  // 🔥 ROZET DETAYINI GÖSTER
+  void _showBadgeDetail(Achievement achievement) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF16161F),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade700,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Büyük rozet PNG - çerçevesiz, temiz
+            ClipOval(
+              child: Image.asset(
+                achievement.imagePath,
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            Text(
+              achievement.name,
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: achievement.rarityColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Nasıl kazanılır
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                achievement.description,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  color: Colors.white70,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Nadir seviyesi
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: achievement.rarityColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                achievement.rarityName,
+                style: GoogleFonts.poppins(
+                  color: achievement.rarityColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _checkFollowStatus() async {
@@ -798,10 +976,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // 🔥 LIVE PHOTO MANTIĞI: BASILI TUT OYNAT 🔥
+                              // 🔥 LEVEL PROGRESS RING + LIVE PHOTO 🔥
                               GestureDetector(
                                 onLongPressStart: (_) {
-                                  // Video varsa ve hazırsa oynat
                                   if (_hasLiveVideo &&
                                       _videoController != null &&
                                       _videoController!.value.isInitialized) {
@@ -810,7 +987,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   }
                                 },
                                 onLongPressEnd: (_) {
-                                  // Bıraktığı an videoyu gizle ve durdur
                                   if (_hasLiveVideo &&
                                       _videoController != null) {
                                     _videoController!.pause();
@@ -818,49 +994,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     setState(() => _isPlayingLiveVideo = false);
                                   }
                                 },
-                                child: Container(
-                                  width: 100, // Boyut önemli
-                                  height: 100,
-                                  padding: const EdgeInsets.all(3),
-                                  decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: LinearGradient(
-                                          colors: [
-                                            Color(0xFF6C63FF),
-                                            Color(0xFF1DB954)
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight)),
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    fit: StackFit.expand, // İçeriği tam doldur
-                                    children: [
-                                      // 1. KATMAN: STATİK RESİM (Her zaman altta)
-                                      CircleAvatar(
-                                          radius: 45,
-                                          backgroundColor:
-                                              const Color(0xFF1F1F1F),
-                                          backgroundImage: _profileData?[
-                                                      'avatar_url'] !=
-                                                  null
-                                              ? NetworkImage(
-                                                  _profileData!['avatar_url'])
-                                              : null,
-                                          child: _profileData?['avatar_url'] ==
-                                                  null
-                                              ? const Icon(Icons.person,
-                                                  size: 40,
-                                                  color: Colors.white54)
-                                              : null),
-
-                                      // 2. KATMAN: VİDEO (Sadece basılı tutunca görünür)
-                                      if (_hasLiveVideo &&
-                                          _isPlayingLiveVideo &&
-                                          _videoController!.value.isInitialized)
-                                        ClipOval(
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    // LevelProgressRing with avatar
+                                    LevelProgressRing(
+                                      avatarUrl: _isPlayingLiveVideo
+                                          ? null
+                                          : _profileData?['avatar_url'],
+                                      level: _userLevel,
+                                      progress: _levelProgress,
+                                      size: 105,
+                                    ),
+                                    // Live video overlay when pressed
+                                    if (_hasLiveVideo &&
+                                        _isPlayingLiveVideo &&
+                                        _videoController!.value.isInitialized)
+                                      SizedBox(
+                                        width: 86,
+                                        height: 86,
+                                        child: ClipOval(
                                           child: FittedBox(
-                                            fit: BoxFit
-                                                .cover, // Videoyu yuvarlağın içine yay
+                                            fit: BoxFit.cover,
                                             child: SizedBox(
                                               width: _videoController!
                                                   .value.size.width,
@@ -871,17 +1026,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             ),
                                           ),
                                         ),
-
-                                      // 🔥 İKON KATMANI TAMAMEN KALDIRILDI 🔥
-                                      // Artık burada hiçbir görsel yok.
-                                      // Video varsa basılı tutunca çalışır, ama normalde sadece resim görünür.
-                                    ],
-                                  ),
+                                      ),
+                                  ],
                                 ),
                               ),
-                              // 🔥 LIVE PHOTO BİTİŞ 🔥
 
-                              const SizedBox(height: 10),
+                              // Level display kaldırıldı - daha temiz görünüm
 
                               // 🔥 PROFİL İSMİ VE ADMIN ROZETİ
                               Row(
@@ -936,6 +1086,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         textAlign: TextAlign.center,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis)),
+
+                              // 🔥 FEATURED BADGES (3 rozet)
+                              // Kendi profilinde her zaman göster (düzenleme için)
+                              // Başkasının profilinde sadece rozet varsa göster
+                              if (isMe || _featuredBadges.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                FeaturedBadges(
+                                  badgeIds: _featuredBadges,
+                                  unlockedIds: _unlockedAchievements,
+                                  onTap: isMe
+                                      ? () => _openAchievementsScreen()
+                                      : null,
+                                  onBadgeTap: (achievement) =>
+                                      _showBadgeDetail(achievement),
+                                  showEmptySlots:
+                                      isMe, // Boş slotları sadece kendi profilinde göster
+                                ),
+                              ],
+
                               const SizedBox(height: 16),
                               Row(
                                 mainAxisAlignment:

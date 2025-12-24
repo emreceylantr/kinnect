@@ -73,6 +73,7 @@ flutter:
   # Resim vb. varlıklar
   assets:
     - assets/icon/
+    - assets/badges/
 
 # --- İKON AYARLARI ---
 flutter_launcher_icons:
