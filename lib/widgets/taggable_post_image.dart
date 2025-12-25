@@ -12,6 +12,8 @@ class TaggablePostImage extends StatefulWidget {
   final double? width;
   final double? height;
   final BorderRadius? borderRadius;
+  final String? musicTrackName; // 🆕 Müzik Adı
+  final String? musicArtistName; // 🆕 Sanatçı Adı
 
   const TaggablePostImage({
     super.key,
@@ -20,6 +22,8 @@ class TaggablePostImage extends StatefulWidget {
     this.width,
     this.height,
     this.borderRadius,
+    this.musicTrackName,
+    this.musicArtistName,
   });
 
   @override
@@ -228,7 +232,72 @@ class _TaggablePostImageState extends State<TaggablePostImage> {
               );
             }).toList(),
 
-          // Etiketleri kapat butonu
+          // 🎵 MÜZİK ETİKETİ (Etiketlerle birlikte veya her zaman gösterilebilir)
+          // Kullanıcı "etiket basınca çalışıyosa öyle çalıştır" dediği için
+          // showTags true olduğunda (fotoğrafa tıklayınca) gösteriyoruz.
+          if (showTags && widget.musicTrackName != null)
+            Positioned(
+              bottom: 20,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(20),
+                    border:
+                        Border.all(color: const Color(0xFFFC3C44), width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.music_note,
+                          color: Color(0xFFFC3C44), size: 16),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.musicTrackName!,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (widget.musicArtistName != null)
+                              Text(
+                                widget.musicArtistName!,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          // Close button (mevcut kodda var) butonu
           if (showTags && tags.isNotEmpty)
             Positioned(
               top: 10,
