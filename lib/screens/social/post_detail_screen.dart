@@ -66,6 +66,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   // 📸 Emoji tepkileri
   List<Map<String, dynamic>> emojiReactions = [];
 
+  // 🎧 Müzik oynatıcı state
+  final AudioPlayer _musicPlayer = AudioPlayer();
+  bool _isMusicPlaying = false;
+
   String get myId => client.auth.currentUser!.id;
 
   // 📸 Emoji tipinden varsayılan emoji karakterini al
@@ -128,6 +132,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     commentController.dispose();
     audioRecorder.dispose();
     audioPlayer.dispose();
+    _musicPlayer.dispose(); // 🎧 Müzik player temizle
     recordTimer?.cancel();
     super.dispose();
   }
@@ -952,6 +957,161 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
+  // 🎧 MÜZİK PLAYER WİDGET
+  Widget _buildMusicPlayer() {
+    final trackName = widget.post['spotify_track_name'] ?? 'Şarkı';
+    final artistName = widget.post['spotify_artist_name'] ?? 'Sanatçı';
+    final albumImage = widget.post['spotify_album_image'];
+    final previewUrl = widget.post['spotify_preview_url'];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF1DB954).withOpacity(0.2),
+              const Color(0xFF1DB954).withOpacity(0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFF1DB954).withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Album Art
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: albumImage != null
+                  ? Image.network(
+                      albumImage,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: 50,
+                      height: 50,
+                      color: Colors.grey[800],
+                      child:
+                          const Icon(Icons.music_note, color: Colors.white54),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            // Track Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.music_note,
+                        color: Color(0xFF1DB954),
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Spotify',
+                        style: TextStyle(
+                          color: Color(0xFF1DB954),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    trackName,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    artistName,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white54,
+                      fontSize: 12,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            // Play Button
+            if (previewUrl != null)
+              GestureDetector(
+                onTap: () async {
+                  if (_isMusicPlaying) {
+                    await _musicPlayer.stop();
+                    setState(() => _isMusicPlaying = false);
+                  } else {
+                    await _musicPlayer.play(UrlSource(previewUrl));
+                    setState(() => _isMusicPlaying = true);
+
+                    // 30 saniye sonra otomatik dur
+                    Future.delayed(const Duration(seconds: 30), () {
+                      if (mounted && _isMusicPlaying) {
+                        _musicPlayer.stop();
+                        setState(() => _isMusicPlaying = false);
+                      }
+                    });
+                  }
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1DB954),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1DB954).withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _isMusicPlaying ? Icons.pause : Icons.play_arrow,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              )
+            else
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'önizleme yok',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white38,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // 🔥 BUZLU CAM (GLASSMORPHISM) VE MOR KALP TEMALI DETAY KARTI 🔥
   Widget _buildPostCard() {
     final profile = widget.post["profiles"] ?? {};
@@ -1093,6 +1253,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ),
                     ),
                   ),
+                ],
+
+                // 🎧 MÜZİK PLAYER (varsa)
+                if (widget.post['spotify_track_name'] != null) ...[
+                  const SizedBox(height: 8),
+                  _buildMusicPlayer(),
                 ],
 
                 const SizedBox(height: 14),
