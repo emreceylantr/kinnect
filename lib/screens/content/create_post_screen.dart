@@ -409,12 +409,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color:
-                                    const Color(0xFF1DB954).withOpacity(0.15),
+                                color: const Color(0xFFFC3C44)
+                                    .withOpacity(0.15), // Apple Music Red
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   color:
-                                      const Color(0xFF1DB954).withOpacity(0.3),
+                                      const Color(0xFFFC3C44).withOpacity(0.3),
                                 ),
                               ),
                               child: Row(
@@ -607,9 +607,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                             }
                           },
                           icon: Icon(
-                            FontAwesomeIcons.spotify,
+                            FontAwesomeIcons.music,
                             color: _selectedMusic != null
-                                ? const Color(0xFF1DB954)
+                                ? const Color(0xFFFC3C44) // Apple Music Red
                                 : Colors.white54,
                             size: 24,
                           ),

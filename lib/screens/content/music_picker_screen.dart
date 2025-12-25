@@ -1,10 +1,11 @@
-// Kinnect - Spotify Müzik Seçici
+// Kinnect - Apple Music Seçici (iTunes Search API)
 
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class MusicPickerScreen extends StatefulWidget {
   const MusicPickerScreen({super.key});
@@ -14,7 +15,6 @@ class MusicPickerScreen extends StatefulWidget {
 }
 
 class _MusicPickerScreenState extends State<MusicPickerScreen> {
-  final SupabaseClient client = Supabase.instance.client;
   final TextEditingController _searchController = TextEditingController();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -22,8 +22,6 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
   bool isLoading = false;
   String? playingTrackId;
   Timer? _debounce;
-
-  Map<String, dynamic>? selectedTrack;
 
   @override
   void dispose() {
@@ -45,29 +43,38 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
     });
   }
 
-  // Spotify API ile şarkı ara
+  // iTunes API ile şarkı ara
   Future<void> _searchTracks(String query) async {
     setState(() => isLoading = true);
 
     try {
-      final response = await client.functions.invoke(
-        'spotify-search',
-        body: {'query': query},
-      );
+      final url = Uri.parse(
+          'https://itunes.apple.com/search?term=$query&media=music&entity=song&limit=25&country=TR');
 
-      if (response.data != null && response.data['tracks'] != null) {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final results = data['results'] as List;
+
         setState(() {
-          tracks = List<Map<String, dynamic>>.from(response.data['tracks']);
+          tracks = results.map((track) {
+            return {
+              'id': track['trackId'].toString(),
+              'name': track['trackName'],
+              'artist': track['artistName'],
+              'preview_url': track['previewUrl'],
+              'album_image': track['artworkUrl100']
+                  ?.replaceAll('100x100', '600x600'), // Yüksek kalite
+            };
+          }).toList();
         });
       }
     } catch (e) {
-      debugPrint('Spotify search error: $e');
+      debugPrint('iTunes search error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Arama hatası: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
+          SnackBar(content: Text('Arama hatası: $e')),
         );
       }
     } finally {
@@ -80,15 +87,7 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
     final previewUrl = track['preview_url'];
     final trackId = track['id'];
 
-    if (previewUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bu şarkının önizlemesi yok'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
+    if (previewUrl == null) return;
 
     if (playingTrackId == trackId) {
       await _audioPlayer.stop();
@@ -114,9 +113,9 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
     Navigator.pop(context, {
       'id': track['id'],
       'name': track['name'],
-      'artist': track['artists']?.first?['name'] ?? 'Bilinmeyen',
+      'artist': track['artist'] ?? 'Bilinmeyen',
       'preview_url': track['preview_url'],
-      'album_image': track['album']?['images']?.first?['url'],
+      'album_image': track['album_image'],
     });
   }
 
@@ -176,7 +175,7 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
             ),
           ),
 
-          // Spotify logo
+          // Apple Music Logo / Empty State
           if (tracks.isEmpty && !isLoading)
             Expanded(
               child: Center(
@@ -184,13 +183,14 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.music_note,
+                      Icons.music_note, // Apple Music için generic ikon
                       size: 80,
-                      color: const Color(0xFF1DB954).withOpacity(0.5),
+                      color: const Color(0xFFFC3C44)
+                          .withOpacity(0.5), // Apple Music Red
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Spotify ile şarkı ara',
+                      'Müzik Ara',
                       style: GoogleFonts.poppins(
                         color: Colors.white54,
                         fontSize: 16,
@@ -198,7 +198,7 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '30 saniyelik önizleme dinleyebilirsin',
+                      'Apple Music ile arama yapılır',
                       style: GoogleFonts.poppins(
                         color: Colors.white38,
                         fontSize: 13,
@@ -213,7 +213,7 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
           if (isLoading)
             const Expanded(
               child: Center(
-                child: CircularProgressIndicator(color: Color(0xFF1DB954)),
+                child: CircularProgressIndicator(color: Color(0xFFFC3C44)),
               ),
             ),
 
@@ -225,30 +225,24 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
                 itemCount: tracks.length,
                 itemBuilder: (context, index) {
                   final track = tracks[index];
-                  final albumImage =
-                      track['album']?['images']?.isNotEmpty == true
-                          ? track['album']['images'].last['url']
-                          : null;
-                  final artistName =
-                      (track['artists'] as List?)?.isNotEmpty == true
-                          ? track['artists'][0]['name']
-                          : 'Bilinmeyen';
+                  final albumImage = track['album_image'];
+                  final artistName = track['artist'] ?? 'Bilinmeyen';
+
                   final isPlaying = playingTrackId == track['id'];
                   final hasPreview = track['preview_url'] != null;
 
                   return GestureDetector(
-                    onTap: () => _selectTrack(
-                        track), // 🆕 Herhangi bir yere tıklayınca seç
+                    onTap: () => _selectTrack(track),
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
                         color: isPlaying
-                            ? const Color(0xFF1DB954).withOpacity(0.15)
+                            ? const Color(0xFFFC3C44).withOpacity(0.15)
                             : Colors.white.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(16),
                         border: isPlaying
                             ? Border.all(
-                                color: const Color(0xFF1DB954), width: 1.5)
+                                color: const Color(0xFFFC3C44), width: 1.5)
                             : null,
                       ),
                       child: ListTile(
@@ -282,31 +276,16 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        subtitle: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                artistName,
-                                style:
-                                    GoogleFonts.poppins(color: Colors.white54),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (!hasPreview)
-                              Text(
-                                ' • önizleme yok',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.orange.withOpacity(0.7),
-                                  fontSize: 11,
-                                ),
-                              ),
-                          ],
+                        subtitle: Text(
+                          artistName,
+                          style: GoogleFonts.poppins(color: Colors.white54),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Oynat/Durdur (sadece preview varsa)
+                            // Oynat/Durdur
                             if (hasPreview)
                               IconButton(
                                 onPressed: () => _togglePlay(track),
@@ -314,11 +293,12 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
                                   isPlaying
                                       ? Icons.pause_circle_filled
                                       : Icons.play_circle_filled,
-                                  color: const Color(0xFF1DB954),
-                                  size: 36,
+                                  color: const Color(0xFFFC3C44),
+                                  size: 40,
                                 ),
                               ),
-                            // Seç butonu (herkese göster)
+
+                            // Seç butonu (Ok)
                             const Icon(
                               Icons.chevron_right,
                               color: Colors.white38,

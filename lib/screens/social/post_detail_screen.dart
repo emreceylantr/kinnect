@@ -971,15 +971,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF1DB954).withOpacity(0.2),
-              const Color(0xFF1DB954).withOpacity(0.05),
+              const Color(0xFFFC3C44).withOpacity(0.2), // Apple Music Red
+              const Color(0xFFFC3C44).withOpacity(0.05),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: const Color(0xFF1DB954).withOpacity(0.3),
+            color: const Color(0xFFFC3C44).withOpacity(0.3),
           ),
         ),
         child: Row(
@@ -1012,14 +1012,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     children: [
                       const Icon(
                         Icons.music_note,
-                        color: Color(0xFF1DB954),
+                        color: Color(0xFFFC3C44),
                         size: 14,
                       ),
                       const SizedBox(width: 4),
                       const Text(
-                        'Spotify',
+                        'Müzik',
                         style: TextStyle(
-                          color: Color(0xFF1DB954),
+                          color: Color(0xFFFC3C44),
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1073,11 +1073,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1DB954),
+                    color: const Color(0xFFFC3C44),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1DB954).withOpacity(0.4),
+                        color: const Color(0xFFFC3C44).withOpacity(0.4),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
