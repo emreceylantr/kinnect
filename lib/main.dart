@@ -6,6 +6,7 @@ import 'package:app_links/app_links.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'services/notification_service.dart';
+import 'services/spotify_service.dart';
 
 import 'screens/auth/welcome_screen.dart';
 import 'screens/main/home_screen.dart';
@@ -31,6 +32,11 @@ Future<void> main() async {
   await Supabase.initialize(
     url: 'https://vxrvudcafkgqusjrawme.supabase.co',
     anonKey: 'sb_publishable_tSqnWtXnUhEog3MIx5ajRw_PZeTlwuG',
+    authOptions: FlutterAuthClientOptions(
+      // Spotify callback'lerini Supabase Auth'a gönderme
+      // Çünkü Spotify bağlantısı auth değil, sadece müzik token'ı
+      authFlowType: AuthFlowType.pkce,
+    ),
   );
 
   // 🚀 Uygulamayı HEMEN başlat - bildirim servisi arka planda çalışacak
@@ -119,9 +125,31 @@ class _MyAppState extends State<MyApp> {
   }
 
   // 🔍 Deep Link Analizi
-  void _handleDeepLink(Uri uri) {
+  void _handleDeepLink(Uri uri) async {
     debugPrint("🔗 Gelen Link: $uri");
 
+    // 🎵 SPOTIFY CALLBACK - Müzik bağlantısı için
+    if (uri.host == 'spotify-callback') {
+      debugPrint("🎵 Spotify callback yakalandı!");
+      final success = await SpotifyService().handleCallback(uri);
+      if (success) {
+        // Başarılı mesajı göster
+        Future.delayed(const Duration(milliseconds: 500), () {
+          navigatorKey.currentState?.context != null
+              ? ScaffoldMessenger.of(navigatorKey.currentState!.context)
+                  .showSnackBar(
+                  const SnackBar(
+                    content: Text('🎵 Spotify başarıyla bağlandı!'),
+                    backgroundColor: Color(0xFF1DB954),
+                  ),
+                )
+              : null;
+        });
+      }
+      return;
+    }
+
+    // Şifre sıfırlama callback
     if (uri.host == 'reset-callback' ||
         uri.fragment.contains('type=recovery')) {
       _navigateToResetScreen();
