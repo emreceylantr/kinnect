@@ -2,57 +2,110 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SpotifyService {
-  // GÜVENLİK NOTU: Client Secret normalde sunucuda tutulmalıdır.
+  // Spotify API credentials
   final String _clientId = "b4d97f8903084d738c777a1dfe07e1fe";
   final String _clientSecret = "712f7a6b8d8a48498ef3e15161abc8b2";
+  final String _redirectUri = "kinnect://spotify-callback";
 
-  // 1. BAĞLANTIYI BAŞLAT (Tarayıcıyı Açar)
+  // 1. BAĞLANTIYI BAŞLAT - Direkt Spotify OAuth (Supabase Auth DEĞİL!)
+  // Bu sayede mevcut hesaba Spotify bağlanır, yeni hesap OLUŞMAZ.
   Future<void> authenticate() async {
     try {
-      // Supabase'in kendi OAuth fonksiyonunu kullanıyoruz.
-      // redirectTo: 'kinnect://callback' -> Bu link Info.plist ile eşleşmeli!
-      await Supabase.instance.client.auth.signInWithOAuth(
-        OAuthProvider.spotify,
-        redirectTo: 'kinnect://callback',
-        scopes: 'user-read-currently-playing user-read-playback-state user-read-recently-played',
-        queryParams: {
-          'prompt': 'consent', // Her seferinde "Kabul ediyor musun?" diye sorsun
-        },
-      );
+      final scopes =
+          'user-read-currently-playing user-read-playback-state user-read-recently-played';
+
+      final authUrl = Uri.https('accounts.spotify.com', '/authorize', {
+        'client_id': _clientId,
+        'response_type': 'code',
+        'redirect_uri': _redirectUri,
+        'scope': scopes,
+        'show_dialog': 'true', // Her zaman izin ekranı göster
+      });
+
+      debugPrint("🎵 Spotify Auth URL: $authUrl");
+
+      if (await canLaunchUrl(authUrl)) {
+        await launchUrl(authUrl, mode: LaunchMode.externalApplication);
+      } else {
+        debugPrint("❌ Spotify URL açılamadı");
+      }
     } catch (e) {
       debugPrint("Spotify Bağlantı Hatası: $e");
     }
   }
 
-  // 2. TOKEN'I VERİTABANINA KAYDET
-  // Bu fonksiyonu giriş başarılı olup uygulamaya dönünce çağıracağız.
-  Future<void> updateTokenFromSession() async {
-    final session = Supabase.instance.client.auth.currentSession;
+  // 2. CALLBACK'TEN GELEN KODU İŞLE
+  // Deep link'ten gelen authorization code'u alıp token'a çevir
+  Future<bool> handleCallback(Uri uri) async {
+    try {
+      debugPrint("🎵 Spotify Callback URI: $uri");
 
-    // Eğer session varsa ve Spotify token'ı içeriyorsa
-    if (session != null && session.providerRefreshToken != null) {
-      final user = Supabase.instance.client.auth.currentUser;
-
-      // Sadece giriş yöntemi Spotify ise kaydet
-      if (user != null && user.appMetadata['provider'] == 'spotify') {
-        try {
-          await Supabase.instance.client.from('profiles').update({
-            'spotify_refresh_token': session.providerRefreshToken,
-            'music_provider': 'spotify',
-            // Token'ın ne zaman alındığını da güncelleyelim
-            'last_music_update_at': DateTime.now().toIso8601String(),
-          }).eq('id', user.id);
-
-          debugPrint("✅ Spotify Token'ı Başarıyla Kaydedildi!");
-        } catch (e) {
-          debugPrint("❌ Veritabanı Kayıt Hatası: $e");
-        }
+      // URI'den code parametresini al
+      final code = uri.queryParameters['code'];
+      if (code == null) {
+        debugPrint("❌ Authorization code bulunamadı");
+        return false;
       }
-    } else {
-      debugPrint("⚠️ Session boş veya Spotify token'ı yok.");
+
+      debugPrint("✅ Authorization code alındı: ${code.substring(0, 10)}...");
+
+      // Code'u access token'a çevir
+      final tokenResponse = await http.post(
+        Uri.parse("https://accounts.spotify.com/api/token"),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization':
+              'Basic ${base64Encode(utf8.encode("$_clientId:$_clientSecret"))}',
+        },
+        body: {
+          'grant_type': 'authorization_code',
+          'code': code,
+          'redirect_uri': _redirectUri,
+        },
+      );
+
+      if (tokenResponse.statusCode != 200) {
+        debugPrint("❌ Token alma hatası: ${tokenResponse.body}");
+        return false;
+      }
+
+      final tokenData = jsonDecode(tokenResponse.body);
+      final refreshToken = tokenData['refresh_token'];
+
+      if (refreshToken == null) {
+        debugPrint("❌ Refresh token alınamadı");
+        return false;
+      }
+
+      // Mevcut kullanıcının profiline kaydet
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint("❌ Kullanıcı oturumu yok");
+        return false;
+      }
+
+      await Supabase.instance.client.from('profiles').update({
+        'spotify_refresh_token': refreshToken,
+        'music_provider': 'spotify',
+        'last_music_update_at': DateTime.now().toIso8601String(),
+      }).eq('id', userId);
+
+      debugPrint("✅ Spotify başarıyla bağlandı!");
+      return true;
+    } catch (e) {
+      debugPrint("❌ Spotify callback hatası: $e");
+      return false;
     }
+  }
+
+  // Eski fonksiyon - artık kullanılmıyor ama uyumluluk için bırakıldı
+  Future<void> updateTokenFromSession() async {
+    // Bu fonksiyon artık kullanılmıyor
+    // Yeni flow: authenticate() -> handleCallback()
+    debugPrint("⚠️ updateTokenFromSession artık kullanılmıyor");
   }
 
   // 3. ŞARKI VERİSİNİ ÇEK (Burada değişiklik yok, aynen çalışır)
@@ -73,7 +126,8 @@ class SpotifyService {
         Uri.parse("https://accounts.spotify.com/api/token"), // URL düzeltildi
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Basic ${base64Encode(utf8.encode("$_clientId:$_clientSecret"))}',
+          'Authorization':
+              'Basic ${base64Encode(utf8.encode("$_clientId:$_clientSecret"))}',
         },
         body: {
           'grant_type': 'refresh_token',
@@ -108,7 +162,8 @@ class SpotifyService {
 
       // Son dinlenen
       final recentRes = await http.get(
-        Uri.parse("https://api.spotify.com/v1/me/player/recently-played?limit=1"),
+        Uri.parse(
+            "https://api.spotify.com/v1/me/player/recently-played?limit=1"),
         headers: {'Authorization': 'Bearer $accessToken'},
       );
 

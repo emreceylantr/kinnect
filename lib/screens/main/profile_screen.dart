@@ -14,7 +14,6 @@ import 'package:video_player/video_player.dart'; // 🎥 LIVE VIDEO OYNATICI
 import '../../services/feed_service.dart';
 import '../../services/chat_service.dart';
 import '../../services/safety_service.dart';
-import '../../services/spotify_service.dart';
 
 // --- WIDGET IMPORTU ---
 import '../../widgets/music_player_card.dart';
@@ -133,10 +132,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+      // Profili yeniden yükle (sadece önemli değişikliklerde)
       if (data.event == AuthChangeEvent.signedIn ||
           data.event == AuthChangeEvent.tokenRefreshed ||
           data.event == AuthChangeEvent.userUpdated) {
-        await SpotifyService().updateTokenFromSession();
         if (mounted) {
           _loadProfileData();
         }
