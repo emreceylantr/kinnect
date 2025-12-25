@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  lottie: ^3.1.0
+  flutter_svg: ^2.0.10+1
 
   # --- MÜZİK SERVİSLERİ ---
   http: ^1.2.0           # Spotify & Apple Music API istekleri için
@@ -73,7 +75,13 @@ flutter:
 
   # Resim vb. varlıklar
   assets:
-    - assets/icon/
+    - assets/icon/icon.png
+    - assets/animations/f.json
+    - assets/animations/l.json
+    - assets/animations/s.json
+    - assets/animations/guy.json
+
+
 
 # --- İKON AYARLARI ---
 flutter_launcher_icons:

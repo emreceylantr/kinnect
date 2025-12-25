@@ -1,10 +1,12 @@
-// Kinnect - Arama ve keşfet ekranı
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:lottie/lottie.dart'; // Lottie paketi
+import 'dart:ui';
+import 'dart:math';
 
+// Importları kendi proje yapına göre kontrol et
 import '../../widgets/fuel_button.dart';
 import '../../services/feed_service.dart';
 import '../../services/safety_service.dart';
@@ -12,10 +14,11 @@ import 'profile_screen.dart';
 import '../social/post_detail_screen.dart';
 
 // 🎨 TEMA RENKLERİ
-const Color kBgColor = Color(0xFF0A0A0F);
-const Color kCardColor = Color(0xFF16161F);
-const Color kAccentPurple = Color(0xFF6C63FF);
-const Color kAccentOrange = Color(0xFFFF9800);
+const Color kBgColor = Color(0xFF0A0A0F); // Derin Siyah
+const Color kCardColor = Color(0xFF16161F); // Kart Rengi
+const Color kAccentPurple = Color(0xFF6C63FF); // Mistik Mor
+const Color kAccentOrange = Color(0xFFFF5722); // Alev Turuncusu
+const Color kAmberGlow = Color(0xFFFFAB00); // Kor Rengi
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -25,126 +28,97 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  // --- DEĞİŞKENLER (AYNEN KORUNDU) ---
+  // --- DEĞİŞKENLER ---
   final SupabaseClient client = Supabase.instance.client;
   final FeedService feedService = FeedService();
   final SafetyService _safetyService = SafetyService();
 
-  final String myId = Supabase.instance.client.auth.currentUser!.id;
+  late final String myId;
   final TextEditingController searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode(); // 🔥 FocusNode eklendi
 
   bool isExpanded = false;
-  String selectedFilter = "Harlanan";
 
   List<Map<String, dynamic>> searchResults = [];
   List<Map<String, dynamic>> explorePosts = [];
   bool loadingExplore = true;
 
+  // 🔥 SLIDER AYARI
+  final PageController _pageController = PageController(
+    viewportFraction: 0.8,
+    initialPage: 1000,
+  );
+
+  double _currentPage = 1000.0;
+
   @override
   void initState() {
     super.initState();
-    _fetchExplore();
-  }
-
-  // ---------------------------------------------------------
-  // 1. ARAMA İŞLEMİ (AYNEN KORUNDU)
-  // ---------------------------------------------------------
-  Future<void> _performSearch(String text) async {
-    if (text.trim().isEmpty) {
-      setState(() => searchResults = []);
-      return;
+    final user = client.auth.currentUser;
+    if (user != null) {
+      myId = user.id;
+      _fetchExplore();
     }
-
-    final blockedMeIds = await _safetyService.getIdsThatBlockedMe();
-    blockedMeIds.add(myId);
-
-    final res = await client
-        .from("profiles")
-        .select()
-        .ilike("username", "%$text%")
-        .not('id', 'in', blockedMeIds)
-        .limit(15);
-
-    if (mounted) {
+    _pageController.addListener(() {
       setState(() {
-        searchResults = List<Map<String, dynamic>>.from(res as List);
+        _currentPage = _pageController.page!;
       });
-    }
-  }
-
-  // ---------------------------------------------------------
-  // 2. KEŞFET VERİLERİ (AYNEN KORUNDU)
-  // ---------------------------------------------------------
-  Future<void> _fetchExplore() async {
-    if (explorePosts.isEmpty) setState(() => loadingExplore = true);
-
-    try {
-      final data = await feedService.getExploreFeed();
-      final now = DateTime.now();
-
-      if (selectedFilter == "Harlanan") {
-        data.sort((a, b) {
-          final dateA =
-              DateTime.tryParse(a['created_at'])?.toLocal() ?? DateTime(2000);
-          final dateB =
-              DateTime.tryParse(b['created_at'])?.toLocal() ?? DateTime(2000);
-
-          final isAliveA = now.difference(dateA).inHours < 24;
-          final isAliveB = now.difference(dateB).inHours < 24;
-
-          if (isAliveA && !isAliveB) return -1;
-          if (!isAliveA && isAliveB) return 1;
-
-          int countA = (a['likes'] as List).length;
-          int countB = (b['likes'] as List).length;
-          return countB.compareTo(countA);
-        });
-      } else {
-        data.sort((a, b) => b['created_at'].compareTo(a['created_at']));
-      }
-
-      if (mounted) {
-        setState(() {
-          explorePosts = data;
-          loadingExplore = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => loadingExplore = false);
-      debugPrint("Keşfet hatası: $e");
-    }
-  }
-
-  // ---------------------------------------------------------
-  // 3. HARLAMA (AYNEN KORUNDU)
-  // ---------------------------------------------------------
-  void _toggleFuel(int index, String postId) async {
-    final post = explorePosts[index];
-
-    final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
-    final isAlive =
-        date != null && DateTime.now().difference(date).inHours < 24;
-
-    if (!isAlive) return;
-
-    final likes = List<dynamic>.from(post["likes"] ?? []);
-    final isFueled = likes.any((l) => l["user_id"] == myId);
-
-    setState(() {
-      if (isFueled) {
-        likes.removeWhere((l) => l["user_id"] == myId);
-      } else {
-        likes.add({"user_id": myId, "post_id": postId});
-      }
-      explorePosts[index] = {...post, "likes": likes};
     });
 
+    // 🔥 Focus dinleyicisi: Tıklanınca setState yapıp UI'ı güncelle
+    _searchFocusNode.addListener(() {
+      setState(() {
+        // Klavye açılıp kapanınca arayüz güncellensin
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _searchFocusNode.dispose(); // Unutma
+    super.dispose();
+  }
+
+  // --- ARAMA VE VERİ ÇEKME ---
+  Future<void> _performSearch(String text) async {
+    if (text.trim().isEmpty) { setState(() => searchResults = []); return; }
+    final blockedMeIds = await _safetyService.getIdsThatBlockedMe(); blockedMeIds.add(myId);
+    final res = await client.from("profiles").select().ilike("username", "%$text%").not('id', 'in', blockedMeIds).limit(15);
+    if (mounted) setState(() => searchResults = List<Map<String, dynamic>>.from(res as List));
+  }
+
+  Future<void> _fetchExplore() async {
+    if (explorePosts.isEmpty) setState(() => loadingExplore = true);
+    try {
+      final data = await feedService.getExploreFeed();
+      // 🔥 1. ADIM: TÜM LİSTEYİ KRONOLOJİK (YENİDEN ESKİYE) SIRALA
+      data.sort((a, b) {
+        final dateA = DateTime.tryParse(a['created_at']) ?? DateTime(2000);
+        final dateB = DateTime.tryParse(b['created_at']) ?? DateTime(2000);
+        return dateB.compareTo(dateA); // En yeni en üstte
+      });
+
+      if (mounted) setState(() { explorePosts = data; loadingExplore = false; });
+    } catch (e) { if (mounted) setState(() => loadingExplore = false); }
+  }
+
+  void _toggleFuel(int index, String postId) async {
+    final int realIndex = explorePosts.indexWhere((p) => p['id'] == postId);
+    if (realIndex == -1) return;
+    final post = explorePosts[realIndex];
+    final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
+    final isAlive = date != null && DateTime.now().difference(date).inHours < 24;
+    if (!isAlive) return;
+    final likes = List<dynamic>.from(post["likes"] ?? []);
+    final isFueled = likes.any((l) => l["user_id"] == myId);
+    setState(() {
+      if (isFueled) likes.removeWhere((l) => l["user_id"] == myId); else likes.add({"user_id": myId, "post_id": postId});
+      explorePosts[realIndex] = {...post, "likes": likes};
+    });
     await feedService.toggleLike(postId, isFuel: true);
   }
 
-  // ---------------------------------------------------------
-  // EKRAN YAPISI (YENİ TASARIM)
-  // ---------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -152,694 +126,321 @@ class _SearchScreenState extends State<SearchScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 🔥 PREMIUM HEADER
             _buildHeader(),
-
-            // İÇERİK
-            Expanded(
-              child: isExpanded || searchController.text.isNotEmpty
-                  ? _buildSearchList()
-                  : _buildExploreFeed(),
-            ),
+            Expanded(child: isExpanded || searchController.text.isNotEmpty ? _buildSearchList() : _buildExploreFeed()),
           ],
         ),
       ),
     );
   }
 
-  // --- PREMIUM HEADER ---
+  // --- HEADER ---
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            kAccentOrange.withOpacity(0.15),
-            kBgColor,
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+      decoration: BoxDecoration(color: kBgColor, boxShadow: [BoxShadow(color: kAccentOrange.withOpacity(0.05), blurRadius: 30, spreadRadius: 0, offset: const Offset(0, 10))]),
+      child: Column(children: [
+        Row(children: [Icon(FontAwesomeIcons.fire, color: kAccentOrange, size: 22), const SizedBox(width: 8), Text("Keşfet", style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white))]),
+        const SizedBox(height: 20),
+        Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            _buildAnimatedSearchBar(),
+            Positioned(
+              right: 15,
+              bottom: 0,
+              child: Transform.flip(
+                flipX: true,
+                child: SizedBox(
+                  height: 100,
+                  width: 100,
+                  child: Lottie.asset('assets/animations/guy.json', fit: BoxFit.contain),
+                ),
+              ),
+            ),
           ],
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Başlık
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      kAccentOrange.withOpacity(0.3),
-                      kAccentOrange.withOpacity(0.1)
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(FontAwesomeIcons.fire,
-                    color: kAccentOrange, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                "Keşfet",
-                style: GoogleFonts.poppins(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Arama Çubuğu
-          _buildSearchBar(),
-        ],
-      ),
+        const SizedBox(height: 10),
+      ]),
     );
   }
 
-  // --- ARAMA ÇUBUĞU (YENİ TASARIM) ---
-  Widget _buildSearchBar() {
+  // 🔥 REVİZE EDİLEN ARAMA ÇUBUĞU
+  Widget _buildAnimatedSearchBar() {
+    final bool isFocused = _searchFocusNode.hasFocus;
+    final bool hasText = searchController.text.isNotEmpty;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: kCardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isExpanded ? kAccentPurple.withOpacity(0.5) : Colors.white10,
-        ),
-        boxShadow: isExpanded
-            ? [
-                BoxShadow(
-                  color: kAccentPurple.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : [],
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.search_rounded,
-            color: isExpanded ? kAccentPurple : Colors.white38,
-            size: 22,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
+      height: 36,
+      decoration: BoxDecoration(color: kCardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: isExpanded ? kAccentOrange.withOpacity(0.5) : Colors.white10), boxShadow: isExpanded ? [BoxShadow(color: kAccentOrange.withOpacity(0.15), blurRadius: 15)] : []),
+      child: Row(children: [
+        const SizedBox(width: 12),
+        const Icon(Icons.search, color: Colors.white38, size: 18),
+        const SizedBox(width: 10),
+        Expanded(
             child: TextField(
-              controller: searchController,
-              style: GoogleFonts.poppins(color: Colors.white, fontSize: 15),
-              decoration: InputDecoration(
-                hintText: "Kullanıcı ara...",
-                hintStyle:
-                    GoogleFonts.poppins(color: Colors.white30, fontSize: 15),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              onTap: () => setState(() => isExpanded = true),
-              onChanged: _performSearch,
-            ),
-          ),
-          if (isExpanded || searchController.text.isNotEmpty)
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  isExpanded = false;
-                  searchController.clear();
-                  searchResults = [];
-                  FocusScope.of(context).unfocus();
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white10,
-                  borderRadius: BorderRadius.circular(8),
+                controller: searchController,
+                focusNode: _searchFocusNode, // FocusNode bağlandı
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 13),
+                textAlignVertical: TextAlignVertical.center,
+                // 🔥 Odaklanınca veya yazı varsa SOLA, yoksa ORTAYA
+                textAlign: (isFocused || hasText) ? TextAlign.start : TextAlign.center,
+                decoration: InputDecoration(
+                  isDense: true,
+                  // 🔥 Odaklanınca ipucu yazısı KAYBOLSUN
+                  hintText: isFocused ? "" : "Kullanıcı ara...",
+                  hintStyle: GoogleFonts.poppins(color: Colors.white30, fontSize: 13),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.only(bottom: 4),
                 ),
-                child: const Icon(Icons.close, color: Colors.white54, size: 16),
-              ),
+                onTap: () => setState(() => isExpanded = true),
+                onChanged: _performSearch
+            )
+        ),
+        if (isExpanded || hasText)
+          GestureDetector(onTap: () { setState(() { isExpanded = false; searchController.clear(); searchResults = []; FocusScope.of(context).unfocus(); }); }, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: const Icon(Icons.close, color: Colors.white38, size: 16)))
+        else
+          const SizedBox(width: 40),
+      ]),
+    );
+  }
+
+  // --- ANA AKIŞ ---
+  Widget _buildExploreFeed() {
+    if (loadingExplore) return const Center(child: CircularProgressIndicator(color: kAccentOrange));
+    if (explorePosts.isEmpty) return _buildEmptyState();
+
+    // 🔥 GÜNDEM İÇİN YENİ MANTIK 🔥
+    // 1. Sadece "Canlı" (24 saati geçmemiş) postları filtrele.
+    final now = DateTime.now();
+    List<Map<String, dynamic>> alivePosts = explorePosts.where((p) {
+      final date = DateTime.tryParse(p['created_at'] ?? "")?.toLocal();
+      if (date == null) return false;
+      return now.difference(date).inHours < 24;
+    }).toList();
+
+    // 2. Canlı postları beğeni sayısına göre sırala.
+    alivePosts.sort((a, b) => (b['likes'] as List).length.compareTo((a['likes'] as List).length));
+
+    // 3. İlk 3 tanesini al (Gündem Slider için).
+    final List<Map<String, dynamic>> sliderPosts = alivePosts.take(3).toList();
+
+    // 4. Liste postları: Tüm postlar (Kül olanlar dahil) kronolojik (zaten explorePosts sıralı gelmişti).
+    final List<Map<String, dynamic>> listPosts = explorePosts;
+
+    return RefreshIndicator(
+      onRefresh: _fetchExplore, color: kAccentOrange, backgroundColor: kCardColor,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(children: [
+
+          const SizedBox(height: 20),
+
+          // GÜNDEM SLIDER'I (Sadece Canlı ve En Çok Beğenilen 3 Post)
+          if (sliderPosts.isNotEmpty) ...[
+            _build3DTrendSlider(sliderPosts),
+            const SizedBox(height: 20),
+          ],
+
+          // NORMAL LİSTE (Hepsi - Kronolojik)
+          if (listPosts.isEmpty)
+            _buildEmptyState()
+          else
+            ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: listPosts.length,
+                itemBuilder: (_, i) => _buildPostCard(listPosts[i], i)
             ),
-        ],
+        ]),
       ),
     );
   }
 
-  // --- ARAMA LİSTESİ (YENİ TASARIM) ---
-  Widget _buildSearchList() {
-    if (searchResults.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                shape: BoxShape.circle,
+  Widget _build3DTrendSlider(List<Map<String, dynamic>> posts) {
+    if (posts.isEmpty) return const SizedBox();
+    return SizedBox(
+      height: 360,
+      child: PageView.builder(
+        controller: _pageController,
+        itemBuilder: (context, index) {
+          final int realIndex = index % posts.length;
+          double value = (_currentPage - index);
+          double scale = (1 - (value.abs() * 0.2)).clamp(0.85, 1.0);
+          double opacity = (1 - (value.abs() * 0.5)).clamp(0.5, 1.0);
+          double translateY = (1 - scale) * -40;
+          return Transform.translate(
+            offset: Offset(0, translateY),
+            child: Transform.scale(
+              scale: scale,
+              child: Opacity(
+                opacity: opacity,
+                child: _buildFeaturedCard(posts[realIndex], rank: realIndex + 1),
               ),
-              child: const Icon(FontAwesomeIcons.magnifyingGlass,
-                  size: 32, color: Colors.white24),
             ),
-            const SizedBox(height: 16),
-            Text(
-              searchController.text.isEmpty
-                  ? "Kullanıcı aramaya başla"
-                  : "Sonuç bulunamadı",
-              style: GoogleFonts.poppins(color: Colors.white38, fontSize: 15),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: searchResults.length,
-      itemBuilder: (_, i) {
-        final user = searchResults[i];
-        return _buildUserCard(user, i);
-      },
-    );
-  }
-
-  Widget _buildUserCard(Map<String, dynamic> user, int index) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 300 + (index * 50)),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, 20 * (1 - value)),
-          child: Opacity(opacity: value, child: child),
-        );
-      },
-      child: GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => ProfileScreen(userId: user["id"])),
           );
         },
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: kCardColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [kAccentPurple, kAccentPurple.withOpacity(0.5)],
-                  ),
-                ),
-                child: CircleAvatar(
-                  radius: 24,
-                  backgroundColor: kCardColor,
-                  backgroundImage: user["avatar_url"] != null
-                      ? NetworkImage(user["avatar_url"])
-                      : null,
-                  child: user["avatar_url"] == null
-                      ? const Icon(Icons.person,
-                          color: Colors.white54, size: 24)
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user["full_name"] ?? user["username"] ?? "İsimsiz",
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                      ),
-                    ),
-                    Text(
-                      "@${user["username"] ?? ""}",
-                      style: GoogleFonts.poppins(
-                          color: Colors.white38, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: kAccentPurple.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.arrow_forward_ios,
-                    size: 14, color: kAccentPurple),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
 
-  // --- KEŞFET AKIŞI (YENİ TASARIM) ---
-  Widget _buildExploreFeed() {
-    return Column(
-      children: [
-        // FİLTRELER
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              _buildChip("Harlanan", FontAwesomeIcons.fire),
-              const SizedBox(width: 10),
-              _buildChip("Yeni", FontAwesomeIcons.clock),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        Expanded(
-          child: loadingExplore
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(color: kAccentOrange),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Keşfediliyor...",
-                        style: GoogleFonts.poppins(color: Colors.white38),
-                      ),
-                    ],
-                  ),
-                )
-              : explorePosts.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.05),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(FontAwesomeIcons.fireFlameCurved,
-                                size: 40, color: Colors.white24),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Henüz keşfedilecek post yok",
-                            style: GoogleFonts.poppins(
-                                color: Colors.white38, fontSize: 15),
-                          ),
-                        ],
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _fetchExplore,
-                      color: kAccentOrange,
-                      backgroundColor: kCardColor,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                        itemCount: explorePosts.length,
-                        itemBuilder: (_, i) =>
-                            _buildExplorePostCard(explorePosts[i], i),
-                      ),
-                    ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChip(String text, IconData icon) {
-    final selected = selectedFilter == text;
-    return GestureDetector(
-      onTap: () {
-        setState(() => selectedFilter = text);
-        _fetchExplore();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: selected
-              ? LinearGradient(
-                  colors: [kAccentOrange, kAccentOrange.withOpacity(0.7)],
-                )
-              : null,
-          color: selected ? null : kCardColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected ? Colors.transparent : Colors.white10,
-          ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: kAccentOrange.withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: selected ? Colors.white : Colors.white54,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              text,
-              style: GoogleFonts.poppins(
-                color: selected ? Colors.white : Colors.white54,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- POST KARTI (YENİ TASARIM) ---
-  Widget _buildExplorePostCard(Map<String, dynamic> post, int index) {
-    final profile = post["profiles"] ?? {};
+  // 🏆 VİTRİN KARTI
+  Widget _buildFeaturedCard(Map<String, dynamic> post, {required int rank}) {
     final likes = post["likes"] as List? ?? [];
-    final comments = post["comments"] as List? ?? [];
-
-    final isFueled = likes.any((l) => l["user_id"] == myId);
     final likeCount = likes.length;
-    final commentCount = comments.length;
-
+    final profile = post["profiles"] ?? {};
     final content = post["content"] ?? "";
     final imageUrl = post["image_url"];
 
-    // 24 SAAT KONTROLÜ
+    final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
+    final now = DateTime.now();
+    final isAlive = date != null && now.difference(date).inHours < 24;
+    final bool isRank1 = rank == 1;
+
+    Color statusColor = Colors.grey;
+    String statusText = "";
+    IconData statusIcon = FontAwesomeIcons.wind;
+
+    if (!isAlive) {
+      statusColor = Colors.blueGrey; statusText = "KÜL OLDU";
+    } else {
+      if (likeCount > 10) { statusColor = Colors.redAccent; statusText = "CEHENNEM"; statusIcon = FontAwesomeIcons.fire; }
+      else if (likeCount > 5) { statusColor = kAccentOrange; statusText = "ALEVLİ"; statusIcon = FontAwesomeIcons.fire; }
+      else if (likeCount > 0) { statusColor = kAmberGlow; statusText = "ISINIYOR"; statusIcon = FontAwesomeIcons.fireFlameSimple; }
+    }
+
+    Color headerBgColor = isRank1 ? kAccentOrange : Colors.black.withOpacity(0.6);
+
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post, isExploreMode: true))).then((_) => _fetchExplore()),
+      child: Container(
+        decoration: BoxDecoration(
+          color: kCardColor, borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: isAlive ? statusColor.withOpacity(0.5) : Colors.white.withOpacity(0.1), width: 1.2),
+          boxShadow: [
+            if (isAlive) BoxShadow(color: statusColor.withOpacity(isRank1 ? 0.3 : 0.15), blurRadius: isRank1 ? 30 : 20, spreadRadius: 0),
+            BoxShadow(color: Colors.black.withOpacity(0.6), blurRadius: 15, offset: const Offset(0, 8))
+          ],
+          image: imageUrl != null ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover) : null,
+          gradient: imageUrl == null ? LinearGradient(colors: [kCardColor, kCardColor.withOpacity(0.8)], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              if (imageUrl != null) Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.transparent, Colors.black.withOpacity(0.9)], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
+
+              Positioned(
+                top: 0, left: 0, right: 0,
+                child: Container(
+                  height: 36,
+                  decoration: BoxDecoration(color: headerBgColor, borderRadius: const BorderRadius.vertical(top: Radius.circular(22))),
+                  child: Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isRank1) ...[const Icon(FontAwesomeIcons.crown, color: Colors.white, size: 14), const SizedBox(width: 8)],
+                        Text(isRank1 ? "GÜNDEM #1" : "GÜNDEM #$rank", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 13, letterSpacing: 1.0)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              Positioned(
+                top: 50, bottom: 16, left: 16, right: 16,
+                child: Column(
+                  mainAxisAlignment: imageUrl != null ? MainAxisAlignment.end : MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (imageUrl == null) const SizedBox(height: 60),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                            radius: imageUrl != null ? (isRank1 ? 20 : 16) : (isRank1 ? 24 : 20),
+                            backgroundColor: Colors.white24,
+                            backgroundImage: profile["avatar_url"] != null ? NetworkImage(profile["avatar_url"]) : null,
+                            child: profile["avatar_url"] == null ? Icon(Icons.person, size: imageUrl != null ? 16 : 20, color: Colors.white) : null
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Text(profile["full_name"] ?? "Anonim", style: GoogleFonts.poppins(color: Colors.white, fontSize: imageUrl != null ? (isRank1 ? 14 : 12) : (isRank1 ? 16 : 14), fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Text("@${profile["username"]}", style: GoogleFonts.poppins(color: Colors.white70, fontSize: imageUrl != null ? 11 : 13), maxLines: 1, overflow: TextOverflow.ellipsis)
+                        ])),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    if (content.isNotEmpty) Text(content, maxLines: imageUrl == null ? 6 : 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(color: Colors.white.withOpacity(imageUrl != null ? 0.9 : 1.0), fontWeight: imageUrl == null ? FontWeight.normal : FontWeight.w500, fontSize: imageUrl == null ? 18 : 12, shadows: imageUrl != null ? [const Shadow(blurRadius: 2, color: Colors.black, offset: Offset(0, 1))] : [])),
+                    if (imageUrl == null) const Spacer() else const SizedBox(height: 12),
+                    Row(children: [Icon(FontAwesomeIcons.fire, color: statusColor, size: 16), const SizedBox(width: 6), Text("$likeCount Harlama", style: GoogleFonts.poppins(color: statusColor, fontSize: 14, fontWeight: FontWeight.w600)), const Spacer(), if (statusText.isNotEmpty) ...[Icon(statusIcon, color: statusColor.withOpacity(0.8), size: 12), const SizedBox(width: 4), Text(statusText, style: GoogleFonts.poppins(color: statusColor.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.w500))]])
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 📝 NORMAL LİSTE KARTI (AYNI KALDI)
+  Widget _buildPostCard(Map<String, dynamic> post, int index) {
+    final profile = post["profiles"] ?? {};
+    final likes = post["likes"] as List? ?? [];
+    final comments = post["comments"] as List? ?? [];
+    final likeCount = likes.length;
+    final isFueled = likes.any((l) => l["user_id"] == myId);
     final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
     final now = DateTime.now();
     final isAlive = date != null && now.difference(date).inHours < 24;
 
-    // DURUM RENKLERİ VE METNİ
     Color statusColor = Colors.grey;
     String statusText = "";
-    IconData? statusIcon;
+    IconData statusIcon = FontAwesomeIcons.wind;
 
-    if (!isAlive) {
-      statusColor = Colors.blueGrey;
-      statusText = "KÜL OLDU";
-      statusIcon = FontAwesomeIcons.wind;
-    } else {
-      if (likeCount > 9) {
-        statusColor = Colors.redAccent;
-        statusText = "CEHENNEM";
-        statusIcon = FontAwesomeIcons.fire;
-      } else if (likeCount > 3) {
-        statusColor = kAccentOrange;
-        statusText = "ALEVLİ";
-        statusIcon = FontAwesomeIcons.fire;
-      } else if (likeCount > 0) {
-        statusColor = Colors.amber;
-        statusText = "YANIYOR";
-        statusIcon = FontAwesomeIcons.fire;
-      }
+    if (!isAlive) { statusText = "KÜL OLDU"; statusColor = Colors.blueGrey; }
+    else {
+      if (likeCount > 10) { statusText = "CEHENNEM"; statusColor = Colors.redAccent; statusIcon = FontAwesomeIcons.fire; }
+      else if (likeCount > 5) { statusText = "ALEVLİ"; statusColor = kAccentOrange; statusIcon = FontAwesomeIcons.fire; }
+      else if (likeCount > 0) { statusText = "ISINIYOR"; statusColor = kAmberGlow; statusIcon = FontAwesomeIcons.fireFlameSimple; }
     }
 
-    // GÜNDEM ROZETİ
-    final isTop = selectedFilter == "Harlanan" && index == 0 && isAlive;
-
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 400 + (index * 50)),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, 30 * (1 - value)),
-          child: Opacity(opacity: value, child: child),
-        );
-      },
-      child: GestureDetector(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PostDetailScreen(post: post, isExploreMode: true),
-          ),
-        ).then((_) => _fetchExplore()),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            color: kCardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isTop
-                  ? kAccentOrange.withOpacity(0.5)
-                  : Colors.white.withOpacity(0.05),
-              width: isTop ? 1.5 : 1,
-            ),
-            boxShadow: isTop
-                ? [
-                    BoxShadow(
-                      color: kAccentOrange.withOpacity(0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : [],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ÜSTTE GÜNDEM ROZETİ
-              if (isTop)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [kAccentOrange, kAccentOrange.withOpacity(0.7)],
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(19),
-                      topRight: Radius.circular(19),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(FontAwesomeIcons.crown,
-                          size: 12, color: Colors.white),
-                      const SizedBox(width: 8),
-                      Text(
-                        "#1 GÜNDEM",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // PROFİL
-              Padding(
-                padding: EdgeInsets.fromLTRB(16, isTop ? 12 : 16, 16, 0),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) =>
-                                ProfileScreen(userId: post['user_id'])),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: isAlive
-                                ? [
-                                    kAccentOrange,
-                                    kAccentOrange.withOpacity(0.5)
-                                  ]
-                                : [
-                                    Colors.blueGrey,
-                                    Colors.blueGrey.withOpacity(0.5)
-                                  ],
-                          ),
-                        ),
-                        child: CircleAvatar(
-                          radius: 20,
-                          backgroundColor: kCardColor,
-                          backgroundImage: profile["avatar_url"] != null
-                              ? NetworkImage(profile["avatar_url"])
-                              : null,
-                          child: profile["avatar_url"] == null
-                              ? const Icon(Icons.person,
-                                  color: Colors.white54, size: 20)
-                              : null,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            profile["full_name"] ?? "İsimsiz",
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            "@${profile["username"]}",
-                            style: GoogleFonts.poppins(
-                                color: Colors.white38, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (statusText.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            if (statusIcon != null) ...[
-                              Icon(statusIcon, size: 10, color: statusColor),
-                              const SizedBox(width: 4),
-                            ],
-                            Text(
-                              statusText,
-                              style: GoogleFonts.poppins(
-                                color: statusColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              // YAZI
-              if (content.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Text(
-                    content,
-                    style: GoogleFonts.poppins(
-                        color: Colors.white, fontSize: 14, height: 1.4),
-                  ),
-                ),
-
-              // FOTO
-              if (imageUrl != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.network(
-                      imageUrl,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          height: 200,
-                          color: Colors.white.withOpacity(0.05),
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                                color: kAccentOrange, strokeWidth: 2),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
-              // ALT BAR
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    // 🔥 ATEŞ BUTONU
-                    FuelButton(
-                      isFueled: isFueled,
-                      count: likeCount,
-                      isExpired: !isAlive,
-                      onTap: () => _toggleFuel(index, post["id"]),
-                      size: 28,
-                    ),
-                    const SizedBox(width: 8),
-                    if (likeCount > 0)
-                      Text(
-                        "$likeCount",
-                        style: GoogleFonts.poppins(
-                          color: statusColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-
-                    const Spacer(),
-
-                    // YORUM
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(FontAwesomeIcons.comment,
-                              color: Colors.white54, size: 14),
-                          const SizedBox(width: 6),
-                          Text(
-                            "$commentCount",
-                            style: GoogleFonts.poppins(
-                                color: Colors.white54, fontSize: 13),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(post: post, isExploreMode: true))).then((_) => _fetchExplore()),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(color: kCardColor, borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.05)), boxShadow: [if (isAlive && likeCount > 0) BoxShadow(color: statusColor.withOpacity(0.15), blurRadius: 20, spreadRadius: 0, offset: const Offset(0, 4))]),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [CircleAvatar(radius: 20, backgroundColor: Colors.white10, backgroundImage: profile["avatar_url"] != null ? NetworkImage(profile["avatar_url"]) : null, child: profile["avatar_url"] == null ? const Icon(Icons.person, color: Colors.white54) : null), const SizedBox(width: 10), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(profile["full_name"] ?? "Anonim", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)), Text("@${profile["username"]}", style: GoogleFonts.poppins(color: Colors.white38, fontSize: 12))])), if (statusText.isNotEmpty) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: statusColor.withOpacity(0.2))), child: Row(children: [Icon(statusIcon, color: statusColor, size: 10), const SizedBox(width: 4), Text(statusText, style: GoogleFonts.poppins(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold))]))]),
+            const SizedBox(height: 12),
+            if (post["content"] != null && post["content"].isNotEmpty) Text(post["content"], style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 14, height: 1.5)),
+            if (post["image_url"] != null) ...[const SizedBox(height: 12), ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.network(post["image_url"], width: double.infinity, fit: BoxFit.cover, loadingBuilder: (c, child, p) => p == null ? child : Container(height: 200, color: Colors.white.withOpacity(0.05))))],
+            const SizedBox(height: 10),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              FuelButton(isFueled: isFueled, count: likeCount, isExpired: !isAlive, onTap: () => _toggleFuel(index, post["id"]), size: 28),
+              Padding(padding: EdgeInsets.only(left: 2, top: isAlive ? 32.0 : 38.0), child: Text("$likeCount", style: GoogleFonts.poppins(color: statusColor, fontWeight: FontWeight.bold, fontSize: 15))),
+              const Spacer(),
+              Padding(padding: EdgeInsets.only(top: isAlive ? 32.0 : 38.0), child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(12)), child: Row(children: [const Icon(FontAwesomeIcons.comment, size: 16, color: Colors.white38), const SizedBox(width: 6), Text("${comments.length}", style: GoogleFonts.poppins(color: Colors.white38, fontSize: 13))])))
+            ]),
+          ]),
         ),
       ),
     );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(FontAwesomeIcons.fireFlameCurved, size: 50, color: Colors.white10), const SizedBox(height: 16), Text("Henüz ateş yok.", style: GoogleFonts.poppins(color: Colors.white38))]));
+  }
+
+  Widget _buildSearchList() {
+    return ListView.builder(itemCount: searchResults.length, padding: const EdgeInsets.all(16), itemBuilder: (_, i) {
+      final u = searchResults[i];
+      return ListTile(leading: CircleAvatar(backgroundImage: u["avatar_url"] != null ? NetworkImage(u["avatar_url"]) : null, child: u["avatar_url"] == null ? const Icon(Icons.person) : null), title: Text(u["username"], style: GoogleFonts.poppins(color: Colors.white)), subtitle: Text(u["full_name"] ?? "", style: GoogleFonts.poppins(color: Colors.white54)), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: u["id"]))));
+    });
   }
 }
