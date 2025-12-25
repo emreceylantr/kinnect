@@ -1,4 +1,4 @@
-// Kinnect - Post detay ve yorumlar
+// Kinnect - Post detay ve yorumlar (post_detail_screen.dart)
 
 import 'dart:async';
 import 'dart:io';
@@ -20,7 +20,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../widgets/photo_emoji_picker.dart'; // 📸 Photo Emoji Tepkileri
-import '../../widgets/taggable_post_image.dart'; // 🆕 Etiketli Fotoğraf Widget'ı
 
 class PostDetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -60,15 +59,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   String? playingCommentId;
   bool isComposing = false;
 
-  // 🆕 Yanıtla özelliği
-  Map<String, dynamic>? replyingToComment;
-
   // 📸 Emoji tepkileri
   List<Map<String, dynamic>> emojiReactions = [];
-
-  // 🎧 Müzik oynatıcı state
-  final AudioPlayer _musicPlayer = AudioPlayer();
-  bool _isMusicPlaying = false;
 
   String get myId => client.auth.currentUser!.id;
 
@@ -112,28 +104,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
 
     commentCount = (widget.post['comments'] as List?)?.length ?? 0;
+
     _fetchComments();
-    _fetchEmojiReactions(); // 📸 Emoji tepkileri
-
-    // 🎧 MÜZİK OTOMATİK OYNATMA
-    final previewUrl = widget.post['spotify_preview_url'];
-    if (previewUrl != null) {
-      // Sayfa açıldıktan 0.5sn sonra başlat
-      Future.delayed(const Duration(milliseconds: 500), () async {
-        if (mounted && isAlive) {
-          await _musicPlayer.play(UrlSource(previewUrl));
-          setState(() => _isMusicPlaying = true);
-
-          // 30 saniye sonra dur
-          Future.delayed(const Duration(seconds: 30), () {
-            if (mounted && _isMusicPlaying) {
-              _musicPlayer.stop();
-              setState(() => _isMusicPlaying = false);
-            }
-          });
-        }
-      });
-    }
+    _fetchEmojiReactions(); // 📸 Emoji tepkilerini yükle
 
     commentController.addListener(() {
       setState(() {
@@ -151,7 +124,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     commentController.dispose();
     audioRecorder.dispose();
     audioPlayer.dispose();
-    _musicPlayer.dispose(); // 🎧 Müzik player temizle
     recordTimer?.cancel();
     super.dispose();
   }
@@ -181,7 +153,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 color: const Color(0xFF252525),
                 borderRadius: BorderRadius.circular(24),
                 border:
-                    Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+                Border.all(color: Colors.white.withOpacity(0.08), width: 1),
                 boxShadow: [
                   BoxShadow(
                       color: Colors.black.withOpacity(0.5),
@@ -221,7 +193,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   borderRadius: BorderRadius.circular(12)),
                               child: Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(reasons[index],
                                       style: GoogleFonts.poppins(
@@ -274,7 +246,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               color: const Color(0xFF252525),
               borderRadius: BorderRadius.circular(24),
               border:
-                  Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+              Border.all(color: Colors.white.withOpacity(0.08), width: 1),
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withOpacity(0.5),
@@ -294,11 +266,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               const SizedBox(height: 15),
               Text("Seçilen: $reason",
                   style:
-                      GoogleFonts.poppins(color: Colors.orange, fontSize: 12)),
+                  GoogleFonts.poppins(color: Colors.orange, fontSize: 12)),
               const SizedBox(height: 5),
               Text("Detay eklemek istersen aşağıya yazabilirsin.",
                   style:
-                      GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
+                  GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
               const SizedBox(height: 15),
               TextField(
                 controller: detailsController,
@@ -307,7 +279,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 decoration: InputDecoration(
                   hintText: "Buraya yaz...",
                   hintStyle:
-                      GoogleFonts.poppins(color: Colors.white24, fontSize: 14),
+                  GoogleFonts.poppins(color: Colors.white24, fontSize: 14),
                   filled: true,
                   fillColor: Colors.black26,
                   contentPadding: const EdgeInsets.all(12),
@@ -415,7 +387,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       final res = await client
           .from("post_reactions")
           .select(
-              "id, post_id, user_id, emoji_url, emoji_type, created_at, profiles(*)") // Açıkça belirt
+          "id, post_id, user_id, emoji_url, emoji_type, created_at, profiles(*)") // Açıkça belirt
           .eq("post_id", widget.post['id'])
           .order("created_at", ascending: false);
 
@@ -589,46 +561,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
 
     commentController.clear();
-
-    // 🆕 Yanıt bilgisini önce kaydet (setState'ten önce)
-    final replyToUsername = replyingToComment?['profiles']?['username'];
-
-    setState(() {
-      isComposing = false;
-      replyingToComment = null; // 🆕 Yanıt state'ini temizle
-    });
-
-    // 🆕 Yanıt varsa @mention ekle
-    final String finalMsg =
-        replyToUsername != null ? "@$replyToUsername $msg" : msg;
-
-    // 🆕 OPTİMİSTİK UI - Yorumu hemen göster
-    final myProfile = await client
-        .from('profiles')
-        .select('username, avatar_url, full_name')
-        .eq('id', myId)
-        .single();
-
-    final optimisticComment = {
-      'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
-      'post_id': widget.post["id"],
-      'user_id': myId,
-      'content': finalMsg,
-      'audio_url': null,
-      'created_at': DateTime.now().toIso8601String(),
-      'profiles': myProfile,
-    };
-
-    setState(() {
-      comments.add(optimisticComment);
-      commentCount++;
-    });
+    setState(() => isComposing = false);
 
     try {
       await client.from("comments").insert({
         "post_id": widget.post["id"],
         "user_id": myId,
-        "content": finalMsg,
+        "content": msg,
         "audio_url": null,
       });
 
@@ -643,6 +582,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           });
 
           // 🔔 PUSH BİLDİRİM GÖNDER
+          final myProfile = await client
+              .from('profiles')
+              .select('username')
+              .eq('id', myId)
+              .single();
           final username = myProfile['username'] ?? 'Birisi';
 
           await client.functions.invoke('send-push-notification', body: {
@@ -655,17 +599,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         } catch (_) {}
       }
 
-      // Arka planda gerçek yorumları senkronize et
       _fetchComments();
     } catch (e) {
       debugPrint("Yorum hatası: $e");
-      // Hata olursa optimistik yorumu kaldır
-      setState(() {
-        comments.removeWhere((c) => c['id'] == optimisticComment['id']);
-        commentCount--;
-      });
     } finally {
-      if (mounted) setState(() => _isSendingComment = false);
+      if (mounted) setState(() => _isSendingComment = false); // 🔒 Reset flag
     }
   }
 
@@ -811,9 +749,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     },
                     onLongPress: isMyReaction
                         ? () {
-                            Navigator.pop(context);
-                            _confirmDeleteReaction(reaction);
-                          }
+                      Navigator.pop(context);
+                      _confirmDeleteReaction(reaction);
+                    }
                         : null,
                     child: Column(
                       children: [
@@ -834,7 +772,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 ),
                                 image: DecorationImage(
                                   image:
-                                      NetworkImage(reaction['emoji_url'] ?? ''),
+                                  NetworkImage(reaction['emoji_url'] ?? ''),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -913,7 +851,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       await client.storage.from("uploads").upload("comment_audio/$name", file);
 
       final url =
-          client.storage.from("uploads").getPublicUrl("comment_audio/$name");
+      client.storage.from("uploads").getPublicUrl("comment_audio/$name");
 
       await client.from("comments").insert({
         "post_id": widget.post["id"],
@@ -977,6 +915,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   // 🔥 BUZLU CAM (GLASSMORPHISM) VE MOR KALP TEMALI DETAY KARTI 🔥
+  // 🛠️ HİZALAMA: SEARCH SCREEN İLE BİREBİR EŞİTLENDİ
+  // - Sayı: Yanıyorsa 22, Sönmüşse 38
+  // - Yorum: Yanıyorsa 22, Sönmüşse 38
   Widget _buildPostCard() {
     final profile = widget.post["profiles"] ?? {};
     final text = widget.post["content"] ?? "";
@@ -985,6 +926,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final dateStr = date != null ? "${date.day}/${date.month}" : "";
 
     final isMyPost = widget.post["user_id"] == myId;
+
+    // Statü Rengi
+    Color statusColor = Colors.grey;
+    if (isAlive) {
+      if (fuelCount > 10) {
+        statusColor = Colors.redAccent;
+      } else if (fuelCount > 5) {
+        statusColor = const Color(0xFFFF5722);
+      } else if (fuelCount > 0) {
+        statusColor = const Color(0xFFFFAB00);
+      }
+    } else {
+      statusColor = Colors.blueGrey;
+    }
+
+    // 🎯 HİZALAMA DEĞERİ (TEK YERDEN YÖNETİM)
+    final double alignmentTopPadding = isAlive ? 22.0 : 38.0;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -1103,20 +1061,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ),
                 ],
 
-                // 🖼️ ETİKETLİ VE MÜZİKLİ GÖRSEL
+                // --- GÖRSEL ---
                 if (image != null) ...[
+                  const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: TaggablePostImage(
-                        imageUrl: image,
-                        postId: widget.post['id'],
-                        borderRadius: BorderRadius.circular(12),
-                        musicTrackName: widget.post['spotify_track_name'], // 🆕
-                        musicArtistName:
-                            widget.post['spotify_artist_name'], // 🆕
-                      ),
+                      child: Image.network(image),
                     ),
                   ),
                 ],
@@ -1128,175 +1080,196 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: widget.isExploreMode
                       ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // 1. Fuel Button
+                      FuelButton(
+                        isFueled: isFueled,
+                        count: fuelCount,
+                        isExpired: !isAlive,
+                        onTap: _toggleFuel,
+                        size: 30,
+                      ),
+
+                      // 2. Beğeni Sayısı (DİNAMİK HİZALAMA)
+                      Transform.translate(
+                        offset: const Offset(-5, 0),
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                              top: alignmentTopPadding), // 🔥 22 veya 38
+                          child: Text(
+                            "$fuelCount",
+                            style: GoogleFonts.poppins(
+                              color: statusColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      // 3. Yorum Kısmı (AYNI HİZALAMA)
+                      Padding(
+                        padding: EdgeInsets.only(
+                            top:
+                            alignmentTopPadding), // 🔥 Yorum da aynı hizaya indi
+                        child: Row(
                           children: [
-                            FuelButton(
-                              isFueled: isFueled,
-                              count: fuelCount,
-                              isExpired: !isAlive,
-                              onTap: _toggleFuel,
-                              size: 30,
-                            ),
-                            const SizedBox(width: 10),
-                            Flexible(
-                              child: Text(
-                                "$fuelCount Odun",
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.poppins(
-                                    color: Colors.orange,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            const Spacer(),
                             const Icon(FontAwesomeIcons.comment,
-                                color: Colors.grey, size: 22),
+                                color: Colors.grey, size: 20),
                             const SizedBox(width: 6),
                             Text("$commentCount",
                                 style: GoogleFonts.poppins(
                                     color: Colors.grey, fontSize: 14)),
                           ],
-                        )
+                        ),
+                      ),
+                    ],
+                  )
                       : Row(
-                          // 🔥 NORMAL MOD: MOR KALP VE HİZALAMA
-                          children: [
-                            GestureDetector(
-                              onTap: _toggleLike,
-                              child: Container(
-                                color: Colors.transparent,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      isLiked
-                                          ? FontAwesomeIcons.solidHeart
-                                          : FontAwesomeIcons.heart,
-                                      color: isLiked
-                                          ? const Color(0xFF6C63FF)
-                                          : Colors.grey.shade400, // Mor Kalp
-                                      size: 22,
-                                    ),
-                                    if (likeCount > 0) ...[
-                                      const SizedBox(width: 6),
-                                      Text("$likeCount",
-                                          style: GoogleFonts.poppins(
-                                              color: isLiked
-                                                  ? const Color(0xFF6C63FF)
-                                                  : Colors.grey.shade400,
-                                              fontWeight: FontWeight.w600)),
-                                    ]
-                                  ],
-                                ),
+                    // 🔥 NORMAL MOD: MOR KALP VE HİZALAMA
+                    children: [
+                      GestureDetector(
+                        onTap: _toggleLike,
+                        child: Container(
+                          color: Colors.transparent,
+                          child: Row(
+                            children: [
+                              Icon(
+                                isLiked
+                                    ? FontAwesomeIcons.solidHeart
+                                    : FontAwesomeIcons.heart,
+                                color: isLiked
+                                    ? const Color(0xFF6C63FF)
+                                    : Colors.grey.shade400, // Mor Kalp
+                                size: 22,
                               ),
-                            ),
-                            const SizedBox(width: 24),
-                            Container(
-                              color: Colors.transparent,
-                              child: Row(
-                                children: [
-                                  Icon(FontAwesomeIcons.comment,
-                                      color: Colors.grey.shade400, size: 22),
-                                  if (commentCount > 0) ...[
-                                    const SizedBox(width: 6),
-                                    Text("$commentCount",
-                                        style: GoogleFonts.poppins(
-                                            color: Colors.grey.shade400,
-                                            fontWeight: FontWeight.w600)),
-                                  ]
-                                ],
-                              ),
-                            ),
-                            // 📸 Emoji Tepkileri - Sağda
-                            if (emojiReactions.isNotEmpty) ...[
-                              const Spacer(),
-                              GestureDetector(
-                                onTap: () => _showAllReactionsDialog(),
-                                child: Row(
-                                  children: [
-                                    // Üst üste binen avatarlar (max 3)
-                                    SizedBox(
-                                      width: (emojiReactions.length > 3
-                                                  ? 3
-                                                  : emojiReactions.length) *
-                                              22 +
-                                          10,
-                                      height: 28,
-                                      child: Stack(
-                                        children: [
-                                          for (int i = 0;
-                                              i <
-                                                  (emojiReactions.length > 3
-                                                      ? 3
-                                                      : emojiReactions.length);
-                                              i++)
-                                            Positioned(
-                                              left: i * 18.0,
-                                              child: Stack(
-                                                children: [
-                                                  Container(
-                                                    width: 28,
-                                                    height: 28,
-                                                    decoration: BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      border: Border.all(
-                                                          color: Colors.black,
-                                                          width: 2),
-                                                      image: DecorationImage(
-                                                        image: NetworkImage(
-                                                            emojiReactions[i][
-                                                                    'emoji_url'] ??
-                                                                ''),
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Positioned(
-                                                    right: 0,
-                                                    bottom: 0,
-                                                    child: Container(
-                                                      width: 12,
-                                                      height: 12,
-                                                      decoration: BoxDecoration(
-                                                        color: const Color(
-                                                            0xFF1A1A24),
-                                                        shape: BoxShape.circle,
-                                                        border: Border.all(
-                                                            color: const Color(
-                                                                0xFF6C63FF),
-                                                            width: 1),
-                                                      ),
-                                                      child: Center(
-                                                        child: Text(
-                                                          _getEmojiIcon(
-                                                              emojiReactions[i][
-                                                                  'emoji_type']),
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 6),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (emojiReactions.length > 3) ...[
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        "+${emojiReactions.length - 3}",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.grey.shade400,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
+                              if (likeCount > 0) ...[
+                                const SizedBox(width: 6),
+                                Text("$likeCount",
+                                    style: GoogleFonts.poppins(
+                                        color: isLiked
+                                            ? const Color(0xFF6C63FF)
+                                            : Colors.grey.shade400,
+                                        fontWeight: FontWeight.w600)),
+                              ]
                             ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Container(
+                        color: Colors.transparent,
+                        child: Row(
+                          children: [
+                            Icon(FontAwesomeIcons.comment,
+                                color: Colors.grey.shade400, size: 22),
+                            if (commentCount > 0) ...[
+                              const SizedBox(width: 6),
+                              Text("$commentCount",
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.grey.shade400,
+                                      fontWeight: FontWeight.w600)),
+                            ]
                           ],
                         ),
+                      ),
+                      // 📸 Emoji Tepkileri - Sağda
+                      if (emojiReactions.isNotEmpty) ...[
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => _showAllReactionsDialog(),
+                          child: Row(
+                            children: [
+                              // Üst üste binen avatarlar (max 3)
+                              SizedBox(
+                                width: (emojiReactions.length > 3
+                                    ? 3
+                                    : emojiReactions.length) *
+                                    22 +
+                                    10,
+                                height: 28,
+                                child: Stack(
+                                  children: [
+                                    for (int i = 0;
+                                    i <
+                                        (emojiReactions.length > 3
+                                            ? 3
+                                            : emojiReactions.length);
+                                    i++)
+                                      Positioned(
+                                        left: i * 18.0,
+                                        child: Stack(
+                                          children: [
+                                            Container(
+                                              width: 28,
+                                              height: 28,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                    color: Colors.black,
+                                                    width: 2),
+                                                image: DecorationImage(
+                                                  image: NetworkImage(
+                                                      emojiReactions[i][
+                                                      'emoji_url'] ??
+                                                          ''),
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              right: 0,
+                                              bottom: 0,
+                                              child: Container(
+                                                width: 12,
+                                                height: 12,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(
+                                                      0xFF1A1A24),
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                      color: const Color(
+                                                          0xFF6C63FF),
+                                                      width: 1),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    _getEmojiIcon(
+                                                        emojiReactions[i][
+                                                        'emoji_type']),
+                                                    style:
+                                                    const TextStyle(
+                                                        fontSize: 6),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (emojiReactions.length > 3) ...[
+                                const SizedBox(width: 4),
+                                Text(
+                                  "+${emojiReactions.length - 3}",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade400,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1311,7 +1284,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       return const Padding(
         padding: EdgeInsets.all(30),
         child:
-            Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF))),
+        Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF))),
       );
     }
 
@@ -1339,48 +1312,27 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         final id = c["id"].toString();
         final isAudio = c["audio_url"] != null;
         final isMine = c["user_id"] == myId;
-        final isPostOwner = widget.post["user_id"] == myId;
-        final canDelete = isMine || isPostOwner;
         final isPlaying = playingCommentId == id;
 
-        // 🆕 Yanıt mı kontrol et (@ile başlıyorsa)
-        final content = c["content"]?.toString() ?? "";
-        final isReply = content.startsWith("@");
-
         return Padding(
-          padding: EdgeInsets.fromLTRB(
-            isReply ? 40 : 16, // 🆕 Yanıtlar girintili
-            isReply ? 4 : 10,
-            16,
-            isReply ? 4 : 10,
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🆕 Yanıtlar için küçük ok işareti
-              if (isReply)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8, top: 6),
-                  child: Icon(
-                    Icons.subdirectory_arrow_right,
-                    color: Colors.white24,
-                    size: 14,
-                  ),
-                ),
               GestureDetector(
                 onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (_) => ProfileScreen(userId: c['user_id']))),
                 child: CircleAvatar(
-                  radius: isReply ? 14 : 18, // 🆕 Yanıtlar küçük avatar
+                  radius: 18,
                   backgroundImage: p["avatar_url"] != null
                       ? NetworkImage(p["avatar_url"])
                       : null,
                   backgroundColor: Colors.grey[900],
                 ),
               ),
-              SizedBox(width: isReply ? 8 : 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1400,7 +1352,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               style: GoogleFonts.poppins(
                                   color: Colors.white38, fontSize: 11),
                             ),
-                            if (canDelete) // 🆕 Post sahibi veya yorum sahibi silebilir
+                            if (isMine)
                               GestureDetector(
                                 onTap: () => _confirmDelete(id),
                                 child: Padding(
@@ -1446,26 +1398,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         c["content"] ?? "",
                         style: GoogleFonts.poppins(
                             color: Colors.white, fontSize: 14),
-                      ),
-                    // 🆕 YANITLA BUTONU
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          replyingToComment = c;
-                        });
-                        // Input'a focus ver
-                        FocusScope.of(context).requestFocus(FocusNode());
-                      },
-                      child: Text(
-                        "Yanıtla",
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFF6C63FF),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                      )
                   ],
                 ),
               )
@@ -1488,113 +1421,75 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         color: Color(0xFF111111),
         border: Border(top: BorderSide(color: Colors.white12)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          // 🆕 YANITLA GÖSTERGESİ
-          if (replyingToComment != null)
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          // 📸 Foto Emoji butonu
+          GestureDetector(
+            onTap: () async {
+              final result = await showPhotoEmojiPicker(context);
+              if (result != null) {
+                _sendEmojiReaction(result['path']!, result['type']!);
+              }
+            },
+            child: Container(
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: const Color(0xFF6C63FF).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFF2A2A2A),
+                shape: BoxShape.circle,
                 border:
-                    Border.all(color: const Color(0xFF6C63FF).withOpacity(0.3)),
+                Border.all(color: const Color(0xFF6C63FF).withOpacity(0.3)),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.reply, color: Color(0xFF6C63FF), size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "@${replyingToComment!['profiles']?['username'] ?? 'kullanıcı'} yanıtlıyorsun",
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF6C63FF),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => setState(() => replyingToComment = null),
-                    child: const Icon(Icons.close,
-                        color: Colors.white54, size: 18),
-                  ),
-                ],
+              child: const Icon(
+                Icons.face_retouching_natural,
+                color: Color(0xFF6C63FF),
+                size: 22,
               ),
             ),
-          Row(
-            children: [
-              // 📸 Foto Emoji butonu
-              GestureDetector(
-                onTap: () async {
-                  final result = await showPhotoEmojiPicker(context);
-                  if (result != null) {
-                    _sendEmojiReaction(result['path']!, result['type']!);
-                  }
-                },
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: const Color(0xFF6C63FF).withOpacity(0.3)),
-                  ),
-                  child: const Icon(
-                    Icons.face_retouching_natural,
-                    color: Color(0xFF6C63FF),
-                    size: 22,
-                  ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF2A2A2A),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: TextField(
+                controller: commentController,
+                style: const TextStyle(color: Colors.white),
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
+                decoration: InputDecoration(
+                  hintText: isRecording
+                      ? "Kaydediliyor... ($recordDuration)"
+                      : "Yorum yaz...",
+                  hintStyle:
+                  const TextStyle(color: Colors.white38, fontSize: 14),
+                  border: InputBorder.none,
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: TextField(
-                    controller: commentController,
-                    style: const TextStyle(color: Colors.white),
-                    maxLines: null,
-                    keyboardType: TextInputType.multiline,
-                    decoration: InputDecoration(
-                      hintText: isRecording
-                          ? "Kaydediliyor... ($recordDuration)"
-                          : "Yorum yaz...",
-                      hintStyle:
-                          const TextStyle(color: Colors.white38, fontSize: 14),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                    ),
-                  ),
-                ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          GestureDetector(
+            onLongPress: isComposing ? null : _startRecording,
+            onLongPressUp: _stopRecording,
+            onTap: isComposing ? _sendTextComment : null,
+            child: CircleAvatar(
+              radius: 22,
+              backgroundColor:
+              isRecording ? Colors.redAccent : const Color(0xFF6C63FF),
+              child: Icon(
+                isComposing ? Icons.send : Icons.mic,
+                color: Colors.white,
+                size: 20,
               ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                onLongPress: isComposing ? null : _startRecording,
-                onLongPressUp: _stopRecording,
-                onTap: isComposing ? _sendTextComment : null,
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor:
-                      isRecording ? Colors.redAccent : const Color(0xFF6C63FF),
-                  child: Icon(
-                    isComposing ? Icons.send : Icons.mic,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
-          ), // Row kapanışı
+            ),
+          ),
         ],
-      ), // Column kapanışı
+      ),
     );
   }
 }
