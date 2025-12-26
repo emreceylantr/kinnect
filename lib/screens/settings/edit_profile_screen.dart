@@ -1,7 +1,5 @@
 // Kinnect - Profil düzenleme ekranı
 
-// Kinnect - Profil düzenleme ekranı
-
 import 'dart:io';
 import 'dart:ui'; // Blur efekti için
 import 'package:flutter/material.dart';
@@ -10,6 +8,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import '../../theme/theme_manager.dart'; // 🌓 Tema Yöneticisi
+// 🔥 YENİ EKLENEN IMPORTLAR
+import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:path_provider/path_provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> currentProfile;
@@ -84,12 +85,18 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     super.dispose();
   }
 
-  // FOTOĞRAF SEÇME
+  // FOTOĞRAF SEÇME - 🔥 GÜNCELLENDİ: Video varsa siler
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image =
         await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (image != null) setState(() => _imageFile = File(image.path));
+
+    if (image != null) {
+      setState(() {
+        _imageFile = File(image.path);
+        _videoFile = null; // 🔥 ÖNEMLİ: Yeni foto seçilince videoyu iptal et
+      });
+    }
   }
 
   // 🎥 VİDEO (LIVE PHOTO) SEÇME
@@ -102,11 +109,29 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         );
 
     if (video != null) {
-      setState(() => _videoFile = File(video.path));
+      // 1. Videodan Thumbnail Üretme
+      final tempDir = await getTemporaryDirectory();
+      final String? thumbnailPath = await VideoThumbnail.thumbnailFile(
+        video: video.path,
+        thumbnailPath: tempDir.path,
+        imageFormat: ImageFormat.JPEG,
+        maxHeight: 512, // Profil fotosu için yeterli kalite
+        quality: 75,
+      );
+
+      // 2. State'i Güncelleme
+      setState(() {
+        _videoFile = File(video.path); // Videoyu kaydet
+        // Eğer thumbnail başarıyla oluştuysa, profil fotoğrafını da o yap!
+        if (thumbnailPath != null) {
+          _imageFile = File(thumbnailPath);
+        }
+      });
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content:
-                Text("Live Video Seçildi! 🎬", style: GoogleFonts.poppins()),
+            content: Text("Live Video ve Kapak Resmi Ayarlandı! 🎬",
+                style: GoogleFonts.poppins()),
             backgroundColor: _colorGreen));
       }
     }
@@ -369,7 +394,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     }
   }
 
-  // PROFİLİ KAYDET (VİDEO YÜKLEME DAHİL)
+  // PROFİLİ KAYDET - 🔥 GÜNCELLENDİ: Video iptal mantığı eklendi
   Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
     final userId = Supabase.instance.client.auth.currentUser!.id;
@@ -381,6 +406,14 @@ class _EditProfileScreenState extends State<EditProfileScreen>
 
       String? avatarUrl = widget.currentProfile['avatar_url'];
       String? videoUrl = widget.currentProfile['avatar_video_url'];
+
+      // 🔥 YENİ MANTIK:
+      // Eğer kullanıcı YENİ bir resim seçtiyse (_imageFile != null)
+      // VE yeni bir video seçmediyse (_videoFile == null)
+      // Demek ki statik fotoğrafa dönmek istiyor. Videoyu NULL yap.
+      if (_imageFile != null && _videoFile == null) {
+        videoUrl = null;
+      }
 
       // Resim Yükleme
       if (_imageFile != null) {
@@ -415,7 +448,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         'username': _usernameController.text.trim(),
         'bio': _bioController.text.trim(),
         'avatar_url': avatarUrl,
-        'avatar_video_url': videoUrl, // Veritabanına video linkini yaz
+        'avatar_video_url':
+            videoUrl, // Veritabanına video linkini yaz (veya null gönder)
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', userId);
 
@@ -559,7 +593,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                       ),
                       const SizedBox(height: 16),
 
-                      // 🔥 LIVE VIDEO SEÇME BUTONU (AYRI BUTON AMA GEREKLİ) 🔥
+                      // 🔥 LIVE VIDEO SEÇME BUTONU
                       InkWell(
                         onTap: _pickVideo,
                         borderRadius: BorderRadius.circular(20),
