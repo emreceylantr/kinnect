@@ -12,6 +12,7 @@ import 'screens/auth/welcome_screen.dart';
 import 'screens/main/home_screen.dart';
 import 'screens/auth/change_password_screen.dart';
 import 'screens/auth/create_profile_screen.dart';
+import 'theme/theme_manager.dart'; // 🌓 Tema Yöneticisi
 
 // 🎨 Splash Screen Temaları
 const Color kSplashBg = Color(0xFF06060A);
@@ -38,6 +39,9 @@ Future<void> main() async {
       authFlowType: AuthFlowType.pkce,
     ),
   );
+
+  // 🌓 Temayı yükle
+  await ThemeManager().loadTheme();
 
   // 🚀 Uygulamayı HEMEN başlat - bildirim servisi arka planda çalışacak
   runApp(const MyApp());
@@ -172,26 +176,53 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      title: 'Kinnect',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF050505),
-        textTheme: GoogleFonts.poppinsTextTheme().apply(
-          bodyColor: Colors.white,
-          displayColor: Colors.white,
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: IconThemeData(color: Colors.white),
-        ),
-      ),
-      // 🔥 HER ŞEYİN KONTROL NOKTASI BURASI
-      home: const AuthGate(),
+    // 🌓 Tema değişikliğini dinle ve uygula
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeManager().themeNotifier,
+      builder: (context, currentMode, child) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          title: 'Kinnect',
+          themeMode: currentMode,
+          // 🌞 Aydınlık Tema (Light)
+          theme: ThemeData(
+            brightness: Brightness.light,
+            scaffoldBackgroundColor: const Color(0xFFF9FAFB),
+            fontFamily: GoogleFonts.poppins().fontFamily,
+            useMaterial3: true,
+            iconTheme: const IconThemeData(color: Colors.black),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: IconThemeData(color: Colors.black),
+            ),
+            textTheme: GoogleFonts.poppinsTextTheme().apply(
+              bodyColor: Colors.black,
+              displayColor: Colors.black,
+            ),
+          ),
+          // 🌑 Karanlık Tema (Dark)
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            scaffoldBackgroundColor: const Color(0xFF0A0A0F),
+            fontFamily: GoogleFonts.poppins().fontFamily,
+            useMaterial3: true,
+            iconTheme: const IconThemeData(color: Colors.white),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: IconThemeData(color: Colors.white),
+            ),
+            textTheme: GoogleFonts.poppinsTextTheme().apply(
+              bodyColor: Colors.white,
+              displayColor: Colors.white,
+            ),
+          ),
+          // 🔥 HER ŞEYİN KONTROL NOKTASI BURASI
+          home: const AuthGate(),
+        );
+      },
     );
   }
 }

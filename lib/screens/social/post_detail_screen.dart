@@ -26,6 +26,7 @@ import '../../widgets/taggable_post_image.dart'; // 🆕 Etiketli Fotoğraf Widg
 import '../../widgets/image_carousel.dart'; // 🆕 Çoklu Fotoğraf Carousel
 import '../../widgets/shimmer/comment_shimmer.dart';
 import '../../widgets/double_tap_overlay.dart';
+import '../../theme/app_colors.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -189,13 +190,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-                color: const Color(0xFF252525),
+                color: AppColors.bgCardLight,
                 borderRadius: BorderRadius.circular(24),
                 border:
                     Border.all(color: Colors.white.withOpacity(0.08), width: 1),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
+                      color: AppColors.bgBlack.withOpacity(0.5),
                       blurRadius: 20,
                       spreadRadius: 5)
                 ]),
@@ -282,13 +283,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-              color: const Color(0xFF252525),
+              color: AppColors.bgCardLight,
               borderRadius: BorderRadius.circular(24),
               border:
                   Border.all(color: Colors.white.withOpacity(0.08), width: 1),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: AppColors.bgBlack.withOpacity(0.5),
                     blurRadius: 20,
                     spreadRadius: 5)
               ]),
@@ -304,8 +305,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           fontWeight: FontWeight.w600))),
               const SizedBox(height: 15),
               Text("Seçilen: $reason",
-                  style:
-                      GoogleFonts.poppins(color: Colors.orange, fontSize: 12)),
+                  style: GoogleFonts.poppins(
+                      color: AppColors.accentOrange, fontSize: 12)),
               const SizedBox(height: 5),
               Text("Detay eklemek istersen aşağıya yazabilirsin.",
                   style:
@@ -350,7 +351,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         _submitReport(reason, detailsController.text.trim());
                       },
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6C63FF),
+                          backgroundColor: AppColors.primary,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -383,7 +384,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Bildirimin alındı. Teşekkürler! 🛡️"),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.accentGreen,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -392,7 +393,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text("Hata: $e"), backgroundColor: Colors.redAccent),
+              content: Text("Hata: $e"),
+              backgroundColor: AppColors.accentRedAccent),
         );
       }
     }
@@ -476,7 +478,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: AppColors.bgCard,
         title: const Text("Yorumu Sil", style: TextStyle(color: Colors.white)),
         content: const Text("Bu yorumu silmek istediğine emin misin?",
             style: TextStyle(color: Colors.white70)),
@@ -490,7 +492,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               Navigator.pop(ctx);
               _deleteComment(commentId);
             },
-            child: const Text("Sil", style: TextStyle(color: Colors.redAccent)),
+            child: const Text("Sil",
+                style: TextStyle(color: AppColors.accentRedAccent)),
           ),
         ],
       ),
@@ -531,7 +534,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title:
             const Text("Gönderiyi Sil", style: TextStyle(color: Colors.white)),
@@ -549,7 +552,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               Navigator.pop(ctx);
               await _deletePost();
             },
-            child: const Text("Sil", style: TextStyle(color: Colors.redAccent)),
+            child: const Text("Sil",
+                style: TextStyle(color: AppColors.accentRedAccent)),
           ),
         ],
       ),
@@ -563,7 +567,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Gönderi silindi! 🗑️'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppColors.accentRedAccent,
           ),
         );
         Navigator.pop(context, true); // Feed'i yenilemek için true döndür
@@ -572,7 +576,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Hata: $e'), backgroundColor: Colors.redAccent),
+              content: Text('Hata: $e'),
+              backgroundColor: AppColors.accentRedAccent),
         );
       }
     }
@@ -590,7 +595,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: const Color(0xFF252525),
+            color: AppColors.bgCardLight,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
           ),
@@ -655,7 +660,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         await _updateComment(comment['id'], newContent);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6C63FF),
+                        backgroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -691,7 +696,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Yorum güncellendi! ✏️'),
-            backgroundColor: Color(0xFF6C63FF),
+            backgroundColor: AppColors.primary,
           ),
         );
       }
@@ -699,7 +704,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Hata: $e'), backgroundColor: Colors.redAccent),
+              content: Text('Hata: $e'),
+              backgroundColor: AppColors.accentRedAccent),
         );
       }
     }
@@ -714,7 +720,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Tepki silindi! 🗑️'),
-            backgroundColor: Color(0xFF6C63FF),
+            backgroundColor: AppColors.primary,
           ),
         );
       }
@@ -730,7 +736,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text("Tepkiyi Sil", style: TextStyle(color: Colors.white)),
         content: Column(
@@ -762,7 +768,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               Navigator.pop(ctx);
               _deleteReaction(reaction['id']);
             },
-            child: const Text("Sil", style: TextStyle(color: Colors.redAccent)),
+            child: const Text("Sil",
+                style: TextStyle(color: AppColors.accentRedAccent)),
           ),
         ],
       ),
@@ -922,7 +929,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Tepki gönderildi! 📸'),
-            backgroundColor: Color(0xFF6C63FF),
+            backgroundColor: AppColors.primary,
           ),
         );
       }
@@ -932,7 +939,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Hata: $e'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppColors.accentRedAccent,
           ),
         );
       }
@@ -1025,7 +1032,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: const Color(0xFF6C63FF),
+                                  color: AppColors.primary,
                                   width: 2,
                                 ),
                                 image: DecorationImage(
@@ -1189,7 +1196,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     Color statusColor = Colors.grey;
     if (isAlive) {
       if (fuelCount > 10) {
-        statusColor = Colors.redAccent;
+        statusColor = AppColors.accentRedAccent;
       } else if (fuelCount > 5) {
         statusColor = const Color(0xFFFF5722);
       } else if (fuelCount > 0) {
@@ -1261,7 +1268,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                         .isNotEmpty) ...[
                                   const SizedBox(width: 6),
                                   const Icon(Icons.location_on,
-                                      color: Color(0xFF6C63FF), size: 12),
+                                      color: AppColors.primary, size: 12),
                                   const SizedBox(width: 2),
                                   Expanded(
                                     child: GestureDetector(
@@ -1270,7 +1277,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                         child: Text(
                                           widget.post['location'],
                                           style: GoogleFonts.poppins(
-                                              color: const Color(0xFF6C63FF),
+                                              color: AppColors.primary,
                                               fontSize: 11,
                                               fontWeight: FontWeight.w500),
                                           maxLines: 1,
@@ -1332,7 +1339,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       child: Row(
                                         children: [
                                           const Icon(Icons.edit_outlined,
-                                              color: Color(0xFF6C63FF),
+                                              color: AppColors.primary,
                                               size: 18),
                                           const SizedBox(width: 10),
                                           Text("Düzenle",
@@ -1347,12 +1354,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       child: Row(
                                         children: [
                                           const Icon(Icons.delete_outline,
-                                              color: Colors.redAccent,
+                                              color: AppColors.accentRedAccent,
                                               size: 18),
                                           const SizedBox(width: 10),
                                           Text("Sil",
                                               style: GoogleFonts.poppins(
-                                                  color: Colors.redAccent,
+                                                  color:
+                                                      AppColors.accentRedAccent,
                                                   fontSize: 13)),
                                         ],
                                       ),
@@ -1506,7 +1514,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           ? FontAwesomeIcons.solidHeart
                                           : FontAwesomeIcons.heart,
                                       color: isLiked
-                                          ? const Color(0xFF6C63FF)
+                                          ? AppColors.primary
                                           : Colors.grey.shade400,
                                       size: 22,
                                     ),
@@ -1515,7 +1523,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       Text("$likeCount",
                                           style: GoogleFonts.poppins(
                                               color: isLiked
-                                                  ? const Color(0xFF6C63FF)
+                                                  ? AppColors.primary
                                                   : Colors.grey.shade400,
                                               fontWeight: FontWeight.w600)),
                                     ]
@@ -1597,7 +1605,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                     decoration: BoxDecoration(
                                                       shape: BoxShape.circle,
                                                       border: Border.all(
-                                                          color: Colors.black,
+                                                          color:
+                                                              AppColors.bgBlack,
                                                           width: 2),
                                                       image: DecorationImage(
                                                         image: NetworkImage(
@@ -1792,7 +1801,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.only(left: 10),
                                   child: Icon(Icons.delete_outline,
-                                      color: Colors.redAccent.withOpacity(0.7),
+                                      color: AppColors.accentRedAccent
+                                          .withOpacity(0.7),
                                       size: 16), // Rengi biraz kıstım
                                 ),
                               )
@@ -1809,7 +1819,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               vertical: 8, horizontal: 12),
                           decoration: BoxDecoration(
                             color: isPlaying
-                                ? const Color(0xFF6C63FF)
+                                ? AppColors.primary
                                 : const Color(0xFF2C2C2C),
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -1846,7 +1856,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       child: Text(
                         "Yanıtla",
                         style: GoogleFonts.poppins(
-                          color: const Color(0xFF6C63FF),
+                          color: AppColors.primary,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1883,20 +1893,19 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF6C63FF).withOpacity(0.15),
+                color: AppColors.primary.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(8),
-                border:
-                    Border.all(color: const Color(0xFF6C63FF).withOpacity(0.3)),
+                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.reply, color: Color(0xFF6C63FF), size: 16),
+                  const Icon(Icons.reply, color: AppColors.primary, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       "@${replyingToComment!['profiles']?['username'] ?? 'kullanıcı'} yanıtlıyorsun",
                       style: GoogleFonts.poppins(
-                        color: const Color(0xFF6C63FF),
+                        color: AppColors.primary,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1926,12 +1935,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF2A2A2A),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                        color: const Color(0xFF6C63FF).withOpacity(0.3)),
+                    border:
+                        Border.all(color: AppColors.primary.withOpacity(0.3)),
                   ),
                   child: const Icon(
                     Icons.face_retouching_natural,
-                    color: Color(0xFF6C63FF),
+                    color: AppColors.primary,
                     size: 22,
                   ),
                 ),
@@ -1968,8 +1977,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 onTap: isComposing ? _sendTextComment : null,
                 child: CircleAvatar(
                   radius: 22,
-                  backgroundColor:
-                      isRecording ? Colors.redAccent : const Color(0xFF6C63FF),
+                  backgroundColor: isRecording
+                      ? AppColors.accentRedAccent
+                      : AppColors.primary,
                   child: Icon(
                     isComposing ? Icons.send : Icons.mic,
                     color: Colors.white,
