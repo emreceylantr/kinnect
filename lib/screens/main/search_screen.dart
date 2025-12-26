@@ -38,7 +38,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   late final String myId;
   final TextEditingController searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode(); // 🔥 FocusNode eklendi
+  final FocusNode _searchFocusNode = FocusNode();
 
   bool isExpanded = false;
 
@@ -68,7 +68,6 @@ class _SearchScreenState extends State<SearchScreen> {
       });
     });
 
-    // 🔥 Focus dinleyicisi: Tıklanınca setState yapıp UI'ı güncelle
     _searchFocusNode.addListener(() {
       setState(() {
         // Klavye açılıp kapanınca arayüz güncellensin
@@ -79,7 +78,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void dispose() {
     _pageController.dispose();
-    _searchFocusNode.dispose(); // Unutma
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -99,7 +98,7 @@ class _SearchScreenState extends State<SearchScreen> {
         .limit(15);
     if (mounted)
       setState(
-          () => searchResults = List<Map<String, dynamic>>.from(res as List));
+              () => searchResults = List<Map<String, dynamic>>.from(res as List));
   }
 
   Future<void> _fetchExplore() async {
@@ -191,13 +190,17 @@ class _SearchScreenState extends State<SearchScreen> {
             Positioned(
               right: 15,
               bottom: 0,
-              child: Transform.flip(
-                flipX: true,
-                child: SizedBox(
-                  height: 100,
-                  width: 100,
-                  child: Lottie.asset('assets/animations/guy.json',
-                      fit: BoxFit.contain),
+              // 🔥 DÜZELTME: IgnorePointer eklendi.
+              // Lottie animasyonunun tıklamaları engellememesini sağlar.
+              child: IgnorePointer(
+                child: Transform.flip(
+                  flipX: true,
+                  child: SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: Lottie.asset('assets/animations/guy.json',
+                        fit: BoxFit.contain),
+                  ),
                 ),
               ),
             ),
@@ -208,7 +211,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // 🔥 REVİZE EDİLEN ARAMA ÇUBUĞU
+  // 🔥 ARAMA ÇUBUĞU
   Widget _buildAnimatedSearchBar() {
     final bool isFocused = _searchFocusNode.hasFocus;
     final bool hasText = searchController.text.isNotEmpty;
@@ -221,12 +224,12 @@ class _SearchScreenState extends State<SearchScreen> {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
               color:
-                  isExpanded ? kAccentOrange.withOpacity(0.5) : Colors.white10),
+              isExpanded ? kAccentOrange.withOpacity(0.5) : Colors.white10),
           boxShadow: isExpanded
               ? [
-                  BoxShadow(
-                      color: kAccentOrange.withOpacity(0.15), blurRadius: 15)
-                ]
+            BoxShadow(
+                color: kAccentOrange.withOpacity(0.15), blurRadius: 15)
+          ]
               : []),
       child: Row(children: [
         const SizedBox(width: 12),
@@ -235,18 +238,16 @@ class _SearchScreenState extends State<SearchScreen> {
         Expanded(
             child: TextField(
                 controller: searchController,
-                focusNode: _searchFocusNode, // FocusNode bağlandı
+                focusNode: _searchFocusNode,
                 style: GoogleFonts.poppins(color: Colors.white, fontSize: 13),
                 textAlignVertical: TextAlignVertical.center,
-                // 🔥 Odaklanınca veya yazı varsa SOLA, yoksa ORTAYA
                 textAlign:
-                    (isFocused || hasText) ? TextAlign.start : TextAlign.center,
+                (isFocused || hasText) ? TextAlign.start : TextAlign.center,
                 decoration: InputDecoration(
                   isDense: true,
-                  // 🔥 Odaklanınca ipucu yazısı KAYBOLSUN
                   hintText: isFocused ? "" : "Kullanıcı ara...",
                   hintStyle:
-                      GoogleFonts.poppins(color: Colors.white30, fontSize: 13),
+                  GoogleFonts.poppins(color: Colors.white30, fontSize: 13),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.only(bottom: 4),
                 ),
@@ -287,8 +288,6 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     if (explorePosts.isEmpty) return _buildEmptyState();
 
-    // 🔥 GÜNDEM İÇİN YENİ MANTIK 🔥
-    // 1. Sadece "Canlı" (24 saati geçmemiş) postları filtrele.
     final now = DateTime.now();
     List<Map<String, dynamic>> alivePosts = explorePosts.where((p) {
       final date = DateTime.tryParse(p['created_at'] ?? "")?.toLocal();
@@ -296,14 +295,10 @@ class _SearchScreenState extends State<SearchScreen> {
       return now.difference(date).inHours < 24;
     }).toList();
 
-    // 2. Canlı postları beğeni sayısına göre sırala.
     alivePosts.sort((a, b) =>
         (b['likes'] as List).length.compareTo((a['likes'] as List).length));
 
-    // 3. İlk 3 tanesini al (Gündem Slider için).
     final List<Map<String, dynamic>> sliderPosts = alivePosts.take(3).toList();
-
-    // 4. Liste postları: Tüm postlar (Kül olanlar dahil) kronolojik (zaten explorePosts sıralı gelmişti).
     final List<Map<String, dynamic>> listPosts = explorePosts;
 
     return RefreshIndicator(
@@ -315,13 +310,13 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(children: [
           const SizedBox(height: 20),
 
-          // GÜNDEM SLIDER'I (Sadece Canlı ve En Çok Beğenilen 3 Post)
+          // GÜNDEM SLIDER'I
           if (sliderPosts.isNotEmpty) ...[
             _build3DTrendSlider(sliderPosts),
             const SizedBox(height: 20),
           ],
 
-          // NORMAL LİSTE (Hepsi - Kronolojik)
+          // NORMAL LİSTE
           if (listPosts.isEmpty)
             _buildEmptyState()
           else
@@ -355,7 +350,7 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Opacity(
                 opacity: opacity,
                 child:
-                    _buildFeaturedCard(posts[realIndex], rank: realIndex + 1),
+                _buildFeaturedCard(posts[realIndex], rank: realIndex + 1),
               ),
             ),
           );
@@ -401,14 +396,14 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     Color headerBgColor =
-        isRank1 ? kAccentOrange : Colors.black.withOpacity(0.6);
+    isRank1 ? kAccentOrange : Colors.black.withOpacity(0.6);
 
     return GestureDetector(
       onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) =>
-                      PostDetailScreen(post: post, isExploreMode: true)))
+          context,
+          MaterialPageRoute(
+              builder: (_) =>
+                  PostDetailScreen(post: post, isExploreMode: true)))
           .then((_) => _fetchExplore()),
       child: Container(
         decoration: BoxDecoration(
@@ -432,13 +427,13 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
           image: imageUrl != null
               ? DecorationImage(
-                  image: NetworkImage(imageUrl), fit: BoxFit.cover)
+              image: NetworkImage(imageUrl), fit: BoxFit.cover)
               : null,
           gradient: imageUrl == null
               ? LinearGradient(
-                  colors: [kCardColor, kCardColor.withOpacity(0.8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight)
+              colors: [kCardColor, kCardColor.withOpacity(0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight)
               : null,
         ),
         child: ClipRRect(
@@ -449,9 +444,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 Container(
                     decoration: BoxDecoration(
                         gradient: LinearGradient(colors: [
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.9)
-                ], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.9)
+                        ], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
               Positioned(
                 top: 0,
                 left: 0,
@@ -506,8 +501,8 @@ class _SearchScreenState extends State<SearchScreen> {
                                 : null,
                             child: profile["avatar_url"] == null
                                 ? Icon(Icons.person,
-                                    size: imageUrl != null ? 16 : 20,
-                                    color: Colors.white)
+                                size: imageUrl != null ? 16 : 20,
+                                color: Colors.white)
                                 : null),
                         const SizedBox(width: 12),
                         Expanded(
@@ -515,22 +510,22 @@ class _SearchScreenState extends State<SearchScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                              Text(profile["full_name"] ?? "Anonim",
-                                  style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontSize: imageUrl != null
-                                          ? (isRank1 ? 14 : 12)
-                                          : (isRank1 ? 16 : 14),
-                                      fontWeight: FontWeight.bold),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis),
-                              Text("@${profile["username"]}",
-                                  style: GoogleFonts.poppins(
-                                      color: Colors.white70,
-                                      fontSize: imageUrl != null ? 11 : 13),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis)
-                            ])),
+                                  Text(profile["full_name"] ?? "Anonim",
+                                      style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: imageUrl != null
+                                              ? (isRank1 ? 14 : 12)
+                                              : (isRank1 ? 16 : 14),
+                                          fontWeight: FontWeight.bold),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis),
+                                  Text("@${profile["username"]}",
+                                      style: GoogleFonts.poppins(
+                                          color: Colors.white70,
+                                          fontSize: imageUrl != null ? 11 : 13),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis)
+                                ])),
                       ],
                     ),
                     const SizedBox(height: 14),
@@ -547,11 +542,11 @@ class _SearchScreenState extends State<SearchScreen> {
                               fontSize: imageUrl == null ? 18 : 12,
                               shadows: imageUrl != null
                                   ? [
-                                      const Shadow(
-                                          blurRadius: 2,
-                                          color: Colors.black,
-                                          offset: Offset(0, 1))
-                                    ]
+                                const Shadow(
+                                    blurRadius: 2,
+                                    color: Colors.black,
+                                    offset: Offset(0, 1))
+                              ]
                                   : [])),
                     if (imageUrl == null)
                       const Spacer()
@@ -587,7 +582,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // 📝 NORMAL LİSTE KARTI (AYNI KALDI)
+  // 📝 NORMAL LİSTE KARTI
   Widget _buildPostCard(Map<String, dynamic> post, int index) {
     final profile = post["profiles"] ?? {};
     final likes = post["likes"] as List? ?? [];
@@ -623,10 +618,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return GestureDetector(
       onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) =>
-                      PostDetailScreen(post: post, isExploreMode: true)))
+          context,
+          MaterialPageRoute(
+              builder: (_) =>
+                  PostDetailScreen(post: post, isExploreMode: true)))
           .then((_) => _fetchExplore()),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -645,7 +640,7 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               CircleAvatar(
                   radius: 20,
@@ -661,24 +656,24 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                    Text(profile["full_name"] ?? "Anonim",
-                        style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14)),
-                    Text("@${profile["username"]}",
-                        style: GoogleFonts.poppins(
-                            color: Colors.white38, fontSize: 12))
-                  ])),
+                        Text(profile["full_name"] ?? "Anonim",
+                            style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14)),
+                        Text("@${profile["username"]}",
+                            style: GoogleFonts.poppins(
+                                color: Colors.white38, fontSize: 12))
+                      ])),
               if (statusText.isNotEmpty)
                 Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                         border:
-                            Border.all(color: statusColor.withOpacity(0.2))),
+                        Border.all(color: statusColor.withOpacity(0.2))),
                     child: Row(children: [
                       Icon(statusIcon, color: statusColor, size: 10),
                       const SizedBox(width: 4),
@@ -762,10 +757,10 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildEmptyState() {
     return Center(
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(FontAwesomeIcons.fireFlameCurved, size: 50, color: Colors.white10),
-      const SizedBox(height: 16),
-      Text("Henüz ateş yok.", style: GoogleFonts.poppins(color: Colors.white38))
-    ]));
+          Icon(FontAwesomeIcons.fireFlameCurved, size: 50, color: Colors.white10),
+          const SizedBox(height: 16),
+          Text("Henüz ateş yok.", style: GoogleFonts.poppins(color: Colors.white38))
+        ]));
   }
 
   Widget _buildSearchList() {
