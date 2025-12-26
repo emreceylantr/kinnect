@@ -3,17 +3,18 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
+import 'package:zego_uikit/zego_uikit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 // 🎨 MODERN VE SOFT RENK PALETİ
 const Color kCallPrimary = Color(0xFF8E84FF); // Soft mor
-const Color kCallAccent = Color(0xFF4DD0E1);  // Soft turkuaz
-const Color kCallPink = Color(0xFFFF80AB);    // Pastel pembe
-const Color kCallDark = Color(0xFF1F2235);    // Lacivert-Siyah taban
+const Color kCallAccent = Color(0xFF4DD0E1); // Soft turkuaz
+const Color kCallPink = Color(0xFFFF80AB); // Pastel pembe
+const Color kCallDark = Color(0xFF1F2235); // Lacivert-Siyah taban
 const Color kCallSuccess = Color(0xFF00E676);
 
-class CallScreen extends StatelessWidget {
+class CallScreen extends StatefulWidget {
   final String callId;
   final String otherUserName;
   final bool isVideo;
@@ -28,36 +29,115 @@ class CallScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    // 🔍 SUPABASE VERİ Debugging
+  State<CallScreen> createState() => _CallScreenState();
+}
+
+class _CallScreenState extends State<CallScreen> {
+  late Future<String> _userNameFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _userNameFuture = _fetchLocalUserName();
+  }
+
+  Future<String> _fetchLocalUserName() async {
     final currentUser = Supabase.instance.client.auth.currentUser;
-    final metadata = currentUser?.userMetadata;
-
-    // Konsola yazdırır: Supabase'den ne geldiğini buradan görebilirsin
-    print("--------------------------------------------------");
-    print("GELEN METADATA VERİSİ: $metadata");
-    print("--------------------------------------------------");
-
-    // 🚀 İSİM ÇEKME MANTIĞI (GÜNCELLENDİ)
-    // Sırasıyla hepsini dener, hangisi doluysa onu alır.
-    String userName = 'Misafir';
-
-    if (metadata != null) {
-      if (metadata['full_name'] != null && metadata['full_name'].toString().isNotEmpty) {
-        userName = metadata['full_name'];
-      } else if (metadata['name'] != null && metadata['name'].toString().isNotEmpty) {
-        userName = metadata['name'];
-      } else if (metadata['username'] != null && metadata['username'].toString().isNotEmpty) {
-        userName = metadata['username'];
-      } else if (metadata['display_name'] != null && metadata['display_name'].toString().isNotEmpty) {
-        userName = metadata['display_name'];
-      }
+    if (currentUser == null) {
+      return 'Misafir';
     }
 
+    try {
+      // profiles tablosundan ismi çek
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('full_name, username')
+          .eq('id', currentUser.id)
+          .single();
+
+      // Önce full_name'e bak, yoksa username'e
+      if (response['full_name'] != null &&
+          response['full_name'].toString().isNotEmpty) {
+        return response['full_name'];
+      } else if (response['username'] != null &&
+          response['username'].toString().isNotEmpty) {
+        return response['username'];
+      } else {
+        // Fallback: metadata'dan dene
+        final metadata = currentUser.userMetadata;
+        if (metadata != null) {
+          if (metadata['full_name'] != null &&
+              metadata['full_name'].toString().isNotEmpty) {
+            return metadata['full_name'];
+          } else if (metadata['name'] != null &&
+              metadata['name'].toString().isNotEmpty) {
+            return metadata['name'];
+          } else if (metadata['username'] != null &&
+              metadata['username'].toString().isNotEmpty) {
+            return metadata['username'];
+          }
+        }
+        return 'Misafir';
+      }
+    } catch (e) {
+      print('Kullanıcı ismi çekilemedi: $e');
+      return 'Misafir';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _userNameFuture,
+      builder: (context, snapshot) {
+        // İsim yüklenene kadar loading göster
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            body: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF2B32B2),
+                    Color(0xFF1488CC),
+                    Color(0xFF1F2235),
+                  ],
+                ),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: kCallPrimary),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Arama hazırlanıyor...',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        // İsim yüklendi, artık Zego widget'ını göster
+        final localUserName = snapshot.data ?? 'Misafir';
+        return _buildCallUI(context, localUserName);
+      },
+    );
+  }
+
+  Widget _buildCallUI(BuildContext context, String localUserName) {
+    final currentUser = Supabase.instance.client.auth.currentUser;
     final userId = currentUser?.id ?? 'unknown_user';
 
     // Video veya Ses konfigürasyonu
-    final config = isVideo
+    final config = widget.isVideo
         ? ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall()
         : ZegoUIKitPrebuiltCallConfig.oneOnOneVoiceCall();
 
@@ -86,7 +166,8 @@ class CallScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: kCallPrimary,
                   boxShadow: [
-                    BoxShadow(color: kCallPrimary.withOpacity(0.3), blurRadius: 4)
+                    BoxShadow(
+                        color: kCallPrimary.withOpacity(0.3), blurRadius: 4)
                   ],
                 ),
                 child: Center(
@@ -128,12 +209,22 @@ class CallScreen extends StatelessWidget {
     config.bottomMenuBar.backgroundColor = Colors.transparent;
     config.bottomMenuBar.style = ZegoCallMenuBarStyle.dark;
 
-    if (!isVideo) {
+    if (!widget.isVideo) {
       config.bottomMenuBar.buttons = [
         ZegoCallMenuBarButtonName.toggleMicrophoneButton,
         ZegoCallMenuBarButtonName.hangUpButton,
         ZegoCallMenuBarButtonName.showMemberListButton,
       ];
+      // 🔊 Layout Ayarı - Sesli aramada kendi görüntünü gizle
+      config.audioVideoView.showMicrophoneStateOnView = false;
+
+      // Küçük ekranı tamamen gizlemek için boyutunu sıfır yap
+      config.layout = ZegoLayout.pictureInPicture(
+        isSmallViewDraggable: false,
+        switchLargeOrSmallViewByClick: false,
+        smallViewSize: const Size(0, 0), // Boyutu sıfırla
+        smallViewPosition: ZegoViewPosition.bottomRight, // Köşeye at
+      );
     } else {
       config.bottomMenuBar.buttons = [
         ZegoCallMenuBarButtonName.toggleCameraButton,
@@ -143,17 +234,31 @@ class CallScreen extends StatelessWidget {
       ];
     }
 
-    // 🎨 Avatar Builder
+    // 🎨 Avatar Builder - Local ve Remote user ayrımı yap
     config.avatarBuilder = (context, size, user, extraInfo) {
-      return otherUserAvatar != null && !isVideo
-          ? _AnimatedProfileAvatar(
-          avatarUrl: otherUserAvatar,
-          userName: user?.name ?? otherUserName)
-          : _buildAvatarWithPhoto(user?.name ?? otherUserName, size);
+      // Eğer user yoksa veya video ise varsayılan avatar göster
+      if (user == null || widget.isVideo) {
+        return _buildAvatarWithPhoto(widget.otherUserName, size);
+      }
+
+      // Local user mı kontrol et (userId ile karşılaştır)
+      final isLocalUser = user.id == userId;
+
+      if (isLocalUser) {
+        // Local user'ı sesli aramada gizle (boş widget döndür)
+        return const SizedBox.shrink();
+      } else {
+        // Remote user için otherUserAvatar kullan
+        return widget.otherUserAvatar != null
+            ? _AnimatedProfileAvatar(
+                avatarUrl: widget.otherUserAvatar,
+                userName: widget.otherUserName)
+            : _buildAvatarWithPhoto(widget.otherUserName, size);
+      }
     };
 
     // 🎨 Foreground
-    if (!isVideo) {
+    if (!widget.isVideo) {
       config.foreground = _buildModernForeground(context);
     }
 
@@ -161,7 +266,7 @@ class CallScreen extends StatelessWidget {
     config.duration.isVisible = true;
 
     // 🎨 Audio View Arka Planı
-    if (!isVideo) {
+    if (!widget.isVideo) {
       config.audioVideoView.backgroundBuilder =
           (context, size, user, extraInfo) {
         return _buildModernBackground();
@@ -170,10 +275,11 @@ class CallScreen extends StatelessWidget {
 
     return ZegoUIKitPrebuiltCall(
       appID: 1191288890,
-      appSign: "REDACTED_ZEGO_APP_SIGN",
+      appSign:
+          "REDACTED_ZEGO_APP_SIGN",
       userID: userId,
-      userName: userName, // Otomatik bulunan isim
-      callID: callId,
+      userName: localUserName, // Users tablosundan çekilen isim
+      callID: widget.callId,
       config: config,
       events: ZegoUIKitPrebuiltCallEvents(
         onCallEnd: (event, defaultAction) {
@@ -277,39 +383,40 @@ class CallScreen extends StatelessWidget {
               shape: BoxShape.circle,
               color: kCallDark,
             ),
-            child: otherUserAvatar != null && otherUserAvatar!.isNotEmpty
+            child: widget.otherUserAvatar != null &&
+                    widget.otherUserAvatar!.isNotEmpty
                 ? ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: otherUserAvatar!,
-                fit: BoxFit.cover,
-                width: avatarSize - 8,
-                height: avatarSize - 8,
-                placeholder: (context, url) => CircularProgressIndicator(
-                  color: kCallPrimary,
-                  strokeWidth: 2,
-                ),
-                errorWidget: (context, url, error) => Center(
-                  child: Text(
-                    initial,
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: avatarSize * 0.3,
-                      fontWeight: FontWeight.bold,
+                    child: CachedNetworkImage(
+                      imageUrl: widget.otherUserAvatar!,
+                      fit: BoxFit.cover,
+                      width: avatarSize - 8,
+                      height: avatarSize - 8,
+                      placeholder: (context, url) => CircularProgressIndicator(
+                        color: kCallPrimary,
+                        strokeWidth: 2,
+                      ),
+                      errorWidget: (context, url, error) => Center(
+                        child: Text(
+                          initial,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: avatarSize * 0.3,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      initial,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: avatarSize * 0.3,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-              ),
-            )
-                : Center(
-              child: Text(
-                initial,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: avatarSize * 0.3,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
           ),
         ),
       ),
@@ -323,7 +430,7 @@ class CallScreen extends StatelessWidget {
         children: [
           const SizedBox(height: 220),
           Text(
-            otherUserName,
+            widget.otherUserName,
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontSize: 28,
@@ -339,8 +446,7 @@ class CallScreen extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
-          _CallStatusIndicator(),
+          // Bağlanıyor yazısı kaldırıldı
           const SizedBox(height: 32),
           _ModernAudioWave(),
           const Spacer(),
@@ -387,7 +493,7 @@ class _AnimatedProfileAvatarState extends State<_AnimatedProfileAvatar>
   @override
   Widget build(BuildContext context) {
     final initial =
-    widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?';
+        widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?';
 
     return AnimatedBuilder(
       animation: _controller,
@@ -450,113 +556,45 @@ class _AnimatedProfileAvatarState extends State<_AnimatedProfileAvatar>
                     shape: BoxShape.circle,
                     color: kCallDark,
                   ),
-                  child: widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty
-                      ? ClipOval(
-                    child: CachedNetworkImage(
-                      imageUrl: widget.avatarUrl!,
-                      fit: BoxFit.cover,
-                      width: 114,
-                      height: 114,
-                      placeholder: (context, url) =>
-                          CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                      errorWidget: (context, url, error) => Center(
-                        child: Text(
-                          initial,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                      : Center(
-                    child: Text(
-                      initial,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                  child:
+                      widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty
+                          ? ClipOval(
+                              child: CachedNetworkImage(
+                                imageUrl: widget.avatarUrl!,
+                                fit: BoxFit.cover,
+                                width: 114,
+                                height: 114,
+                                placeholder: (context, url) =>
+                                    CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                                errorWidget: (context, url, error) => Center(
+                                  child: Text(
+                                    initial,
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                initial,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                 ),
               ),
             ],
           ),
-        );
-      },
-    );
-  }
-}
-
-// 📞 DURUM İNDİKATÖRÜ
-class _CallStatusIndicator extends StatefulWidget {
-  @override
-  State<_CallStatusIndicator> createState() => _CallStatusIndicatorState();
-}
-
-class _CallStatusIndicatorState extends State<_CallStatusIndicator>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.3, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: kCallSuccess,
-                boxShadow: [
-                  BoxShadow(
-                    color: kCallSuccess.withOpacity(_animation.value * 0.6),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Bağlanıyor...',
-              style: GoogleFonts.poppins(
-                color: Colors.white.withOpacity(0.8),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
         );
       },
     );
@@ -598,7 +636,7 @@ class _ModernAudioWaveState extends State<_ModernAudioWave>
           children: List.generate(5, (index) {
             final delay = index * 0.15;
             final animValue =
-            math.sin((_controller.value + delay) * math.pi * 2);
+                math.sin((_controller.value + delay) * math.pi * 2);
             final height = 10 + (animValue * 15).abs();
 
             return Container(
