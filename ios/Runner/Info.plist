@@ -72,6 +72,8 @@
 		<string>Microphone access is needed for voice and video calls.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Photo library access is needed to upload profile photos and share posts.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>We need your location to add location tags to your posts.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UIBackgroundModes</key>

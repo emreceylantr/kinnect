@@ -20,6 +20,8 @@ import '../content/call_screen.dart';
 import 'search_screen.dart';
 import '../../widgets/image_carousel.dart';
 
+import '../../widgets/location_display_sheet.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -930,10 +932,41 @@ class _PostCardState extends State<PostCard> {
                                       fontSize: 15),
                                 ),
                               ),
-                              Text(
-                                '@${profile['username']}',
-                                style: GoogleFonts.poppins(
-                                    color: Colors.grey.shade400, fontSize: 13),
+                              Row(
+                                children: [
+                                  Text(
+                                    '@${profile['username']}',
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.grey.shade400,
+                                        fontSize: 13),
+                                  ),
+                                  if (p['location'] != null &&
+                                      p['location'].toString().isNotEmpty) ...[
+                                    const SizedBox(width: 6),
+                                    const Icon(Icons.location_on,
+                                        color: Color(0xFF6C63FF), size: 12),
+                                    const SizedBox(width: 2),
+                                    GestureDetector(
+                                      onTap: () => showLocationDisplaySheet(
+                                          context, p['location']),
+                                      child: Container(
+                                        constraints:
+                                            const BoxConstraints(maxWidth: 120),
+                                        color: Colors
+                                            .transparent, // Tıklama alanı için
+                                        child: Text(
+                                          p['location'],
+                                          style: GoogleFonts.poppins(
+                                              color: const Color(0xFF6C63FF),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w500),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ],
                           ),
