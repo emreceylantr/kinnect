@@ -193,7 +193,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 color: AppColors.bgCardLight,
                 borderRadius: BorderRadius.circular(24),
                 border:
-                    Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+                Border.all(color: Colors.white.withOpacity(0.08), width: 1),
                 boxShadow: [
                   BoxShadow(
                       color: AppColors.bgBlack.withOpacity(0.5),
@@ -233,7 +233,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   borderRadius: BorderRadius.circular(12)),
                               child: Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(reasons[index],
                                       style: GoogleFonts.poppins(
@@ -286,7 +286,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               color: AppColors.bgCardLight,
               borderRadius: BorderRadius.circular(24),
               border:
-                  Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+              Border.all(color: Colors.white.withOpacity(0.08), width: 1),
               boxShadow: [
                 BoxShadow(
                     color: AppColors.bgBlack.withOpacity(0.5),
@@ -310,7 +310,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               const SizedBox(height: 5),
               Text("Detay eklemek istersen aşağıya yazabilirsin.",
                   style:
-                      GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
+                  GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
               const SizedBox(height: 15),
               TextField(
                 controller: detailsController,
@@ -319,7 +319,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 decoration: InputDecoration(
                   hintText: "Buraya yaz...",
                   hintStyle:
-                      GoogleFonts.poppins(color: Colors.white24, fontSize: 14),
+                  GoogleFonts.poppins(color: Colors.white24, fontSize: 14),
                   filled: true,
                   fillColor: Colors.black26,
                   contentPadding: const EdgeInsets.all(12),
@@ -428,7 +428,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       final res = await client
           .from("post_reactions")
           .select(
-              "id, post_id, user_id, emoji_url, emoji_type, created_at, profiles(*)") // Açıkça belirt
+          "id, post_id, user_id, emoji_url, emoji_type, created_at, profiles(*)") // Açıkça belirt
           .eq("post_id", widget.post['id'])
           .order("created_at", ascending: false);
 
@@ -509,21 +509,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ),
     );
 
-    // Eğer güncelleme yapıldıysa (result == true), sayfayı yenilememiz gerekebilir.
-    // Ancak widget.post dışarıdan geldiği için anlık güncellemeyi
-    // feed'e yansıtmak zor olabilir. En azından UI'da bir feedback verebiliriz.
-    // İdealde post detail sayfası yeniden build edilmeli veya veri tekrar çekilmeli.
-
     if (result == true) {
       if (mounted) {
-        // Feed'e dönüp yenilemek en temizi olabilir,
-        // veya burada post verisini tekrar çekmek.
-        // Şimdilik basitçe kullanıcıya bilgi verelim.
-        // Not: EditPostScreen zaten snackbar gösteriyor.
-
-        // Yeniden veri çekmek istersek:
-        // _viewPost(); // Diye bir fonksiyonumuz yok ama eklenebilir.
-        // Şimdilik sadece pop yapıp feed'i yenilemesini sağlayalım.
         Navigator.pop(context, true);
       }
     }
@@ -537,7 +524,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title:
-            const Text("Gönderiyi Sil", style: TextStyle(color: Colors.white)),
+        const Text("Gönderiyi Sil", style: TextStyle(color: Colors.white)),
         content: const Text(
           "Bu gönderiyi silmek istediğine emin misin? Bu işlem geri alınamaz.",
           style: TextStyle(color: Colors.white70),
@@ -826,7 +813,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     // 🆕 Yanıt varsa @mention ekle
     final String finalMsg =
-        replyToUsername != null ? "@$replyToUsername $msg" : msg;
+    replyToUsername != null ? "@$replyToUsername $msg" : msg;
 
     try {
       await client.from("comments").insert({
@@ -1014,9 +1001,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     },
                     onLongPress: isMyReaction
                         ? () {
-                            Navigator.pop(context);
-                            _confirmDeleteReaction(reaction);
-                          }
+                      Navigator.pop(context);
+                      _confirmDeleteReaction(reaction);
+                    }
                         : null,
                     child: Column(
                       children: [
@@ -1037,7 +1024,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 ),
                                 image: DecorationImage(
                                   image:
-                                      NetworkImage(reaction['emoji_url'] ?? ''),
+                                  NetworkImage(reaction['emoji_url'] ?? ''),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -1111,12 +1098,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Future<void> _uploadAndSendAudio(String filePath) async {
     try {
       final file = File(filePath);
-      final name = "comment_${DateTime.now().millisecondsSinceEpoch}.m4a";
+      final name = "comment_audio/${DateTime.now().millisecondsSinceEpoch}.m4a";
 
-      await client.storage.from("uploads").upload("comment_audio/$name", file);
+      await client.storage.from("uploads").upload(name, file);
 
-      final url =
-          client.storage.from("uploads").getPublicUrl("comment_audio/$name");
+      final url = client.storage.from("uploads").getPublicUrl(name);
 
       await client.from("comments").insert({
         "post_id": widget.post["id"],
@@ -1180,15 +1166,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   // 🔥 BUZLU CAM (GLASSMORPHISM) VE MOR KALP TEMALI DETAY KARTI 🔥
-  // 🛠️ HİZALAMA: SEARCH SCREEN İLE BİREBİR EŞİTLENDİ
-  // - Sayı: Yanıyorsa 22, Sönmüşse 38
-  // - Yorum: Yanıyorsa 22, Sönmüşse 38
   Widget _buildPostCard() {
     final profile = widget.post["profiles"] ?? {};
     final text = widget.post["content"] ?? "";
     final image = widget.post["image_url"];
     final date = DateTime.tryParse(widget.post["created_at"] ?? "");
     final dateStr = date != null ? "${date.day}/${date.month}" : "";
+    final location = widget.post['location']; // Konum verisi
 
     final isMyPost = widget.post["user_id"] == myId;
 
@@ -1205,9 +1189,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     } else {
       statusColor = Colors.blueGrey;
     }
-
-    // 🎯 HİZALAMA DEĞERİ (TEK YERDEN YÖNETİM)
-    final double alignmentTopPadding = isAlive ? 22.0 : 38.0;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -1231,6 +1212,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
                   child: Row(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.center, // 🔥 DİKEYDE ORTALA
                     children: [
                       GestureDetector(
                         onTap: () => Navigator.push(
@@ -1246,82 +1229,96 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           backgroundColor: Colors.grey[900],
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
+
+                      // 🔥 ORTA KISIM (İsim, Kullanıcı Adı, Konum)
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            // 1. Tam İsim
                             Text(profile["full_name"] ?? "İsimsiz",
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.poppins(
                                     color: Colors.white,
+                                    fontSize: 15,
                                     fontWeight: FontWeight.bold)),
-                            Row(
-                              children: [
-                                Text("@${profile["username"]}",
-                                    style: GoogleFonts.poppins(
-                                        color: Colors.grey.shade400,
-                                        fontSize: 12)),
-                                if (widget.post['location'] != null &&
-                                    widget.post['location']
-                                        .toString()
-                                        .isNotEmpty) ...[
-                                  const SizedBox(width: 6),
-                                  const Icon(Icons.location_on,
-                                      color: AppColors.primary, size: 12),
-                                  const SizedBox(width: 2),
-                                  Expanded(
-                                    child: GestureDetector(
-                                        onTap: () => showLocationDisplaySheet(
-                                            context, widget.post['location']),
+
+                            // 2. Kullanıcı Adı
+                            Text("@${profile["username"]}",
+                                style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade400, fontSize: 12)),
+
+                            // 3. 🔥 KONUM (Varsa göster, Yoksa bu satır hiç çizilmez = Boşluk kalmaz)
+                            if (location != null &&
+                                location.toString().isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: GestureDetector(
+                                  onTap: () => showLocationDisplaySheet(
+                                      context, location),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.location_on_outlined,
+                                          color: AppColors.primary, size: 14),
+                                      const SizedBox(width: 4),
+                                      Flexible(
                                         child: Text(
-                                          widget.post['location'],
+                                          location,
                                           style: GoogleFonts.poppins(
                                               color: AppColors.primary,
                                               fontSize: 11,
                                               fontWeight: FontWeight.w500),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                        )),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ],
-                            ),
+                                ),
+                              ),
                           ],
                         ),
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+
+                      // SAĞ KISIM (Tarih, Seçenekler)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          // ✏️ Düzenlendi etiketi
-                          if (widget.post['is_edited'] == true ||
-                              _editedPostContent != null)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Text(
-                                "(düzenlendi)",
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white38,
-                                  fontSize: 10,
-                                  fontStyle: FontStyle.italic,
+                          Row(
+                            children: [
+                              // ✏️ Düzenlendi etiketi
+                              if (widget.post['is_edited'] == true ||
+                                  _editedPostContent != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 4),
+                                  child: Text(
+                                    "(düzenlendi)",
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white38,
+                                      fontSize: 10,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          Text(dateStr,
-                              style: GoogleFonts.poppins(
-                                  color: Colors.grey.shade400, fontSize: 12)),
-                          const SizedBox(width: 6),
+                              Text(dateStr,
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.grey.shade400,
+                                      fontSize: 12)),
+                            ],
+                          ),
+                          // Popup Menu
                           Container(
                             width: 28,
                             height: 28,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.05),
-                              shape: BoxShape.circle,
-                            ),
+                            margin: const EdgeInsets.only(top: 4),
+                            alignment: Alignment.centerRight,
                             child: PopupMenuButton<String>(
                               padding: EdgeInsets.zero,
                               icon: const Icon(Icons.more_horiz,
-                                  color: Colors.white70, size: 18),
+                                  color: Colors.white70, size: 20),
                               color: const Color(0xFF2C2C2C),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
@@ -1360,7 +1357,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           Text("Sil",
                                               style: GoogleFonts.poppins(
                                                   color:
-                                                      AppColors.accentRedAccent,
+                                                  AppColors.accentRedAccent,
                                                   fontSize: 13)),
                                         ],
                                       ),
@@ -1396,7 +1393,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                 // --- İÇERİK ---
                 if (text.isNotEmpty) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(text,
@@ -1409,6 +1406,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 // 🖼️ ETİKETLİ VE MÜZİKLİ GÖRSEL (CAROUSEL DESTEĞİ)
                 if (widget.post['image_urls'] != null &&
                     (widget.post['image_urls'] as List).length > 1) ...[
+                  const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: DoubleTapOverlay(
@@ -1417,7 +1415,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       iconColor: Colors.red,
                       child: ImageCarousel(
                         imageUrls:
-                            (widget.post['image_urls'] as List).cast<String>(),
+                        (widget.post['image_urls'] as List).cast<String>(),
                         height: 350,
                         borderRadius: BorderRadius.circular(12),
                         musicTrackName: widget.post['spotify_track_name'],
@@ -1427,6 +1425,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     ),
                   ),
                 ] else if (image != null) ...[
+                  const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: ClipRRect(
@@ -1449,224 +1448,224 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: widget.isExploreMode
                       ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 1. Fuel Button
-                            FuelButton(
-                              isFueled: isFueled,
-                              count: fuelCount,
-                              isExpired: !isAlive,
-                              onTap: _toggleFuel,
-                              size: 28,
-                            ),
-                            // 2. Beğeni Sayısı
-                            Padding(
-                              padding: EdgeInsets.only(
-                                  left: 2, top: isAlive ? 32.0 : 38.0),
-                              child: Text(
-                                "$fuelCount",
-                                style: GoogleFonts.poppins(
-                                  color: statusColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            // 3. Yorum Kısmı
-                            Padding(
-                              padding:
-                                  EdgeInsets.only(top: isAlive ? 32.0 : 38.0),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(FontAwesomeIcons.comment,
-                                        size: 16, color: Colors.white38),
-                                    const SizedBox(width: 6),
-                                    Text("$commentCount",
-                                        style: GoogleFonts.poppins(
-                                            color: Colors.white38,
-                                            fontSize: 13)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          // 🔥 NORMAL MOD: ANA AKIŞ GİBİ SOLDA HİZALI
-                          children: [
-                            // 1. Beğeni
-                            GestureDetector(
-                              onTap: _toggleLike,
-                              child: Container(
-                                color: Colors.transparent,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      isLiked
-                                          ? FontAwesomeIcons.solidHeart
-                                          : FontAwesomeIcons.heart,
-                                      color: isLiked
-                                          ? AppColors.primary
-                                          : Colors.grey.shade400,
-                                      size: 22,
-                                    ),
-                                    if (likeCount > 0) ...[
-                                      const SizedBox(width: 6),
-                                      Text("$likeCount",
-                                          style: GoogleFonts.poppins(
-                                              color: isLiked
-                                                  ? AppColors.primary
-                                                  : Colors.grey.shade400,
-                                              fontWeight: FontWeight.w600)),
-                                    ]
-                                  ],
-                                ),
-                              ),
-                            ),
-                            // 2. Yorum
-                            const SizedBox(width: 24),
-                            Container(
-                              color: Colors.transparent,
-                              child: Row(
-                                children: [
-                                  Icon(FontAwesomeIcons.comment,
-                                      color: Colors.grey.shade400, size: 22),
-                                  if (commentCount > 0) ...[
-                                    const SizedBox(width: 6),
-                                    Text("$commentCount",
-                                        style: GoogleFonts.poppins(
-                                            color: Colors.grey.shade400,
-                                            fontWeight: FontWeight.w600)),
-                                  ]
-                                ],
-                              ),
-                            ),
-                            // 3. Tepki Ver Butonu
-                            const SizedBox(width: 24),
-                            GestureDetector(
-                              onTap: () async {
-                                final result =
-                                    await showPhotoEmojiPicker(context);
-                                if (result != null) {
-                                  _sendEmojiReaction(
-                                      result['path']!, result['type']!);
-                                }
-                              },
-                              child: Container(
-                                color: Colors.transparent,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.add_reaction_outlined,
-                                      color: Colors.grey.shade400,
-                                      size: 22,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            // 4. Mevcut Tepkiler - Sağda
-                            if (emojiReactions.isNotEmpty) ...[
-                              const Spacer(),
-                              GestureDetector(
-                                onTap: () => _showAllReactionsDialog(),
-                                child: Row(
-                                  children: [
-                                    SizedBox(
-                                      width: (emojiReactions.length > 3
-                                                  ? 3
-                                                  : emojiReactions.length) *
-                                              22 +
-                                          10,
-                                      height: 28,
-                                      child: Stack(
-                                        children: [
-                                          for (int i = 0;
-                                              i <
-                                                  (emojiReactions.length > 3
-                                                      ? 3
-                                                      : emojiReactions.length);
-                                              i++)
-                                            Positioned(
-                                              left: i * 18.0,
-                                              child: Stack(
-                                                children: [
-                                                  Container(
-                                                    width: 28,
-                                                    height: 28,
-                                                    decoration: BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      border: Border.all(
-                                                          color:
-                                                              AppColors.bgBlack,
-                                                          width: 2),
-                                                      image: DecorationImage(
-                                                        image: NetworkImage(
-                                                            emojiReactions[i][
-                                                                    'emoji_url'] ??
-                                                                ''),
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Positioned(
-                                                    right: 0,
-                                                    bottom: 0,
-                                                    child: Container(
-                                                      width: 12,
-                                                      height: 12,
-                                                      decoration: BoxDecoration(
-                                                        color: const Color(
-                                                            0xFF1A1A24),
-                                                        shape: BoxShape.circle,
-                                                        border: Border.all(
-                                                            color: const Color(
-                                                                0xFF6C63FF),
-                                                            width: 1),
-                                                      ),
-                                                      child: Center(
-                                                        child: Text(
-                                                          _getEmojiIcon(
-                                                              emojiReactions[i][
-                                                                  'emoji_type']),
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 6),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (emojiReactions.length > 3) ...[
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        "+${emojiReactions.length - 3}",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.grey.shade400,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. Fuel Button
+                      FuelButton(
+                        isFueled: isFueled,
+                        count: fuelCount,
+                        isExpired: !isAlive,
+                        onTap: _toggleFuel,
+                        size: 28,
+                      ),
+                      // 2. Beğeni Sayısı
+                      Padding(
+                        padding: EdgeInsets.only(
+                            left: 2, top: isAlive ? 32.0 : 38.0),
+                        child: Text(
+                          "$fuelCount",
+                          style: GoogleFonts.poppins(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      // 3. Yorum Kısmı
+                      Padding(
+                        padding:
+                        EdgeInsets.only(top: isAlive ? 32.0 : 38.0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(FontAwesomeIcons.comment,
+                                  size: 16, color: Colors.white38),
+                              const SizedBox(width: 6),
+                              Text("$commentCount",
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.white38,
+                                      fontSize: 13)),
                             ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                      : Row(
+                    // 🔥 NORMAL MOD
+                    children: [
+                      // 1. Beğeni
+                      GestureDetector(
+                        onTap: _toggleLike,
+                        child: Container(
+                          color: Colors.transparent,
+                          child: Row(
+                            children: [
+                              Icon(
+                                isLiked
+                                    ? FontAwesomeIcons.solidHeart
+                                    : FontAwesomeIcons.heart,
+                                color: isLiked
+                                    ? AppColors.primary
+                                    : Colors.grey.shade400,
+                                size: 22,
+                              ),
+                              if (likeCount > 0) ...[
+                                const SizedBox(width: 6),
+                                Text("$likeCount",
+                                    style: GoogleFonts.poppins(
+                                        color: isLiked
+                                            ? AppColors.primary
+                                            : Colors.grey.shade400,
+                                        fontWeight: FontWeight.w600)),
+                              ]
+                            ],
+                          ),
+                        ),
+                      ),
+                      // 2. Yorum
+                      const SizedBox(width: 24),
+                      Container(
+                        color: Colors.transparent,
+                        child: Row(
+                          children: [
+                            Icon(FontAwesomeIcons.comment,
+                                color: Colors.grey.shade400, size: 22),
+                            if (commentCount > 0) ...[
+                              const SizedBox(width: 6),
+                              Text("$commentCount",
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.grey.shade400,
+                                      fontWeight: FontWeight.w600)),
+                            ]
                           ],
                         ),
+                      ),
+                      const Spacer(),
+                      // 3. Mevcut Tepkiler - Sağda
+                      if (emojiReactions.isNotEmpty) ...[
+                        GestureDetector(
+                          onTap: () => _showAllReactionsDialog(),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: (emojiReactions.length > 3
+                                    ? 3
+                                    : emojiReactions.length) *
+                                    22 +
+                                    10,
+                                height: 28,
+                                child: Stack(
+                                  children: [
+                                    for (int i = 0;
+                                    i <
+                                        (emojiReactions.length > 3
+                                            ? 3
+                                            : emojiReactions.length);
+                                    i++)
+                                      Positioned(
+                                        left: i * 18.0,
+                                        child: Stack(
+                                          children: [
+                                            Container(
+                                              width: 28,
+                                              height: 28,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                    color:
+                                                    AppColors.bgBlack,
+                                                    width: 2),
+                                                image: DecorationImage(
+                                                  image: NetworkImage(
+                                                      emojiReactions[i][
+                                                      'emoji_url'] ??
+                                                          ''),
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              right: 0,
+                                              bottom: 0,
+                                              child: Container(
+                                                width: 12,
+                                                height: 12,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(
+                                                      0xFF1A1A24),
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                      color: const Color(
+                                                          0xFF6C63FF),
+                                                      width: 1),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    _getEmojiIcon(
+                                                        emojiReactions[i][
+                                                        'emoji_type']),
+                                                    style:
+                                                    const TextStyle(
+                                                        fontSize: 6),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (emojiReactions.length > 3) ...[
+                                const SizedBox(width: 4),
+                                Text(
+                                  "+${emojiReactions.length - 3}",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade400,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      // 4. Tepki Ver Butonu
+                      GestureDetector(
+                        onTap: () async {
+                          final result =
+                          await showPhotoEmojiPicker(context);
+                          if (result != null) {
+                            _sendEmojiReaction(
+                                result['path']!, result['type']!);
+                          }
+                        },
+                        child: Container(
+                          color: Colors.transparent,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.add_reaction_outlined,
+                                color: Colors.grey.shade400,
+                                size: 26,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1936,7 +1935,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     color: const Color(0xFF2A2A2A),
                     shape: BoxShape.circle,
                     border:
-                        Border.all(color: AppColors.primary.withOpacity(0.3)),
+                    Border.all(color: AppColors.primary.withOpacity(0.3)),
                   ),
                   child: const Icon(
                     Icons.face_retouching_natural,
@@ -1962,7 +1961,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ? "Kaydediliyor... ($recordDuration)"
                           : "Yorum yaz...",
                       hintStyle:
-                          const TextStyle(color: Colors.white38, fontSize: 14),
+                      const TextStyle(color: Colors.white38, fontSize: 14),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
