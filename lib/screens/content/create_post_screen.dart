@@ -25,6 +25,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
 
   File? _imageFile;
+  List<File> _imageFiles = [];
+  int _currentImageIndex = 0;
   bool _isLoading = false;
   String _visibility = 'public';
   String? _avatarUrl;
@@ -122,52 +124,93 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image =
-        await picker.pickImage(source: source, imageQuality: 70);
-    if (image != null) {
-      final file = File(image.path);
 
-      // 🆕 Etiketleme ekranına yönlendir
-      if (mounted) {
-        final tags = await Navigator.push<List<Map<String, dynamic>>>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PhotoTagScreen(imageFile: file),
-          ),
-        );
+    if (source == ImageSource.gallery) {
+      final List<XFile> images = await picker.pickMultiImage(imageQuality: 70);
+      if (images.isNotEmpty && mounted) {
+        final files = images.map((img) => File(img.path)).toList();
 
-        setState(() {
-          _imageFile = file;
-          _photoTags = tags ?? [];
-        });
+        // İlk fotoğraf için etiketleme ekranına git
+        if (_imageFiles.isEmpty && files.isNotEmpty) {
+          final tags = await Navigator.push<List<Map<String, dynamic>>>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PhotoTagScreen(imageFile: files.first),
+            ),
+          );
+          if (mounted) {
+            setState(() {
+              _imageFiles = [..._imageFiles, ...files].take(10).toList();
+              _photoTags = tags ?? [];
+            });
+          }
+        } else {
+          setState(() {
+            _imageFiles = [..._imageFiles, ...files].take(10).toList();
+          });
+        }
+      }
+    } else {
+      final XFile? image =
+          await picker.pickImage(source: source, imageQuality: 70);
+      if (image != null && mounted) {
+        final file = File(image.path);
+
+        if (_imageFiles.isEmpty) {
+          final tags = await Navigator.push<List<Map<String, dynamic>>>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PhotoTagScreen(imageFile: file),
+            ),
+          );
+          if (mounted) {
+            setState(() {
+              _imageFiles.add(file);
+              _photoTags = tags ?? [];
+            });
+          }
+        } else if (_imageFiles.length < 10) {
+          setState(() => _imageFiles.add(file));
+        }
       }
     }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _imageFiles.removeAt(index);
+      if (_currentImageIndex >= _imageFiles.length && _imageFiles.isNotEmpty) {
+        _currentImageIndex = _imageFiles.length - 1;
+      }
+    });
   }
 
   Future<void> _sharePost() async {
     if (_isLoading) return;
     final content = _textController.text.trim();
-    if (content.isEmpty && _imageFile == null) return;
+    if (content.isEmpty && _imageFiles.isEmpty) return;
 
     setState(() => _isLoading = true);
 
     try {
-      String? imageUrl;
+      List<String> imageUrls = [];
 
-      if (_imageFile != null) {
-        final fileExt = _imageFile!.path.split('.').last;
+      for (int i = 0; i < _imageFiles.length; i++) {
+        final file = _imageFiles[i];
+        final fileExt = file.path.split('.').last;
         final fileName =
-            '$_currentUserId/${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+            '$_currentUserId/${DateTime.now().millisecondsSinceEpoch}_$i.$fileExt';
 
         await Supabase.instance.client.storage.from('uploads').uploadBinary(
               fileName,
-              await _imageFile!.readAsBytes(),
+              await file.readAsBytes(),
               fileOptions: const FileOptions(upsert: true),
             );
 
-        imageUrl = Supabase.instance.client.storage
+        final url = Supabase.instance.client.storage
             .from('uploads')
             .getPublicUrl(fileName);
+        imageUrls.add(url);
       }
 
       final postResponse = await Supabase.instance.client
@@ -175,7 +218,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           .insert({
             'user_id': _currentUserId,
             'content': content,
-            'image_url': imageUrl,
+            'image_url': imageUrls.isNotEmpty ? imageUrls.first : null,
+            'image_urls': imageUrls.isNotEmpty ? imageUrls : null,
             'visibility': _visibility,
             // 🎧 Müzik bilgileri
             if (_selectedMusic != null) ...{
@@ -192,7 +236,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       final postId = postResponse['id'];
 
       // 🆕 Etiketleri kaydet
-      if (_photoTags.isNotEmpty && imageUrl != null) {
+      if (_photoTags.isNotEmpty && imageUrls.isNotEmpty) {
         for (final tag in _photoTags) {
           try {
             await Supabase.instance.client.from('post_tags').insert({
@@ -210,6 +254,25 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               'post_id': postId,
               'is_read': false,
             });
+
+            // 🔔 PUSH BİLDİRİM GÖNDER
+            try {
+              final myProfile = await Supabase.instance.client
+                  .from('profiles')
+                  .select('username')
+                  .eq('id', _currentUserId)
+                  .single();
+              final username = myProfile['username'] ?? 'Birisi';
+
+              await Supabase.instance.client.functions
+                  .invoke('send-push-notification', body: {
+                'target_user_id': tag['user']['id'],
+                'title': '📸 Fotoğrafta Etiketlendin!',
+                'body': '$username seni bir fotoğrafta etiketledi',
+                'type': 'tag',
+                'target_id': postId,
+              });
+            } catch (_) {}
           } catch (_) {}
         }
       }
@@ -365,39 +428,105 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                             ),
                           ],
                         ),
-                        if (_imageFile != null)
+                        if (_imageFiles.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 25, left: 60),
-                            child: Stack(
+                            child: Column(
                               children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: Image.file(
-                                    _imageFile!,
-                                    height: 250,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
+                                SizedBox(
+                                  height: 250,
+                                  child: PageView.builder(
+                                    itemCount: _imageFiles.length,
+                                    onPageChanged: (i) =>
+                                        setState(() => _currentImageIndex = i),
+                                    itemBuilder: (context, index) {
+                                      return Stack(
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            child: Image.file(
+                                              _imageFiles[index],
+                                              height: 250,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                          Positioned(
+                                            top: 10,
+                                            right: 10,
+                                            child: GestureDetector(
+                                              onTap: () => _removeImage(index),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black
+                                                      .withOpacity(0.6),
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                      color: Colors.white24,
+                                                      width: 1),
+                                                ),
+                                                child: const Icon(Icons.close,
+                                                    color: Colors.white,
+                                                    size: 18),
+                                              ),
+                                            ),
+                                          ),
+                                          if (_imageFiles.length > 1)
+                                            Positioned(
+                                              top: 10,
+                                              left: 10,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black
+                                                      .withOpacity(0.6),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  '${index + 1}/${_imageFiles.length}',
+                                                  style: GoogleFonts.poppins(
+                                                      color: Colors.white,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w600),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      );
+                                    },
                                   ),
                                 ),
-                                Positioned(
-                                  top: 10,
-                                  right: 10,
-                                  child: GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _imageFile = null),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.6),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                            color: Colors.white24, width: 1),
+                                if (_imageFiles.length > 1)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: List.generate(
+                                        _imageFiles.length,
+                                        (i) => Container(
+                                          width: 6,
+                                          height: 6,
+                                          margin: const EdgeInsets.symmetric(
+                                              horizontal: 2),
+                                          decoration: BoxDecoration(
+                                            color: i == _currentImageIndex
+                                                ? const Color(0xFF6C63FF)
+                                                : Colors.white.withOpacity(0.3),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
                                       ),
-                                      child: const Icon(Icons.close,
-                                          color: Colors.white, size: 18),
                                     ),
                                   ),
-                                ),
                               ],
                             ),
                           ),

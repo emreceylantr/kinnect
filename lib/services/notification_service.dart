@@ -39,6 +39,13 @@ class NotificationService {
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional) {
+        // 🔥 iOS'ta uygulama açıkken de bildirim banner'ı göster
+        await _messaging.setForegroundNotificationPresentationOptions(
+          alert: true, // Banner göster
+          badge: true, // Badge güncelle
+          sound: true, // Ses çal
+        );
+
         // FCM Token al
         await _getToken(saveToDatabase: saveToDatabase);
 

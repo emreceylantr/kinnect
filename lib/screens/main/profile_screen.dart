@@ -17,6 +17,7 @@ import '../../services/safety_service.dart';
 
 // --- WIDGET IMPORTU ---
 import '../../widgets/music_player_card.dart';
+import '../../widgets/image_carousel.dart';
 
 // --- EKRANLAR ---
 import '../social/messages_screen.dart';
@@ -1297,8 +1298,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
 
-                  // --- GÖRSEL
-                  if (imageUrl != null)
+                  // --- GÖRSEL (CAROUSEL DESTEĞİ)
+                  if (post['image_urls'] != null &&
+                      (post['image_urls'] as List).isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      child: ImageCarousel(
+                        imageUrls: (post['image_urls'] as List).cast<String>(),
+                        height: 350,
+                        borderRadius: BorderRadius.circular(18),
+                        musicTrackName: post['spotify_track_name'],
+                        musicArtistName: post['spotify_artist_name'],
+                        postId: post['id'],
+                      ),
+                    )
+                  else if (imageUrl != null)
                     Container(
                       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                       width: double.infinity,
