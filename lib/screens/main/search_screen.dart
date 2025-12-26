@@ -39,7 +39,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   late final String myId;
   final TextEditingController searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode(); // 🔥 FocusNode eklendi
+  final FocusNode _searchFocusNode = FocusNode();
 
   bool isExpanded = false;
 
@@ -69,7 +69,6 @@ class _SearchScreenState extends State<SearchScreen> {
       });
     });
 
-    // 🔥 Focus dinleyicisi: Tıklanınca setState yapıp UI'ı güncelle
     _searchFocusNode.addListener(() {
       setState(() {
         // Klavye açılıp kapanınca arayüz güncellensin
@@ -80,7 +79,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void dispose() {
     _pageController.dispose();
-    _searchFocusNode.dispose(); // Unutma
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -192,13 +191,17 @@ class _SearchScreenState extends State<SearchScreen> {
             Positioned(
               right: 15,
               bottom: 0,
-              child: Transform.flip(
-                flipX: true,
-                child: SizedBox(
-                  height: 100,
-                  width: 100,
-                  child: Lottie.asset('assets/animations/guy.json',
-                      fit: BoxFit.contain),
+              // 🔥 DÜZELTME: IgnorePointer eklendi.
+              // Lottie animasyonunun tıklamaları engellememesini sağlar.
+              child: IgnorePointer(
+                child: Transform.flip(
+                  flipX: true,
+                  child: SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: Lottie.asset('assets/animations/guy.json',
+                        fit: BoxFit.contain),
+                  ),
                 ),
               ),
             ),
@@ -209,7 +212,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // 🔥 REVİZE EDİLEN ARAMA ÇUBUĞU
+  // 🔥 ARAMA ÇUBUĞU
   Widget _buildAnimatedSearchBar() {
     final bool isFocused = _searchFocusNode.hasFocus;
     final bool hasText = searchController.text.isNotEmpty;
@@ -236,15 +239,13 @@ class _SearchScreenState extends State<SearchScreen> {
         Expanded(
             child: TextField(
                 controller: searchController,
-                focusNode: _searchFocusNode, // FocusNode bağlandı
+                focusNode: _searchFocusNode,
                 style: GoogleFonts.poppins(color: Colors.white, fontSize: 13),
                 textAlignVertical: TextAlignVertical.center,
-                // 🔥 Odaklanınca veya yazı varsa SOLA, yoksa ORTAYA
                 textAlign:
                     (isFocused || hasText) ? TextAlign.start : TextAlign.center,
                 decoration: InputDecoration(
                   isDense: true,
-                  // 🔥 Odaklanınca ipucu yazısı KAYBOLSUN
                   hintText: isFocused ? "" : "Kullanıcı ara...",
                   hintStyle:
                       GoogleFonts.poppins(color: Colors.white30, fontSize: 13),
@@ -288,8 +289,6 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     if (explorePosts.isEmpty) return _buildEmptyState();
 
-    // 🔥 GÜNDEM İÇİN YENİ MANTIK 🔥
-    // 1. Sadece "Canlı" (24 saati geçmemiş) postları filtrele.
     final now = DateTime.now();
     List<Map<String, dynamic>> alivePosts = explorePosts.where((p) {
       final date = DateTime.tryParse(p['created_at'] ?? "")?.toLocal();
@@ -297,14 +296,10 @@ class _SearchScreenState extends State<SearchScreen> {
       return now.difference(date).inHours < 24;
     }).toList();
 
-    // 2. Canlı postları beğeni sayısına göre sırala.
     alivePosts.sort((a, b) =>
         (b['likes'] as List).length.compareTo((a['likes'] as List).length));
 
-    // 3. İlk 3 tanesini al (Gündem Slider için).
     final List<Map<String, dynamic>> sliderPosts = alivePosts.take(3).toList();
-
-    // 4. Liste postları: Tüm postlar (Kül olanlar dahil) kronolojik (zaten explorePosts sıralı gelmişti).
     final List<Map<String, dynamic>> listPosts = explorePosts;
 
     return RefreshIndicator(
@@ -316,13 +311,13 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(children: [
           const SizedBox(height: 20),
 
-          // GÜNDEM SLIDER'I (Sadece Canlı ve En Çok Beğenilen 3 Post)
+          // GÜNDEM SLIDER'I
           if (sliderPosts.isNotEmpty) ...[
             _build3DTrendSlider(sliderPosts),
             const SizedBox(height: 20),
           ],
 
-          // NORMAL LİSTE (Hepsi - Kronolojik)
+          // NORMAL LİSTE
           if (listPosts.isEmpty)
             _buildEmptyState()
           else
@@ -588,7 +583,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // 📝 NORMAL LİSTE KARTI (AYNI KALDI)
+  // 📝 NORMAL LİSTE KARTI
   Widget _buildPostCard(Map<String, dynamic> post, int index) {
     final profile = post["profiles"] ?? {};
     final likes = post["likes"] as List? ?? [];
