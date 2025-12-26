@@ -8,6 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 import 'photo_tag_screen.dart'; // 🆕 Fotoğrafa kişi etiketleme
 import 'music_picker_screen.dart'; // 🌵 Spotify müzik ekle
@@ -37,6 +39,10 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   // 🎧 Müzik bilgileri
   Map<String, dynamic>? _selectedMusic;
+
+  // 📍 Konum bilgisi
+  String? _location;
+  bool _isGettingLocation = false;
 
   // --- ANİMASYON STATE'LERİ ---
   bool _isShareButtonPressed = false;
@@ -229,6 +235,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               'spotify_preview_url': _selectedMusic!['preview_url'],
               'spotify_album_image': _selectedMusic!['album_image'],
             },
+            // 📍 Konum
+            'location': _location,
           })
           .select('id')
           .single();
@@ -296,6 +304,209 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  // 📍 KONUM ALMA FONKSİYONU
+  Future<void> _getLocation() async {
+    setState(() => _isGettingLocation = true);
+    try {
+      bool serviceEnabled;
+      LocationPermission permission;
+
+      // 1. Servis açık mı?
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw 'Konum servisi kapalı.';
+      }
+
+      // 2. İzin kontrolü
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw 'Konum izni reddedildi.';
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw 'Konum izni kalıcı olarak reddedildi, ayarlardan açmalısın.';
+      }
+
+      // 3. Konumu al
+      final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+
+      // 4. Adrese çevir
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        // Örn: "Kadıköy, İstanbul" veya "Beşiktaş"
+        String loc = "";
+        if (place.subAdministrativeArea != null) {
+          loc = place.subAdministrativeArea!;
+        } else if (place.locality != null) {
+          loc = place.locality!;
+        }
+
+        if (place.administrativeArea != null &&
+            place.administrativeArea != loc) {
+          if (loc.isNotEmpty) loc += ", ";
+          loc += place.administrativeArea!;
+        }
+
+        setState(() => _location = loc);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text("Hata: $e"), backgroundColor: Colors.redAccent),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGettingLocation = false);
+    }
+  }
+
+  // 📍 KONUM SEÇİCİ
+  void _showLocationPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Konum Ekle",
+                style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+
+            // Seçenek 1: Mevcut Konum
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                    color: Colors.orangeAccent.withOpacity(0.2),
+                    shape: BoxShape.circle),
+                child:
+                    const Icon(Icons.my_location, color: Colors.orangeAccent),
+              ),
+              title: Text("Şu anki konumu bul",
+                  style: GoogleFonts.poppins(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _getLocation();
+              },
+            ),
+
+            // Seçenek 2: Elle Gir
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                    color: const Color(0xFF6C63FF).withOpacity(0.2),
+                    shape: BoxShape.circle),
+                child: const Icon(Icons.edit_location_alt,
+                    color: Color(0xFF6C63FF)),
+              ),
+              title: Text("Elle konum gir",
+                  style: GoogleFonts.poppins(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showManualLocationDialog();
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ✍️ ELLE KONUM GİRİŞİ
+  void _showManualLocationDialog() {
+    final TextEditingController locController =
+        TextEditingController(text: _location);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF252525),
+        title:
+            Text("Konum Yaz", style: GoogleFonts.poppins(color: Colors.white)),
+        content: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: locController,
+                style: GoogleFonts.poppins(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: "Örn: Kadıköy, İstanbul",
+                  hintStyle: GoogleFonts.poppins(color: Colors.white38),
+                  enabledBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white24)),
+                  focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFF6C63FF))),
+                ),
+                autofocus: true,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.search, color: Color(0xFF6C63FF)),
+              onPressed: () async {
+                if (locController.text.trim().isEmpty) return;
+                try {
+                  List<Location> locations =
+                      await locationFromAddress(locController.text);
+                  if (locations.isNotEmpty) {
+                    List<Placemark> placemarks = await placemarkFromCoordinates(
+                        locations.first.latitude, locations.first.longitude);
+                    if (placemarks.isNotEmpty) {
+                      final p = placemarks.first;
+                      String newLoc = "";
+                      if (p.locality != null) newLoc += p.locality!;
+                      if (p.administrativeArea != null) {
+                        if (newLoc.isNotEmpty) newLoc += ", ";
+                        newLoc += p.administrativeArea!;
+                      }
+                      locController.text = newLoc;
+                    }
+                  }
+                } catch (e) {
+                  debugPrint("Konum bulma hatası: $e");
+                }
+              },
+            )
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text("İptal",
+                style: GoogleFonts.poppins(color: Colors.white38)),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() => _location = locController.text.trim());
+              Navigator.pop(ctx);
+            },
+            child: Text("Tamam",
+                style: GoogleFonts.poppins(
+                    color: const Color(0xFF6C63FF),
+                    fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -743,6 +954,28 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                             size: 24,
                           ),
                           tooltip: 'Müzik Ekle',
+                        ),
+                        // 📍 Konum Butonu
+                        IconButton(
+                          onPressed: _showLocationPicker,
+                          icon: _isGettingLocation
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.orangeAccent,
+                                      strokeWidth: 2))
+                              : Icon(
+                                  // Eğer konum varsa dolu ikon, yoksa boş ikon
+                                  _location != null
+                                      ? Icons.location_on
+                                      : Icons.location_on_outlined,
+                                  color: _location != null
+                                      ? Colors.orangeAccent
+                                      : Colors.white54,
+                                  size: 24,
+                                ),
+                          tooltip: 'Konum Ekle',
                         ),
                         const Spacer(),
                         GestureDetector(

@@ -13,6 +13,7 @@ import '../../widgets/fuel_button.dart';
 import '../../services/feed_service.dart';
 import '../../services/safety_service.dart'; // Güvenlik servisi (Şikayet için)
 import '../../services/toxicity_service.dart'; // 🤖 AI Toxic yorum kontrolü
+import '../content/edit_post_screen.dart';
 import '../main/profile_screen.dart';
 
 import 'package:record/record.dart';
@@ -20,6 +21,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../widgets/photo_emoji_picker.dart'; // 📸 Photo Emoji Tepkileri
+import '../../widgets/location_display_sheet.dart';
 import '../../widgets/taggable_post_image.dart'; // 🆕 Etiketli Fotoğraf Widget'ı
 import '../../widgets/image_carousel.dart'; // 🆕 Çoklu Fotoğraf Carousel
 
@@ -70,6 +72,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   // 🎧 Müzik oynatıcı state
   final AudioPlayer _musicPlayer = AudioPlayer();
   bool _isMusicPlaying = false;
+
+  // ✏️ Post düzenleme state
+  String? _editedPostContent;
+
+  // ✏️ Yorum düzenleme state
+  final TextEditingController _editCommentController = TextEditingController();
 
   String get myId => client.auth.currentUser!.id;
 
@@ -485,6 +493,214 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         ],
       ),
     );
+  }
+
+  // ✏️ POST DÜZENLEME EKRANINA GİT
+  Future<void> _showEditPostDialog() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditPostScreen(post: widget.post),
+      ),
+    );
+
+    // Eğer güncelleme yapıldıysa (result == true), sayfayı yenilememiz gerekebilir.
+    // Ancak widget.post dışarıdan geldiği için anlık güncellemeyi
+    // feed'e yansıtmak zor olabilir. En azından UI'da bir feedback verebiliriz.
+    // İdealde post detail sayfası yeniden build edilmeli veya veri tekrar çekilmeli.
+
+    if (result == true) {
+      if (mounted) {
+        // Feed'e dönüp yenilemek en temizi olabilir,
+        // veya burada post verisini tekrar çekmek.
+        // Şimdilik basitçe kullanıcıya bilgi verelim.
+        // Not: EditPostScreen zaten snackbar gösteriyor.
+
+        // Yeniden veri çekmek istersek:
+        // _viewPost(); // Diye bir fonksiyonumuz yok ama eklenebilir.
+        // Şimdilik sadece pop yapıp feed'i yenilemesini sağlayalım.
+        Navigator.pop(context, true);
+      }
+    }
+  }
+
+  // 🗑️ POST SİLME
+  void _confirmDeletePost() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title:
+            const Text("Gönderiyi Sil", style: TextStyle(color: Colors.white)),
+        content: const Text(
+          "Bu gönderiyi silmek istediğine emin misin? Bu işlem geri alınamaz.",
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("İptal", style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _deletePost();
+            },
+            child: const Text("Sil", style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deletePost() async {
+    try {
+      await FeedService().deletePost(widget.post['id']);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gönderi silindi! 🗑️'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        Navigator.pop(context, true); // Feed'i yenilemek için true döndür
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Hata: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
+
+  // ✏️ YORUM DÜZENLEME DIALOG'U
+  void _showEditCommentDialog(Map<String, dynamic> comment) {
+    _editCommentController.text = comment['content'] ?? '';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF252525),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Text(
+                  "Yorumu Düzenle",
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _editCommentController,
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: "Yorumun...",
+                  hintStyle: GoogleFonts.poppins(color: Colors.white24),
+                  filled: true,
+                  fillColor: Colors.black26,
+                  contentPadding: const EdgeInsets.all(16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        "Vazgeç",
+                        style: GoogleFonts.poppins(
+                            color: Colors.white38, fontSize: 13),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final newContent = _editCommentController.text.trim();
+                        if (newContent.isEmpty) return;
+
+                        Navigator.pop(ctx);
+                        await _updateComment(comment['id'], newContent);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6C63FF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        "Kaydet",
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ✏️ YORUM GÜNCELLEME
+  Future<void> _updateComment(String commentId, String newContent) async {
+    try {
+      await FeedService().updateComment(commentId, newContent);
+      // Yorumları yenile
+      _fetchComments();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Yorum güncellendi! ✏️'),
+            backgroundColor: Color(0xFF6C63FF),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Hata: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
   }
 
   // 📸 EMOJİ TEPKİSİNİ SİL
@@ -1031,38 +1247,117 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 style: GoogleFonts.poppins(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold)),
-                            Text("@${profile["username"]}",
-                                style: GoogleFonts.poppins(
-                                    color: Colors.grey.shade400, fontSize: 12)),
+                            Row(
+                              children: [
+                                Text("@${profile["username"]}",
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.grey.shade400,
+                                        fontSize: 12)),
+                                if (widget.post['location'] != null &&
+                                    widget.post['location']
+                                        .toString()
+                                        .isNotEmpty) ...[
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.location_on,
+                                      color: Color(0xFF6C63FF), size: 12),
+                                  const SizedBox(width: 2),
+                                  Expanded(
+                                    child: GestureDetector(
+                                        onTap: () => showLocationDisplaySheet(
+                                            context, widget.post['location']),
+                                        child: Text(
+                                          widget.post['location'],
+                                          style: GoogleFonts.poppins(
+                                              color: const Color(0xFF6C63FF),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w500),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        )),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ],
                         ),
                       ),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // ✏️ Düzenlendi etiketi
+                          if (widget.post['is_edited'] == true ||
+                              _editedPostContent != null)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Text(
+                                "(düzenlendi)",
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white38,
+                                  fontSize: 10,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
                           Text(dateStr,
                               style: GoogleFonts.poppins(
                                   color: Colors.grey.shade400, fontSize: 12)),
-                          if (!isMyPost) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.05),
-                                shape: BoxShape.circle,
-                              ),
-                              child: PopupMenuButton<String>(
-                                padding: EdgeInsets.zero,
-                                icon: const Icon(Icons.more_horiz,
-                                    color: Colors.white70, size: 18),
-                                color: const Color(0xFF2C2C2C),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                onSelected: (value) {
-                                  if (value == 'report') _showReportDialog();
-                                },
-                                itemBuilder: (BuildContext context) {
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              shape: BoxShape.circle,
+                            ),
+                            child: PopupMenuButton<String>(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.more_horiz,
+                                  color: Colors.white70, size: 18),
+                              color: const Color(0xFF2C2C2C),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              onSelected: (value) {
+                                if (value == 'report') _showReportDialog();
+                                if (value == 'edit') _showEditPostDialog();
+                                if (value == 'delete') _confirmDeletePost();
+                              },
+                              itemBuilder: (BuildContext context) {
+                                if (isMyPost) {
+                                  // Kendi postum için düzenle ve sil seçenekleri
+                                  return [
+                                    PopupMenuItem(
+                                      value: 'edit',
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.edit_outlined,
+                                              color: Color(0xFF6C63FF),
+                                              size: 18),
+                                          const SizedBox(width: 10),
+                                          Text("Düzenle",
+                                              style: GoogleFonts.poppins(
+                                                  color: Colors.white,
+                                                  fontSize: 13)),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.delete_outline,
+                                              color: Colors.redAccent,
+                                              size: 18),
+                                          const SizedBox(width: 10),
+                                          Text("Sil",
+                                              style: GoogleFonts.poppins(
+                                                  color: Colors.redAccent,
+                                                  fontSize: 13)),
+                                        ],
+                                      ),
+                                    ),
+                                  ];
+                                } else {
+                                  // Başkasının postu için şikayet seçeneği
                                   return [
                                     PopupMenuItem(
                                       value: 'report',
@@ -1079,10 +1374,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       ),
                                     ),
                                   ];
-                                },
-                              ),
+                                }
+                              },
                             ),
-                          ],
+                          ),
                         ],
                       ),
                     ],
@@ -1453,19 +1748,43 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 fontWeight: FontWeight.bold)),
                         Row(
                           children: [
+                            // ✏️ Düzenlendi etiketi
+                            if (c['is_edited'] == true)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: Text(
+                                  "(düzenlendi)",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white30,
+                                    fontSize: 10,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
                             Text(
                               timeago.format(DateTime.parse(c["created_at"]),
                                   locale: "en_short"),
                               style: GoogleFonts.poppins(
                                   color: Colors.white38, fontSize: 11),
                             ),
-                            if (canDelete) // Post sahibi de silebilir
+                            // ✏️ DÜZENLEME BUTONU (Sadece kendi yorumumsa)
+                            if (isMine)
+                              GestureDetector(
+                                onTap: () => _showEditCommentDialog(c),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 10),
+                                  child: Icon(Icons.edit_outlined,
+                                      color: Colors.white30, size: 16),
+                                ),
+                              ),
+                            if (canDelete) // Post sahibi veya yorum sahibi silebilir
                               GestureDetector(
                                 onTap: () => _confirmDelete(id),
                                 child: Padding(
                                   padding: const EdgeInsets.only(left: 10),
                                   child: Icon(Icons.delete_outline,
-                                      color: Colors.white30, size: 16),
+                                      color: Colors.redAccent.withOpacity(0.7),
+                                      size: 16), // Rengi biraz kıstım
                                 ),
                               )
                           ],

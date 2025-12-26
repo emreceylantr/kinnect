@@ -6,9 +6,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PhotoTagScreen extends StatefulWidget {
-  final File imageFile;
+  final File? imageFile;
+  final String? imageUrl;
+  final List<Map<String, dynamic>>? initialTags;
 
-  const PhotoTagScreen({super.key, required this.imageFile});
+  const PhotoTagScreen({
+    super.key,
+    this.imageFile,
+    this.imageUrl,
+    this.initialTags,
+  }) : assert(imageFile != null || imageUrl != null,
+            'Either imageFile or imageUrl must be provided');
 
   @override
   State<PhotoTagScreen> createState() => _PhotoTagScreenState();
@@ -29,6 +37,14 @@ class _PhotoTagScreenState extends State<PhotoTagScreen> {
   Offset? pendingTagPosition;
 
   String get myId => client.auth.currentUser!.id;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialTags != null) {
+      tags = List.from(widget.initialTags!);
+    }
+  }
 
   // Kullanıcı ara
   Future<void> _searchUsers(String query) async {
@@ -293,11 +309,17 @@ class _PhotoTagScreenState extends State<PhotoTagScreen> {
                         // Fotoğraf
                         ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: Image.file(
-                            widget.imageFile,
-                            fit: BoxFit.contain,
-                            width: constraints.maxWidth,
-                          ),
+                          child: widget.imageFile != null
+                              ? Image.file(
+                                  widget.imageFile!,
+                                  fit: BoxFit.contain,
+                                  width: constraints.maxWidth,
+                                )
+                              : Image.network(
+                                  widget.imageUrl!,
+                                  fit: BoxFit.contain,
+                                  width: constraints.maxWidth,
+                                ),
                         ),
 
                         // Etiketler

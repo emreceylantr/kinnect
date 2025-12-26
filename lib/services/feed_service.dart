@@ -241,4 +241,100 @@ class FeedService {
       'audience': visibility,
     }).eq('id', postId);
   }
+
+  // --- 10. POST DÜZENLEME ---
+  Future<void> updatePost(String postId, String newContent) async {
+    await client.from('posts').update({
+      'content': newContent,
+      'is_edited': true,
+      'edited_at': DateTime.now().toIso8601String(),
+    }).eq('id', postId);
+  }
+
+  // --- 11. YORUM DÜZENLEME ---
+  Future<void> updateComment(String commentId, String newContent) async {
+    await client.from('comments').update({
+      'content': newContent,
+      'is_edited': true,
+      'edited_at': DateTime.now().toIso8601String(),
+    }).eq('id', commentId);
+  }
+  // --- 12. GELİŞMİŞ POST DÜZENLEME ---
+
+  // Etiketleri Getir
+  Future<List<Map<String, dynamic>>> getPostTags(String postId) async {
+    try {
+      final response = await client
+          .from('post_tags')
+          .select('*, profiles:tagged_user_id(*)') // İlişkili profil bilgisi
+          .eq('post_id', postId);
+      return List<Map<String, dynamic>>.from(response as List);
+    } catch (e) {
+      debugPrint('HATA (Etiketleri Getir): $e');
+      return [];
+    }
+  }
+
+  // Gelişmiş Güncelleme (Foto, Müzik, Etiket, Konum)
+  Future<void> updatePostAdvanced({
+    required String postId,
+    required String content,
+    required List<String> imageUrls,
+    Map<String, dynamic>? musicData,
+    required List<Map<String, dynamic>> tags,
+    String? location, // 📍 Yeni: Konum
+  }) async {
+    // 1. Post içeriğini ve meta verilerini güncelle
+    final Map<String, dynamic> updateData = {
+      'content': content,
+      'image_urls': imageUrls.isNotEmpty ? imageUrls : null,
+      'image_url': imageUrls.isNotEmpty ? imageUrls.first : null,
+      'location': location, // 📍
+      'is_edited': true,
+      'edited_at': DateTime.now().toIso8601String(),
+    };
+
+    // Müzik verisi varsa güncelle, yoksa null yap (sil)
+    if (musicData != null) {
+      updateData['spotify_track_id'] = musicData['id'];
+      updateData['spotify_track_name'] = musicData['name'];
+      updateData['spotify_artist_name'] = musicData['artist'];
+      updateData['spotify_preview_url'] = musicData['preview_url'];
+      updateData['spotify_album_image'] = musicData['album_image'];
+    } else {
+      updateData['spotify_track_id'] = null;
+      updateData['spotify_track_name'] = null;
+      updateData['spotify_artist_name'] = null;
+      updateData['spotify_preview_url'] = null;
+      updateData['spotify_album_image'] = null;
+    }
+
+    await client.from('posts').update(updateData).eq('id', postId);
+
+    // 2. Etiketleri Yönet (Tamamen silip yeniden ekleme stratejisi - daha güvenli)
+    // Önce mevcut etiketleri sil
+    await client.from('post_tags').delete().eq('post_id', postId);
+
+    // Yeni etiketleri ekle (Eğer varsa)
+    if (tags.isNotEmpty) {
+      for (final tag in tags) {
+        // Tag yapısı: {user_id (tagged_user_id), x, y}
+        // Gelen tag listesi 'profiles' içerebilir, ama insert ederken sadece ID lazım.
+        // Edit ekranından gelen veri yapısına dikkat edilmeli.
+
+        final String taggedUserId = tag['tagged_user_id'] ?? tag['user_id'];
+        final double x = (tag['x_position'] ?? tag['x'] ?? 0.0) as double;
+        final double y = (tag['y_position'] ?? tag['y'] ?? 0.0) as double;
+
+        if (taggedUserId.isNotEmpty) {
+          await client.from('post_tags').insert({
+            'post_id': postId,
+            'tagged_user_id': taggedUserId,
+            'x_position': x,
+            'y_position': y,
+          });
+        }
+      }
+    }
+  }
 }
