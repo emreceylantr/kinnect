@@ -21,6 +21,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../widgets/photo_emoji_picker.dart'; // 📸 Photo Emoji Tepkileri
 import '../../widgets/taggable_post_image.dart'; // 🆕 Etiketli Fotoğraf Widget'ı
+import '../../widgets/image_carousel.dart'; // 🆕 Çoklu Fotoğraf Carousel
 
 class PostDetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -1100,8 +1101,22 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ),
                 ],
 
-                // 🖼️ ETİKETLİ VE MÜZİKLİ GÖRSEL
-                if (image != null) ...[
+                // 🖼️ ETİKETLİ VE MÜZİKLİ GÖRSEL (CAROUSEL DESTEĞİ)
+                if (widget.post['image_urls'] != null &&
+                    (widget.post['image_urls'] as List).length > 1) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: ImageCarousel(
+                      imageUrls:
+                          (widget.post['image_urls'] as List).cast<String>(),
+                      height: 350,
+                      borderRadius: BorderRadius.circular(12),
+                      musicTrackName: widget.post['spotify_track_name'],
+                      musicArtistName: widget.post['spotify_artist_name'],
+                      postId: widget.post['id'],
+                    ),
+                  ),
+                ] else if (image != null) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: ClipRRect(
@@ -1110,9 +1125,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         imageUrl: image,
                         postId: widget.post['id'],
                         borderRadius: BorderRadius.circular(12),
-                        musicTrackName: widget.post['spotify_track_name'], // 🆕
-                        musicArtistName:
-                            widget.post['spotify_artist_name'], // 🆕
+                        musicTrackName: widget.post['spotify_track_name'],
+                        musicArtistName: widget.post['spotify_artist_name'],
                       ),
                     ),
                   ),
@@ -1125,7 +1139,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: widget.isExploreMode
                       ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // 1. Fuel Button
                             FuelButton(
@@ -1133,49 +1147,52 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               count: fuelCount,
                               isExpired: !isAlive,
                               onTap: _toggleFuel,
-                              size: 30,
+                              size: 28,
                             ),
-
-                            // 2. Beğeni Sayısı (DİNAMİK HİZALAMA)
-                            Transform.translate(
-                              offset: const Offset(-5, 0),
-                              child: Padding(
-                                padding: EdgeInsets.only(
-                                    top: alignmentTopPadding), // 🔥 22 veya 38
-                                child: Text(
-                                  "$fuelCount",
-                                  style: GoogleFonts.poppins(
-                                    color: statusColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
+                            // 2. Beğeni Sayısı
+                            Padding(
+                              padding: EdgeInsets.only(
+                                  left: 2, top: isAlive ? 32.0 : 38.0),
+                              child: Text(
+                                "$fuelCount",
+                                style: GoogleFonts.poppins(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
                                 ),
                               ),
                             ),
-
                             const Spacer(),
-
-                            // 3. Yorum Kısmı (AYNI HİZALAMA)
+                            // 3. Yorum Kısmı
                             Padding(
-                              padding: EdgeInsets.only(
-                                  top:
-                                      alignmentTopPadding), // 🔥 Yorum da aynı hizaya indi
-                              child: Row(
-                                children: [
-                                  const Icon(FontAwesomeIcons.comment,
-                                      color: Colors.grey, size: 20),
-                                  const SizedBox(width: 6),
-                                  Text("$commentCount",
-                                      style: GoogleFonts.poppins(
-                                          color: Colors.grey, fontSize: 14)),
-                                ],
+                              padding:
+                                  EdgeInsets.only(top: isAlive ? 32.0 : 38.0),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(FontAwesomeIcons.comment,
+                                        size: 16, color: Colors.white38),
+                                    const SizedBox(width: 6),
+                                    Text("$commentCount",
+                                        style: GoogleFonts.poppins(
+                                            color: Colors.white38,
+                                            fontSize: 13)),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
                         )
                       : Row(
-                          // 🔥 NORMAL MOD: MOR KALP VE HİZALAMA
+                          // 🔥 NORMAL MOD: ANA AKIŞ GİBİ SOLDA HİZALI
                           children: [
+                            // 1. Beğeni
                             GestureDetector(
                               onTap: _toggleLike,
                               child: Container(
@@ -1188,7 +1205,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           : FontAwesomeIcons.heart,
                                       color: isLiked
                                           ? const Color(0xFF6C63FF)
-                                          : Colors.grey.shade400, // Mor Kalp
+                                          : Colors.grey.shade400,
                                       size: 22,
                                     ),
                                     if (likeCount > 0) ...[
@@ -1204,6 +1221,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 ),
                               ),
                             ),
+                            // 2. Yorum
                             const SizedBox(width: 24),
                             Container(
                               color: Colors.transparent,
@@ -1221,14 +1239,37 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 ],
                               ),
                             ),
-                            // 📸 Emoji Tepkileri - Sağda
+                            // 3. Tepki Ver Butonu
+                            const SizedBox(width: 24),
+                            GestureDetector(
+                              onTap: () async {
+                                final result =
+                                    await showPhotoEmojiPicker(context);
+                                if (result != null) {
+                                  _sendEmojiReaction(
+                                      result['path']!, result['type']!);
+                                }
+                              },
+                              child: Container(
+                                color: Colors.transparent,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.add_reaction_outlined,
+                                      color: Colors.grey.shade400,
+                                      size: 22,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // 4. Mevcut Tepkiler - Sağda
                             if (emojiReactions.isNotEmpty) ...[
                               const Spacer(),
                               GestureDetector(
                                 onTap: () => _showAllReactionsDialog(),
                                 child: Row(
                                   children: [
-                                    // Üst üste binen avatarlar (max 3)
                                     SizedBox(
                                       width: (emojiReactions.length > 3
                                                   ? 3

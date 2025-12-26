@@ -18,6 +18,7 @@ import '../social/post_detail_screen.dart';
 import '../social/messages_screen.dart';
 import '../content/call_screen.dart';
 import 'search_screen.dart';
+import '../../widgets/image_carousel.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -956,7 +957,21 @@ class _PostCardState extends State<PostCard> {
                             height: 1.5),
                       ),
                     ),
-                  if (p['image_url'] != null)
+                  if (p['image_urls'] != null &&
+                      (p['image_urls'] as List).isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      child: ImageCarousel(
+                        imageUrls: (p['image_urls'] as List).cast<String>(),
+                        height: 350,
+                        borderRadius: BorderRadius.circular(18),
+                        onImageTap: (url) => _openFullScreen(url),
+                        musicTrackName: p['spotify_track_name'],
+                        musicArtistName: p['spotify_artist_name'],
+                        postId: p['id'],
+                      ),
+                    )
+                  else if (p['image_url'] != null)
                     GestureDetector(
                       onTap: () => _openFullScreen(p['image_url']),
                       child: Container(

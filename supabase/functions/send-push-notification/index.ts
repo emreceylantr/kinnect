@@ -131,6 +131,11 @@ serve(async (req) => {
 
         // FCM'e push gönder
         const projectId = serviceAccount.project_id || 'kinnect-8fc6b'
+
+        // Null check - değişkenler boş olmamalı
+        const notificationTitle = title || 'Kinnect'
+        const notificationBody = body || 'Yeni bildirim'
+
         const fcmResponse = await fetch(
             `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
             {
@@ -143,19 +148,41 @@ serve(async (req) => {
                     message: {
                         token: profile.fcm_token,
                         notification: {
-                            title: title,
-                            body: body,
+                            title: notificationTitle,
+                            body: notificationBody,
                         },
                         data: {
                             type: type || '',
                             target_id: target_id || '',
+                            title: notificationTitle,
+                            body: notificationBody,
+                            click_action: 'FLUTTER_NOTIFICATION_CLICK',
                         },
                         apns: {
+                            headers: {
+                                'apns-priority': '10',
+                                'apns-push-type': 'alert',
+                            },
                             payload: {
                                 aps: {
+                                    alert: {
+                                        title: notificationTitle,
+                                        body: notificationBody,
+                                    },
                                     sound: 'default',
                                     badge: 1,
+                                    'content-available': 1,
+                                    'mutable-content': 1,
                                 }
+                            }
+                        },
+                        android: {
+                            priority: 'high',
+                            notification: {
+                                title: notificationTitle,
+                                body: notificationBody,
+                                sound: 'default',
+                                click_action: 'FLUTTER_NOTIFICATION_CLICK',
                             }
                         }
                     }
