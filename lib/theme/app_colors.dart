@@ -16,21 +16,20 @@ class AppColors {
   // ==================== BACKGROUNDS ====================
   static Color get bgDark => isDark
       ? const Color(0xFF0A0A0F)
-      : const Color(0xFFF5F5F5); // Dark background or light gray
-  static Color get bgBlack => isDark
-      ? Colors.black
-      : const Color(0xFFFAFAFA); // Black in dark mode, off‑white in light mode
+      : const Color(0xFFF9FAFB); // Koyu Gri <-> Kırık Beyaz
+  static Color get bgBlack =>
+      isDark ? Colors.black : Colors.white; // Siyah <-> Beyaz
   static Color get bgCard => isDark
       ? const Color(0xFF1E1E1E)
-      : const Color(0xFFFFFFFF); // Dark card or pure white
+      : Colors.white; // Koyu Kart <-> Beyaz Kart
   static Color get bgCardDark => isDark
       ? const Color(0xFF121212)
-      : const Color(0xFFE0E0E0); // Darker card variant or light gray
+      : const Color(0xFFF3F4F6); // Daha koyu <-> Açık gri
   static Color get bgCardLight => isDark
       ? const Color(0xFF2C2C2C)
-      : const Color(0xFFD0D0D0); // Light card variant or medium gray
+      : const Color(0xFFEEEEEE); // Açık koyu <-> Gri
   static Color get bgCardExplore =>
-      isDark ? const Color(0xFF16161F) : const Color(0xFFF5F5F5);
+      isDark ? const Color(0xFF16161F) : const Color(0xFFFFFFFF);
   static const Color bgTransparent = Colors.transparent;
 
   // ==================== ACCENT COLORS ====================
