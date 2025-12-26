@@ -18,6 +18,7 @@ import '../../services/safety_service.dart';
 // --- WIDGET IMPORTU ---
 import '../../widgets/music_player_card.dart';
 import '../../widgets/image_carousel.dart';
+import '../../theme/app_colors.dart';
 
 // --- EKRANLAR ---
 import '../social/messages_screen.dart';
@@ -467,7 +468,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: AppColors.bgCard,
         title: const Text("Sil", style: TextStyle(color: Colors.white)),
         content: const Text("Bu gönderiyi silmek istediğine emin misin?",
             style: TextStyle(color: Colors.white70)),
@@ -503,7 +504,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           "Diğer"
         ];
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E),
+          backgroundColor: AppColors.bgCard,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text("Kullanıcıyı Şikayet Et",
@@ -552,7 +553,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: AppColors.bgCard,
         title: Text(isBlocking ? "Engelle" : "Engeli Kaldır",
             style: GoogleFonts.poppins(
                 color: Colors.white, fontWeight: FontWeight.bold)),
@@ -611,7 +612,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     if (_isBlockedByMe) {
       return Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.bgBlack,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -624,7 +625,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.white),
-              color: const Color(0xFF2C2C2C),
+              color: AppColors.bgCardLight,
               onSelected: (val) {
                 if (val == 'unblock') _confirmUnblockAction();
               },
@@ -652,7 +653,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ElevatedButton(
                 onPressed: _confirmUnblockAction,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF262626),
+                    backgroundColor: AppColors.bgCardLight,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20))),
                 child: Text("Engeli Kaldır",
@@ -679,7 +680,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final coverUrl = _profileData?['cover_url'];
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.bgBlack,
       body: _isLoading
           ? const ProfileHeaderShimmer()
           : RefreshIndicator(
@@ -717,7 +718,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           end: Alignment.bottomRight,
                                           colors: [
                                       Colors.grey.shade900,
-                                      Colors.black
+                                      AppColors.bgBlack
                                     ]))),
                         ),
 
@@ -772,7 +773,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   height: 36,
                                   width: 36,
                                   decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.25),
+                                      color:
+                                          AppColors.bgBlack.withOpacity(0.25),
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                           color: Colors.white.withOpacity(0.15),
@@ -781,7 +783,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     padding: EdgeInsets.zero,
                                     icon: const Icon(Icons.more_horiz,
                                         color: Colors.white, size: 20),
-                                    color: const Color(0xFF2C2C2C),
+                                    color: AppColors.bgCardLight,
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(16)),
@@ -856,14 +858,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: const Color(0xFF6C63FF),
+                                          color: AppColors.primary,
                                           width: 3,
                                         ),
                                       ),
                                       child: CircleAvatar(
                                         radius: 50,
-                                        backgroundColor:
-                                            const Color(0xFF1E1E1E),
+                                        backgroundColor: AppColors.bgCard,
                                         backgroundImage: _isPlayingLiveVideo
                                             ? null
                                             : (_profileData?['avatar_url'] !=
@@ -917,10 +918,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
                                           shadows: [
-                                            const Shadow(
+                                            Shadow(
                                                 offset: Offset(0, 1),
                                                 blurRadius: 4,
-                                                color: Colors.black)
+                                                color: AppColors.bgBlack)
                                           ])),
                                   if (isAdmin) ...[
                                     const AdminBadge(size: 24),
@@ -937,10 +938,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
                                             shadows: [
-                                              const Shadow(
+                                              Shadow(
                                                   offset: Offset(0, 1),
                                                   blurRadius: 3,
-                                                  color: Colors.black)
+                                                  color: AppColors.bgBlack)
                                             ]))),
                               if (_profileData?['bio'] != null)
                                 Padding(
@@ -951,10 +952,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             color: Colors.white70,
                                             fontSize: 13,
                                             shadows: [
-                                              const Shadow(
+                                              Shadow(
                                                   offset: Offset(0, 1),
                                                   blurRadius: 3,
-                                                  color: Colors.black)
+                                                  color: AppColors.bgBlack)
                                             ]),
                                         textAlign: TextAlign.center,
                                         maxLines: 2,
@@ -1063,10 +1064,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   shadows: [
-                    const Shadow(
+                    Shadow(
                         offset: Offset(0, 1),
                         blurRadius: 4,
-                        color: Colors.black)
+                        color: AppColors.bgBlack)
                   ])),
           Text(label,
               style: GoogleFonts.poppins(color: Colors.white60, fontSize: 12)),
@@ -1090,7 +1091,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (result == true) _loadProfileData();
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF262626),
+          backgroundColor: AppColors.bgCardLight,
           foregroundColor: Colors.white,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1106,11 +1107,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildOtherProfileButtons() {
     String label = "Takip Et";
-    Color bgColor = const Color(0xFF6C63FF);
+    Color bgColor = AppColors.primary;
     Color txtColor = Colors.white;
     if (_friendshipStatus == 'accepted') {
       label = "Takip Ediliyor";
-      bgColor = const Color(0xFF262626);
+      bgColor = AppColors.bgCardLight;
     } else if (_friendshipStatus == 'pending') {
       label = "İstek Gönderildi";
       bgColor = Colors.grey.shade900;
@@ -1139,7 +1140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: ElevatedButton(
                     onPressed: _startMessage,
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF262626),
+                        backgroundColor: AppColors.bgCardLight,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
@@ -1209,7 +1210,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
-                                colors: [Color(0xFF6C63FF), Color(0xFF4834D4)],
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primaryDark
+                                ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -1390,7 +1394,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ? FontAwesomeIcons.solidHeart
                                       : FontAwesomeIcons.heart,
                                   color: isLiked
-                                      ? const Color(0xFF6C63FF)
+                                      ? AppColors.primary
                                       : Colors.grey.shade400,
                                   size: 22,
                                 ),
@@ -1400,7 +1404,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     "$likeCount",
                                     style: GoogleFonts.poppins(
                                       color: isLiked
-                                          ? const Color(0xFF6C63FF)
+                                          ? AppColors.primary
                                           : Colors.grey.shade400,
                                       fontWeight: FontWeight.w600,
                                     ),

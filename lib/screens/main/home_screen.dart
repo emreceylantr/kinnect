@@ -23,6 +23,7 @@ import '../../widgets/image_carousel.dart';
 import '../../widgets/location_display_sheet.dart';
 import '../../widgets/shimmer/post_card_shimmer.dart';
 import '../../widgets/double_tap_overlay.dart';
+import '../../theme/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -168,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (type == 'follow') {
       message = 'seni takip etmek istiyor.';
       icon = FontAwesomeIcons.userPlus;
-      iconColor = const Color(0xFF6C63FF);
+      iconColor = AppColors.primary;
     } else if (type == 'like') {
       message = 'gönderini beğendi.';
       icon = FontAwesomeIcons.heart;
@@ -244,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E1E1E).withOpacity(0.95),
+                      color: AppColors.bgCard.withOpacity(0.95),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -322,11 +323,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: const Color(0xFF050505),
+        backgroundColor: AppColors.bgDark,
         appBar: hideAppBar
             ? null
             : AppBar(
-                backgroundColor: const Color(0xFF050505),
+                backgroundColor: AppColors.bgDark,
                 elevation: 0,
                 title: Text(
                   _getAppBarTitle(),
@@ -406,8 +407,8 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
         return RefreshIndicator(
-          color: const Color(0xFF6C63FF),
-          backgroundColor: const Color(0xFF1E1E1E),
+          color: AppColors.primary,
+          backgroundColor: AppColors.bgCard,
           onRefresh: () async {
             _refreshFeed();
             await _feedFuture;
@@ -432,7 +433,7 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(FontAwesomeIcons.wandMagicSparkles,
-              size: 60, color: Color(0xFF6C63FF)),
+              size: 60, color: AppColors.primary),
           const SizedBox(height: 20),
           Text('Yapay Zeka Asistanı',
               style: GoogleFonts.poppins(
@@ -450,10 +451,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBottomNavBar() {
     return BottomNavigationBar(
-      backgroundColor: const Color(0xFF050505),
+      backgroundColor: AppColors.bgDark,
       type: BottomNavigationBarType.fixed,
       currentIndex: _currentIndex,
-      selectedItemColor: const Color(0xFF6C63FF),
+      selectedItemColor: AppColors.primary,
       unselectedItemColor: Colors.grey.shade700,
       showSelectedLabels: false,
       showUnselectedLabels: false,
@@ -473,28 +474,28 @@ class _HomeScreenState extends State<HomeScreen> {
         BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.house),
             activeIcon: Icon(FontAwesomeIcons.house,
-                shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
+                shadows: [Shadow(blurRadius: 10, color: AppColors.primary)]),
             label: ''),
         BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.fire),
             activeIcon: Icon(FontAwesomeIcons.fire,
-                shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
+                shadows: [Shadow(blurRadius: 10, color: AppColors.primary)]),
             label: ''),
         BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.circlePlus, size: 32),
             activeIcon: Icon(FontAwesomeIcons.circlePlus,
                 size: 32,
-                shadows: [Shadow(blurRadius: 15, color: Color(0xFF6C63FF))]),
+                shadows: [Shadow(blurRadius: 15, color: AppColors.primary)]),
             label: ''),
         BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.wandMagicSparkles),
             activeIcon: Icon(FontAwesomeIcons.wandMagicSparkles,
-                shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
+                shadows: [Shadow(blurRadius: 10, color: AppColors.primary)]),
             label: ''),
         BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.user),
             activeIcon: Icon(FontAwesomeIcons.user,
-                shadows: [Shadow(blurRadius: 10, color: Color(0xFF6C63FF))]),
+                shadows: [Shadow(blurRadius: 10, color: AppColors.primary)]),
             label: ''),
       ],
     );
@@ -545,7 +546,7 @@ class _KawaiiBellIconState extends State<KawaiiBellIcon>
       if (!_controller.isAnimating) _controller.repeat();
     }
 
-    final Color bellColor = const Color(0xFF6C63FF); // TEMA MORU
+    final Color bellColor = AppColors.primary; // TEMA MORU
     final Color faceColor = Colors.white; // BEYAZ YÜZ
 
     return GestureDetector(
@@ -904,14 +905,17 @@ class _PostCardState extends State<PostCard> {
                             decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
-                                colors: [Color(0xFF6C63FF), Color(0xFF4834D4)],
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primaryDark
+                                ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                             ),
                             child: CircleAvatar(
                               radius: 20,
-                              backgroundColor: const Color(0xFF121212),
+                              backgroundColor: AppColors.bgCardDark,
                               backgroundImage: profile['avatar_url'] != null
                                   ? NetworkImage(profile['avatar_url'])
                                   : null,
@@ -949,7 +953,7 @@ class _PostCardState extends State<PostCard> {
                                       p['location'].toString().isNotEmpty) ...[
                                     const SizedBox(width: 6),
                                     const Icon(Icons.location_on,
-                                        color: Color(0xFF6C63FF), size: 12),
+                                        color: AppColors.primary, size: 12),
                                     const SizedBox(width: 2),
                                     GestureDetector(
                                       onTap: () => showLocationDisplaySheet(
@@ -962,7 +966,7 @@ class _PostCardState extends State<PostCard> {
                                         child: Text(
                                           p['location'],
                                           style: GoogleFonts.poppins(
-                                              color: const Color(0xFF6C63FF),
+                                              color: AppColors.primary,
                                               fontSize: 11,
                                               fontWeight: FontWeight.w500),
                                           maxLines: 1,
@@ -1049,7 +1053,7 @@ class _PostCardState extends State<PostCard> {
                                       ? FontAwesomeIcons.solidHeart
                                       : FontAwesomeIcons.heart,
                                   color: isLiked
-                                      ? const Color(0xFF6C63FF)
+                                      ? AppColors.primary
                                       : Colors.grey.shade400,
                                   size: 22,
                                 ),
@@ -1058,7 +1062,7 @@ class _PostCardState extends State<PostCard> {
                                   Text("$likeCount",
                                       style: GoogleFonts.poppins(
                                           color: isLiked
-                                              ? const Color(0xFF6C63FF)
+                                              ? AppColors.primary
                                               : Colors.grey.shade400,
                                           fontWeight: FontWeight.w600)),
                                 ]
@@ -1187,7 +1191,7 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF6C63FF).withOpacity(0.2),
+                  color: AppColors.primary.withOpacity(0.2),
                   blurRadius: 40,
                   spreadRadius: 0,
                 ),
@@ -1250,7 +1254,7 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: const Color(0xFF6C63FF)
+                                  color: AppColors.primary
                                       .withOpacity(0.5 - value),
                                   width: 2,
                                 ),
@@ -1270,14 +1274,14 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFF6C63FF),
+                              AppColors.primary,
                               Color(0xFF9D89D9),
-                              Color(0xFF6C63FF),
+                              AppColors.primary,
                             ],
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF6C63FF).withOpacity(0.4),
+                              color: AppColors.primary.withOpacity(0.4),
                               blurRadius: 20,
                               spreadRadius: 2,
                             ),

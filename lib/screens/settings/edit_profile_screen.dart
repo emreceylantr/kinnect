@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+import '../../theme/theme_manager.dart'; // 🌓 Tema Yöneticisi
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> currentProfile;
@@ -626,6 +627,55 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                           maxLines: 3, maxLength: 150, icon: Icons.short_text),
 
                       const SizedBox(height: 30),
+                      // 🔥 GÜVENLİK BÖLÜMÜ 🔥
+                      const SizedBox(height: 30),
+
+                      // 🔥 GÖRÜNÜM BÖLÜMÜ (Light/Dark Mod) 🔥
+                      const Divider(color: Colors.white10),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(
+                              ThemeManager().isDark
+                                  ? Icons.dark_mode
+                                  : Icons.light_mode,
+                              color: _colorBlue,
+                              size: 24),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Aydınlık Mod",
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600)),
+                                Text(
+                                    ThemeManager().isDark
+                                        ? "Kapalı (Karanlık Mod)"
+                                        : "Açık (Aydınlık Mod)",
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.white54, fontSize: 11)),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: !ThemeManager()
+                                .isDark, // isDark=false ise switch açık (Lighting)
+                            activeThumbColor: Colors.black, // Thumb rengi
+                            activeTrackColor: Colors.white, // Track rengi
+                            inactiveThumbColor: Colors.grey,
+                            inactiveTrackColor: Colors.white10,
+                            onChanged: (val) {
+                              // val=true -> Light Mode açılıyor -> Dark=false
+                              ThemeManager().toggleTheme(!val); // Toggle Theme
+                              setState(() {}); // UI'ı güncelle
+                            },
+                          )
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
                       // 🔥 GÜVENLİK BÖLÜMÜ 🔥
                       const Divider(color: Colors.white10),
                       const SizedBox(height: 10),

@@ -13,6 +13,7 @@ import 'package:geocoding/geocoding.dart';
 
 import 'photo_tag_screen.dart'; // 🆕 Fotoğrafa kişi etiketleme
 import 'music_picker_screen.dart'; // 🌵 Spotify müzik ekle
+import '../../theme/app_colors.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -289,7 +290,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Gönderildi! 🚀"),
-            backgroundColor: Color(0xFF6C63FF),
+            backgroundColor: AppColors.primary,
           ),
         );
         Navigator.pop(context);
@@ -377,8 +378,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Color(0xFF1E1E1E),
+        decoration: BoxDecoration(
+          color: AppColors.bgCard,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         ),
         child: Column(
@@ -414,10 +415,10 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                    color: const Color(0xFF6C63FF).withOpacity(0.2),
+                    color: AppColors.primary.withOpacity(0.2),
                     shape: BoxShape.circle),
                 child: const Icon(Icons.edit_location_alt,
-                    color: Color(0xFF6C63FF)),
+                    color: AppColors.primary),
               ),
               title: Text("Elle konum gir",
                   style: GoogleFonts.poppins(color: Colors.white)),
@@ -440,7 +441,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF252525),
+        backgroundColor: AppColors.bgCardLight,
         title:
             Text("Konum Yaz", style: GoogleFonts.poppins(color: Colors.white)),
         content: Row(
@@ -455,13 +456,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                   enabledBorder: const UnderlineInputBorder(
                       borderSide: BorderSide(color: Colors.white24)),
                   focusedBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF6C63FF))),
+                      borderSide: BorderSide(color: AppColors.primary)),
                 ),
                 autofocus: true,
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.search, color: Color(0xFF6C63FF)),
+              icon: const Icon(Icons.search, color: AppColors.primary),
               onPressed: () async {
                 if (locController.text.trim().isEmpty) return;
                 try {
@@ -501,8 +502,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             },
             child: Text("Tamam",
                 style: GoogleFonts.poppins(
-                    color: const Color(0xFF6C63FF),
-                    fontWeight: FontWeight.bold)),
+                    color: AppColors.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -535,7 +535,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     final bool showAurora = _textController.text.isEmpty && _imageFile == null;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.bgBlack,
       body: Stack(
         children: [
           // 1. AURORA
@@ -554,10 +554,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                         begin: Alignment(-1.0 + t * 0.5, -1.0),
                         end: Alignment(1.0 - t * 0.5, 1.0),
                         colors: [
-                          Color.lerp(Colors.black, const Color(0xFF004D40), t)!,
+                          Color.lerp(
+                              AppColors.bgBlack, const Color(0xFF004D40), t)!,
                           Color.lerp(const Color(0xFF1A237E),
                               const Color(0xFF311B92), t)!,
-                          Color.lerp(Colors.black, const Color(0xFF4A148C), t)!,
+                          Color.lerp(
+                              AppColors.bgBlack, const Color(0xFF4A148C), t)!,
                         ],
                         stops: [0.0 + t * 0.2, 0.5, 1.0 - t * 0.2],
                       ),
@@ -587,7 +589,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                             // 🔥 DÜZELTME: Avatarın üzerindeki fazlalık padding kaldırıldı
                             CircleAvatar(
                               radius: 22, // Standart boyut
-                              backgroundColor: const Color(0xFF1F1F1F),
+                              backgroundColor: AppColors.bgCard,
                               backgroundImage: _avatarUrl != null
                                   ? NetworkImage(_avatarUrl!)
                                   : null,
@@ -624,7 +626,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                       controller: _textController,
                                       style: commonTextStyle,
                                       maxLines: null,
-                                      cursorColor: const Color(0xFF6C63FF),
+                                      cursorColor: AppColors.primary,
                                       onChanged: (val) => setState(() {}),
                                       decoration: const InputDecoration(
                                         hintText: null,
@@ -672,7 +674,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                                 padding:
                                                     const EdgeInsets.all(8),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.black
+                                                  color: AppColors.bgBlack
                                                       .withOpacity(0.6),
                                                   shape: BoxShape.circle,
                                                   border: Border.all(
@@ -695,7 +697,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                                         horizontal: 10,
                                                         vertical: 4),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.black
+                                                  color: AppColors.bgBlack
                                                       .withOpacity(0.6),
                                                   borderRadius:
                                                       BorderRadius.circular(12),
@@ -730,7 +732,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                               horizontal: 2),
                                           decoration: BoxDecoration(
                                             color: i == _currentImageIndex
-                                                ? const Color(0xFF6C63FF)
+                                                ? AppColors.primary
                                                 : Colors.white.withOpacity(0.3),
                                             shape: BoxShape.circle,
                                           ),
@@ -879,7 +881,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                           height: 40,
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.3),
+                            color: AppColors.bgBlack.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                                 color: Colors.white.withOpacity(0.1)),
@@ -913,7 +915,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E1E1E).withOpacity(0.7),
+                      color: AppColors.bgCard.withOpacity(0.7),
                       borderRadius: BorderRadius.circular(35),
                       border: Border.all(color: Colors.white.withOpacity(0.1)),
                     ),
@@ -998,7 +1000,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [
-                                    Color(0xFF6C63FF),
+                                    AppColors.primary,
                                     Color(0xFF448AFF),
                                     Color(0xFF69F0AE)
                                   ],
@@ -1008,8 +1010,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                 borderRadius: BorderRadius.circular(21),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF6C63FF)
-                                        .withOpacity(0.4),
+                                    color: AppColors.primary.withOpacity(0.4),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -1054,7 +1055,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6C63FF) : Colors.transparent,
+          color: isSelected ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(

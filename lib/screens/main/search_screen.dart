@@ -15,13 +15,14 @@ import 'profile_screen.dart';
 import '../social/post_detail_screen.dart';
 import '../../widgets/shimmer/post_card_shimmer.dart';
 import '../../widgets/double_tap_overlay.dart';
+import '../../theme/app_colors.dart';
 
 // 🎨 TEMA RENKLERİ
-const Color kBgColor = Color(0xFF0A0A0F); // Derin Siyah
-const Color kCardColor = Color(0xFF16161F); // Kart Rengi
-const Color kAccentPurple = Color(0xFF6C63FF); // Mistik Mor
-const Color kAccentOrange = Color(0xFFFF5722); // Alev Turuncusu
-const Color kAmberGlow = Color(0xFFFFAB00); // Kor Rengi
+Color kBgColor = AppColors.bgDark; // Derin Siyah
+Color kCardColor = AppColors.bgCardExplore; // Kart Rengi
+Color kAccentPurple = AppColors.primary; // Mistik Mor
+Color kAccentOrange = AppColors.accentOrange; // Alev Turuncusu
+Color kAmberGlow = AppColors.accentAmber; // Kor Rengi
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -401,7 +402,7 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     Color headerBgColor =
-        isRank1 ? kAccentOrange : Colors.black.withOpacity(0.6);
+        isRank1 ? kAccentOrange : AppColors.bgBlack.withOpacity(0.6);
 
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -426,7 +427,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   blurRadius: isRank1 ? 30 : 20,
                   spreadRadius: 0),
             BoxShadow(
-                color: Colors.black.withOpacity(0.6),
+                color: AppColors.bgBlack.withOpacity(0.6),
                 blurRadius: 15,
                 offset: const Offset(0, 8))
           ],
@@ -450,7 +451,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     decoration: BoxDecoration(
                         gradient: LinearGradient(colors: [
                   Colors.transparent,
-                  Colors.black.withOpacity(0.9)
+                  AppColors.bgBlack.withOpacity(0.9)
                 ], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
               Positioned(
                 top: 0,
@@ -547,9 +548,9 @@ class _SearchScreenState extends State<SearchScreen> {
                               fontSize: imageUrl == null ? 18 : 12,
                               shadows: imageUrl != null
                                   ? [
-                                      const Shadow(
+                                      Shadow(
                                           blurRadius: 2,
-                                          color: Colors.black,
+                                          color: AppColors.bgBlack,
                                           offset: Offset(0, 1))
                                     ]
                                   : [])),
