@@ -52,7 +52,7 @@
 			</dict>
 		</array>
 		<key>CFBundleVersion</key>
-		<string>8</string>
+		<string>9</string>
 		<key>LSApplicationQueriesSchemes</key>
 		<array>
 			<string>spotify</string>
@@ -73,6 +73,10 @@
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Photo library access is needed to upload profile photos and share posts.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>We need your location to add location tags to your posts.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>We need your location to add location tags to your posts even when the app is in the background.</string>
+		<key>NSLocationAlwaysUsageDescription</key>
 		<string>We need your location to add location tags to your posts.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
