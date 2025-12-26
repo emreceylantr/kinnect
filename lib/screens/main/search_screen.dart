@@ -3,8 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:lottie/lottie.dart'; // Lottie paketi
-import 'dart:ui';
-import 'dart:math';
 
 // Importları kendi proje yapına göre kontrol et
 import '../../widgets/fuel_button.dart';
@@ -167,7 +165,7 @@ class _SearchScreenState extends State<SearchScreen> {
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       decoration: BoxDecoration(color: kBgColor, boxShadow: [
         BoxShadow(
-            color: kAccentOrange.withOpacity(0.05),
+            color: kAccentOrange.withValues(alpha: 0.05),
             blurRadius: 30,
             spreadRadius: 0,
             offset: const Offset(0, 10))
@@ -224,12 +222,14 @@ class _SearchScreenState extends State<SearchScreen> {
           color: kCardColor,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-              color:
-                  isExpanded ? kAccentOrange.withOpacity(0.5) : Colors.white10),
+              color: isExpanded
+                  ? kAccentOrange.withValues(alpha: 0.5)
+                  : Colors.white10),
           boxShadow: isExpanded
               ? [
                   BoxShadow(
-                      color: kAccentOrange.withOpacity(0.15), blurRadius: 15)
+                      color: kAccentOrange.withValues(alpha: 0.15),
+                      blurRadius: 15)
                 ]
               : []),
       child: Row(children: [
@@ -333,6 +333,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _build3DTrendSlider(List<Map<String, dynamic>> posts) {
+    if (myId.isEmpty) {
+      return const SizedBox();
+    }
     if (posts.isEmpty) return const SizedBox();
     return SizedBox(
       height: 360,
@@ -397,7 +400,7 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     Color headerBgColor =
-        isRank1 ? kAccentOrange : AppColors.bgBlack.withOpacity(0.6);
+        isRank1 ? kAccentOrange : AppColors.bgBlack.withValues(alpha: 0.6);
 
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -412,17 +415,17 @@ class _SearchScreenState extends State<SearchScreen> {
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
               color: isAlive
-                  ? statusColor.withOpacity(0.5)
-                  : Colors.white.withOpacity(0.1),
+                  ? statusColor.withValues(alpha: 0.5)
+                  : Colors.white.withValues(alpha: 0.1),
               width: 1.2),
           boxShadow: [
             if (isAlive)
               BoxShadow(
-                  color: statusColor.withOpacity(isRank1 ? 0.3 : 0.15),
+                  color: statusColor.withValues(alpha: isRank1 ? 0.3 : 0.15),
                   blurRadius: isRank1 ? 30 : 20,
                   spreadRadius: 0),
             BoxShadow(
-                color: AppColors.bgBlack.withOpacity(0.6),
+                color: AppColors.bgBlack.withValues(alpha: 0.6),
                 blurRadius: 15,
                 offset: const Offset(0, 8))
           ],
@@ -432,7 +435,7 @@ class _SearchScreenState extends State<SearchScreen> {
               : null,
           gradient: imageUrl == null
               ? LinearGradient(
-                  colors: [kCardColor, kCardColor.withOpacity(0.8)],
+                  colors: [kCardColor, kCardColor.withValues(alpha: 0.8)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight)
               : null,
@@ -446,7 +449,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     decoration: BoxDecoration(
                         gradient: LinearGradient(colors: [
                   Colors.transparent,
-                  AppColors.bgBlack.withOpacity(0.9)
+                  AppColors.bgBlack.withValues(alpha: 0.9)
                 ], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
               Positioned(
                 top: 0,
@@ -535,8 +538,8 @@ class _SearchScreenState extends State<SearchScreen> {
                           maxLines: imageUrl == null ? 6 : 2,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
-                              color: Colors.white
-                                  .withOpacity(imageUrl != null ? 0.9 : 1.0),
+                              color: Colors.white.withValues(
+                                  alpha: imageUrl != null ? 0.9 : 1.0),
                               fontWeight: imageUrl == null
                                   ? FontWeight.normal
                                   : FontWeight.w500,
@@ -564,11 +567,12 @@ class _SearchScreenState extends State<SearchScreen> {
                       const Spacer(),
                       if (statusText.isNotEmpty) ...[
                         Icon(statusIcon,
-                            color: statusColor.withOpacity(0.8), size: 12),
+                            color: statusColor.withValues(alpha: 0.8),
+                            size: 12),
                         const SizedBox(width: 4),
                         Text(statusText,
                             style: GoogleFonts.poppins(
-                                color: statusColor.withOpacity(0.8),
+                                color: statusColor.withValues(alpha: 0.8),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500))
                       ]
@@ -629,11 +633,11 @@ class _SearchScreenState extends State<SearchScreen> {
         decoration: BoxDecoration(
             color: kCardColor,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
             boxShadow: [
               if (isAlive && likeCount > 0)
                 BoxShadow(
-                    color: statusColor.withOpacity(0.15),
+                    color: statusColor.withValues(alpha: 0.15),
                     blurRadius: 20,
                     spreadRadius: 0,
                     offset: const Offset(0, 4))
@@ -671,10 +675,10 @@ class _SearchScreenState extends State<SearchScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
+                        color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border:
-                            Border.all(color: statusColor.withOpacity(0.2))),
+                        border: Border.all(
+                            color: statusColor.withValues(alpha: 0.2))),
                     child: Row(children: [
                       Icon(statusIcon, color: statusColor, size: 10),
                       const SizedBox(width: 4),
@@ -689,7 +693,7 @@ class _SearchScreenState extends State<SearchScreen> {
             if (post["content"] != null && post["content"].isNotEmpty)
               Text(post["content"],
                   style: GoogleFonts.poppins(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 14,
                       height: 1.5)),
             if (post["image_url"] != null ||
@@ -738,7 +742,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(12)),
                       child: Row(children: [
                         const Icon(FontAwesomeIcons.comment,

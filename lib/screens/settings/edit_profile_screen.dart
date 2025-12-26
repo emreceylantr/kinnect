@@ -30,7 +30,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   // 2FA Değişkenleri
   bool _is2FAEnabled = false;
   String? _verifiedPhone;
-  String _selectedCountryCode = "+90"; // Varsayılan Türkiye
+  final String _selectedCountryCode = "+90"; // Varsayılan Türkiye
 
   bool _isLoading = false;
   File? _imageFile;
@@ -166,7 +166,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
               // 🔥 ÜLKE KODU VE NUMARA ALANI 🔥
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.white24),
                 ),
@@ -400,9 +400,12 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     final userId = Supabase.instance.client.auth.currentUser!.id;
 
     try {
-      if (_usernameController.text.contains(' '))
+      if (_usernameController.text.contains(' ')) {
         throw 'Kullanıcı adında boşluk olamaz.';
-      if (_nameController.text.isEmpty) throw 'İsim alanı boş bırakılamaz.';
+      }
+      if (_nameController.text.isEmpty) {
+        throw 'İsim alanı boş bırakılamaz.';
+      }
 
       String? avatarUrl = widget.currentProfile['avatar_url'];
       String? videoUrl = widget.currentProfile['avatar_video_url'];
@@ -461,9 +464,10 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         Navigator.pop(context, true);
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -491,7 +495,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     height: 300,
                     decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _colorPurple.withOpacity(0.25))))),
+                        color: _colorPurple.withValues(alpha: 0.25))))),
         SlideTransition(
             position: _animOffset2,
             child: Align(
@@ -501,7 +505,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     height: 300,
                     decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _colorBlue.withOpacity(0.25))))),
+                        color: _colorBlue.withValues(alpha: 0.25))))),
         BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 60.0, sigmaY: 60.0),
             child: Container(color: Colors.transparent)),
@@ -564,7 +568,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                                       colors: [_colorPurple, _colorBlue]),
                                   boxShadow: [
                                     BoxShadow(
-                                        color: _colorPurple.withOpacity(0.3),
+                                        color:
+                                            _colorPurple.withValues(alpha: 0.3),
                                         blurRadius: 20)
                                   ]),
                               child: CircleAvatar(
@@ -602,7 +607,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                               horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
                             color: _videoFile != null
-                                ? _colorGreen.withOpacity(0.2)
+                                ? _colorGreen.withValues(alpha: 0.2)
                                 : Colors.white10,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
@@ -645,10 +650,10 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
+                      color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(30),
-                      border:
-                          Border.all(color: Colors.white.withOpacity(0.08))),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.08))),
                   child: Column(
                     children: [
                       _buildTextField("Adın Soyadın", _nameController,
@@ -737,15 +742,16 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                           ),
                           Switch(
                             value: _is2FAEnabled,
-                            activeColor: Colors.black,
+                            activeThumbColor: Colors.black,
                             activeTrackColor: _colorGreen,
                             inactiveThumbColor: Colors.grey,
                             inactiveTrackColor: Colors.white10,
                             onChanged: (val) {
-                              if (val)
+                              if (val) {
                                 _showPhoneInputDialog();
-                              else
+                              } else {
                                 _disable2FA();
+                              }
                             },
                           )
                         ],
@@ -783,13 +789,14 @@ class _EditProfileScreenState extends State<EditProfileScreen>
             filled: true,
             fillColor: const Color(0xFF1A1A1A),
             prefixIcon: icon != null
-                ? Icon(icon, color: _colorBlue.withOpacity(0.7))
+                ? Icon(icon, color: _colorBlue.withValues(alpha: 0.7))
                 : null,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.05))),
+                borderSide:
+                    BorderSide(color: Colors.white.withValues(alpha: 0.05))),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide(color: _colorPurple, width: 1.5)),
