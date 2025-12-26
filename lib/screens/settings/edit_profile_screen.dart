@@ -1,7 +1,5 @@
 // Kinnect - Profil düzenleme ekranı
 
-// Kinnect - Profil düzenleme ekranı
-
 import 'dart:io';
 import 'dart:ui'; // Blur efekti için
 import 'package:flutter/material.dart';
@@ -9,6 +7,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+// 🔥 YENİ EKLENEN IMPORTLAR
+import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:path_provider/path_provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> currentProfile;
@@ -57,20 +58,20 @@ class _EditProfileScreenState extends State<EditProfileScreen>
 
     // Animasyonlar
     _animController1 =
-        AnimationController(vsync: this, duration: const Duration(seconds: 5))
-          ..repeat(reverse: true);
+    AnimationController(vsync: this, duration: const Duration(seconds: 5))
+      ..repeat(reverse: true);
     _animOffset1 = Tween<Offset>(
-            begin: const Offset(-0.2, -0.2), end: const Offset(0.2, 0.2))
+        begin: const Offset(-0.2, -0.2), end: const Offset(0.2, 0.2))
         .animate(
-            CurvedAnimation(parent: _animController1, curve: Curves.easeInOut));
+        CurvedAnimation(parent: _animController1, curve: Curves.easeInOut));
 
     _animController2 =
-        AnimationController(vsync: this, duration: const Duration(seconds: 4))
-          ..repeat(reverse: true);
+    AnimationController(vsync: this, duration: const Duration(seconds: 4))
+      ..repeat(reverse: true);
     _animOffset2 = Tween<Offset>(
-            begin: const Offset(0.2, 0.2), end: const Offset(-0.2, -0.2))
+        begin: const Offset(0.2, 0.2), end: const Offset(-0.2, -0.2))
         .animate(
-            CurvedAnimation(parent: _animController2, curve: Curves.easeInOut));
+        CurvedAnimation(parent: _animController2, curve: Curves.easeInOut));
   }
 
   @override
@@ -83,12 +84,18 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     super.dispose();
   }
 
-  // FOTOĞRAF SEÇME
+  // FOTOĞRAF SEÇME - 🔥 GÜNCELLENDİ: Video varsa siler
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (image != null) setState(() => _imageFile = File(image.path));
+    await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+
+    if (image != null) {
+      setState(() {
+        _imageFile = File(image.path);
+        _videoFile = null; // 🔥 ÖNEMLİ: Yeni foto seçilince videoyu iptal et
+      });
+    }
   }
 
   // 🎥 VİDEO (LIVE PHOTO) SEÇME
@@ -98,14 +105,32 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     final XFile? video = await picker.pickVideo(
         source: ImageSource.gallery,
         maxDuration: const Duration(seconds: 10) // Çok uzun videoları engelle
-        );
+    );
 
     if (video != null) {
-      setState(() => _videoFile = File(video.path));
+      // 1. Videodan Thumbnail Üretme
+      final tempDir = await getTemporaryDirectory();
+      final String? thumbnailPath = await VideoThumbnail.thumbnailFile(
+        video: video.path,
+        thumbnailPath: tempDir.path,
+        imageFormat: ImageFormat.JPEG,
+        maxHeight: 512, // Profil fotosu için yeterli kalite
+        quality: 75,
+      );
+
+      // 2. State'i Güncelleme
+      setState(() {
+        _videoFile = File(video.path); // Videoyu kaydet
+        // Eğer thumbnail başarıyla oluştuysa, profil fotoğrafını da o yap!
+        if (thumbnailPath != null) {
+          _imageFile = File(thumbnailPath);
+        }
+      });
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content:
-                Text("Live Video Seçildi! 🎬", style: GoogleFonts.poppins()),
+            content: Text("Live Video ve Kapak Resmi Ayarlandı! 🎬",
+                style: GoogleFonts.poppins()),
             backgroundColor: _colorGreen));
       }
     }
@@ -124,7 +149,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         return AlertDialog(
           backgroundColor: const Color(0xFF1A1A1A),
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text("Telefon Doğrulama",
               style: GoogleFonts.poppins(
                   color: Colors.white, fontWeight: FontWeight.bold)),
@@ -185,7 +210,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                           hintStyle: GoogleFonts.poppins(color: Colors.white30),
                           border: InputBorder.none,
                           contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 16),
+                          const EdgeInsets.symmetric(horizontal: 16),
                         ),
                       ),
                     ),
@@ -264,7 +289,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           children: [
             Text("$phone numarasına gelen kodu girin.",
                 style:
-                    GoogleFonts.poppins(color: Colors.white54, fontSize: 13)),
+                GoogleFonts.poppins(color: Colors.white54, fontSize: 13)),
             const SizedBox(height: 20),
             TextField(
               controller: otpController,
@@ -301,7 +326,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 _verifyOtpAndEnable2FA(phone, otpController.text.trim());
               },
               child:
-                  const Text("Onayla", style: TextStyle(color: Colors.black))),
+              const Text("Onayla", style: TextStyle(color: Colors.black))),
         ],
       ),
     );
@@ -368,7 +393,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     }
   }
 
-  // PROFİLİ KAYDET (VİDEO YÜKLEME DAHİL)
+  // PROFİLİ KAYDET - 🔥 GÜNCELLENDİ: Video iptal mantığı eklendi
   Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
     final userId = Supabase.instance.client.auth.currentUser!.id;
@@ -380,6 +405,14 @@ class _EditProfileScreenState extends State<EditProfileScreen>
 
       String? avatarUrl = widget.currentProfile['avatar_url'];
       String? videoUrl = widget.currentProfile['avatar_video_url'];
+
+      // 🔥 YENİ MANTIK:
+      // Eğer kullanıcı YENİ bir resim seçtiyse (_imageFile != null)
+      // VE yeni bir video seçmediyse (_videoFile == null)
+      // Demek ki statik fotoğrafa dönmek istiyor. Videoyu NULL yap.
+      if (_imageFile != null && _videoFile == null) {
+        videoUrl = null;
+      }
 
       // Resim Yükleme
       if (_imageFile != null) {
@@ -414,7 +447,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         'username': _usernameController.text.trim(),
         'bio': _bioController.text.trim(),
         'avatar_url': avatarUrl,
-        'avatar_video_url': videoUrl, // Veritabanına video linkini yaz
+        'avatar_video_url': videoUrl, // Veritabanına video linkini yaz (veya null gönder)
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', userId);
 
@@ -497,13 +530,13 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                               borderRadius: BorderRadius.circular(20))),
                       child: _isLoading
                           ? const SizedBox(
-                              height: 14,
-                              width: 14,
-                              child: CircularProgressIndicator(
-                                  color: Colors.black, strokeWidth: 2))
+                          height: 14,
+                          width: 14,
+                          child: CircularProgressIndicator(
+                              color: Colors.black, strokeWidth: 2))
                           : Text('Kaydet',
-                              style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w600, fontSize: 13)),
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
                   ),
                 ),
@@ -538,7 +571,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                                   backgroundImage: bgImage,
                                   child: bgImage == null
                                       ? const Icon(Icons.person,
-                                          size: 60, color: Colors.white24)
+                                      size: 60, color: Colors.white24)
                                       : null),
                             ),
                             Positioned(
@@ -558,7 +591,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                       ),
                       const SizedBox(height: 16),
 
-                      // 🔥 LIVE VIDEO SEÇME BUTONU (AYRI BUTON AMA GEREKLİ) 🔥
+                      // 🔥 LIVE VIDEO SEÇME BUTONU
                       InkWell(
                         onTap: _pickVideo,
                         borderRadius: BorderRadius.circular(20),
@@ -613,7 +646,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                       color: Colors.white.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(30),
                       border:
-                          Border.all(color: Colors.white.withOpacity(0.08))),
+                      Border.all(color: Colors.white.withOpacity(0.08))),
                   child: Column(
                     children: [
                       _buildTextField("Adın Soyadın", _nameController,
@@ -702,7 +735,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 ? Icon(icon, color: _colorBlue.withOpacity(0.7))
                 : null,
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide(color: Colors.white.withOpacity(0.05))),
