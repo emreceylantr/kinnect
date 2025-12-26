@@ -84,9 +84,11 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
     if (widget.isMe) {
       // İlk açılışta bir sync denemesi yap
       await _syncMusicData();
-      _timer = Timer.periodic(const Duration(seconds: 5), (_) => _syncMusicData());
+      _timer =
+          Timer.periodic(const Duration(seconds: 5), (_) => _syncMusicData());
     } else {
-      _timer = Timer.periodic(const Duration(seconds: 5), (_) => _fetchFromDB());
+      _timer =
+          Timer.periodic(const Duration(seconds: 5), (_) => _fetchFromDB());
     }
 
     if (mounted) setState(() => _isLoading = false);
@@ -111,9 +113,33 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
   Future<void> _syncMusicData() async {
     if (!mounted || !widget.isMe) return;
 
-    // Her iki servisten de veri çekmeyi dene
-    final appleTrack = await _appleMusicService.getCurrentTrack();
-    final spotifyTrack = await _spotifyService.getCurrentTrack(widget.userId);
+    // Önce veritabanından bağlantı durumunu kontrol et
+    bool hasSpotifyToken = false;
+    bool hasAppleMusic = false;
+
+    try {
+      final profile = await Supabase.instance.client
+          .from('profiles')
+          .select('spotify_refresh_token, music_provider')
+          .eq('id', widget.userId)
+          .maybeSingle();
+
+      if (profile != null) {
+        hasSpotifyToken = profile['spotify_refresh_token'] != null;
+        hasAppleMusic = profile['music_provider'] == 'apple';
+      }
+    } catch (_) {}
+
+    // Sadece bağlı olan servislerden veri çek
+    Map<String, dynamic>? appleTrack;
+    Map<String, dynamic>? spotifyTrack;
+
+    if (hasAppleMusic) {
+      appleTrack = await _appleMusicService.getCurrentTrack();
+    }
+    if (hasSpotifyToken) {
+      spotifyTrack = await _spotifyService.getCurrentTrack(widget.userId);
+    }
 
     Map<String, dynamic>? winner;
 
@@ -148,7 +174,28 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
 
   // --- UI ACTIONS ---
 
-  void _showConnectionSheet() {
+  void _showConnectionSheet() async {
+    // Veritabanından bağlantı durumunu kontrol et
+    bool isSpotifyConnected = false;
+    bool isAppleMusicConnected = false;
+
+    try {
+      final profile = await Supabase.instance.client
+          .from('profiles')
+          .select('spotify_refresh_token, music_provider')
+          .eq('id', widget.userId)
+          .maybeSingle();
+
+      if (profile != null) {
+        isSpotifyConnected = profile['spotify_refresh_token'] != null;
+        // Apple Music için: music_provider alanına bakıyoruz
+        // Kullanıcı her iki servise de aynı anda bağlı olabilir
+        isAppleMusicConnected = profile['music_provider'] == 'apple';
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1E1E1E),
@@ -185,39 +232,80 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
             ),
             const SizedBox(height: 20),
 
-            // SPOTIFY BUTTON
-            ListTile(
-              tileColor: Colors.white.withOpacity(0.05),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              leading: const FaIcon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954)),
-              title: const Text("Spotify ile Bağlan/Yenile", style: TextStyle(color: Colors.white)),
-              onTap: () async {
-                Navigator.pop(context);
-                await _spotifyService.authenticate();
-                setState(() => _isLoading = true);
-                // Bağlandıktan sonra hemen sync dene
-                await _syncMusicData();
-                setState(() => _isLoading = false);
-              },
-            ),
+            // SPOTIFY BUTTON - Bağlan veya Çık
+            if (!isSpotifyConnected)
+              ListTile(
+                tileColor: Colors.white.withOpacity(0.05),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                leading: const FaIcon(FontAwesomeIcons.spotify,
+                    color: Color(0xFF1DB954)),
+                title: const Text("Spotify ile Bağlan",
+                    style: TextStyle(color: Colors.white)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _spotifyService.authenticate();
+                },
+              )
+            else
+              ListTile(
+                tileColor: Colors.red.withOpacity(0.1),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                leading: const FaIcon(FontAwesomeIcons.spotify,
+                    color: Color(0xFF1DB954)),
+                title: const Text("Spotify Bağlantısını Kes",
+                    style: TextStyle(color: Colors.redAccent)),
+                trailing:
+                    const Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _disconnectSpotify();
+                },
+              ),
             const SizedBox(height: 10),
 
-            // APPLE MUSIC BUTTON
-            ListTile(
-              tileColor: Colors.white.withOpacity(0.05),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              leading: const FaIcon(FontAwesomeIcons.apple, color: Colors.white),
-              title: const Text("Apple Music ile Bağlan/Yenile", style: TextStyle(color: Colors.white)),
-              onTap: () async {
-                Navigator.pop(context);
-                final allowed = await _appleMusicService.requestPermission();
-                if (allowed) {
-                  setState(() => _isLoading = true);
-                  await _syncMusicData();
-                  setState(() => _isLoading = false);
-                }
-              },
-            ),
+            // APPLE MUSIC BUTTON - Bağlan veya Çık
+            if (!isAppleMusicConnected)
+              ListTile(
+                tileColor: Colors.white.withOpacity(0.05),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                leading:
+                    const FaIcon(FontAwesomeIcons.apple, color: Colors.white),
+                title: const Text("Apple Music ile Bağlan",
+                    style: TextStyle(color: Colors.white)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final allowed = await _appleMusicService.requestPermission();
+                  if (allowed) {
+                    setState(() => _isLoading = true);
+                    // Önce veritabanında music_provider'ı apple olarak işaretle
+                    await Supabase.instance.client.from('profiles').update({
+                      'music_provider': 'apple',
+                    }).eq('id', widget.userId);
+                    // Sonra müzik verisini çek
+                    await _syncMusicData();
+                    setState(() => _isLoading = false);
+                  }
+                },
+              )
+            else
+              ListTile(
+                tileColor: Colors.red.withOpacity(0.1),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                leading:
+                    const FaIcon(FontAwesomeIcons.apple, color: Colors.white),
+                title: const Text("Apple Music Bağlantısını Kes",
+                    style: TextStyle(color: Colors.redAccent)),
+                trailing:
+                    const Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _disconnectAppleMusic();
+                },
+              ),
             const SizedBox(height: 20),
           ],
         ),
@@ -225,12 +313,53 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
     );
   }
 
+  // Spotify bağlantısını kes
+  Future<void> _disconnectSpotify() async {
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client.from('profiles').update({
+        'spotify_refresh_token': null,
+        'current_song_metadata': null,
+        'music_provider': null,
+      }).eq('id', widget.userId);
+
+      setState(() {
+        _trackData = null;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Spotify disconnect hatası: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // Apple Music bağlantısını kes
+  Future<void> _disconnectAppleMusic() async {
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client.from('profiles').update({
+        'current_song_metadata': null,
+        'music_provider': null,
+        'last_music_update_at': null,
+      }).eq('id', widget.userId);
+
+      setState(() {
+        _trackData = null;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Apple Music disconnect hatası: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _handleTap() async {
     if (_trackData == null) return;
 
     // Spotify ise direkt linke git
     if (_trackData!['provider'] == 'spotify') {
-      await launchUrl(Uri.parse(_trackData!['external_url']), mode: LaunchMode.externalApplication);
+      await launchUrl(Uri.parse(_trackData!['external_url']),
+          mode: LaunchMode.externalApplication);
     } else {
       // Apple Music ise ve preview varsa çal, yoksa linke git
       if (_isPlayingPreview) {
@@ -238,7 +367,8 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
       } else if (_trackData!['preview_url'] != null) {
         await _audioPlayer.play(UrlSource(_trackData!['preview_url']));
       } else {
-        await launchUrl(Uri.parse(_trackData!['external_url']), mode: LaunchMode.externalApplication);
+        await launchUrl(Uri.parse(_trackData!['external_url']),
+            mode: LaunchMode.externalApplication);
       }
     }
   }
@@ -250,7 +380,8 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
       animation: _animController,
       builder: (context, child) {
         final sinValue = (1 + _animController.value) * 0.5;
-        final dynamicHeight = 3 + (height * sinValue * ((delay % 2 == 0) ? 0.7 : 1.3));
+        final dynamicHeight =
+            3 + (height * sinValue * ((delay % 2 == 0) ? 0.7 : 1.3));
         final color = _trackData?['provider'] == 'spotify'
             ? const Color(0xFF1DB954)
             : const Color(0xFFFA243C);
@@ -285,14 +416,18 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const FaIcon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954), size: 20),
+                  const FaIcon(FontAwesomeIcons.spotify,
+                      color: Color(0xFF1DB954), size: 20),
                   const SizedBox(width: 16),
                   Container(
-                    width: 4, height: 4,
-                    decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+                    width: 4,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                        color: Colors.white24, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 16),
-                  const FaIcon(FontAwesomeIcons.apple, color: Colors.white, size: 20),
+                  const FaIcon(FontAwesomeIcons.apple,
+                      color: Colors.white, size: 20),
                 ],
               ),
             );
@@ -320,16 +455,19 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
             decoration: BoxDecoration(
               color: const Color(0xFF1E1E1E),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white24, style: BorderStyle.solid),
+              border:
+                  Border.all(color: Colors.white24, style: BorderStyle.solid),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const FaIcon(FontAwesomeIcons.link, color: Colors.white, size: 16),
+                const FaIcon(FontAwesomeIcons.link,
+                    color: Colors.white, size: 16),
                 const SizedBox(width: 12),
                 Text(
                   "Spotify veya Apple Music Bağla",
-                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500),
+                  style: GoogleFonts.poppins(
+                      color: Colors.white, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -342,9 +480,11 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
 
     // 3. Durum: Müzik Verisi Var
     final isSpotify = _trackData!['provider'] == 'spotify';
-    final themeColor = isSpotify ? const Color(0xFF1DB954) : const Color(0xFFFA243C);
+    final themeColor =
+        isSpotify ? const Color(0xFF1DB954) : const Color(0xFFFA243C);
     final icon = isSpotify ? FontAwesomeIcons.spotify : FontAwesomeIcons.apple;
-    final isAnimPlaying = isSpotify ? _trackData!['is_playing'] == true : _isPlayingPreview;
+    final isAnimPlaying =
+        isSpotify ? _trackData!['is_playing'] == true : _isPlayingPreview;
     final statusText = isSpotify
         ? (isAnimPlaying ? "Şu an Dinleniyor" : "Son Dinlenen")
         : (_isPlayingPreview ? "Önizleme Çalıyor" : "Apple Music");
@@ -376,7 +516,8 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
                   child: Image.network(
                     _trackData!['image_url'] ?? '',
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[900]),
+                    errorBuilder: (context, error, stackTrace) =>
+                        Container(color: Colors.grey[900]),
                   ),
                 ),
               ),
@@ -394,17 +535,21 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
                   children: [
                     // Albüm Kapağı
                     Container(
-                      width: 60, height: 60,
+                      width: 60,
+                      height: 60,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white.withOpacity(0.1), width: 0.5),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.1), width: 0.5),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
                           _trackData!['image_url'] ?? '',
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.music_note, color: Colors.white54),
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.music_note,
+                                  color: Colors.white54),
                         ),
                       ),
                     ),
@@ -470,15 +615,19 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
                     // Play/Pause Butonu (Apple Music için)
                     if (!isSpotify)
                       Container(
-                        width: 36, height: 36,
+                        width: 36,
+                        height: 36,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white.withOpacity(0.1),
-                          border: Border.all(color: Colors.white.withOpacity(0.15)),
+                          border:
+                              Border.all(color: Colors.white.withOpacity(0.15)),
                         ),
                         child: Center(
                           child: Icon(
-                            _isPlayingPreview ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                            _isPlayingPreview
+                                ? Icons.pause_rounded
+                                : Icons.play_arrow_rounded,
                             color: Colors.white,
                             size: 24,
                           ),
