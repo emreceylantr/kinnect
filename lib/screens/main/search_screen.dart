@@ -13,6 +13,8 @@ import '../../services/feed_service.dart';
 import '../../services/safety_service.dart';
 import 'profile_screen.dart';
 import '../social/post_detail_screen.dart';
+import '../../widgets/shimmer/post_card_shimmer.dart';
+import '../../widgets/double_tap_overlay.dart';
 
 // 🎨 TEMA RENKLERİ
 const Color kBgColor = Color(0xFF0A0A0F); // Derin Siyah
@@ -278,8 +280,11 @@ class _SearchScreenState extends State<SearchScreen> {
   // --- ANA AKIŞ ---
   Widget _buildExploreFeed() {
     if (loadingExplore)
-      return const Center(
-          child: CircularProgressIndicator(color: kAccentOrange));
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 3,
+        itemBuilder: (context, index) => const PostCardShimmer(),
+      );
     if (explorePosts.isEmpty) return _buildEmptyState();
 
     // 🔥 GÜNDEM İÇİN YENİ MANTIK 🔥
@@ -701,11 +706,16 @@ class _SearchScreenState extends State<SearchScreen> {
                           (post["image_url"] != null
                               ? [post["image_url"] as String]
                               : []);
-                  return ImageCarousel(
-                    imageUrls: imageUrls,
-                    height: 380,
-                    borderRadius: BorderRadius.circular(16),
-                    postId: post["id"],
+                  return DoubleTapOverlay(
+                    onDoubleTap: () => _toggleFuel(index, post["id"]),
+                    icon: Icons.local_fire_department,
+                    iconColor: kAccentOrange,
+                    child: ImageCarousel(
+                      imageUrls: imageUrls,
+                      height: 380,
+                      borderRadius: BorderRadius.circular(16),
+                      postId: post["id"],
+                    ),
                   );
                 },
               ),

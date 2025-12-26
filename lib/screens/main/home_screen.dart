@@ -21,6 +21,8 @@ import 'search_screen.dart';
 import '../../widgets/image_carousel.dart';
 
 import '../../widgets/location_display_sheet.dart';
+import '../../widgets/shimmer/post_card_shimmer.dart';
+import '../../widgets/double_tap_overlay.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -388,8 +390,11 @@ class _HomeScreenState extends State<HomeScreen> {
       future: _feedFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6C63FF)));
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: 3,
+            itemBuilder: (context, index) => const PostCardShimmer(),
+          );
         }
         final posts = snapshot.data ?? [];
         if (posts.isEmpty) {
@@ -994,14 +999,19 @@ class _PostCardState extends State<PostCard> {
                       (p['image_urls'] as List).isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                      child: ImageCarousel(
-                        imageUrls: (p['image_urls'] as List).cast<String>(),
-                        height: 350,
-                        borderRadius: BorderRadius.circular(18),
-                        onImageTap: (url) => _openFullScreen(url),
-                        musicTrackName: p['spotify_track_name'],
-                        musicArtistName: p['spotify_artist_name'],
-                        postId: p['id'],
+                      child: DoubleTapOverlay(
+                        onDoubleTap: _toggleLike,
+                        icon: Icons.favorite,
+                        iconColor: Colors.red,
+                        child: ImageCarousel(
+                          imageUrls: (p['image_urls'] as List).cast<String>(),
+                          height: 350,
+                          borderRadius: BorderRadius.circular(18),
+                          onImageTap: (url) => _openFullScreen(url),
+                          musicTrackName: p['spotify_track_name'],
+                          musicArtistName: p['spotify_artist_name'],
+                          postId: p['id'],
+                        ),
                       ),
                     )
                   else if (p['image_url'] != null)
