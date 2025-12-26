@@ -24,6 +24,7 @@ import '../social/messages_screen.dart';
 import '../social/post_detail_screen.dart';
 import '../social/follow_list_screen.dart';
 import '../settings/edit_profile_screen.dart';
+import '../../widgets/shimmer/profile_header_shimmer.dart';
 import '../auth/login_screen.dart';
 
 // 🔥🔥🔥 ÖZEL "ALTIN NEON TAÇ" ADMIN ROZETİ WIDGET'I 🔥🔥🔥
@@ -680,8 +681,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6C63FF)))
+          ? const ProfileHeaderShimmer()
           : RefreshIndicator(
               onRefresh: _loadProfileData,
               child: SingleChildScrollView(

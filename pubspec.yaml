@@ -63,6 +63,9 @@ dependencies:
   geolocator: ^11.0.0
   geocoding: ^3.0.0
 
+  # --- SHIMMER LOADING ---
+  shimmer: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

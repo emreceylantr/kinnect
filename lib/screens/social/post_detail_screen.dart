@@ -24,6 +24,8 @@ import '../../widgets/photo_emoji_picker.dart'; // 📸 Photo Emoji Tepkileri
 import '../../widgets/location_display_sheet.dart';
 import '../../widgets/taggable_post_image.dart'; // 🆕 Etiketli Fotoğraf Widget'ı
 import '../../widgets/image_carousel.dart'; // 🆕 Çoklu Fotoğraf Carousel
+import '../../widgets/shimmer/comment_shimmer.dart';
+import '../../widgets/double_tap_overlay.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -1401,14 +1403,19 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     (widget.post['image_urls'] as List).length > 1) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: ImageCarousel(
-                      imageUrls:
-                          (widget.post['image_urls'] as List).cast<String>(),
-                      height: 350,
-                      borderRadius: BorderRadius.circular(12),
-                      musicTrackName: widget.post['spotify_track_name'],
-                      musicArtistName: widget.post['spotify_artist_name'],
-                      postId: widget.post['id'],
+                    child: DoubleTapOverlay(
+                      onDoubleTap: _toggleLike,
+                      icon: Icons.favorite,
+                      iconColor: Colors.red,
+                      child: ImageCarousel(
+                        imageUrls:
+                            (widget.post['image_urls'] as List).cast<String>(),
+                        height: 350,
+                        borderRadius: BorderRadius.circular(12),
+                        musicTrackName: widget.post['spotify_track_name'],
+                        musicArtistName: widget.post['spotify_artist_name'],
+                        postId: widget.post['id'],
+                      ),
                     ),
                   ),
                 ] else if (image != null) ...[
@@ -1662,10 +1669,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Widget _buildComments() {
     if (loadingComments) {
-      return const Padding(
-        padding: EdgeInsets.all(30),
-        child:
-            Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF))),
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 3,
+        itemBuilder: (context, index) => const CommentShimmer(),
       );
     }
 
