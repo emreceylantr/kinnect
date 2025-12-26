@@ -67,6 +67,8 @@ class SpotifyService {
         },
       );
 
+      debugPrint("🔑 Token Response Status: ${tokenResponse.statusCode}");
+
       if (tokenResponse.statusCode != 200) {
         debugPrint("❌ Token alma hatası: ${tokenResponse.body}");
         return false;
@@ -74,6 +76,11 @@ class SpotifyService {
 
       final tokenData = jsonDecode(tokenResponse.body);
       final refreshToken = tokenData['refresh_token'];
+      final accessToken = tokenData['access_token'];
+
+      debugPrint("🔑 Access Token: ${accessToken != null ? 'ALINDI' : 'YOK'}");
+      debugPrint(
+          "🔑 Refresh Token: ${refreshToken != null ? 'ALINDI' : 'YOK'}");
 
       if (refreshToken == null) {
         debugPrint("❌ Refresh token alınamadı");
@@ -82,18 +89,27 @@ class SpotifyService {
 
       // Mevcut kullanıcının profiline kaydet
       final userId = Supabase.instance.client.auth.currentUser?.id;
+      debugPrint("👤 Kullanıcı ID: $userId");
+
       if (userId == null) {
         debugPrint("❌ Kullanıcı oturumu yok");
         return false;
       }
 
-      await Supabase.instance.client.from('profiles').update({
-        'spotify_refresh_token': refreshToken,
-        'music_provider': 'spotify',
-        'last_music_update_at': DateTime.now().toIso8601String(),
-      }).eq('id', userId);
+      debugPrint("💾 Veritabanına kaydediliyor...");
 
-      debugPrint("✅ Spotify başarıyla bağlandı!");
+      final updateResult = await Supabase.instance.client
+          .from('profiles')
+          .update({
+            'spotify_refresh_token': refreshToken,
+            'music_provider': 'spotify',
+            'last_music_update_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', userId)
+          .select();
+
+      debugPrint("💾 Update sonucu: $updateResult");
+      debugPrint("✅ Spotify başarıyla bağlandı ve kaydedildi!");
       return true;
     } catch (e) {
       debugPrint("❌ Spotify callback hatası: $e");

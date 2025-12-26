@@ -86,10 +86,14 @@ class _ImageCarouselState extends State<ImageCarousel> {
                   children: [
                     ClipRRect(
                       borderRadius: widget.borderRadius,
-                      child: Image.network(
-                        widget.imageUrls[index],
-                        fit: BoxFit.cover,
-                        width: double.infinity,
+                      child: InteractiveViewer(
+                        minScale: 1.0,
+                        maxScale: 4.0,
+                        child: Image.network(
+                          widget.imageUrls[index],
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        ),
                       ),
                     ),
                     // Overlay sadece ilk foto + gösterildiğinde
@@ -139,11 +143,15 @@ class _ImageCarouselState extends State<ImageCarousel> {
         children: [
           ClipRRect(
             borderRadius: widget.borderRadius,
-            child: Image.network(
-              widget.imageUrls.first,
-              height: widget.height,
-              width: double.infinity,
-              fit: BoxFit.cover,
+            child: InteractiveViewer(
+              minScale: 1.0,
+              maxScale: 4.0,
+              child: Image.network(
+                widget.imageUrls.first,
+                height: widget.height,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           if (_showOverlay) ...[

@@ -703,7 +703,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               : []);
                   return ImageCarousel(
                     imageUrls: imageUrls,
-                    height: 280,
+                    height: 380,
                     borderRadius: BorderRadius.circular(16),
                     postId: post["id"],
                   );

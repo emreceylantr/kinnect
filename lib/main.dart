@@ -133,6 +133,21 @@ class _MyAppState extends State<MyApp> {
       debugPrint("🎵 Spotify callback yakalandı!");
       final success = await SpotifyService().handleCallback(uri);
       if (success) {
+        // Hemen müzik verisini çek ve kaydet
+        final userId = Supabase.instance.client.auth.currentUser?.id;
+        if (userId != null) {
+          debugPrint("🎵 Müzik verisi sync ediliyor...");
+          final trackData = await SpotifyService().getCurrentTrack(userId);
+          if (trackData != null) {
+            await Supabase.instance.client.from('profiles').update({
+              'current_song_metadata': trackData,
+              'music_provider': 'spotify',
+              'last_music_update_at': trackData['timestamp'],
+            }).eq('id', userId);
+            debugPrint("✅ Müzik verisi kaydedildi: ${trackData['song_name']}");
+          }
+        }
+
         // Başarılı mesajı göster
         Future.delayed(const Duration(milliseconds: 500), () {
           navigatorKey.currentState?.context != null
