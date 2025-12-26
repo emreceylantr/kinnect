@@ -17,7 +17,8 @@ import '../../theme/app_colors.dart';
 
 // 🎨 TEMA RENKLERİ
 Color kBgColor = AppColors.bgDark; // Derin Siyah
-Color kCardColor = AppColors.bgCardExplore; // Kart Rengi
+Color kCardColor =
+    AppColors.bgCard; // Updated for better contrast in light theme
 Color kAccentPurple = AppColors.primary; // Mistik Mor
 Color kAccentOrange = AppColors.accentOrange; // Alev Turuncusu
 Color kAmberGlow = AppColors.accentAmber; // Kor Rengi
