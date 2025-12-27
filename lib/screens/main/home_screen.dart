@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:lottie/lottie.dart'; // 🔥 Lottie paketi eklendi
 
 // Servis ve Ekranlar
 import '../../services/feed_service.dart';
@@ -71,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const end = Offset.zero;
         const curve = Curves.easeOutQuart;
         var tween =
-            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         return SlideTransition(position: animation.drive(tween), child: child);
       },
     );
@@ -82,24 +83,24 @@ class _HomeScreenState extends State<HomeScreen> {
     _notificationChannel = Supabase.instance.client
         .channel('public:notifications')
         .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'notifications',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'user_id',
-            value: _currentUserId,
-          ),
-          callback: (payload) {
-            if (mounted) {
-              // Bildirim geldiğinde sayacı artır
-              setState(() {
-                _unreadCount++;
-              });
-              _handleNewNotification(payload.newRecord);
-            }
-          },
-        )
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'notifications',
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'user_id',
+        value: _currentUserId,
+      ),
+      callback: (payload) {
+        if (mounted) {
+          // Bildirim geldiğinde sayacı artır
+          setState(() {
+            _unreadCount++;
+          });
+          _handleNewNotification(payload.newRecord);
+        }
+      },
+    )
         .subscribe();
   }
 
@@ -230,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       final postRes = await Supabase.instance.client
                           .from('posts')
                           .select(
-                              '*, profiles(*), likes(user_id), comments(id)')
+                          '*, profiles(*), likes(user_id), comments(id)')
                           .eq('id', postId)
                           .maybeSingle();
                       if (postRes != null && mounted) {
@@ -327,44 +328,39 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: hideAppBar
             ? null
             : AppBar(
-                backgroundColor: AppColors.bgDark,
-                elevation: 0,
-                title: Text(
-                  _getAppBarTitle(),
-                  style: GoogleFonts.poppins(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: -0.5),
-                ),
-                actions: [
-                  // --- HİZALI KAWAII ÇAN ---
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 4.0),
-                      child: KawaiiBellIcon(
-                        notificationCount: _unreadCount,
-                        onTap: () {
-                          setState(() => _unreadCount = 0);
-                          Navigator.of(context).push(
-                              _createSlideRoute(const NotificationsScreen()));
-                        },
-                      ),
-                    ),
-                  ),
+          backgroundColor: AppColors.bgDark,
+          elevation: 0,
+          title: Text(
+            _getAppBarTitle(),
+            style: GoogleFonts.poppins(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: -0.5),
+          ),
+          actions: [
+            // --- 🔥 BİLDİRİM ÇANI (Padding kalktı, birbirine yanaştı) 🔥 ---
+            LottieBellButton(
+              notificationCount: _unreadCount,
+              onTap: () {
+                setState(() => _unreadCount = 0);
+                Navigator.of(context).push(
+                    _createSlideRoute(const NotificationsScreen()));
+              },
+            ),
 
-                  // 🔥 YENİ: PARLAMAYAN, DÜZ YEŞİL MESAJ İKONU 🔥
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0, left: 4.0),
-                    child: CyberMessageButton(
-                      onTap: () {
-                        Navigator.of(context)
-                            .push(_createSlideRoute(const MessagesScreen()));
-                      },
-                    ),
-                  ),
-                ],
+            // 🔥 MESAJ İKONU (Sadece sağa margin var, sola yok) 🔥
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: CyberMessageButton(
+                onTap: () {
+                  Navigator.of(context)
+                      .push(_createSlideRoute(const MessagesScreen()));
+                },
               ),
+            ),
+          ],
+        ),
         body: _buildBody(),
         bottomNavigationBar: _buildBottomNavBar(),
       ),
@@ -502,114 +498,65 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// 🔔 KAWAII ÇAN WIDGET 🔔
-class KawaiiBellIcon extends StatefulWidget {
+// 🔔🔥 YENİ LOTTIE BİLDİRİM ÇANI WIDGETI (BÜYÜK GÖRSEL, SIKI YERLEŞİM) 🔥🔔
+class LottieBellButton extends StatelessWidget {
   final int notificationCount;
   final VoidCallback onTap;
 
-  const KawaiiBellIcon({
+  const LottieBellButton({
     super.key,
     required this.notificationCount,
     required this.onTap,
   });
 
   @override
-  State<KawaiiBellIcon> createState() => _KawaiiBellIconState();
-}
-
-class _KawaiiBellIconState extends State<KawaiiBellIcon>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    bool hasNotification = widget.notificationCount > 0;
-
-    if (hasNotification) {
-      _controller.stop();
-    } else {
-      if (!_controller.isAnimating) _controller.repeat();
-    }
-
-    final Color bellColor = AppColors.primary; // TEMA MORU
-    final Color faceColor = Colors.white; // BEYAZ YÜZ
-
     return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        color: Colors.transparent,
+      onTap: onTap,
+      child: SizedBox(
+        // 🔥 Kapsayıcı genişliği küçültüldü (80 -> 55) ki yandaki ikona yanaşsın
+        // ama içindeki animasyon büyük kalacak.
+        width: 55,
+        height: 55,
         child: Stack(
           alignment: Alignment.center,
           children: [
-            if (!hasNotification)
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return Positioned(
-                    top: 0 + (3 * (1 - _controller.value)),
-                    right: 2 + (3 * _controller.value),
-                    child: Opacity(
-                      opacity: 1 - _controller.value,
-                      child: Transform.scale(
-                        scale: 0.6 + (_controller.value * 0.4),
-                        child: Text(
-                          "zZz",
-                          style: GoogleFonts.poppins(
-                              color: Colors.white70,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            Icon(FontAwesomeIcons.solidBell, size: 26, color: bellColor),
-            Positioned(
-              top: hasNotification ? 18 : 16,
-              child: hasNotification
-                  ? _buildAwakeFace(faceColor)
-                  : _buildSleepingFace(faceColor),
+            // Lottie Animasyonu (Görsel olarak BÜYÜK)
+            Lottie.asset(
+              'assets/animations/bell.json',
+              width: 85, // 🔥 Görsel olarak büyük
+              height: 85, // 🔥 Görsel olarak büyük
+              fit: BoxFit.contain,
             ),
-            if (hasNotification)
+            // Bildirim Rozeti (Badge)
+            if (notificationCount > 0)
               Positioned(
-                top: 4,
-                right: 4,
+                top: 8,
+                right: 8,
                 child: Container(
-                  padding: const EdgeInsets.all(3),
+                  padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
                     color: Colors.redAccent,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.black, width: 1.5),
+                    border: Border.all(color: AppColors.bgDark, width: 2),
                   ),
-                  constraints:
-                      const BoxConstraints(minWidth: 14, minHeight: 14),
-                  child: Text(
-                    widget.notificationCount > 9
-                        ? '9+'
-                        : widget.notificationCount.toString(),
-                    style: const TextStyle(
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
+                  child: Center(
+                    child: Text(
+                      notificationCount > 99
+                          ? '99+'
+                          : notificationCount.toString(),
+                      style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        height: 1.0,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
               ),
@@ -618,91 +565,9 @@ class _KawaiiBellIconState extends State<KawaiiBellIcon>
       ),
     );
   }
-
-  Widget _buildSleepingFace(Color color) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.keyboard_arrow_down_rounded, size: 9, color: color),
-            const SizedBox(width: 2),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 9, color: color),
-          ],
-        ),
-        const SizedBox(height: 1),
-        _buildSnoreBubble(color),
-      ],
-    );
-  }
-
-  Widget _buildSnoreBubble(Color color) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        double scale = 0.6 + (sin(_controller.value * pi) * 0.4);
-        return Transform.scale(
-          scale: scale,
-          child: Container(
-            width: 5,
-            height: 5,
-            decoration: BoxDecoration(
-                color: color.withOpacity(0.5),
-                shape: BoxShape.circle,
-                border: Border.all(color: color, width: 0.8)),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAwakeFace(Color color) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildEye(color),
-            const SizedBox(width: 6),
-            _buildEye(color),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Container(
-          width: 9,
-          height: 4,
-          decoration: BoxDecoration(
-              color: Colors.transparent,
-              border: Border(bottom: BorderSide(color: color, width: 1.5)),
-              borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(8))),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEye(Color color) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-            width: 5.5,
-            height: 5.5,
-            decoration: const BoxDecoration(
-                color: Colors.white, shape: BoxShape.circle)),
-        Container(
-            width: 3,
-            height: 3,
-            decoration: const BoxDecoration(
-                color: Colors.black, shape: BoxShape.circle)),
-      ],
-    );
-  }
 }
 
-// 🔥🔥 YENİ: PARLAMAYAN, YEŞİL CYBER MESAJ İKONU 🔥🔥
+// 🔥🔥 PARLAMAYAN, YEŞİL CYBER MESAJ İKONU 🔥🔥
 class CyberMessageButton extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -713,7 +578,6 @@ class CyberMessageButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 RENK: Neon Yeşil
     const neonGreen = Color(0xFF69F0AE);
 
     return GestureDetector(
@@ -725,7 +589,6 @@ class CyberMessageButton extends StatelessWidget {
           height: 34,
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            // 🔥 SHADOW/GLOW KALDIRILDI
           ),
           child: CustomPaint(
             painter: _ChatBubblePainter(neonGreen),
@@ -748,9 +611,8 @@ class _ChatBubblePainter extends CustomPainter {
       ..strokeWidth = 1.3
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      ..color = color; // 🔥 YEŞİL RENK
+      ..color = color;
 
-    // --- 1. BALONCUK ŞEKLİ (KÜÇÜK) ---
     const double padding = 7.0;
     const double cornerRadius = 6.0;
 
@@ -762,7 +624,6 @@ class _ChatBubblePainter extends CustomPainter {
         radius: const Radius.circular(cornerRadius));
     path.lineTo(size.width - padding, size.height - padding - 6);
 
-    // 🔥 KUYRUK
     path.lineTo(size.width - padding + 1.5, size.height - padding + 1.5);
     path.lineTo(size.width - padding - 5, size.height - padding);
 
@@ -775,7 +636,6 @@ class _ChatBubblePainter extends CustomPainter {
 
     canvas.drawPath(path, paint);
 
-    // --- 2. İÇERİK ÇİZGİLERİ ---
     final linePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.3
@@ -830,7 +690,7 @@ class _PostCardState extends State<PostCard> {
         const end = Offset.zero;
         const curve = Curves.easeOutQuart;
         var tween =
-            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         return SlideTransition(position: animation.drive(tween), child: child);
       },
     );
@@ -889,7 +749,7 @@ class _PostCardState extends State<PostCard> {
                 color: Colors.white.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(24),
                 border:
-                    Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                Border.all(color: Colors.white.withOpacity(0.1), width: 1),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -921,7 +781,7 @@ class _PostCardState extends State<PostCard> {
                                   : null,
                               child: profile['avatar_url'] == null
                                   ? const Icon(Icons.person,
-                                      color: Colors.white54, size: 20)
+                                  color: Colors.white54, size: 20)
                                   : null,
                             ),
                           ),
@@ -960,7 +820,7 @@ class _PostCardState extends State<PostCard> {
                                           context, p['location']),
                                       child: Container(
                                         constraints:
-                                            const BoxConstraints(maxWidth: 120),
+                                        const BoxConstraints(maxWidth: 120),
                                         color: Colors
                                             .transparent, // Tıklama alanı için
                                         child: Text(
@@ -1296,7 +1156,7 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
                               : null,
                           child: callerAvatar == null
                               ? const Icon(Icons.person,
-                                  size: 45, color: Colors.white54)
+                              size: 45, color: Colors.white54)
                               : null,
                         ),
                       ),
@@ -1331,7 +1191,7 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
                 // 💬 Alt metin
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(20),
