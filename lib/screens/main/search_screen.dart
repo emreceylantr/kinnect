@@ -53,6 +53,17 @@ class _SearchScreenState extends State<SearchScreen> {
 
   double _currentPage = 999.0;
 
+  // 🎭 AVATAR AYARLARI
+  final Map<String, String> avatarOptions = {
+    'Guy': 'assets/animations/guy.json',
+    'Girl': 'assets/animations/girl.json',
+    'Robot': 'assets/animations/robot.json',
+    'Cat': 'assets/animations/cat.json',
+    'Mor': 'assets/animations/mor.json',
+  };
+
+  String selectedAvatarKey = 'Guy'; // Varsayılan seçim
+
   @override
   void initState() {
     super.initState();
@@ -81,6 +92,107 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
+  // --- AVATAR SEÇİCİ MENÜ ---
+  void _showAvatarSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: kBgColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          height: 280,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text("Yoldaşını Seç",
+                  style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text("Keşfet ekranında sana eşlik edecek karakteri seç.",
+                  style: GoogleFonts.poppins(
+                      color: Colors.white54, fontSize: 12)),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: avatarOptions.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 16),
+                  itemBuilder: (context, index) {
+                    String key = avatarOptions.keys.elementAt(index);
+                    String? path = avatarOptions.values.elementAt(index);
+                    bool isSelected = key == selectedAvatarKey;
+
+                    // 🔥 KARTLARDA YÖN AYARI:
+                    // Girl hariç hepsi ters dönsün (true).
+                    // Girl düz kalsın (false).
+                    bool flipInCard = (key != 'Girl');
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedAvatarKey = key;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 100,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? kAccentOrange.withValues(alpha: 0.2)
+                              : kCardColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: isSelected
+                                  ? kAccentOrange
+                                  : Colors.transparent,
+                              width: 2),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              height: 60,
+                              child: Transform.flip(
+                                // 🔥 KART ÖZELİ YÖNÜ BURADA UYGULUYORUZ
+                                flipX: flipInCard,
+                                child: Lottie.asset(path,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.error,
+                                          color: Colors.white24);
+                                    }),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // --- ARAMA VE VERİ ÇEKME ---
   Future<void> _performSearch(String text) async {
     if (text.trim().isEmpty) {
@@ -97,18 +209,17 @@ class _SearchScreenState extends State<SearchScreen> {
         .limit(15);
     if (mounted)
       setState(
-          () => searchResults = List<Map<String, dynamic>>.from(res as List));
+              () => searchResults = List<Map<String, dynamic>>.from(res as List));
   }
 
   Future<void> _fetchExplore() async {
     if (explorePosts.isEmpty) setState(() => loadingExplore = true);
     try {
       final data = await feedService.getExploreFeed();
-      // 🔥 1. ADIM: TÜM LİSTEYİ KRONOLOJİK (YENİDEN ESKİYE) SIRALA
       data.sort((a, b) {
         final dateA = DateTime.tryParse(a['created_at']) ?? DateTime(2000);
         final dateB = DateTime.tryParse(b['created_at']) ?? DateTime(2000);
-        return dateB.compareTo(dateA); // En yeni en üstte
+        return dateB.compareTo(dateA);
       });
 
       if (mounted)
@@ -161,6 +272,26 @@ class _SearchScreenState extends State<SearchScreen> {
 
   // --- HEADER ---
   Widget _buildHeader() {
+    // 🔥 ÖZEL AYARLAR: Mor, Cat, Girl ve Robot
+    double currentPadding = 0.0;
+    double currentSize = 100.0; // Varsayılan boyut
+    bool isFlipped = true; // Varsayılan yön (flipX: true)
+
+    if (selectedAvatarKey == 'Mor') {
+      currentPadding = 24.0; // Mor: 24px yukarı
+      currentSize = 65.0;    // Mor: küçük
+    } else if (selectedAvatarKey == 'Cat') {
+      currentPadding = 20.0; // Cat: 20px yukarı
+      currentSize = 75.0;    // Cat: 75 boyut
+    } else if (selectedAvatarKey == 'Girl') {
+      currentPadding = 25.0; // Girl: 25px yukarı
+      currentSize = 75.0;    // Girl: 75 boyut
+      isFlipped = false;     // Girl: Ters yön
+    } else if (selectedAvatarKey == 'Robot') {
+      currentPadding = 28.0; // 🔥 Robot: 28px yukarı (YENİ)
+      currentSize = 68.0;    // 🔥 Robot: 68 boyut
+    }
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       decoration: BoxDecoration(color: kBgColor, boxShadow: [
@@ -170,47 +301,69 @@ class _SearchScreenState extends State<SearchScreen> {
             spreadRadius: 0,
             offset: const Offset(0, 10))
       ]),
-      child: Column(children: [
-        Row(children: [
-          Icon(FontAwesomeIcons.fire, color: kAccentOrange, size: 22),
-          const SizedBox(width: 8),
-          Text("Keşfet",
-              style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white))
-        ]),
-        const SizedBox(height: 20),
-        Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.bottomCenter,
-          children: [
-            _buildAnimatedSearchBar(),
-            Positioned(
-              right: 15,
-              bottom: 0,
-              // 🔥 DÜZELTME: IgnorePointer eklendi.
-              // Lottie animasyonunun tıklamaları engellememesini sağlar.
-              child: IgnorePointer(
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter,
+        children: [
+          // 1. KATMAN: Görünür İçerik (Başlık + Search Bar)
+          Column(
+            children: [
+              Row(children: [
+                Icon(FontAwesomeIcons.fire, color: kAccentOrange, size: 22),
+                const SizedBox(width: 8),
+                Text("Keşfet",
+                    style: GoogleFonts.poppins(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white))
+              ]),
+              const SizedBox(height: 20),
+              _buildAnimatedSearchBar(),
+              const SizedBox(height: 10), // Search bar alt boşluğu
+            ],
+          ),
+
+          // 2. KATMAN: Lottie ve Geniş Tıklama Alanı
+          Positioned(
+            right: 15,
+            bottom: 10,
+            child: IgnorePointer(
+              ignoring: isExpanded || searchController.text.isNotEmpty,
+              child: GestureDetector(
+                onTap: _showAvatarSelector,
+                behavior: HitTestBehavior.opaque,
                 child: Transform.flip(
-                  flipX: true,
-                  child: SizedBox(
-                    height: 100,
-                    width: 100,
-                    child: Lottie.asset('assets/animations/guy.json',
-                        fit: BoxFit.contain),
+                  flipX: isFlipped,
+                  // 🔥 TIKLAMA KULESİ
+                  child: Container(
+                    height: 250, // Yüksek tıklama alanı
+                    width: 100, // Genişlik
+                    alignment: Alignment.bottomCenter, // Taban hizala
+
+                    // 🔥 KONUMLANDIRMA: Dinamik Padding
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: currentPadding),
+                      child: SizedBox(
+                        // 🔥 BOYUTLANDIRMA: Dinamik Boyut
+                        height: currentSize,
+                        width: currentSize,
+                        child: Lottie.asset(
+                          avatarOptions[selectedAvatarKey]!,
+                          fit: BoxFit.contain,
+                          key: ValueKey(selectedAvatarKey),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 10),
-      ]),
+          ),
+        ],
+      ),
     );
   }
 
-  // 🔥 ARAMA ÇUBUĞU
   Widget _buildAnimatedSearchBar() {
     final bool isFocused = _searchFocusNode.hasFocus;
     final bool hasText = searchController.text.isNotEmpty;
@@ -227,10 +380,10 @@ class _SearchScreenState extends State<SearchScreen> {
                   : Colors.white10),
           boxShadow: isExpanded
               ? [
-                  BoxShadow(
-                      color: kAccentOrange.withValues(alpha: 0.15),
-                      blurRadius: 15)
-                ]
+            BoxShadow(
+                color: kAccentOrange.withValues(alpha: 0.15),
+                blurRadius: 15)
+          ]
               : []),
       child: Row(children: [
         const SizedBox(width: 12),
@@ -243,12 +396,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 style: GoogleFonts.poppins(color: Colors.white, fontSize: 13),
                 textAlignVertical: TextAlignVertical.center,
                 textAlign:
-                    (isFocused || hasText) ? TextAlign.start : TextAlign.center,
+                (isFocused || hasText) ? TextAlign.start : TextAlign.center,
                 decoration: InputDecoration(
                   isDense: true,
                   hintText: isFocused ? "" : "Kullanıcı ara...",
                   hintStyle:
-                      GoogleFonts.poppins(color: Colors.white30, fontSize: 13),
+                  GoogleFonts.poppins(color: Colors.white30, fontSize: 13),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.only(bottom: 4),
                 ),
@@ -354,7 +507,7 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Opacity(
                 opacity: opacity,
                 child:
-                    _buildFeaturedCard(posts[realIndex], rank: realIndex + 1),
+                _buildFeaturedCard(posts[realIndex], rank: realIndex + 1),
               ),
             ),
           );
@@ -400,14 +553,14 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     Color headerBgColor =
-        isRank1 ? kAccentOrange : AppColors.bgBlack.withValues(alpha: 0.6);
+    isRank1 ? kAccentOrange : AppColors.bgBlack.withValues(alpha: 0.6);
 
     return GestureDetector(
       onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) =>
-                      PostDetailScreen(post: post, isExploreMode: true)))
+          context,
+          MaterialPageRoute(
+              builder: (_) =>
+                  PostDetailScreen(post: post, isExploreMode: true)))
           .then((_) => _fetchExplore()),
       child: Container(
         decoration: BoxDecoration(
@@ -431,13 +584,13 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
           image: imageUrl != null
               ? DecorationImage(
-                  image: NetworkImage(imageUrl), fit: BoxFit.cover)
+              image: NetworkImage(imageUrl), fit: BoxFit.cover)
               : null,
           gradient: imageUrl == null
               ? LinearGradient(
-                  colors: [kCardColor, kCardColor.withValues(alpha: 0.8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight)
+              colors: [kCardColor, kCardColor.withValues(alpha: 0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight)
               : null,
         ),
         child: ClipRRect(
@@ -448,9 +601,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 Container(
                     decoration: BoxDecoration(
                         gradient: LinearGradient(colors: [
-                  Colors.transparent,
-                  AppColors.bgBlack.withValues(alpha: 0.9)
-                ], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
+                          Colors.transparent,
+                          AppColors.bgBlack.withValues(alpha: 0.9)
+                        ], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
               Positioned(
                 top: 0,
                 left: 0,
@@ -505,8 +658,8 @@ class _SearchScreenState extends State<SearchScreen> {
                                 : null,
                             child: profile["avatar_url"] == null
                                 ? Icon(Icons.person,
-                                    size: imageUrl != null ? 16 : 20,
-                                    color: Colors.white)
+                                size: imageUrl != null ? 16 : 20,
+                                color: Colors.white)
                                 : null),
                         const SizedBox(width: 12),
                         Expanded(
@@ -514,22 +667,22 @@ class _SearchScreenState extends State<SearchScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                              Text(profile["full_name"] ?? "Anonim",
-                                  style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontSize: imageUrl != null
-                                          ? (isRank1 ? 14 : 12)
-                                          : (isRank1 ? 16 : 14),
-                                      fontWeight: FontWeight.bold),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis),
-                              Text("@${profile["username"]}",
-                                  style: GoogleFonts.poppins(
-                                      color: Colors.white70,
-                                      fontSize: imageUrl != null ? 11 : 13),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis)
-                            ])),
+                                  Text(profile["full_name"] ?? "Anonim",
+                                      style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: imageUrl != null
+                                              ? (isRank1 ? 14 : 12)
+                                              : (isRank1 ? 16 : 14),
+                                          fontWeight: FontWeight.bold),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis),
+                                  Text("@${profile["username"]}",
+                                      style: GoogleFonts.poppins(
+                                          color: Colors.white70,
+                                          fontSize: imageUrl != null ? 11 : 13),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis)
+                                ])),
                       ],
                     ),
                     const SizedBox(height: 14),
@@ -546,11 +699,11 @@ class _SearchScreenState extends State<SearchScreen> {
                               fontSize: imageUrl == null ? 18 : 12,
                               shadows: imageUrl != null
                                   ? [
-                                      Shadow(
-                                          blurRadius: 2,
-                                          color: AppColors.bgBlack,
-                                          offset: Offset(0, 1))
-                                    ]
+                                Shadow(
+                                    blurRadius: 2,
+                                    color: AppColors.bgBlack,
+                                    offset: Offset(0, 1))
+                              ]
                                   : [])),
                     if (imageUrl == null)
                       const Spacer()
@@ -623,10 +776,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return GestureDetector(
       onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) =>
-                      PostDetailScreen(post: post, isExploreMode: true)))
+          context,
+          MaterialPageRoute(
+              builder: (_) =>
+                  PostDetailScreen(post: post, isExploreMode: true)))
           .then((_) => _fetchExplore()),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -645,7 +798,7 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               CircleAvatar(
                   radius: 20,
@@ -661,19 +814,19 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                    Text(profile["full_name"] ?? "Anonim",
-                        style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14)),
-                    Text("@${profile["username"]}",
-                        style: GoogleFonts.poppins(
-                            color: Colors.white38, fontSize: 12))
-                  ])),
+                        Text(profile["full_name"] ?? "Anonim",
+                            style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14)),
+                        Text("@${profile["username"]}",
+                            style: GoogleFonts.poppins(
+                                color: Colors.white38, fontSize: 12))
+                      ])),
               if (statusText.isNotEmpty)
                 Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -729,7 +882,8 @@ class _SearchScreenState extends State<SearchScreen> {
                   onTap: () => _toggleFuel(index, post["id"]),
                   size: 28),
               Padding(
-                  padding: EdgeInsets.only(left: 2, top: isAlive ? 32.0 : 38.0),
+                  padding:
+                  EdgeInsets.only(left: 2, top: isAlive ? 32.0 : 38.0),
                   child: Text("$likeCount",
                       style: GoogleFonts.poppins(
                           color: statusColor,
@@ -762,10 +916,12 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildEmptyState() {
     return Center(
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(FontAwesomeIcons.fireFlameCurved, size: 50, color: Colors.white10),
-      const SizedBox(height: 16),
-      Text("Henüz ateş yok.", style: GoogleFonts.poppins(color: Colors.white38))
-    ]));
+          Icon(FontAwesomeIcons.fireFlameCurved,
+              size: 50, color: Colors.white10),
+          const SizedBox(height: 16),
+          Text("Henüz ateş yok.",
+              style: GoogleFonts.poppins(color: Colors.white38))
+        ]));
   }
 
   Widget _buildSearchList() {

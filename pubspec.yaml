@@ -87,6 +87,11 @@ flutter:
     - assets/animations/l.json
     - assets/animations/s.json
     - assets/animations/guy.json
+    - assets/animations/mor.json
+    - assets/animations/cat.json
+    - assets/animations/girl.json
+    - assets/animations/robot.json
+    - assets/animations/bell.json
 
 
 
