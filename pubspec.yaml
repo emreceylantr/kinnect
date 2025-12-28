@@ -92,6 +92,8 @@ flutter:
     - assets/animations/girl.json
     - assets/animations/robot.json
     - assets/animations/bell.json
+    - assets/animations/logo.json
+    - assets/animations/iki.json
 
 
 
