@@ -33,16 +33,12 @@ import FirebaseMessaging
             if call.method == "getAppleMusicTrack" {
                 self.getNowPlaying(result: result)
             }
-            // ▼▼▼▼ GÜNCELLEME BURADA: İZİN İSTEME FONKSİYONU EKLENDİ ▼▼▼▼
             else if call.method == "requestAppleMusicPermission" {
-                // Bu kod çalıştığında ekrana o "İzin Ver" kutusu ZORLA çıkar
                 MPMediaLibrary.requestAuthorization { status in
-                    // Kullanıcı izin verdi mi? (authorized = true)
                     let isGranted = (status == .authorized)
                     result(isGranted)
                 }
             }
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             else {
                 result(FlutterMethodNotImplemented)
             }
@@ -54,15 +50,28 @@ import FirebaseMessaging
 
     // Şarkı bilgisini çeken fonksiyon
     private func getNowPlaying(result: FlutterResult) {
-        let musicPlayer = MPMusicPlayerController.systemMusicPlayer
-
-        // Şarkı çalıyor mu?
-        let isPlaying = musicPlayer.playbackState == .playing
-
-        if let nowPlayingItem = musicPlayer.nowPlayingItem {
+        // Önce izin durumunu kontrol et
+        let authStatus = MPMediaLibrary.authorizationStatus()
+        print("🍎 Apple Music Auth Status: \(authStatus.rawValue)")
+        
+        if authStatus != .authorized {
+            print("❌ Apple Music izni yok!")
+            result(nil)
+            return
+        }
+        
+        // systemMusicPlayer'dan şarkı bilgisi al
+        let systemPlayer = MPMusicPlayerController.systemMusicPlayer
+        let isPlaying = systemPlayer.playbackState == .playing
+        
+        print("🎵 systemMusicPlayer - isPlaying: \(isPlaying), item: \(systemPlayer.nowPlayingItem?.title ?? "NIL")")
+        
+        if let nowPlayingItem = systemPlayer.nowPlayingItem {
             let songName = nowPlayingItem.title ?? ""
             let artistName = nowPlayingItem.artist ?? ""
-            let storeId = nowPlayingItem.playbackStoreID // iTunes Store ID'si
+            let storeId = nowPlayingItem.playbackStoreID
+            
+            print("✅ Track found: \(songName) - \(artistName) (storeId: \(storeId))")
 
             let trackInfo: [String: Any] = [
                 "name": songName,
@@ -71,10 +80,54 @@ import FirebaseMessaging
                 "is_playing": isPlaying
             ]
             result(trackInfo)
-        } else {
-            // Hiçbir şey çalmıyorsa boş dönelim
-            result(nil)
+            return
         }
+        
+        // systemMusicPlayer çalışmadıysa applicationMusicPlayer dene
+        let appPlayer = MPMusicPlayerController.applicationMusicPlayer
+        let appIsPlaying = appPlayer.playbackState == .playing
+        
+        print("🎵 applicationMusicPlayer - isPlaying: \(appIsPlaying), item: \(appPlayer.nowPlayingItem?.title ?? "NIL")")
+        
+        if let nowPlayingItem = appPlayer.nowPlayingItem {
+            let songName = nowPlayingItem.title ?? ""
+            let artistName = nowPlayingItem.artist ?? ""
+            let storeId = nowPlayingItem.playbackStoreID
+            
+            print("✅ Track found from appPlayer: \(songName) - \(artistName)")
+
+            let trackInfo: [String: Any] = [
+                "name": songName,
+                "artist": artistName,
+                "storeId": storeId,
+                "is_playing": appIsPlaying
+            ]
+            result(trackInfo)
+            return
+        }
+        
+        // Hala nil ise MPNowPlayingInfoCenter dene (diğer uygulamalar için)
+        let nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo
+        print("🎵 MPNowPlayingInfoCenter: \(nowPlayingInfo ?? [:])")
+        
+        if let info = nowPlayingInfo,
+           let title = info[MPMediaItemPropertyTitle] as? String {
+            let artist = info[MPMediaItemPropertyArtist] as? String ?? ""
+            
+            print("✅ NowPlayingInfoCenter Track: \(title) - \(artist)")
+            
+            let trackInfo: [String: Any] = [
+                "name": title,
+                "artist": artist,
+                "storeId": "0",
+                "is_playing": true
+            ]
+            result(trackInfo)
+            return
+        }
+        
+        print("❌ No music found from any source")
+        result(nil)
     }
     
     // FCM Token alındığında

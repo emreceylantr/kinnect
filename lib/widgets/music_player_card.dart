@@ -116,6 +116,7 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
     // Önce veritabanından bağlantı durumunu kontrol et
     bool hasSpotifyToken = false;
     bool hasAppleMusic = false;
+    String? currentProvider;
 
     try {
       final profile = await Supabase.instance.client
@@ -127,30 +128,64 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
       if (profile != null) {
         hasSpotifyToken = profile['spotify_refresh_token'] != null;
         hasAppleMusic = profile['music_provider'] == 'apple';
+        currentProvider = profile['music_provider'];
       }
     } catch (_) {}
 
-    // Sadece bağlı olan servislerden veri çek
+    debugPrint(
+        '🎵 Music Sync - hasSpotify: $hasSpotifyToken, hasApple: $hasAppleMusic, provider: $currentProvider');
+
+    // Bağlı olan servislerden veri çek
     Map<String, dynamic>? appleTrack;
     Map<String, dynamic>? spotifyTrack;
 
+    // Apple Music bağlıysa veri çek
     if (hasAppleMusic) {
       appleTrack = await _appleMusicService.getCurrentTrack();
+      debugPrint(
+          '🍎 Apple Track: ${appleTrack != null ? appleTrack['song_name'] : 'NULL'}');
     }
+
+    // Spotify bağlıysa veri çek
     if (hasSpotifyToken) {
       spotifyTrack = await _spotifyService.getCurrentTrack(widget.userId);
+      debugPrint(
+          '🟢 Spotify Track: ${spotifyTrack != null ? spotifyTrack['song_name'] : 'NULL'}');
     }
 
     Map<String, dynamic>? winner;
 
-    // Hangisi daha güncelse onu seç
-    if (appleTrack != null && spotifyTrack != null) {
-      final appleTime = DateTime.parse(appleTrack['timestamp']);
-      final spotifyTime = DateTime.parse(spotifyTrack['timestamp']);
+    // Hangisi şu an çalıyorsa ona öncelik ver (is_playing kontrolü)
+    final appleIsPlaying = appleTrack?['is_playing'] == true;
+    final spotifyIsPlaying = spotifyTrack?['is_playing'] == true;
+
+    debugPrint(
+        '🎶 Apple isPlaying: $appleIsPlaying, Spotify isPlaying: $spotifyIsPlaying');
+
+    if (appleIsPlaying && !spotifyIsPlaying) {
+      // Sadece Apple çalıyorsa Apple'ı seç
+      winner = appleTrack;
+    } else if (spotifyIsPlaying && !appleIsPlaying) {
+      // Sadece Spotify çalıyorsa Spotify'ı seç
+      winner = spotifyTrack;
+    } else if (appleIsPlaying && spotifyIsPlaying) {
+      // İkisi de çalıyorsa, timestamp'e göre seç (daha güncel olan)
+      final appleTime = DateTime.parse(appleTrack!['timestamp']);
+      final spotifyTime = DateTime.parse(spotifyTrack!['timestamp']);
       winner = appleTime.isAfter(spotifyTime) ? appleTrack : spotifyTrack;
     } else {
-      winner = appleTrack ?? spotifyTrack;
+      // Hiçbiri çalmıyorsa, en son çalanı göster (timestamp'e göre)
+      if (appleTrack != null && spotifyTrack != null) {
+        final appleTime = DateTime.parse(appleTrack['timestamp']);
+        final spotifyTime = DateTime.parse(spotifyTrack['timestamp']);
+        winner = appleTime.isAfter(spotifyTime) ? appleTrack : spotifyTrack;
+      } else {
+        winner = appleTrack ?? spotifyTrack;
+      }
     }
+
+    debugPrint(
+        '🏆 Winner: ${winner != null ? "${winner['provider']} - ${winner['song_name']}" : 'NULL'}');
 
     if (winner == null) return;
 
