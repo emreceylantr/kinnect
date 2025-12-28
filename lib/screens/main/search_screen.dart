@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:lottie/lottie.dart'; // Lottie paketi
+import 'package:lottie/lottie.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 🔥 EKLENDİ: Kayıt için gerekli paket
 
 // Importları kendi proje yapına göre kontrol et
 import '../../widgets/fuel_button.dart';
@@ -67,6 +68,8 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
+    _loadAvatarPreference(); // 🔥 EKLENDİ: Uygulama açılınca kayıtlı karakteri yükle
+
     final user = client.auth.currentUser;
     if (user != null) {
       myId = user.id;
@@ -90,6 +93,21 @@ class _SearchScreenState extends State<SearchScreen> {
     _pageController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  // 🔥 EKLENDİ: Kayıtlı avatarı hafızadan okuyan fonksiyon
+  Future<void> _loadAvatarPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      // Eğer daha önce seçilmediyse 'Guy' varsayılan olur
+      selectedAvatarKey = prefs.getString('selected_avatar') ?? 'Guy';
+    });
+  }
+
+  // 🔥 EKLENDİ: Seçilen avatarı hafızaya kaydeden fonksiyon
+  Future<void> _saveAvatarPreference(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selected_avatar', key);
   }
 
   // --- AVATAR SEÇİCİ MENÜ ---
@@ -143,11 +161,13 @@ class _SearchScreenState extends State<SearchScreen> {
                     bool flipInCard = (key != 'Girl');
 
                     return GestureDetector(
-                      onTap: () {
+                      onTap: () async {
+                        // 🔥 GÜNCELLENDİ: Hem state'i güncelle hem hafızaya kaydet
                         setState(() {
                           selectedAvatarKey = key;
                         });
-                        Navigator.pop(context);
+                        await _saveAvatarPreference(key); // Kaydetme işlemi
+                        if (mounted) Navigator.pop(context);
                       },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
@@ -288,7 +308,7 @@ class _SearchScreenState extends State<SearchScreen> {
       currentSize = 75.0;    // Girl: 75 boyut
       isFlipped = false;     // Girl: Ters yön
     } else if (selectedAvatarKey == 'Robot') {
-      currentPadding = 28.0; // 🔥 Robot: 28px yukarı (YENİ)
+      currentPadding = 28.0; // 🔥 Robot: 28px yukarı
       currentSize = 68.0;    // 🔥 Robot: 68 boyut
     }
 
