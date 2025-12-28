@@ -1,9 +1,11 @@
-// Kinnect - Uygulama giriş ekranı
+// Kinnect - Uygulama giriş ekranı (REVİZE - KÜÇÜK LOGO, 0.8 ÇIKIŞ SCALE)
 
-import 'dart:ui';
+import 'dart:math'; // Animasyon hesaplamaları için
+import 'dart:ui'; // lerpDouble ve BackdropFilter için
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart'; // 🔥 LOTTIE KÜTÜPHANESİ
 import 'auth_screen.dart';
 
 // 🎨 PREMIUM TEMA
@@ -32,6 +34,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late AnimationController _glowController;
   late AnimationController _typeController;
 
+  // ✨ KUTUCUKLARIN GİRİŞ ANİMASYONU
+  late AnimationController _entranceController;
+
+  // ✨ BALONCUK VAKUM ANİMASYONU
+  late AnimationController _streamController;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +63,25 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat();
+
+    // Vakum akış hızı
+    _streamController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat();
+
+    // Giriş animasyonu (Kutular için)
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 4000),
+    );
+
+    // Gecikmeli başlat
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      if (mounted) {
+        _entranceController.forward();
+      }
+    });
   }
 
   @override
@@ -64,6 +91,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     _pulseController.dispose();
     _glowController.dispose();
     _typeController.dispose();
+    _entranceController.dispose();
+    _streamController.dispose();
     super.dispose();
   }
 
@@ -102,9 +131,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           // 📄 SAYFALAR
           PageView(
             controller: _pageController,
-            onPageChanged: (i) => setState(() => _currentPage = i),
+            onPageChanged: (i) {
+              setState(() => _currentPage = i);
+              if (i == 0) {
+                _entranceController.reset();
+                _entranceController.forward();
+              }
+            },
             children: [
-              _buildWelcomePage(),
+              _buildWelcomePage(), // 🔥 REVIZE EDILDI
               _buildPhotoAnalysisPage(),
               _buildTextAnalysisPage(),
               _buildMatchPage(),
@@ -159,55 +194,298 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 📱 SAYFA 1: HOŞ GELDİN
+  // 📱 SAYFA 1: HOŞ GELDİN (REVİZE: LOTTIE + VAKUM)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildWelcomePage() {
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          children: [
-            const SizedBox(height: 80),
+      child: Stack(
+        children: [
+          // 1. HUB (Lottie, Kutular, Balonlar)
+          Align(
+            alignment: const Alignment(0, -0.5), // Yukarıda konumlu
+            child: _buildLottieFeatureHub(),
+          ),
 
-            // Logo
-            _buildPulsingIcon(FontAwesomeIcons.infinity, kAccentPurple),
+          // 2. YAZILAR (Aşağıda Sabit)
+          Positioned(
+            left: 20,
+            right: 20,
+            bottom: 140,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Kinnect'e\nHoş Geldin",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 42,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    height: 1.1,
+                    letterSpacing: -1,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "Sadece fotoğraf değil, anlam paylaş.",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    color: Colors.white.withOpacity(0.7),
+                    height: 1.6,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            const SizedBox(height: 50),
+  // 🔥 LOTTIE LOGOLU, YOĞUN VAKUM EFEKTLİ HUB
+  Widget _buildLottieFeatureHub() {
+    // Mesajlar
+    final inputWords = [
+      "Keşfeti gördün mü?",
+      "Selam!",
+      "Fotoğrafın harika",
+      "Naber?",
+      "Konum neresi?",
+      "Bu şarkı ne?",
+      "Tanışalım mı?",
+      "Harika!"
+    ];
+    final outputWords = ["Bağ", "Dostluk", "Güven", "Anlam", "Kabile", "Samimiyet", "Gerçek", "His"];
 
-            // Badge
-            _buildBadge("YAPAY ZEKA DESTEKLİ", kAccentPurple),
+    // 4 Kutu Konfigürasyonu
+    final features = [
+      {
+        'title': 'Yapay Zeka',
+        'icon': FontAwesomeIcons.wandMagicSparkles,
+        'align': const Alignment(-0.95, -0.75), // Sol Üst (Yakın)
+        'slideBegin': const Offset(-0.5, -0.5),
+      },
+      {
+        'title': 'Yenilikçi ve Eğlenceli',
+        'icon': FontAwesomeIcons.faceSmileBeam,
+        'align': const Alignment(0.95, -0.75), // Sağ Üst (Yakın)
+        'slideBegin': const Offset(0.5, -0.5),
+      },
+      {
+        'title': 'Derin Analiz',
+        'icon': FontAwesomeIcons.chartPie,
+        'align': const Alignment(-0.95, 0.75), // Sol Alt (Yakın)
+        'slideBegin': const Offset(-0.5, 0.5),
+      },
+      {
+        'title': 'Gizli ve Güvenli',
+        'icon': FontAwesomeIcons.shieldHeart,
+        'align': const Alignment(0.95, 0.75), // Sağ Alt (Yakın)
+        'slideBegin': const Offset(0.5, 0.5),
+      },
+    ];
 
-            const SizedBox(height: 20),
+    return SizedBox(
+      height: 320, // Animasyon alanı
+      width: 320,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none, // Balonlar dışarı taşsın
+        children: [
 
-            // Başlık
-            Text(
-              "Kinnect'e\nHoş Geldin",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 42,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                height: 1.1,
-                letterSpacing: -1,
+          // 1. VAKUM BALONLARI (Lottie Arkasında ve Önünde)
+          AnimatedBuilder(
+            animation: _streamController,
+            builder: (context, child) {
+              return Stack(
+                clipBehavior: Clip.none,
+                children: List.generate(12, (index) {
+                  final offset = index * (1.0 / 12.0);
+                  final rawProgress = (_streamController.value + offset) % 1.0;
+                  final isInput = rawProgress < 0.5;
+
+                  double top, left, scale, opacity;
+                  String text;
+                  Color bgColor;
+
+                  // Alanın merkezi
+                  const center = 160.0;
+
+                  if (isInput) {
+                    // --- GİRİŞ (VAKUM - ÜSTTEN ve YANLARDAN) ---
+                    final t = rawProgress * 2;
+                    final curveT = Curves.easeInBack.transform(t);
+
+                    // Başlangıç noktası: Tüm üst alanı kapsasın
+                    final startX = -50.0 + (index * 35.0);
+                    final startY = -120.0 - (index % 3 * 30); // Farklı yüksekliklerden
+
+                    left = lerpDouble(startX, center - 25, curveT)!;
+                    top = lerpDouble(startY, center - 10, curveT)!;
+
+                    scale = lerpDouble(1.0, 0.0, curveT)!; // Merkeze girerken yok ol
+                    opacity = lerpDouble(0.8, 0.0, curveT)!;
+
+                    text = inputWords[index % inputWords.length];
+                    bgColor = Colors.white.withOpacity(0.12);
+                  } else {
+                    // --- ÇIKIŞ (ÜRETİM - SAÇILMA) ---
+                    final t = (rawProgress - 0.5) * 2;
+                    final curveT = Curves.elasticOut.transform(t);
+
+                    // Saçılma Yönü: Sol Çapraz, Orta, Sağ Çapraz
+                    final directionMultiplier = (index % 3) - 1;
+
+                    final endX = center + (directionMultiplier * 90.0); // Geniş saçılma
+                    final endY = 450.0; // Aşağıya
+
+                    left = lerpDouble(center - 30, endX - 30, t)!;
+                    top = lerpDouble(center, endY, t)!;
+
+                    // 🔥 GÜNCELLEME: Çıkan mesajlar büyütüldü (0.8 scale)
+                    scale = lerpDouble(0.0, 0.8, curveT)!;
+
+                    opacity = t > 0.8 ? (1.0 - t) * 5 : 1.0;
+
+                    text = outputWords[index % outputWords.length];
+                    bgColor = kAccentPurple;
+                  }
+
+                  return Positioned(
+                    top: top,
+                    left: left,
+                    child: Transform.scale(
+                      scale: scale,
+                      child: Opacity(
+                        opacity: opacity.clamp(0.0, 1.0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: bgColor,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(12),
+                              topRight: const Radius.circular(12),
+                              bottomLeft: Radius.circular(isInput ? 0 : 12),
+                              bottomRight: Radius.circular(isInput ? 12 : 0),
+                            ),
+                            boxShadow: !isInput ? [
+                              BoxShadow(color: kAccentPurple.withOpacity(0.4), blurRadius: 8)
+                            ] : null,
+                          ),
+                          child: Text(
+                            text,
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: !isInput ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              );
+            },
+          ),
+
+          // 2. LOTTIE LOGO (MERKEZ)
+          Align(
+            alignment: Alignment.center,
+            child: SizedBox(
+              width: 160, // 🔥 LOGO KÜÇÜLTÜLDÜ (200 -> 160)
+              height: 160,
+              child: Lottie.asset(
+                'assets/animations/iki.json', // 🔥 DOSYA GÜNCELLENDİ
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: kAccentPurple.withOpacity(0.2),
+                        border: Border.all(color: kAccentPurple)
+                    ),
+                    child: const Icon(Icons.error, color: kAccentPurple),
+                  );
+                },
               ),
             ),
+          ),
 
-            const SizedBox(height: 20),
+          // 3. KUTUCUKLAR (En üst katman)
+          ...List.generate(features.length, (index) {
+            final f = features[index];
+            final start = index * 0.25;
+            final end = start + 0.25;
 
-            // Açıklama
-            Text(
-              "Sadece fotoğraf değil, anlam paylaş.\nSeni gerçekten anlayan kabileleri keşfet.",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                color: Colors.white.withOpacity(0.6),
-                height: 1.6,
+            final animation = CurvedAnimation(
+              parent: _entranceController,
+              curve: Interval(start, end, curve: Curves.easeOutCubic),
+            );
+
+            return Align(
+              alignment: f['align'] as Alignment,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: f['slideBegin'] as Offset,
+                  end: Offset.zero,
+                ).animate(animation),
+                child: FadeTransition(
+                  opacity: animation,
+                  child: _buildFeatureTag(
+                    f['title'] as String,
+                    f['icon'] as IconData,
+                    kAccentPurple, // Hepsi Mor
+                  ),
+                ),
               ),
-            ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
 
-            const Spacer(),
-          ],
+  // Özellik Etiketi (İnce ve Mor)
+  Widget _buildFeatureTag(String title, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A24),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.5),
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.6),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: color.withOpacity(0.2),
+            blurRadius: 8,
+            spreadRadius: -2,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 6),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -222,16 +500,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         child: Column(
           children: [
             const SizedBox(height: 60),
-
-            // 📸 FOTOĞRAF TARAMA SİMÜLASYONU
             _buildPhotoScanner(),
-
             const SizedBox(height: 40),
-
             _buildBadge("GÖRSEL ZEKA", kAccentCyan),
-
             const SizedBox(height: 20),
-
             Text(
               "Fotoğraflarını\nAnaliz Ediyoruz",
               textAlign: TextAlign.center,
@@ -243,9 +515,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 letterSpacing: -1,
               ),
             ),
-
             const SizedBox(height: 20),
-
             Text(
               "Paylaştığın karelerdeki gizli hobileri,\ntarzını ve ilgi alanlarını AI ile keşfediyoruz.",
               textAlign: TextAlign.center,
@@ -255,7 +525,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 height: 1.6,
               ),
             ),
-
             const Spacer(),
           ],
         ),
@@ -269,7 +538,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Arka fotoğraflar (blur)
           Positioned(
             left: 10,
             child: Transform.rotate(
@@ -284,8 +552,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               child: _buildMiniPhoto(Colors.purple.withOpacity(0.3)),
             ),
           ),
-
-          // Ana fotoğraf
           Container(
             width: 150,
             height: 190,
@@ -309,13 +575,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             ),
             child: Stack(
               children: [
-                // Fotoğraf ikonu
                 const Center(
                   child: Icon(FontAwesomeIcons.image,
                       size: 50, color: Colors.white30),
                 ),
-
-                // Tarama çizgisi
                 AnimatedBuilder(
                   animation: _scanController,
                   builder: (context, child) {
@@ -345,14 +608,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     );
                   },
                 ),
-
-                // AI etiketi
                 Positioned(
                   top: 10,
                   right: 10,
                   child: Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: kAccentCyan,
                       borderRadius: BorderRadius.circular(6),
@@ -408,16 +669,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         child: Column(
           children: [
             const SizedBox(height: 60),
-
-            // 📝 YAZI ANALİZİ
             _buildTextAnalyzer(),
-
             const SizedBox(height: 40),
-
             _buildBadge("DOĞAL DİL İŞLEME", kAccentPink),
-
             const SizedBox(height: 20),
-
             Text(
               "Yazılarını\nDeşifre Ediyoruz",
               textAlign: TextAlign.center,
@@ -429,9 +684,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 letterSpacing: -1,
               ),
             ),
-
             const SizedBox(height: 20),
-
             Text(
               "Tweetlerin ve yazılarının satır aralarındaki\n'seni' okuyoruz. Yüzeysel değil, derin bağlar kur.",
               textAlign: TextAlign.center,
@@ -441,7 +694,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 height: 1.6,
               ),
             ),
-
             const Spacer(),
           ],
         ),
@@ -455,7 +707,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Glow
           Container(
             width: 200,
             height: 200,
@@ -469,8 +720,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               ),
             ),
           ),
-
-          // Yazı kartı
           Container(
             width: 200,
             height: 160,
@@ -489,7 +738,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profil satırı
                 Row(
                   children: [
                     Container(
@@ -529,10 +777,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 16),
-
-                // Analiz edilen satırlar
                 ...List.generate(3, (index) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -568,8 +813,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               ],
             ),
           ),
-
-          // AI Badge
           Positioned(
             top: 20,
             right: 60,
@@ -645,7 +888,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           return Stack(
             alignment: Alignment.center,
             children: [
-              // Pulsing circles
               ...List.generate(3, (index) {
                 final value = ((_pulseController.value + index * 0.2) % 1.0);
                 return Container(
@@ -660,8 +902,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   ),
                 );
               }),
-
-              // Center icon
               Container(
                 width: 100,
                 height: 100,
@@ -690,49 +930,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   // ═══════════════════════════════════════════════════════════════
   // 🔧 YARDIMCI WİDGETLER
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildPulsingIcon(IconData icon, Color color) {
-    return SizedBox(
-      height: 180,
-      child: AnimatedBuilder(
-        animation: _pulseController,
-        builder: (context, child) {
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              ...List.generate(3, (index) {
-                final value = ((_pulseController.value + index * 0.2) % 1.0);
-                return Container(
-                  width: 100 + (value * 40) + (index * 25),
-                  height: 100 + (value * 40) + (index * 25),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: color.withOpacity(0.3 - value * 0.3),
-                      width: 1.5,
-                    ),
-                  ),
-                );
-              }),
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient:
-                      LinearGradient(colors: [color, color.withOpacity(0.7)]),
-                  boxShadow: [
-                    BoxShadow(color: color.withOpacity(0.4), blurRadius: 30),
-                  ],
-                ),
-                child: Icon(icon, size: 40, color: Colors.white),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildBadge(String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -799,7 +996,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(4),
                       gradient:
-                          isActive ? LinearGradient(colors: current) : null,
+                      isActive ? LinearGradient(colors: current) : null,
                       color: isActive ? null : Colors.white24,
                     ),
                   );
@@ -820,7 +1017,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           color: Colors.white.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(14),
                           border:
-                              Border.all(color: Colors.white.withOpacity(0.1)),
+                          Border.all(color: Colors.white.withOpacity(0.1)),
                         ),
                         child: Center(
                           child: Text(
