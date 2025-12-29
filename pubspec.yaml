@@ -50,6 +50,7 @@ dependencies:
 
   # --- RESİM & DOSYA ---
   image_picker: ^1.0.7
+  image_cropper: ^8.0.2     # 📸 Fotoğraf kırpma ve döndürme
   cached_network_image: ^3.4.1
 
   # --- ZEGO CLOUD (ARAMA & GÖRÜNTÜLÜ SOHBET) ---

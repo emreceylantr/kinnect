@@ -12,6 +12,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
 import 'photo_tag_screen.dart'; // 🆕 Fotoğrafa kişi etiketleme
+import 'photo_editor_screen.dart'; // 📸 Fotoğraf düzenleme
 import 'music_picker_screen.dart'; // 🌵 Spotify müzik ekle
 import '../../theme/app_colors.dart';
 
@@ -135,49 +136,83 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     if (source == ImageSource.gallery) {
       final List<XFile> images = await picker.pickMultiImage(imageQuality: 70);
       if (images.isNotEmpty && mounted) {
-        final files = images.map((img) => File(img.path)).toList();
+        List<File> editedFiles = [];
+
+        // 📸 Her fotoğrafı düzenleme ekranından geçir
+        for (final img in images) {
+          final originalFile = File(img.path);
+
+          // Fotoğraf düzenleme ekranına git
+          final editedFile = await Navigator.push<File>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PhotoEditorScreen(imageFile: originalFile),
+            ),
+          );
+
+          if (editedFile != null) {
+            editedFiles.add(editedFile);
+          } else {
+            // Kullanıcı iptal ettiyse orijinal dosyayı kullan
+            editedFiles.add(originalFile);
+          }
+
+          if (!mounted) return;
+        }
 
         // İlk fotoğraf için etiketleme ekranına git
-        if (_imageFiles.isEmpty && files.isNotEmpty) {
+        if (_imageFiles.isEmpty && editedFiles.isNotEmpty) {
           final tags = await Navigator.push<List<Map<String, dynamic>>>(
             context,
             MaterialPageRoute(
-              builder: (_) => PhotoTagScreen(imageFile: files.first),
+              builder: (_) => PhotoTagScreen(imageFile: editedFiles.first),
             ),
           );
           if (mounted) {
             setState(() {
-              _imageFiles = [..._imageFiles, ...files].take(10).toList();
+              _imageFiles = [..._imageFiles, ...editedFiles].take(10).toList();
               _photoTags = tags ?? [];
             });
           }
         } else {
           setState(() {
-            _imageFiles = [..._imageFiles, ...files].take(10).toList();
+            _imageFiles = [..._imageFiles, ...editedFiles].take(10).toList();
           });
         }
       }
     } else {
       final XFile? image =
-      await picker.pickImage(source: source, imageQuality: 70);
+          await picker.pickImage(source: source, imageQuality: 70);
       if (image != null && mounted) {
-        final file = File(image.path);
+        final originalFile = File(image.path);
+
+        // 📸 Fotoğraf düzenleme ekranına git
+        final editedFile = await Navigator.push<File>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PhotoEditorScreen(imageFile: originalFile),
+          ),
+        );
+
+        final fileToUse = editedFile ?? originalFile;
+
+        if (!mounted) return;
 
         if (_imageFiles.isEmpty) {
           final tags = await Navigator.push<List<Map<String, dynamic>>>(
             context,
             MaterialPageRoute(
-              builder: (_) => PhotoTagScreen(imageFile: file),
+              builder: (_) => PhotoTagScreen(imageFile: fileToUse),
             ),
           );
           if (mounted) {
             setState(() {
-              _imageFiles.add(file);
+              _imageFiles.add(fileToUse);
               _photoTags = tags ?? [];
             });
           }
         } else if (_imageFiles.length < 10) {
-          setState(() => _imageFiles.add(file));
+          setState(() => _imageFiles.add(fileToUse));
         }
       }
     }
@@ -209,10 +244,10 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             '$_currentUserId/${DateTime.now().millisecondsSinceEpoch}_$i.$fileExt';
 
         await Supabase.instance.client.storage.from('uploads').uploadBinary(
-          fileName,
-          await file.readAsBytes(),
-          fileOptions: const FileOptions(upsert: true),
-        );
+              fileName,
+              await file.readAsBytes(),
+              fileOptions: const FileOptions(upsert: true),
+            );
 
         final url = Supabase.instance.client.storage
             .from('uploads')
@@ -223,22 +258,22 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       final postResponse = await Supabase.instance.client
           .from('posts')
           .insert({
-        'user_id': _currentUserId,
-        'content': content,
-        'image_url': imageUrls.isNotEmpty ? imageUrls.first : null,
-        'image_urls': imageUrls.isNotEmpty ? imageUrls : null,
-        'visibility': _visibility,
-        // 🎧 Müzik bilgileri
-        if (_selectedMusic != null) ...{
-          'spotify_track_id': _selectedMusic!['id'],
-          'spotify_track_name': _selectedMusic!['name'],
-          'spotify_artist_name': _selectedMusic!['artist'],
-          'spotify_preview_url': _selectedMusic!['preview_url'],
-          'spotify_album_image': _selectedMusic!['album_image'],
-        },
-        // 📍 Konum
-        'location': _location,
-      })
+            'user_id': _currentUserId,
+            'content': content,
+            'image_url': imageUrls.isNotEmpty ? imageUrls.first : null,
+            'image_urls': imageUrls.isNotEmpty ? imageUrls : null,
+            'visibility': _visibility,
+            // 🎧 Müzik bilgileri
+            if (_selectedMusic != null) ...{
+              'spotify_track_id': _selectedMusic!['id'],
+              'spotify_track_name': _selectedMusic!['name'],
+              'spotify_artist_name': _selectedMusic!['artist'],
+              'spotify_preview_url': _selectedMusic!['preview_url'],
+              'spotify_album_image': _selectedMusic!['album_image'],
+            },
+            // 📍 Konum
+            'location': _location,
+          })
           .select('id')
           .single();
 
@@ -339,7 +374,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
       // 4. Adrese çevir
       List<Placemark> placemarks =
-      await placemarkFromCoordinates(position.latitude, position.longitude);
+          await placemarkFromCoordinates(position.latitude, position.longitude);
 
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
@@ -400,7 +435,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                     color: Colors.orangeAccent.withOpacity(0.2),
                     shape: BoxShape.circle),
                 child:
-                const Icon(Icons.my_location, color: Colors.orangeAccent),
+                    const Icon(Icons.my_location, color: Colors.orangeAccent),
               ),
               title: Text("Şu anki konumu bul",
                   style: GoogleFonts.poppins(color: Colors.white)),
@@ -437,13 +472,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   // ✍️ ELLE KONUM GİRİŞİ
   void _showManualLocationDialog() {
     final TextEditingController locController =
-    TextEditingController(text: _location);
+        TextEditingController(text: _location);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bgCardLight,
         title:
-        Text("Konum Yaz", style: GoogleFonts.poppins(color: Colors.white)),
+            Text("Konum Yaz", style: GoogleFonts.poppins(color: Colors.white)),
         content: Row(
           children: [
             Expanded(
@@ -467,7 +502,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 if (locController.text.trim().isEmpty) return;
                 try {
                   List<Location> locations =
-                  await locationFromAddress(locController.text);
+                      await locationFromAddress(locController.text);
                   if (locations.isNotEmpty) {
                     List<Placemark> placemarks = await placemarkFromCoordinates(
                         locations.first.latitude, locations.first.longitude);
@@ -520,17 +555,17 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   Widget build(BuildContext context) {
     // 🔥 DÜZELTME: Yazı boyutu 16'ya çekildi (Daha dengeli)
     final TextStyle commonTextStyle =
-    GoogleFonts.poppins(color: Colors.white, fontSize: 16, height: 1.5);
+        GoogleFonts.poppins(color: Colors.white, fontSize: 16, height: 1.5);
 
     final TextStyle hintTextStyle =
-    commonTextStyle.copyWith(color: Colors.white54);
+        commonTextStyle.copyWith(color: Colors.white54);
 
     // 🔥 HİZALAMA MATEMATİĞİ:
     // Avatar (Radius 22) => Height 44px
     // Yazı (Font 16 * 1.5) => Height 24px
     // Fark = 20px. Ortalamak için üstten 10px boşluk gerekir.
     final double topPadding =
-    _centeredHints.contains(_currentHint) ? 10.0 : 0.0;
+        _centeredHints.contains(_currentHint) ? 10.0 : 0.0;
 
     final bool showAurora = _textController.text.isEmpty && _imageFile == null;
 
@@ -595,7 +630,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                   : null,
                               child: _avatarUrl == null
                                   ? const Icon(Icons.person,
-                                  color: Colors.white54)
+                                      color: Colors.white54)
                                   : null,
                             ),
                             const SizedBox(width: 15),
@@ -613,7 +648,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                             ? _hintOpacity
                                             : 0.0,
                                         duration:
-                                        const Duration(milliseconds: 800),
+                                            const Duration(milliseconds: 800),
                                         curve: Curves.easeOut,
                                         child: Text(
                                           _currentHint,
@@ -657,7 +692,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                         children: [
                                           ClipRRect(
                                             borderRadius:
-                                            BorderRadius.circular(20),
+                                                BorderRadius.circular(20),
                                             child: Image.file(
                                               _imageFiles[index],
                                               height: 250,
@@ -672,7 +707,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                               onTap: () => _removeImage(index),
                                               child: Container(
                                                 padding:
-                                                const EdgeInsets.all(8),
+                                                    const EdgeInsets.all(8),
                                                 decoration: BoxDecoration(
                                                   color: AppColors.bgBlack
                                                       .withOpacity(0.6),
@@ -693,14 +728,14 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                               left: 10,
                                               child: Container(
                                                 padding:
-                                                const EdgeInsets.symmetric(
-                                                    horizontal: 10,
-                                                    vertical: 4),
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 4),
                                                 decoration: BoxDecoration(
                                                   color: AppColors.bgBlack
                                                       .withOpacity(0.6),
                                                   borderRadius:
-                                                  BorderRadius.circular(12),
+                                                      BorderRadius.circular(12),
                                                 ),
                                                 child: Text(
                                                   '${index + 1}/${_imageFiles.length}',
@@ -708,7 +743,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                                       color: Colors.white,
                                                       fontSize: 12,
                                                       fontWeight:
-                                                      FontWeight.w600),
+                                                          FontWeight.w600),
                                                 ),
                                               ),
                                             ),
@@ -722,10 +757,10 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                     padding: const EdgeInsets.only(top: 8),
                                     child: Row(
                                       mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                          MainAxisAlignment.center,
                                       children: List.generate(
                                         _imageFiles.length,
-                                            (i) => Container(
+                                        (i) => Container(
                                           width: 6,
                                           height: 6,
                                           margin: const EdgeInsets.symmetric(
@@ -756,7 +791,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   color:
-                                  const Color(0xFFFC3C44).withOpacity(0.3),
+                                      const Color(0xFFFC3C44).withOpacity(0.3),
                                 ),
                               ),
                               child: Row(
@@ -765,27 +800,27 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
                                     child: _selectedMusic!['album_image'] !=
-                                        null
+                                            null
                                         ? Image.network(
-                                      _selectedMusic!['album_image'],
-                                      width: 44,
-                                      height: 44,
-                                      fit: BoxFit.cover,
-                                    )
+                                            _selectedMusic!['album_image'],
+                                            width: 44,
+                                            height: 44,
+                                            fit: BoxFit.cover,
+                                          )
                                         : Container(
-                                      width: 44,
-                                      height: 44,
-                                      color: Colors.grey[800],
-                                      child: const Icon(Icons.music_note,
-                                          color: Colors.white54),
-                                    ),
+                                            width: 44,
+                                            height: 44,
+                                            color: Colors.grey[800],
+                                            child: const Icon(Icons.music_note,
+                                                color: Colors.white54),
+                                          ),
                                   ),
                                   const SizedBox(width: 12),
                                   // Track info
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           _selectedMusic!['name'] ?? 'Şarkı',
@@ -845,7 +880,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             child: SafeArea(
               child: Padding(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -945,7 +980,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                         IconButton(
                           onPressed: () async {
                             final music =
-                            await Navigator.push<Map<String, dynamic>>(
+                                await Navigator.push<Map<String, dynamic>>(
                               context,
                               MaterialPageRoute(
                                   builder: (_) => const MusicPickerScreen()),
@@ -970,16 +1005,16 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                           onPressed: _showLocationPicker,
                           icon: _isGettingLocation
                               ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.orangeAccent,
-                                  strokeWidth: 2))
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.orangeAccent,
+                                      strokeWidth: 2))
                               : const Icon(
-                            Icons.location_on_outlined, // İçi boş pin
-                            color: Colors.orangeAccent,
-                            size: 28,
-                          ),
+                                  Icons.location_on_outlined, // İçi boş pin
+                                  color: Colors.orangeAccent,
+                                  size: 28,
+                                ),
                           tooltip: 'Konum Ekle',
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -1006,7 +1041,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                             child: Container(
                               height: 42,
                               padding:
-                              const EdgeInsets.symmetric(horizontal: 16),
+                                  const EdgeInsets.symmetric(horizontal: 16),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [
@@ -1029,16 +1064,16 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                               child: Center(
                                 child: _isLoading
                                     ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2))
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2))
                                     : Text("Paylaş",
-                                    style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                        color: Colors.white)),
+                                        style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: Colors.white)),
                               ),
                             ),
                           ),

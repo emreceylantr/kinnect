@@ -507,6 +507,146 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     await FeedService().toggleLike(widget.post["id"], isFuel: true);
   }
 
+  // 🔥 BEĞENENLERİ/HARLAYANLARI GÖSTER
+  void _showLikersDialog() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => FutureBuilder<List<Map<String, dynamic>>>(
+        future: _fetchLikers(),
+        builder: (context, snapshot) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Başlık
+                Text(
+                  '❤️ Beğenenler (${likeCount})',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Liste
+                if (snapshot.connectionState == ConnectionState.waiting)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child:
+                          CircularProgressIndicator(color: AppColors.primary),
+                    ),
+                  )
+                else if (snapshot.hasError)
+                  Center(
+                    child: Text(
+                      'Yüklenemedi',
+                      style: GoogleFonts.poppins(color: Colors.white54),
+                    ),
+                  )
+                else if (!snapshot.hasData || snapshot.data!.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text(
+                        'Henüz kimse beğenmedi',
+                        style: GoogleFonts.poppins(color: Colors.white54),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        final liker = snapshot.data![index];
+                        final profile = liker['profiles'] ?? {};
+                        final username = profile['username'] ?? 'Kullanıcı';
+                        final avatarUrl = profile['avatar_url'];
+                        final userId = liker['user_id'];
+
+                        return ListTile(
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProfileScreen(userId: userId),
+                              ),
+                            );
+                          },
+                          leading: CircleAvatar(
+                            radius: 22,
+                            backgroundColor: AppColors.bgCard,
+                            backgroundImage: avatarUrl != null
+                                ? NetworkImage(avatarUrl)
+                                : null,
+                            child: avatarUrl == null
+                                ? const Icon(Icons.person,
+                                    color: Colors.white54, size: 20)
+                                : null,
+                          ),
+                          title: Text(
+                            username,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.white38,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // 📥 BEĞENENLERİ ÇEK
+  Future<List<Map<String, dynamic>>> _fetchLikers() async {
+    try {
+      final response = await client
+          .from('likes')
+          .select('user_id, created_at, profiles(*)')
+          .eq('post_id', widget.post['id'])
+          .order('created_at', ascending: false);
+
+      return List<Map<String, dynamic>>.from(response as List);
+    } catch (e) {
+      debugPrint('Beğenenler yüklenemedi: $e');
+      return [];
+    }
+  }
+
   Future<void> _deleteComment(String commentId) async {
     try {
       await client.from('comments').delete().eq('id', commentId);
@@ -852,6 +992,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     commentController.clear();
 
+    // 🔥 Klavyeyi kapat
+    FocusScope.of(context).unfocus();
+
     // 🆕 Yanıt bilgisini önce kaydet (setState'ten önce)
     final replyToUsername = replyingToComment?['profiles']?['username'];
 
@@ -901,8 +1044,54 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       }
 
       _fetchComments();
+
+      // ✅ Başarılı yorum feedback'i
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Text('Yorum gönderildi! 💬',
+                    style: GoogleFonts.poppins(color: Colors.white)),
+              ],
+            ),
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+            margin: const EdgeInsets.all(16),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
     } catch (e) {
       debugPrint("Yorum hatası: $e");
+      // ❌ Hata durumunda kullanıcıya göster
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text('Yorum gönderilemedi: $e',
+                      style: GoogleFonts.poppins(
+                          color: Colors.white, fontSize: 12)),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+            margin: const EdgeInsets.all(16),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSendingComment = false); // 🔒 Reset flag
     }
@@ -1597,16 +1786,19 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               onTap: _toggleFuel,
                               size: 28,
                             ),
-                            // 2. Beğeni Sayısı
-                            Padding(
-                              padding: EdgeInsets.only(
-                                  left: 2, top: isAlive ? 32.0 : 38.0),
-                              child: Text(
-                                "$fuelCount",
-                                style: GoogleFonts.poppins(
-                                  color: statusColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                            // 2. Beğeni Sayısı (tıklanabilir)
+                            GestureDetector(
+                              onTap: _showLikersDialog,
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                    left: 2, top: isAlive ? 32.0 : 38.0),
+                                child: Text(
+                                  "$fuelCount",
+                                  style: GoogleFonts.poppins(
+                                    color: statusColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
                                 ),
                               ),
                             ),
@@ -1641,33 +1833,35 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           // 🔥 NORMAL MOD
                           children: [
                             // 1. Beğeni
-                            GestureDetector(
-                              onTap: _toggleLike,
-                              child: Container(
-                                color: Colors.transparent,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      isLiked
-                                          ? FontAwesomeIcons.solidHeart
-                                          : FontAwesomeIcons.heart,
-                                      color: isLiked
-                                          ? AppColors.primary
-                                          : Colors.grey.shade400,
-                                      size: 22,
-                                    ),
-                                    if (likeCount > 0) ...[
-                                      const SizedBox(width: 6),
-                                      Text("$likeCount",
-                                          style: GoogleFonts.poppins(
-                                              color: isLiked
-                                                  ? AppColors.primary
-                                                  : Colors.grey.shade400,
-                                              fontWeight: FontWeight.w600)),
-                                    ]
-                                  ],
+                            Row(
+                              children: [
+                                // Kalp ikonu - beğenme toggle
+                                GestureDetector(
+                                  onTap: _toggleLike,
+                                  child: Icon(
+                                    isLiked
+                                        ? FontAwesomeIcons.solidHeart
+                                        : FontAwesomeIcons.heart,
+                                    color: isLiked
+                                        ? AppColors.primary
+                                        : Colors.grey.shade400,
+                                    size: 22,
+                                  ),
                                 ),
-                              ),
+                                // Sayı - beğenenleri göster
+                                if (likeCount > 0) ...[
+                                  const SizedBox(width: 6),
+                                  GestureDetector(
+                                    onTap: _showLikersDialog,
+                                    child: Text("$likeCount",
+                                        style: GoogleFonts.poppins(
+                                            color: isLiked
+                                                ? AppColors.primary
+                                                : Colors.grey.shade400,
+                                            fontWeight: FontWeight.w600)),
+                                  ),
+                                ]
+                              ],
                             ),
                             // 2. Yorum
                             const SizedBox(width: 24),
