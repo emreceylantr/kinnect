@@ -95,6 +95,8 @@ flutter:
     - assets/animations/bell.json
     - assets/animations/logo.json
     - assets/animations/iki.json
+    - assets/animations/prof.json
+    - assets/animations/ppl.json
 
 
 
