@@ -48,12 +48,18 @@ class _MessagesScreenState extends State<MessagesScreen> {
   late Future<List<Map<String, dynamic>>> _chatsFuture;
 
   // Arama Durumu
-  String _searchQuery = "";
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
 
   // Header Animasyonu
   bool _showGreeting = true;
+  String _searchQuery = "";
+  List<Map<String, dynamic>> _lastChats = [];
+
+  // 🔒 GİZLİLİK AYARLARI
+  bool _showLastSeen = true;
+  bool _showReadReceipts = true;
+
   String _firstName = "";
   String? _avatarUrl;
 
@@ -87,6 +93,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
       if (profile != null) {
         name = profile['full_name'] ?? profile['username'] ?? 'Kullanıcı';
         avatar = profile['avatar_url'];
+        // 🔒 Gizlilik ayarlarını yükle
+        _showLastSeen = profile['show_last_seen'] ?? true;
+        _showReadReceipts = profile['show_read_receipts'] ?? true;
       }
     } catch (_) {}
 
@@ -132,6 +141,121 @@ class _MessagesScreenState extends State<MessagesScreen> {
             .showSnackBar(SnackBar(content: Text("Hata: $e")));
       }
     }
+  }
+
+  // 🔒 GİZLİLİK AYARLARINI GÜNCELLE
+  Future<void> _updatePrivacySetting(String field, bool value) async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser!.id;
+      await Supabase.instance.client.from('profiles').update({
+        field: value,
+      }).eq('id', userId);
+
+      // State güncelleme bottom sheet içinde yapılıyor ama burada da güncelleyelim
+      if (mounted) {
+        if (field == 'show_last_seen') _showLastSeen = value;
+        if (field == 'show_read_receipts') _showReadReceipts = value;
+      }
+    } catch (e) {
+      print('Gizlilik ayarı güncelleme hatası: $e');
+    }
+  }
+
+  // ⚙️ GİZLİLİK AYARLARI MENÜSÜ
+  void _showPrivacySettingsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateSheet) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[700],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  const Text(
+                    "Gizlilik Ayarları",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // 👁️ Son Görülme
+                  SwitchListTile(
+                    activeColor: const Color(0xFF00D26A),
+                    activeTrackColor: const Color(0xFF00D26A).withOpacity(0.3),
+                    inactiveThumbColor: Colors.grey,
+                    inactiveTrackColor: Colors.white10,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text("Son Görülme",
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                      _showLastSeen ? "Herkes görebilir" : "Hiç kimse göremez",
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.5), fontSize: 12),
+                    ),
+                    value: _showLastSeen,
+                    onChanged: (val) {
+                      setStateSheet(() => _showLastSeen = val); // Sheet state
+                      setState(() => _showLastSeen = val); // Screen state
+                      _updatePrivacySetting('show_last_seen', val);
+                    },
+                  ),
+
+                  const Divider(color: Colors.white10),
+
+                  // ✅ Okundu Bilgisi
+                  SwitchListTile(
+                    activeColor: const Color(0xFF53BDEB),
+                    activeTrackColor: const Color(0xFF53BDEB).withOpacity(0.3),
+                    inactiveThumbColor: Colors.grey,
+                    inactiveTrackColor: Colors.white10,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text("Okundu Bilgisi",
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                      _showReadReceipts
+                          ? "Okundu bilgisi paylaşılır"
+                          : "Mavi tik gizlenir (karşılıklı)",
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.5), fontSize: 12),
+                    ),
+                    value: _showReadReceipts,
+                    onChanged: (val) {
+                      setStateSheet(() => _showReadReceipts = val);
+                      setState(() => _showReadReceipts = val);
+                      _updatePrivacySetting('show_read_receipts', val);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -216,6 +340,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                   roomId: chat['id'],
                                   otherUser: otherUser,
                                   heroTag: "list_avatar_${otherUser['id']}",
+                                  showReadReceipts:
+                                      _showReadReceipts, // 🔒 Parametre
                                 ),
                               ),
                             ).then((_) => _refreshChats());
@@ -275,7 +401,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   ),
                 )
               : Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back_ios_new,
@@ -284,6 +409,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
+                    const Spacer(),
+                    // 🔍 Arama Butonu (Eski yerine - Sağa)
                     Container(
                       width: 40,
                       height: 40,
@@ -297,6 +424,39 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         icon: const Icon(Icons.search,
                             color: Colors.white70, size: 20),
                         onPressed: () => setState(() => _isSearching = true),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // ⚙️ Gizlilik Ayarları (Daha az dikkat çeken - Menu)
+                    Theme(
+                      data: Theme.of(context).copyWith(
+                        cardColor: const Color(0xFF1A1A1A),
+                        iconTheme: const IconThemeData(color: Colors.white),
+                      ),
+                      child: PopupMenuButton<String>(
+                        icon:
+                            const Icon(Icons.more_vert, color: Colors.white70),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15)),
+                        onSelected: (value) {
+                          if (value == 'privacy') {
+                            _showPrivacySettingsBottomSheet();
+                          }
+                        },
+                        itemBuilder: (BuildContext context) => [
+                          PopupMenuItem<String>(
+                            value: 'privacy',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.privacy_tip_outlined,
+                                    color: Colors.white, size: 20),
+                                const SizedBox(width: 10),
+                                const Text("Gizlilik Ayarları",
+                                    style: TextStyle(color: Colors.white)),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -536,17 +696,69 @@ class _FlippableChatCardState extends State<FlippableChatCard>
                           fontSize: 16),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      'Mesajları görüntülemek için dokun...',
-                      style: TextStyle(
-                        color: hasUnread ? Colors.white : kTextGrey,
-                        fontWeight:
-                            hasUnread ? FontWeight.bold : FontWeight.normal,
-                        fontSize: 13,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    // 👁️ Son görülme bilgisi
+                    Builder(builder: (context) {
+                      final lastSeenRaw = widget.otherUser['last_seen'];
+                      final showLastSeen =
+                          widget.otherUser['show_last_seen'] ?? true;
+
+                      // Kullanıcı gizlilik ayarını kapattıysa gösterme
+                      if (!showLastSeen || lastSeenRaw == null) {
+                        return Text(
+                          'Mesajları görüntülemek için dokun...',
+                          style: TextStyle(
+                            color: hasUnread ? Colors.white : kTextGrey,
+                            fontWeight:
+                                hasUnread ? FontWeight.bold : FontWeight.normal,
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      }
+
+                      final lastSeen = DateTime.parse(lastSeenRaw);
+                      final now = DateTime.now();
+                      final diff = now.difference(lastSeen);
+
+                      String text;
+                      bool isOnline = false;
+                      if (diff.inMinutes < 5) {
+                        text = 'Çevrimiçi';
+                        isOnline = true;
+                      } else if (diff.inMinutes < 60) {
+                        text = '${diff.inMinutes} dk önce';
+                      } else if (diff.inHours < 24) {
+                        text = '${diff.inHours} saat önce';
+                      } else {
+                        text = '${diff.inDays} gün önce';
+                      }
+
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isOnline)
+                            Container(
+                              width: 8,
+                              height: 8,
+                              margin: const EdgeInsets.only(right: 4),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF00D26A),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          Text(
+                            text,
+                            style: TextStyle(
+                              color: isOnline
+                                  ? const Color(0xFF00D26A)
+                                  : kTextGrey,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -668,12 +880,14 @@ class ChatScreen extends StatefulWidget {
   final String roomId;
   final Map<String, dynamic> otherUser;
   final String heroTag;
+  final bool showReadReceipts;
 
   const ChatScreen(
       {super.key,
       required this.roomId,
       required this.otherUser,
-      this.heroTag = 'default_tag'});
+      this.heroTag = 'default_tag',
+      this.showReadReceipts = true});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -693,10 +907,79 @@ class _ChatScreenState extends State<ChatScreen> {
   int _recordingDuration = 0;
   Timer? _recordingTimer;
 
+  // 👁️ Son Görülme Bilgisi
+  String _lastSeenText = '';
+  // 🔒 Benim okundu bilgisi ayarım
+  bool _myShowReadReceipts = true;
+  // 🔒 Karşı tarafın okundu bilgisi ayarı
+  bool _otherUserShowReadReceipts = true;
+
   @override
   void initState() {
     super.initState();
+    _myShowReadReceipts = widget.showReadReceipts; // Initial değer
     _textController.addListener(_updateInputState);
+    _loadLastSeen();
+    _loadMyPrivacySettings(); // 🔒 Benim ayarım
+    _loadOtherUserPrivacy(); // 🔒 Karşı tarafın ayarı
+    _markMessagesAsRead();
+  }
+
+  // 👁️ Son Görülme Bilgisini Yükle
+  Future<void> _loadLastSeen() async {
+    final userId = widget.otherUser['id']?.toString();
+    if (userId == null) return;
+
+    final lastSeen = await _chatService.getLastSeen(userId);
+    if (lastSeen != null && mounted) {
+      final now = DateTime.now();
+      final diff = now.difference(lastSeen);
+
+      String text;
+      if (diff.inMinutes < 1) {
+        text = 'Çevrimiçi';
+      } else if (diff.inMinutes < 60) {
+        text = '${diff.inMinutes} dk önce';
+      } else if (diff.inHours < 24) {
+        text = '${diff.inHours} saat önce';
+      } else {
+        text = '${diff.inDays} gün önce';
+      }
+
+      setState(() => _lastSeenText = text);
+    }
+  }
+
+  // 🔒 Benim gizlilik ayarımı çek
+  Future<void> _loadMyPrivacySettings() async {
+    try {
+      final myId = Supabase.instance.client.auth.currentUser?.id;
+      if (myId == null) return;
+
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('show_read_receipts')
+          .eq('id', myId)
+          .maybeSingle();
+
+      if (response != null && mounted) {
+        setState(() {
+          _myShowReadReceipts = response['show_read_receipts'] ?? true;
+        });
+      }
+    } catch (_) {}
+  }
+
+  // 🔒 Karşı tarafın ayarını çek
+  Future<void> _loadOtherUserPrivacy() async {
+    final show =
+        await _chatService.getReadReceiptSetting(widget.otherUser['id']);
+    if (mounted) setState(() => _otherUserShowReadReceipts = show);
+  }
+
+  // ✅ Sohbete girince tüm mesajları okundu işaretle
+  Future<void> _markMessagesAsRead() async {
+    await _chatService.markAllMessagesAsRead(widget.roomId);
   }
 
   @override
@@ -990,12 +1273,43 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
                 child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(targetName,
-                        style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                        overflow: TextOverflow.ellipsis))),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(targetName,
+                            style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                            overflow: TextOverflow.ellipsis),
+                        if (_lastSeenText.isNotEmpty)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_lastSeenText == 'Çevrimiçi')
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  margin: const EdgeInsets.only(right: 4),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF00D26A),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              Text(
+                                _lastSeenText,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _lastSeenText == 'Çevrimiçi'
+                                      ? const Color(0xFF00D26A)
+                                      : Colors.white54,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ))),
             _buildHeaderButton(
                 Icons.videocam_outlined, () => _startDirectCall(true),
                 iconSize: 20),
@@ -1272,6 +1586,9 @@ class _ChatScreenState extends State<ChatScreen> {
         isImage: isImg,
         otherUserAvatar: widget.otherUser['avatar_url'],
         showAvatar: showAvatar,
+        isViewed: isViewed, // 👁️ Okundu bilgisi
+        showReadReceipts: _myShowReadReceipts, // 🔒 Ayarı ilet
+        otherUserShowReadReceipts: _otherUserShowReadReceipts, // 🔒 Karşı taraf
       ),
     );
   }
@@ -1314,6 +1631,7 @@ class ModernMessageBubble extends StatelessWidget {
   final bool isImage;
   final String? otherUserAvatar;
   final bool showAvatar;
+  final bool isViewed; // 👁️ Okundu bilgisi
 
   const ModernMessageBubble(
       {super.key,
@@ -1323,7 +1641,13 @@ class ModernMessageBubble extends StatelessWidget {
       this.contentWidget,
       this.isImage = false,
       this.otherUserAvatar,
-      this.showAvatar = true});
+      this.showAvatar = true,
+      this.isViewed = false,
+      this.showReadReceipts = true, // Default true
+      this.otherUserShowReadReceipts = true}); // YENİ
+
+  final bool showReadReceipts;
+  final bool otherUserShowReadReceipts;
 
   @override
   Widget build(BuildContext context) {
@@ -1433,11 +1757,31 @@ class ModernMessageBubble extends StatelessWidget {
           const SizedBox(width: 8),
           Padding(
               padding: const EdgeInsets.only(bottom: 2),
-              child: Text(time,
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500)))
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(time,
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500)),
+                  // 👁️ Okundu işareti (sadece benim mesajlarımda)
+                  // 👁️ Okundu işareti (sadece benim mesajlarımda ve İKİ TARAFTA da açıksa)
+                  if (isMe &&
+                      showReadReceipts &&
+                      otherUserShowReadReceipts) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.done_all,
+                      size: 14,
+                      color: isViewed
+                          ? const Color(0xFF53BDEB) // Mavi tik (okundu)
+                          : Colors.white
+                              .withOpacity(0.5), // Gri tik (gönderildi)
+                    ),
+                  ],
+                ],
+              ))
         ]);
   }
 }

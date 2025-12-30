@@ -226,4 +226,77 @@ class ChatService {
       return [];
     }
   }
+
+  // 👁️ SON GÖRÜLME GÜNCELLE
+  Future<void> updateLastSeen() async {
+    try {
+      await client.from('profiles').update({
+        'last_seen': DateTime.now().toIso8601String(),
+      }).eq('id', _myId);
+    } catch (e) {
+      print('Last seen güncelleme hatası: $e');
+    }
+  }
+
+  // 👁️ SON GÖRÜLME BİLGİSİNİ ÇEK (Gizlilik kontrolü dahil)
+  Future<DateTime?> getLastSeen(String userId) async {
+    try {
+      final response = await client
+          .from('profiles')
+          .select('last_seen, show_last_seen')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (response != null) {
+        // 🔒 Gizlilik kontrolü - kullanıcı gizlediyse null döndür
+        final showLastSeen = response['show_last_seen'] ?? true;
+        if (!showLastSeen) return null;
+
+        if (response['last_seen'] != null) {
+          return DateTime.parse(response['last_seen']);
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Last seen çekme hatası: $e');
+      return null;
+    }
+  }
+
+  // 🔒 Karşı kullanıcının okundu bilgisi ayarını çek
+  Future<bool> getReadReceiptSetting(String userId) async {
+    try {
+      final response = await client
+          .from('profiles')
+          .select('show_read_receipts')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (response != null) {
+        return response['show_read_receipts'] ?? true;
+      }
+      return true; // Varsayılan açık
+    } catch (e) {
+      print('Privacy setting çekme hatası: $e');
+      return true;
+    }
+  }
+
+  // ✅ BİR SOHBETTEKİ TÜM OKUNMAMIŞ MESAJLARI OKUNDU OLARAK İŞARETLE
+  Future<void> markAllMessagesAsRead(String roomId) async {
+    try {
+      // Sadece bana gelen ve okunmamış mesajları güncelle
+      final result = await client.from('messages').update({
+        'is_viewed': true,
+        'viewed_at': DateTime.now().toIso8601String(),
+      }).match({
+        'room_id': roomId,
+        'receiver_id': _myId,
+        'is_viewed': false,
+      }).select();
+      print('📩 Okundu işaretlenen mesaj sayısı: ${result.length}');
+    } catch (e) {
+      print('Tüm mesajları okundu işaretleme hatası: $e');
+    }
+  }
 }

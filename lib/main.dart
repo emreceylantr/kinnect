@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'services/notification_service.dart';
 import 'services/spotify_service.dart';
+import 'services/chat_service.dart'; // 👁️ Son görülme için
 
 import 'screens/auth/welcome_screen.dart';
 import 'screens/main/home_screen.dart';
@@ -314,6 +315,9 @@ class _AuthGateState extends State<AuthGate> {
               debugPrint(
                   '✅ NotificationService HomeScreen geçişinde başlatıldı');
             }
+            // 👁️ Son görülme güncelle
+            await ChatService().updateLastSeen();
+            debugPrint('✅ Last seen güncelendi');
           } catch (e) {
             debugPrint('⚠️ NotificationService başlatma hatası: $e');
           }
