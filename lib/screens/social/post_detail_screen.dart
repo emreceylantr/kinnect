@@ -79,6 +79,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   // ✏️ Post düzenleme state
   String? _editedPostContent;
 
+  // 👤 Kullanıcı Profili (Optimistic UI için)
+  Map<String, dynamic>? _currentUserProfile;
+
   // ✏️ Yorum düzenleme state
   final TextEditingController _editCommentController = TextEditingController();
 
@@ -146,6 +149,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         }
       });
     }
+
+    _loadCurrentUserProfile();
 
     commentController.addListener(() {
       setState(() {
@@ -952,6 +957,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
+  // 👤 Yorum kartında görünmesi için profilimi çek
+  Future<void> _loadCurrentUserProfile() async {
+    try {
+      final res =
+          await client.from('profiles').select().eq('id', myId).maybeSingle();
+      if (mounted && res != null) {
+        setState(() => _currentUserProfile = res);
+      }
+    } catch (_) {}
+  }
+
   Future<void> _sendTextComment() async {
     final msg = commentController.text.trim();
     if (msg.isEmpty) return;
@@ -990,33 +1006,48 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       return; // Yorumu gönderme!
     }
 
-    commentController.clear();
-
-    // 🔥 Klavyeyi kapat
-    FocusScope.of(context).unfocus();
-
-    // 🆕 Yanıt bilgisini önce kaydet (setState'ten önce)
+    // 🚀 OPTIMISTIC UI: Anında ekranda göster
     final replyToUsername = replyingToComment?['profiles']?['username'];
+    final finalMsg = replyToUsername != null ? "@$replyToUsername $msg" : msg;
+
+    // Geçici yorum objesi
+    final optimisticComment = {
+      'id': 'temp-${DateTime.now().millisecondsSinceEpoch}',
+      'content': finalMsg,
+      'created_at': DateTime.now().toIso8601String(),
+      'user_id': myId,
+      'profiles': _currentUserProfile ??
+          {'username': '...', 'avatar_url': null, 'full_name': '...'},
+    };
 
     setState(() {
+      comments.add(optimisticComment); // Listeye ekle
+      commentCount++;
+      commentController.clear(); // Inputu temizle
       isComposing = false;
-      replyingToComment = null; // 🆕 Yanıt state'ini temizle
+      replyingToComment = null;
+      _isSendingComment = false; // Kilidi aç (kullanıcı beklememeli)
     });
 
-    // 🆕 Yanıt varsa @mention ekle
-    final String finalMsg =
-        replyToUsername != null ? "@$replyToUsername $msg" : msg;
+    FocusScope.of(context).unfocus();
 
+    // ⏳ Arka planda sunucuya gönder
+    _submitCommentInBackground(finalMsg);
+  }
+
+  // ☁️ Arka planda yorumu kaydet
+  Future<void> _submitCommentInBackground(String content) async {
     try {
       await client.from("comments").insert({
         "post_id": widget.post["id"],
         "user_id": myId,
-        "content": finalMsg,
+        "content": content,
         "audio_url": null,
       });
 
       if (widget.post['user_id'] != myId) {
         try {
+          // Bildirim kaydı
           await client.from('notifications').insert({
             'user_id': widget.post['user_id'],
             'actor_id': myId,
@@ -1025,14 +1056,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             'is_read': false,
           });
 
-          // 🔔 PUSH BİLDİRİM GÖNDER
-          final myProfile = await client
-              .from('profiles')
-              .select('username')
-              .eq('id', myId)
-              .single();
-          final username = myProfile['username'] ?? 'Birisi';
-
+          // Push bildirimi
+          final username = _currentUserProfile?['username'] ?? 'Birisi';
           await client.functions.invoke('send-push-notification', body: {
             'target_user_id': widget.post['user_id'],
             'title': '💬 Yeni Yorum',
@@ -1043,57 +1068,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         } catch (_) {}
       }
 
+      // Gerçek veriyi çekip listeyi güncelle (ID'ler düzelir)
       _fetchComments();
-
-      // ✅ Başarılı yorum feedback'i
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 20),
-                const SizedBox(width: 10),
-                Text('Yorum gönderildi! 💬',
-                    style: GoogleFonts.poppins(color: Colors.white)),
-              ],
-            ),
-            backgroundColor: AppColors.primary,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-            margin: const EdgeInsets.all(16),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
     } catch (e) {
-      debugPrint("Yorum hatası: $e");
-      // ❌ Hata durumunda kullanıcıya göster
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text('Yorum gönderilemedi: $e',
-                      style: GoogleFonts.poppins(
-                          color: Colors.white, fontSize: 12)),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-            margin: const EdgeInsets.all(16),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
+            const SnackBar(content: Text("Yorum gönderilemedi ❌")));
+        _fetchComments(); // Listeyi geri al
       }
-    } finally {
-      if (mounted) setState(() => _isSendingComment = false); // 🔒 Reset flag
     }
   }
 
