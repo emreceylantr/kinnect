@@ -11,6 +11,7 @@ import '../../theme/theme_manager.dart'; // 🌓 Tema Yöneticisi
 // 🔥 YENİ EKLENEN IMPORTLAR
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
+import '../content/photo_editor_screen.dart'; // 🎨 Fotoğraf Editörü
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> currentProfile;
@@ -85,17 +86,28 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     super.dispose();
   }
 
-  // FOTOĞRAF SEÇME - 🔥 GÜNCELLENDİ: Video varsa siler
+  // FOTOĞRAF SEÇME - 🔥 GÜNCELLENDİ: Fotoğraf editörüne yönlendirme eklendi
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image =
         await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
 
-    if (image != null) {
-      setState(() {
-        _imageFile = File(image.path);
-        _videoFile = null; // 🔥 ÖNEMLİ: Yeni foto seçilince videoyu iptal et
-      });
+    if (image != null && mounted) {
+      // 🎨 Fotoğraf editörüne yönlendir
+      final File? editedImage = await Navigator.push<File>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PhotoEditorScreen(imageFile: File(image.path)),
+        ),
+      );
+
+      // Düzenlenmiş fotoğrafı kullan
+      if (editedImage != null && mounted) {
+        setState(() {
+          _imageFile = editedImage;
+          _videoFile = null; // 🔥 ÖNEMLİ: Yeni foto seçilince videoyu iptal et
+        });
+      }
     }
   }
 
