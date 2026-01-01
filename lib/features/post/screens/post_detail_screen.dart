@@ -78,6 +78,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   // 🎧 Müzik oynatıcı state
   final AudioPlayer _musicPlayer = AudioPlayer();
   bool _isMusicPlaying = false;
+  bool _isMusicMuted = false; // 🔊 Başlangıçta sesli
 
   // ✏️ Post düzenleme state
   String? _editedPostContent;
@@ -112,14 +113,18 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     _fetchComments();
     _fetchEmojiReactions(); // 📸 Emoji tepkileri
 
-    // 🎧 MÜZİK OTOMATİK OYNATMA
+    // 🎧 MÜZİK OTOMATİK OYNATMA (SESLİ BAŞLA)
     final previewUrl = widget.post['spotify_preview_url'];
     if (previewUrl != null) {
-      // Sayfa açıldıktan 0.5sn sonra başlat
+      // Sayfa açıldıktan 0.5sn sonra başlat - SESLİ
       Future.delayed(const Duration(milliseconds: 500), () async {
         if (mounted) {
+          await _musicPlayer.setVolume(1.0); // 🔊 Sesli başla
           await _musicPlayer.play(UrlSource(previewUrl));
-          setState(() => _isMusicPlaying = true);
+          setState(() {
+            _isMusicPlaying = true;
+            _isMusicMuted = false;
+          });
 
           // 30 saniye sonra dur
           Future.delayed(const Duration(seconds: 30), () {
@@ -562,9 +567,40 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     if (_isSendingComment) return;
     setState(() => _isSendingComment = true);
 
+    final replyToUsername = replyingToComment?['profiles']?['username'];
+    final finalMsg = replyToUsername != null ? "@$replyToUsername $msg" : msg;
+    final tempId = 'temp-${DateTime.now().millisecondsSinceEpoch}';
+
+    // 🚀 ÖNCE Optimistic UI update - ANINDA göster
+    final optimisticComment = {
+      'id': tempId,
+      'content': finalMsg,
+      'created_at': DateTime.now().toIso8601String(),
+      'user_id': myId,
+      'profiles': _currentUserProfile ??
+          {'username': '...', 'avatar_url': null, 'full_name': '...'},
+    };
+
+    setState(() {
+      comments.add(optimisticComment);
+      commentCount++;
+      commentController.clear();
+      isComposing = false;
+      replyingToComment = null;
+      _isSendingComment = false;
+    });
+
+    FocusScope.of(context).unfocus();
+
+    // 🔒 Arka planda toxicity check
     final isToxic = await _toxicityService.checkToxicity(msg);
     if (isToxic) {
+      // Toxic ise yorumu kaldır
       if (mounted) {
+        setState(() {
+          comments.removeWhere((c) => c['id'] == tempId);
+          commentCount--;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -585,36 +621,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           ),
         );
       }
-      setState(() => _isSendingComment = false);
       return;
     }
 
-    final replyToUsername = replyingToComment?['profiles']?['username'];
-    final finalMsg = replyToUsername != null ? "@$replyToUsername $msg" : msg;
-
-    // Optimistic UI update
-    final optimisticComment = {
-      'id': 'temp-${DateTime.now().millisecondsSinceEpoch}',
-      'content': finalMsg,
-      'created_at': DateTime.now().toIso8601String(),
-      'user_id': myId,
-      'profiles': _currentUserProfile ??
-          {'username': '...', 'avatar_url': null, 'full_name': '...'},
-    };
-
-    if (!mounted) return;
-
-    setState(() {
-      comments.add(optimisticComment);
-      commentCount++;
-      commentController.clear();
-      isComposing = false;
-      replyingToComment = null;
-      _isSendingComment = false;
-    });
-
-    FocusScope.of(context).unfocus();
-
+    // ✅ Temiz ise veritabanına gönder
     try {
       await _feedService.addCommentWithNotifications(
         postId: widget.post['id'],
@@ -622,12 +632,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         content: finalMsg,
         currentUserProfile: _currentUserProfile,
       );
-      _fetchComments();
+      // Gerçek veriyi çek ama sessiz ol
+      if (mounted) _fetchComments();
     } catch (e) {
       if (mounted) {
+        // Hata olursa optimistic yorumu kaldır
+        setState(() {
+          comments.removeWhere((c) => c['id'] == tempId);
+          commentCount--;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Yorum gönderilemedi ❌")));
-        _fetchComments();
       }
     }
   }
@@ -775,98 +790,132 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   // 🧱 UI
   // *********************************************************
 
+  // 🔊 Müzik sesini aç/kapat
+  void _toggleMusicMute() {
+    if (_isMusicPlaying) {
+      setState(() {
+        _isMusicMuted = !_isMusicMuted;
+        _musicPlayer.setVolume(_isMusicMuted ? 0.0 : 1.0);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF000000),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        leading: BackButton(color: Colors.white),
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          widget.isExploreMode ? "Ateşin Başı 🔥" : "Gönderi",
-          style: GoogleFonts.poppins(
-              color: Colors.white, fontWeight: FontWeight.bold),
+    return GestureDetector(
+      // 👆 Sağa swipe ile geri git
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity != null && details.primaryVelocity! > 300) {
+          Navigator.of(context).pop();
+        }
+      },
+      // 👆 Ekrana tap ile müzik aç/kapat
+      onTap: _toggleMusicMute,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF000000),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          leading: BackButton(color: Colors.white),
+          elevation: 0,
+          centerTitle: true,
+          title: Text(
+            widget.isExploreMode ? "Ateşin Başı 🔥" : "Gönderi",
+            style: GoogleFonts.poppins(
+                color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          // 🔊 Müzik muted göstergesi
+          actions: [
+            if (_isMusicPlaying)
+              IconButton(
+                icon: Icon(
+                  _isMusicMuted ? Icons.volume_off : Icons.volume_up,
+                  color: Colors.white70,
+                ),
+                onPressed: _toggleMusicMute,
+              ),
+          ],
         ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  PostDetailCard(
-                    post: widget.post,
-                    myId: myId,
-                    isAlive: isAlive,
-                    isExploreMode: widget.isExploreMode,
-                    isLiked: isLiked,
-                    isFueled: isFueled,
-                    likeCount: likeCount,
-                    fuelCount: fuelCount,
-                    commentCount: commentCount,
-                    isEdited: widget.post['is_edited'] == true ||
-                        _editedPostContent != null,
-                    emojiReactions: emojiReactions,
-                    onToggleLike: _toggleLike,
-                    onToggleFuel: _toggleFuel,
-                    onShowLikers: () => LikersSheet.show(
-                      context,
-                      likersFuture: _feedService.fetchLikers(widget.post['id']),
-                      likeCount: likeCount,
-                    ),
-                    onShowReport: () => PostReportDialog.show(
-                      context,
-                      onReportSubmit: _submitReport,
-                    ),
-                    onShowEdit: _showEditPostDialog,
-                    onDeletePost: _confirmDeletePost,
-                    onShowAllReactions: () => ReactionsSheet.show(
-                      context,
-                      emojiReactions: emojiReactions,
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    PostDetailCard(
+                      post: widget.post,
                       myId: myId,
-                      onDeleteReaction: _confirmDeleteReaction,
+                      isAlive: isAlive,
+                      isExploreMode: widget.isExploreMode,
+                      isLiked: isLiked,
+                      isFueled: isFueled,
+                      likeCount: likeCount,
+                      fuelCount: fuelCount,
+                      commentCount: commentCount,
+                      isEdited: widget.post['is_edited'] == true ||
+                          _editedPostContent != null,
+                      emojiReactions: emojiReactions,
+                      onToggleLike: _toggleLike,
+                      onToggleFuel: _toggleFuel,
+                      onShowLikers: () => LikersSheet.show(
+                        context,
+                        likersFuture:
+                            _feedService.fetchLikers(widget.post['id']),
+                        likeCount: likeCount,
+                      ),
+                      onShowReport: () => PostReportDialog.show(
+                        context,
+                        onReportSubmit: _submitReport,
+                      ),
+                      onShowEdit: _showEditPostDialog,
+                      onDeletePost: _confirmDeletePost,
+                      onShowAllReactions: () => ReactionsSheet.show(
+                        context,
+                        emojiReactions: emojiReactions,
+                        myId: myId,
+                        onDeleteReaction: _confirmDeleteReaction,
+                      ),
+                      onShowPhotoEmojiPicker: showPhotoEmojiPicker,
+                      onSendEmojiReaction: (path, type) =>
+                          _sendEmojiReaction(path, type),
                     ),
-                    onShowPhotoEmojiPicker: showPhotoEmojiPicker,
-                    onSendEmojiReaction: (path, type) =>
-                        _sendEmojiReaction(path, type),
-                  ),
-                  PostCommentsList(
-                    loadingComments: loadingComments,
-                    comments: comments,
-                    myId: myId,
-                    postOwnerId: widget.post['user_id'],
-                    isExploreMode: widget.isExploreMode,
-                    playingCommentId: playingCommentId,
-                    onEditComment: _showEditCommentDialog,
-                    onDeleteComment: _confirmDelete,
-                    onPlayPauseAudio: _playPause,
-                    onReplyToComment: (comment) {
-                      setState(() {
-                        replyingToComment = comment;
-                      });
-                      FocusScope.of(context).requestFocus(FocusNode());
-                    },
-                  ),
-                ],
+                    PostCommentsList(
+                      loadingComments: loadingComments,
+                      comments: comments,
+                      myId: myId,
+                      postOwnerId: widget.post['user_id'],
+                      isExploreMode: widget.isExploreMode,
+                      playingCommentId: playingCommentId,
+                      onEditComment: _showEditCommentDialog,
+                      onDeleteComment: _confirmDelete,
+                      onPlayPauseAudio: _playPause,
+                      onReplyToComment: (comment) {
+                        setState(() {
+                          replyingToComment = comment;
+                        });
+                        FocusScope.of(context).requestFocus(FocusNode());
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          CommentInputArea(
-            controller: commentController,
-            isComposing: isComposing,
-            isRecording: isRecording,
-            recordDuration: recordDuration,
-            replyingToComment: replyingToComment,
-            onSendTextComment: _sendTextComment,
-            onStartRecording: _startRecording,
-            onStopRecording: _stopRecording,
-            onCancelReply: () => setState(() => replyingToComment = null),
-            onShowPhotoEmojiPicker: showPhotoEmojiPicker,
-            onSendEmojiReaction: (path, type) => _sendEmojiReaction(path, type),
-          ),
-        ],
+            CommentInputArea(
+              controller: commentController,
+              isComposing: isComposing,
+              isRecording: isRecording,
+              recordDuration: recordDuration,
+              replyingToComment: replyingToComment,
+              isSending: _isSendingComment,
+              onSendTextComment: _sendTextComment,
+              onStartRecording: _startRecording,
+              onStopRecording: _stopRecording,
+              onCancelReply: () => setState(() => replyingToComment = null),
+              onShowPhotoEmojiPicker: showPhotoEmojiPicker,
+              onSendEmojiReaction: (path, type) =>
+                  _sendEmojiReaction(path, type),
+            ),
+          ],
+        ),
       ),
     );
   }
