@@ -78,12 +78,18 @@
 		<string>We need your location to add location tags to your posts even when the app is in the background.</string>
 		<key>NSLocationAlwaysUsageDescription</key>
 		<string>We need your location to add location tags to your posts.</string>
+		<key>NSBluetoothAlwaysUsageDescription</key>
+		<string>Kinnect uses Bluetooth to detect nearby friends and show you who's around (Spark Mode).</string>
+		<key>NSBluetoothPeripheralUsageDescription</key>
+		<string>Kinnect broadcasts your presence to nearby friends when Spark Mode is enabled.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>remote-notification</string>
 			<string>fetch</string>
+			<string>bluetooth-central</string>
+			<string>bluetooth-peripheral</string>
 		</array>
 		<key>UILaunchStoryboardName</key>
 		<string>LaunchScreen</string>
