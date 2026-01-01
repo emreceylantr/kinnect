@@ -5,15 +5,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-import 'services/notification_service.dart';
-import 'services/spotify_service.dart';
-import 'services/chat_service.dart'; // 👁️ Son görülme için
+import 'data/services/notification_service.dart';
+import 'data/services/spotify_service.dart';
+import 'data/services/chat_service.dart'; // 👁️ Son görülme için
 
-import 'screens/auth/welcome_screen.dart';
-import 'screens/main/home_screen.dart';
-import 'screens/auth/change_password_screen.dart';
-import 'screens/auth/create_profile_screen.dart';
-import 'theme/theme_manager.dart'; // 🌓 Tema Yöneticisi
+import 'features/auth/screens/welcome_screen.dart';
+import 'features/home/screens/home_screen.dart';
+import 'features/auth/screens/change_password_screen.dart';
+import 'features/auth/screens/create_profile_screen.dart';
+import 'core/theme/theme_manager.dart'; // 🌓 Tema Yöneticisi
 
 // 🎨 Splash Screen Temaları
 const Color kSplashBg = Color(0xFF06060A);
