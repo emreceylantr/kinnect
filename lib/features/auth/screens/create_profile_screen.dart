@@ -1,19 +1,18 @@
 // Kinnect - Profil oluşturma ekranı
-
-// lib/screens/auth/create_profile_screen.dart
-
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // SystemChrome için
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:math' as math;
+import 'package:lottie/lottie.dart';
 
 import '../../../data/services/profile_service.dart';
 import '../../../data/repositories/profile_repository.dart';
 import '../../home/screens/home_screen.dart';
+import 'login_screen.dart';
 
 class CreateProfileScreen extends StatefulWidget {
   const CreateProfileScreen({super.key});
@@ -22,8 +21,7 @@ class CreateProfileScreen extends StatefulWidget {
   State<CreateProfileScreen> createState() => _CreateProfileScreenState();
 }
 
-class _CreateProfileScreenState extends State<CreateProfileScreen>
-    with SingleTickerProviderStateMixin {
+class _CreateProfileScreenState extends State<CreateProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _usernameController = TextEditingController();
@@ -32,29 +30,34 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
 
   File? _imageFile;
   bool _isLoading = false;
-  late AnimationController _rotationController;
 
-  // 🔹 BURAYA EKLİYORUZ
   late final ProfileService _profileService;
+
+  // 3'lü Renk Paleti
+  final List<Color> _liveGradientColors = const [
+    Color(0xFF6C63FF),
+    Color(0xFF448AFF),
+    Color(0xFF69F0AE),
+  ];
 
   @override
   void initState() {
     super.initState();
-
-    // ✅ DOĞRU BAĞLANTI: önce repository, sonra service
     _profileService = ProfileService(
       ProfileRepository(Supabase.instance.client),
     );
 
-    _rotationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 10),
-    )..repeat();
+    // ANDROID STATUS BAR & NAV BAR AYARI (Şeffaflık için)
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ));
   }
 
   @override
   void dispose() {
-    _rotationController.dispose();
     _usernameController.dispose();
     _fullNameController.dispose();
     _bioController.dispose();
@@ -68,7 +71,6 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
   }
 
   Future<void> _saveProfile() async {
-    // 1. Form validation
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -88,14 +90,6 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text("Kimlik oluşturuldu. Ana sayfaya yönlendiriliyorsun..."),
-            backgroundColor: Color(0xFF6C63FF),
-          ),
-        );
-
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const HomeScreen()),
           (route) => false,
@@ -115,50 +109,59 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
     }
   }
 
-  Widget _buildCyberTextField({
+  // 🔹 Navigasyon: Login Ekranına Dönüş
+  void _navigateToLogin() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
+  }
+
+  Widget _buildOvalTextField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
     int maxLines = 1,
     String? Function(String?)? validator,
   }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          child: TextFormField(
-            controller: controller,
-            maxLines: maxLines,
-            style: GoogleFonts.poppins(color: Colors.white),
-            validator: validator,
-            decoration: InputDecoration(
-              labelText: label,
-              labelStyle:
-                  GoogleFonts.poppins(color: Colors.white54, fontSize: 14),
-              alignLabelWithHint: true,
-              prefixIcon: Padding(
-                padding: EdgeInsets.only(
-                  left: 20,
-                  right: 15,
-                  top: 15,
-                  bottom: maxLines > 1 ? 50 : 15,
-                ),
-                child: FaIcon(
-                  icon,
-                  color: const Color(0xFF6C63FF),
-                  size: 18,
-                ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      height: maxLines == 1 ? 65 : null,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(35),
+        border: Border.all(color: Colors.white.withOpacity(0.15)),
+      ),
+      child: Center(
+        child: TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 15),
+          validator: validator,
+          textAlignVertical: TextAlignVertical.center,
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle:
+                GoogleFonts.poppins(color: Colors.white60, fontSize: 14),
+            floatingLabelBehavior: FloatingLabelBehavior.auto,
+            alignLabelWithHint: true,
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 20, right: 15),
+              child: Icon(
+                icon,
+                color: const Color(0xFF6C63FF),
+                size: 20,
               ),
-              border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
             ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 55,
+              minHeight: 55,
+            ),
+            border: InputBorder.none,
+
+            // 🔹 Padding Ayarları
+            contentPadding: maxLines == 1
+                ? const EdgeInsets.only(bottom: 18)
+                : const EdgeInsets.fromLTRB(20, 25, 20, 10),
           ),
         ),
       ),
@@ -167,237 +170,264 @@ class _CreateProfileScreenState extends State<CreateProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xFF050505),
       body: Stack(
         children: [
+          // 1. ARKA PLAN EFEKTLERİ
           Positioned(
-            top: -100,
-            right: -100,
+            top: -50,
+            right: -50,
             child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+              imageFilter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
               child: Container(
-                width: 300,
-                height: 300,
+                width: 200,
+                height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF6C63FF).withValues(alpha: 0.15),
+                  color: const Color(0xFF6C63FF).withOpacity(0.2),
                 ),
               ),
             ),
           ),
+
+          // 2. PPL ANIMASYONU (EN ALTTA, ARKADA)
           Positioned(
-            bottom: -50,
-            left: -50,
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-              child: Container(
-                width: 250,
-                height: 250,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.blueAccent.withValues(alpha: 0.1),
-                ),
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Opacity(
+              opacity: 0.6,
+              child: Lottie.asset(
+                'assets/animations/ppl.json',
+                fit: BoxFit.fitWidth,
+                height: 200,
+                errorBuilder: (context, error, stackTrace) => const SizedBox(),
               ),
             ),
           ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-              child: Form(
-                key: _formKey,
-                child: Column(
+
+          // 3. ÖN PLAN İÇERİĞİ
+          Column(
+            children: [
+              // Üst Status Bar Boşluğu
+              SizedBox(height: topPadding + 10),
+
+              // HEADER
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Row(
                   children: [
-                    const SizedBox(height: 20),
-                    Text(
-                      "KİMLİK OLUŞTUR",
-                      style: GoogleFonts.orbitron(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 2,
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          color: Colors.white, size: 22),
+                      onPressed: _navigateToLogin,
                     ),
-                    const SizedBox(height: 5),
-                    Text(
-                      "Dijital varlığını tanımla.",
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 50),
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: Center(
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            AnimatedBuilder(
-                              animation: _rotationController,
-                              builder: (_, child) => Transform.rotate(
-                                angle: _rotationController.value * 2 * math.pi,
-                                child: child,
-                              ),
-                              child: Container(
-                                width: 160,
-                                height: 160,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xFF6C63FF)
-                                        .withValues(alpha: 0.5),
-                                    width: 2,
-                                  ),
-                                  gradient: const SweepGradient(
-                                    colors: [
-                                      Colors.transparent,
-                                      Color(0xFF6C63FF),
-                                      Colors.transparent,
-                                    ],
-                                    stops: [0.0, 0.5, 1.0],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: 140,
-                              height: 140,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: const Color(0xFF101010),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF6C63FF)
-                                        .withValues(alpha: 0.3),
-                                    blurRadius: 30,
-                                    spreadRadius: 5,
-                                  )
-                                ],
-                                image: _imageFile != null
-                                    ? DecorationImage(
-                                        image: FileImage(_imageFile!),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : null,
-                              ),
-                              child: _imageFile == null
-                                  ? const Icon(
-                                      FontAwesomeIcons.userAstronaut,
-                                      color: Colors.white24,
-                                      size: 50,
-                                    )
-                                  : null,
-                            ),
-                            Positioned(
-                              bottom: 5,
-                              right: 5,
-                              child: Container(
-                                width: 45,
-                                height: 45,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF6C63FF),
-                                      Color(0xFF4834D4),
-                                    ],
-                                  ),
-                                  shape: BoxShape.circle,
-                                  border:
-                                      Border.all(color: Colors.black, width: 3),
-                                ),
-                                child: const Center(
-                                  child: FaIcon(
-                                    FontAwesomeIcons.camera,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 50),
-                    _buildCyberTextField(
-                      controller: _usernameController,
-                      label: "Kullanıcı Adı",
-                      icon: FontAwesomeIcons.at,
-                      validator: (value) => (value == null || value.isEmpty)
-                          ? 'Kullanıcı adı gerekli'
-                          : null,
-                    ),
-                    const SizedBox(height: 20),
-                    _buildCyberTextField(
-                      controller: _fullNameController,
-                      label: "Görünen İsim",
-                      icon: FontAwesomeIcons.idCard,
-                      validator: (value) => (value == null || value.isEmpty)
-                          ? 'İsim gerekli'
-                          : null,
-                    ),
-                    const SizedBox(height: 20),
-                    _buildCyberTextField(
-                      controller: _bioController,
-                      label: "Biyografi (Yapay Zeka Analizi İçin)",
-                      icon: FontAwesomeIcons.fingerprint,
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 50),
-                    Container(
-                      width: double.infinity,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF6C63FF), Color(0xFF4834D4)],
-                        ),
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                const Color(0xFF6C63FF).withValues(alpha: 0.5),
-                            blurRadius: 25,
-                            offset: const Offset(0, 5),
-                          )
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _saveProfile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => LinearGradient(
+                          colors: _liveGradientColors,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ).createShader(bounds),
+                        child: Text(
+                          "PROFİL OLUŞTUR",
+                          style: GoogleFonts.syne(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 1.0,
                           ),
                         ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "Sistemi Başlat",
-                                    style: GoogleFonts.orbitron(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  const Icon(Icons.arrow_forward,
-                                      color: Colors.white),
-                                ],
-                              ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    Container(
+                      margin: const EdgeInsets.only(right: 5),
+                      width: 70,
+                      height: 70,
+                      child: Lottie.asset(
+                        'assets/animations/prof.json',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.star, color: Colors.white24);
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
+
+              // ORTA ALAN (FORM - Scrollable)
+              Expanded(
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        // PROFİL FOTOĞRAFI ALANI
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: Center(
+                            child: Stack(
+                              children: [
+                                Container(
+                                  width: 130,
+                                  height: 130,
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: _imageFile == null
+                                        ? LinearGradient(
+                                            colors: _liveGradientColors,
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          )
+                                        : null,
+                                    color: _imageFile != null
+                                        ? Colors.transparent
+                                        : null,
+                                  ),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: const Color(0xFF1A1A1A),
+                                      border: _imageFile != null
+                                          ? Border.all(
+                                              color: Colors.white24, width: 1)
+                                          : null,
+                                      image: _imageFile != null
+                                          ? DecorationImage(
+                                              image: FileImage(_imageFile!),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
+                                    child: _imageFile == null
+                                        ? const Icon(
+                                            Icons.person_outline_rounded,
+                                            color: Color(0xFF6C63FF),
+                                            size: 50,
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF2C2C2C),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: const Color(0xFF6C63FF),
+                                          width: 2),
+                                    ),
+                                    child: const Icon(
+                                      Icons.add_a_photo_rounded,
+                                      color: Color(0xFF69F0AE),
+                                      size: 18,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
+
+                        // TEXT FIELDS
+                        _buildOvalTextField(
+                          controller: _usernameController,
+                          label: "Kullanıcı Adı",
+                          icon: FontAwesomeIcons.at,
+                          validator: (value) => (value == null || value.isEmpty)
+                              ? 'Gerekli alan'
+                              : null,
+                        ),
+                        _buildOvalTextField(
+                          controller: _fullNameController,
+                          label: "Görünen İsim",
+                          icon: FontAwesomeIcons.user,
+                          validator: (value) => (value == null || value.isEmpty)
+                              ? 'Gerekli alan'
+                              : null,
+                        ),
+                        _buildOvalTextField(
+                          controller: _bioController,
+                          label: "Biyografi",
+                          icon: FontAwesomeIcons.alignLeft,
+                          maxLines: 2,
+                        ),
+
+                        // 🔹 BAŞLAYALIM BUTONU (YUKARI YAKLAŞTIRILDI)
+                        const SizedBox(
+                            height: 15), // 20'den 15'e çekildi (Daha yakın)
+
+                        Align(
+                          // 0.85 ile tam sağ yerine çok az sola kaydırdık
+                          alignment: const Alignment(0.85, 0.0),
+                          child: Container(
+                            height: 45,
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: _liveGradientColors,
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _saveProfile,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 25),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      "BAŞLAYALIM",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 50), // Alttan biraz boşluk
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
