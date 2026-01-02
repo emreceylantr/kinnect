@@ -24,7 +24,7 @@ typedef OnDeletePost = void Function();
 class PostDetailCard extends StatefulWidget {
   final Map<String, dynamic> post;
   final String myId;
-  final bool isAlive;
+  final bool isAlive; // Üst ekrandan 24 saat kontrolü yapılarak geliyor
   final bool isExploreMode;
   final bool isLiked;
   final bool isFueled;
@@ -83,6 +83,19 @@ class _PostDetailCardState extends State<PostDetailCard> {
     super.dispose();
   }
 
+  void _showExpiredMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "Bu gönderinin alev süresi doldu! 🔥",
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+        backgroundColor: Colors.grey.shade800,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   String _getEmojiIcon(String? emojiType) {
     if (emojiType == null) return '📸';
     switch (emojiType) {
@@ -114,7 +127,16 @@ class _PostDetailCardState extends State<PostDetailCard> {
 
     final isMyPost = widget.post["user_id"] == widget.myId;
 
-    // Statü Rengi
+    // 🔥 GÖRÜNÜRLÜK KONTROLÜ
+    // Eğer 'public' ise true, değilse (arkadaşlar) false
+    final bool isPublicPost = (widget.post['visibility'] == 'public');
+
+    // 🔥 SÜRE KONTROLÜ
+    // isAlive parametresi zaten üst ekrandan 24 saat kontrolü yapılarak geliyor
+    // Eğer public ise ve alive değilse (24 saat geçtiyse) expired sayılır.
+    final bool isExpired = isPublicPost && !widget.isAlive;
+
+    // Explore Modu için renkler (Zaten alev odaklı olduğu için koruyoruz)
     Color statusColor = Colors.grey;
     if (widget.isAlive) {
       if (widget.fuelCount > 10) {
@@ -137,10 +159,10 @@ class _PostDetailCardState extends State<PostDetailCard> {
           filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
+              color: Colors.white.withOpacity(0.08),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.1), width: 1),
+                  color: Colors.white.withOpacity(0.1), width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,20 +179,14 @@ class _PostDetailCardState extends State<PostDetailCard> {
                             MaterialPageRoute(
                                 builder: (_) => ProfileScreen(
                                     userId: widget.post["user_id"]))),
-                        child: Container(
+                        child: KinnectImage(
+                          imageUrl: profile["avatar_url"] ?? "",
                           width: 44,
                           height: 44,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white10,
-                          ),
-                          child: KinnectImage(
-                            imageUrl: profile["avatar_url"] ?? "",
-                            isCircle: true,
-                            fit: BoxFit.cover,
-                            useShimmer: false,
-                            backgroundColor: Colors.white10,
-                          ),
+                          isCircle: true,
+                          fit: BoxFit.cover,
+                          useShimmer: false,
+                          backgroundColor: Colors.white10,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -195,8 +211,6 @@ class _PostDetailCardState extends State<PostDetailCard> {
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),
                                 child: GestureDetector(
-                                  // Note: showLocationDisplaySheet needs context.
-                                  // Make sure imports are correct for it.
                                   onTap: () => showLocationDisplaySheet(
                                       context, location),
                                   child: Row(
@@ -230,6 +244,17 @@ class _PostDetailCardState extends State<PostDetailCard> {
                         children: [
                           Row(
                             children: [
+                              // GÖRÜNÜRLÜK İKONU (Dünya veya Grup)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: Icon(
+                                  isPublicPost
+                                      ? FontAwesomeIcons.earthAmericas
+                                      : FontAwesomeIcons.userGroup,
+                                  color: Colors.white24,
+                                  size: 12,
+                                ),
+                              ),
                               if (widget.isEdited)
                                 Padding(
                                   padding: const EdgeInsets.only(right: 4),
@@ -294,7 +319,7 @@ class _PostDetailCardState extends State<PostDetailCard> {
                                           Text("Sil",
                                               style: GoogleFonts.poppins(
                                                   color:
-                                                      AppColors.accentRedAccent,
+                                                  AppColors.accentRedAccent,
                                                   fontSize: 13)),
                                         ],
                                       ),
@@ -334,7 +359,7 @@ class _PostDetailCardState extends State<PostDetailCard> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(text,
                         style: GoogleFonts.poppins(
-                            color: Colors.white.withValues(alpha: 0.95),
+                            color: Colors.white.withOpacity(0.95),
                             fontSize: 15)),
                   ),
                 ],
@@ -346,12 +371,18 @@ class _PostDetailCardState extends State<PostDetailCard> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: DoubleTapOverlay(
-                      onDoubleTap: widget.onToggleLike,
-                      icon: Icons.favorite,
-                      iconColor: Colors.red,
+                      // Süre bittiyse uyar, değilse beğen
+                      onDoubleTap: isExpired ? _showExpiredMessage : widget.onToggleLike,
+                      icon: isPublicPost
+                          ? FontAwesomeIcons.fire
+                          : FontAwesomeIcons.solidHeart,
+                      // Expired: Gri, Public: Turuncu, Friend: Mor
+                      iconColor: isExpired
+                          ? Colors.grey
+                          : (isPublicPost ? Colors.orange : AppColors.primary),
                       child: ImageCarousel(
                         imageUrls:
-                            (widget.post['image_urls'] as List).cast<String>(),
+                        (widget.post['image_urls'] as List).cast<String>(),
                         height: 350,
                         borderRadius: BorderRadius.circular(12),
                         musicTrackName: widget.post['spotify_track_name'],
@@ -366,12 +397,23 @@ class _PostDetailCardState extends State<PostDetailCard> {
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: TaggablePostImage(
-                        imageUrl: image,
-                        postId: widget.post['id'],
-                        borderRadius: BorderRadius.circular(12),
-                        musicTrackName: widget.post['spotify_track_name'],
-                        musicArtistName: widget.post['spotify_artist_name'],
+                      child: DoubleTapOverlay(
+                        // Süre bittiyse uyar, değilse beğen
+                        onDoubleTap: isExpired ? _showExpiredMessage : widget.onToggleLike,
+                        icon: isPublicPost
+                            ? FontAwesomeIcons.fire
+                            : FontAwesomeIcons.solidHeart,
+                        // Expired: Gri, Public: Turuncu, Friend: Mor
+                        iconColor: isExpired
+                            ? Colors.grey
+                            : (isPublicPost ? Colors.orange : AppColors.primary),
+                        child: TaggablePostImage(
+                          imageUrl: image,
+                          postId: widget.post['id'],
+                          borderRadius: BorderRadius.circular(12),
+                          musicTrackName: widget.post['spotify_track_name'],
+                          musicArtistName: widget.post['spotify_artist_name'],
+                        ),
                       ),
                     ),
                   ),
@@ -398,8 +440,8 @@ class _PostDetailCardState extends State<PostDetailCard> {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              const Color(0xFF1DB954).withValues(alpha: 0.3),
-                              const Color(0xFF1DB954).withValues(alpha: 0.1),
+                              const Color(0xFF1DB954).withOpacity(0.3),
+                              const Color(0xFF1DB954).withOpacity(0.1),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -407,7 +449,7 @@ class _PostDetailCardState extends State<PostDetailCard> {
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color:
-                                const Color(0xFF1DB954).withValues(alpha: 0.3),
+                            const Color(0xFF1DB954).withOpacity(0.3),
                           ),
                         ),
                         child: Row(
@@ -474,234 +516,247 @@ class _PostDetailCardState extends State<PostDetailCard> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: widget.isExploreMode
                       ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 1. Fuel Button
-                            FuelButton(
-                              isFueled: widget.isFueled,
-                              count: widget.fuelCount,
-                              isExpired: !widget.isAlive,
-                              onTap: widget.onToggleFuel,
-                              size: 28,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. Fuel Button (Explore Modu - Buraya dokunmadık, kendi mantığı var)
+                      FuelButton(
+                        isFueled: widget.isFueled,
+                        count: widget.fuelCount,
+                        isExpired: !widget.isAlive,
+                        onTap: widget.onToggleFuel,
+                        size: 28,
+                      ),
+                      // 2. Beğeni Sayısı
+                      GestureDetector(
+                        onTap: widget.onShowLikers,
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                              left: 2, top: widget.isAlive ? 32.0 : 38.0),
+                          child: Text(
+                            "${widget.fuelCount}",
+                            style: GoogleFonts.poppins(
+                              color: statusColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
                             ),
-                            // 2. Beğeni Sayısı (tıklanabilir)
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      // 3. Yorum Sayısı
+                      Padding(
+                        padding: EdgeInsets.only(
+                            top: widget.isAlive ? 32.0 : 38.0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(FontAwesomeIcons.comment,
+                                  size: 16, color: Colors.white38),
+                              const SizedBox(width: 6),
+                              Text("${widget.commentCount}",
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.white38,
+                                      fontSize: 13)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                      : Row(
+                    // 🔥 NORMAL MOD (Public veya Friend)
+                    children: [
+                      // 1. Beğeni / Alev Butonu
+                      Row(
+                        children: [
+                          // İkon
+                          GestureDetector(
+                            // Süre dolduysa uyarı, yoksa beğeni
+                            onTap: isExpired ? _showExpiredMessage : widget.onToggleLike,
+                            child: Icon(
+                              // Public -> Alev, Friend -> Kalp
+                              isPublicPost
+                                  ? FontAwesomeIcons.fire
+                                  : (widget.isLiked
+                                  ? FontAwesomeIcons.solidHeart
+                                  : FontAwesomeIcons.heart),
+                              // Renk: Expired->Gri, Public->Turuncu, Friend->Mor
+                              color: isExpired
+                                  ? Colors.grey
+                                  : (widget.isLiked
+                                  ? (isPublicPost
+                                  ? Colors.orange
+                                  : AppColors.primary)
+                                  : Colors.grey.shade400),
+                              size: 22,
+                            ),
+                          ),
+                          // Sayı
+                          if (widget.likeCount > 0) ...[
+                            const SizedBox(width: 6),
                             GestureDetector(
                               onTap: widget.onShowLikers,
-                              child: Padding(
-                                padding: EdgeInsets.only(
-                                    left: 2, top: widget.isAlive ? 32.0 : 38.0),
-                                child: Text(
-                                  "${widget.fuelCount}",
+                              child: Text("${widget.likeCount}",
                                   style: GoogleFonts.poppins(
-                                    color: statusColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
+                                      color: isExpired
+                                          ? Colors.grey
+                                          : (widget.isLiked
+                                          ? (isPublicPost
+                                          ? Colors.orange
+                                          : AppColors.primary)
+                                          : Colors.grey.shade400),
+                                      fontWeight: FontWeight.w600)),
                             ),
-                            const Spacer(),
-                            // 3. Yorum Kısmı
-                            Padding(
-                              padding: EdgeInsets.only(
-                                  top: widget.isAlive ? 32.0 : 38.0),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.05),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(FontAwesomeIcons.comment,
-                                        size: 16, color: Colors.white38),
-                                    const SizedBox(width: 6),
-                                    Text("${widget.commentCount}",
-                                        style: GoogleFonts.poppins(
-                                            color: Colors.white38,
-                                            fontSize: 13)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          // 🔥 NORMAL MOD
+                          ]
+                        ],
+                      ),
+                      // 2. Yorum
+                      const SizedBox(width: 24),
+                      Container(
+                        color: Colors.transparent,
+                        child: Row(
                           children: [
-                            // 1. Beğeni
-                            Row(
-                              children: [
-                                // Kalp ikonu
-                                GestureDetector(
-                                  onTap: widget.onToggleLike,
-                                  child: Icon(
-                                    widget.isLiked
-                                        ? FontAwesomeIcons.solidHeart
-                                        : FontAwesomeIcons.heart,
-                                    color: widget.isLiked
-                                        ? AppColors.primary
-                                        : Colors.grey.shade400,
-                                    size: 22,
-                                  ),
-                                ),
-                                // Sayı
-                                if (widget.likeCount > 0) ...[
-                                  const SizedBox(width: 6),
-                                  GestureDetector(
-                                    onTap: widget.onShowLikers,
-                                    child: Text("${widget.likeCount}",
-                                        style: GoogleFonts.poppins(
-                                            color: widget.isLiked
-                                                ? AppColors.primary
-                                                : Colors.grey.shade400,
-                                            fontWeight: FontWeight.w600)),
-                                  ),
-                                ]
-                              ],
-                            ),
-                            // 2. Yorum
-                            const SizedBox(width: 24),
-                            Container(
-                              color: Colors.transparent,
-                              child: Row(
-                                children: [
-                                  Icon(FontAwesomeIcons.comment,
-                                      color: Colors.grey.shade400, size: 22),
-                                  if (widget.commentCount > 0) ...[
-                                    const SizedBox(width: 6),
-                                    Text("${widget.commentCount}",
-                                        style: GoogleFonts.poppins(
-                                            color: Colors.grey.shade400,
-                                            fontWeight: FontWeight.w600)),
-                                  ]
-                                ],
-                              ),
-                            ),
-                            const Spacer(),
-                            // 3. Mevcut Tepkiler - Sağda
-                            if (widget.emojiReactions.isNotEmpty) ...[
-                              GestureDetector(
-                                onTap: widget.onShowAllReactions,
-                                child: Row(
-                                  children: [
-                                    SizedBox(
-                                      width: (widget.emojiReactions.length > 3
-                                                  ? 3
-                                                  : widget
-                                                      .emojiReactions.length) *
-                                              22 +
-                                          10,
-                                      height: 28,
-                                      child: Stack(
-                                        children: [
-                                          for (int i = 0;
-                                              i <
-                                                  (widget.emojiReactions
-                                                              .length >
-                                                          3
-                                                      ? 3
-                                                      : widget.emojiReactions
-                                                          .length);
-                                              i++)
-                                            Positioned(
-                                              left: i * 18.0,
-                                              child: Stack(
-                                                children: [
-                                                  Container(
-                                                    width: 28,
-                                                    height: 28,
-                                                    decoration: BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      border: Border.all(
-                                                          color:
-                                                              AppColors.bgBlack,
-                                                          width: 2),
-                                                      image: DecorationImage(
-                                                        image: NetworkImage(
-                                                            widget.emojiReactions[
-                                                                        i][
-                                                                    'emoji_url'] ??
-                                                                ''),
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Positioned(
-                                                    right: 0,
-                                                    bottom: 0,
-                                                    child: Container(
-                                                      width: 12,
-                                                      height: 12,
-                                                      decoration: BoxDecoration(
-                                                        color: const Color(
-                                                            0xFF1A1A24),
-                                                        shape: BoxShape.circle,
-                                                        border: Border.all(
-                                                            color: const Color(
-                                                                0xFF6C63FF),
-                                                            width: 1),
-                                                      ),
-                                                      child: Center(
-                                                        child: Text(
-                                                          _getEmojiIcon(widget
-                                                                  .emojiReactions[
-                                                              i]['emoji_type']),
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 6),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (widget.emojiReactions.length > 3) ...[
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        "+${widget.emojiReactions.length - 3}",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.grey.shade400,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                            ],
-                            // 4. Tepki Ver Butonu
-                            GestureDetector(
-                              onTap: () async {
-                                final result = await widget
-                                    .onShowPhotoEmojiPicker(context);
-                                if (result != null) {
-                                  widget.onSendEmojiReaction(
-                                      result['path']!, result['type']!);
-                                }
-                              },
-                              child: Container(
-                                color: Colors.transparent,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.add_reaction_outlined,
+                            Icon(FontAwesomeIcons.comment,
+                                color: Colors.grey.shade400, size: 22),
+                            if (widget.commentCount > 0) ...[
+                              const SizedBox(width: 6),
+                              Text("${widget.commentCount}",
+                                  style: GoogleFonts.poppins(
                                       color: Colors.grey.shade400,
-                                      size: 26,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                                      fontWeight: FontWeight.w600)),
+                            ]
                           ],
                         ),
+                      ),
+                      const Spacer(),
+                      // 3. Mevcut Tepkiler - Sağda
+                      if (widget.emojiReactions.isNotEmpty) ...[
+                        GestureDetector(
+                          onTap: widget.onShowAllReactions,
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: (widget.emojiReactions.length > 3
+                                    ? 3
+                                    : widget
+                                    .emojiReactions.length) *
+                                    22 +
+                                    10,
+                                height: 28,
+                                child: Stack(
+                                  children: [
+                                    for (int i = 0;
+                                    i <
+                                        (widget.emojiReactions
+                                            .length >
+                                            3
+                                            ? 3
+                                            : widget.emojiReactions
+                                            .length);
+                                    i++)
+                                      Positioned(
+                                        left: i * 18.0,
+                                        child: Stack(
+                                          children: [
+                                            Container(
+                                              width: 28,
+                                              height: 28,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                    color:
+                                                    AppColors.bgBlack,
+                                                    width: 2),
+                                                image: DecorationImage(
+                                                  image: NetworkImage(
+                                                      widget.emojiReactions[
+                                                      i][
+                                                      'emoji_url'] ??
+                                                          ''),
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              right: 0,
+                                              bottom: 0,
+                                              child: Container(
+                                                width: 12,
+                                                height: 12,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(
+                                                      0xFF1A1A24),
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                      color: const Color(
+                                                          0xFF6C63FF),
+                                                      width: 1),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    _getEmojiIcon(widget
+                                                        .emojiReactions[
+                                                    i]['emoji_type']),
+                                                    style:
+                                                    const TextStyle(
+                                                        fontSize: 6),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (widget.emojiReactions.length > 3) ...[
+                                const SizedBox(width: 4),
+                                Text(
+                                  "+${widget.emojiReactions.length - 3}",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade400,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      // 4. Tepki Ver Butonu
+                      GestureDetector(
+                        onTap: () async {
+                          final result = await widget
+                              .onShowPhotoEmojiPicker(context);
+                          if (result != null) {
+                            widget.onSendEmojiReaction(
+                                result['path']!, result['type']!);
+                          }
+                        },
+                        child: Container(
+                          color: Colors.transparent,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.add_reaction_outlined,
+                                color: Colors.grey.shade400,
+                                size: 26,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

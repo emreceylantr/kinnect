@@ -58,6 +58,7 @@ class ModernMessageBubble extends StatelessWidget {
   final bool isViewed;
   final bool showReadReceipts;
   final bool otherUserShowReadReceipts;
+  final VoidCallback? onAvatarTap; // 👇 EKLENDİ
 
   const ModernMessageBubble({
     super.key,
@@ -71,6 +72,7 @@ class ModernMessageBubble extends StatelessWidget {
     this.isViewed = false,
     this.showReadReceipts = true,
     this.otherUserShowReadReceipts = true,
+    this.onAvatarTap, // 👇 EKLENDİ
   });
 
   @override
@@ -80,23 +82,27 @@ class ModernMessageBubble extends StatelessWidget {
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin:
-            EdgeInsets.symmetric(vertical: showAvatar ? 6 : 2, horizontal: 16),
+        EdgeInsets.symmetric(vertical: showAvatar ? 6 : 2, horizontal: 16),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (!isMe) ...[
               if (showAvatar)
-                CircleAvatar(
-                    radius: 14,
-                    backgroundColor: Colors.grey[800],
-                    backgroundImage: otherUserAvatar != null
-                        ? NetworkImage(otherUserAvatar!)
-                        : null,
-                    child: otherUserAvatar == null
-                        ? const Icon(Icons.person,
-                            size: 16, color: Colors.white)
-                        : null)
+              // 👇 GÜNCELLENDİ: Tıklanabilir Avatar
+                GestureDetector(
+                  onTap: onAvatarTap,
+                  child: CircleAvatar(
+                      radius: 14,
+                      backgroundColor: Colors.grey[800],
+                      backgroundImage: otherUserAvatar != null
+                          ? NetworkImage(otherUserAvatar!)
+                          : null,
+                      child: otherUserAvatar == null
+                          ? const Icon(Icons.person,
+                          size: 16, color: Colors.white)
+                          : null),
+                )
               else
                 const SizedBox(width: 28),
               const SizedBox(width: 8),
@@ -109,10 +115,10 @@ class ModernMessageBubble extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: isMe
                       ? const LinearGradient(colors: [
-                          Color(0xFF9D89D9),
-                          Color(0xFF899DD9),
-                          Color(0xFF335FA1)
-                        ], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                    Color(0xFF9D89D9),
+                    Color(0xFF899DD9),
+                    Color(0xFF335FA1)
+                  ], begin: Alignment.topLeft, end: Alignment.bottomRight)
                       : null,
                   color: isMe ? null : kReceivedBubbleColor,
                   borderRadius: BorderRadius.only(
@@ -121,12 +127,12 @@ class ModernMessageBubble extends StatelessWidget {
                       bottomLeft: isMe
                           ? const Radius.circular(20)
                           : (showAvatar
-                              ? Radius.zero
-                              : const Radius.circular(20)),
+                          ? Radius.zero
+                          : const Radius.circular(20)),
                       bottomRight: isMe
                           ? (showAvatar
-                              ? Radius.zero
-                              : const Radius.circular(20))
+                          ? Radius.zero
+                          : const Radius.circular(20))
                           : const Radius.circular(20)),
                   boxShadow: [
                     BoxShadow(
@@ -138,8 +144,8 @@ class ModernMessageBubble extends StatelessWidget {
                 constraints: BoxConstraints(maxWidth: maxWidth),
                 child: isImage
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: _buildImageContent(context))
+                    borderRadius: BorderRadius.circular(16),
+                    child: _buildImageContent(context))
                     : _buildTextOrAudioContent(),
               ),
             ),
@@ -213,15 +219,15 @@ class ModernMessageBubble extends StatelessWidget {
 class AudioMessagePlayer extends StatefulWidget {
   final String url;
   final bool isMe;
-  final Color? color; // Added color property
-  final Color? backgroundColor; // Added backgroundColor property
+  final Color? color;
+  final Color? backgroundColor;
 
   const AudioMessagePlayer({
     super.key,
     required this.url,
     required this.isMe,
-    this.color, // Initialize color
-    this.backgroundColor, // Initialize backgroundColor
+    this.color,
+    this.backgroundColor,
   });
 
   @override
@@ -300,7 +306,7 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
                 height: 4,
                 decoration: BoxDecoration(
                     color:
-                        widget.backgroundColor ?? Colors.white.withOpacity(0.1),
+                    widget.backgroundColor ?? Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10)),
                 child: FractionallySizedBox(
                   alignment: Alignment.centerLeft,
@@ -308,9 +314,7 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
                   child: Container(
                     decoration: BoxDecoration(
                         color: widget.isMe
-                            ? widget.color ??
-                                const Color(
-                                    0xFF9D89D9) // Assuming AppColors.primary is this color
+                            ? widget.color ?? const Color(0xFF9D89D9)
                             : widget.color ?? Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10)),
                   ),
@@ -345,6 +349,7 @@ class EphemeralMessageBubble extends StatefulWidget {
   final bool isImage;
   final ChatService chatService;
   final VoidCallback onBurned;
+  final VoidCallback? onAvatarTap; // 👇 EKLENDİ
 
   const EphemeralMessageBubble({
     super.key,
@@ -360,6 +365,7 @@ class EphemeralMessageBubble extends StatefulWidget {
     this.showAvatar = true,
     this.contentWidget,
     this.isImage = false,
+    this.onAvatarTap, // 👇 EKLENDİ
   });
 
   @override
@@ -443,16 +449,20 @@ class _EphemeralMessageBubbleState extends State<EphemeralMessageBubble>
           children: [
             if (!widget.isMe) ...[
               if (widget.showAvatar)
-                CircleAvatar(
-                    radius: 14,
-                    backgroundColor: Colors.grey[800],
-                    backgroundImage: widget.otherUserAvatar != null
-                        ? NetworkImage(widget.otherUserAvatar!)
-                        : null,
-                    child: widget.otherUserAvatar == null
-                        ? const Icon(Icons.person,
-                            size: 16, color: Colors.white)
-                        : null)
+              // 👇 GÜNCELLENDİ: Tıklanabilir Avatar
+                GestureDetector(
+                  onTap: widget.onAvatarTap,
+                  child: CircleAvatar(
+                      radius: 14,
+                      backgroundColor: Colors.grey[800],
+                      backgroundImage: widget.otherUserAvatar != null
+                          ? NetworkImage(widget.otherUserAvatar!)
+                          : null,
+                      child: widget.otherUserAvatar == null
+                          ? const Icon(Icons.person,
+                          size: 16, color: Colors.white)
+                          : null),
+                )
               else
                 const SizedBox(width: 28),
               const SizedBox(width: 8),
@@ -464,7 +474,7 @@ class _EphemeralMessageBubbleState extends State<EphemeralMessageBubble>
                     padding: widget.isImage
                         ? const EdgeInsets.all(4)
                         : const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                        horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFFFF6B00), Color(0xFFFF4500)],
@@ -477,12 +487,12 @@ class _EphemeralMessageBubbleState extends State<EphemeralMessageBubble>
                         bottomLeft: widget.isMe
                             ? const Radius.circular(20)
                             : (widget.showAvatar
-                                ? Radius.zero
-                                : const Radius.circular(20)),
+                            ? Radius.zero
+                            : const Radius.circular(20)),
                         bottomRight: widget.isMe
                             ? (widget.showAvatar
-                                ? Radius.zero
-                                : const Radius.circular(20))
+                            ? Radius.zero
+                            : const Radius.circular(20))
                             : const Radius.circular(20),
                       ),
                       boxShadow: [
@@ -555,7 +565,7 @@ class _EphemeralMessageBubbleState extends State<EphemeralMessageBubble>
                               value: _animController.value,
                               backgroundColor: Colors.transparent,
                               valueColor:
-                                  const AlwaysStoppedAnimation(Colors.yellow),
+                              const AlwaysStoppedAnimation(Colors.yellow),
                               minHeight: 3,
                             );
                           },
