@@ -1,0 +1,1031 @@
+Analyzing kinnect...                                            
+
+   info • Don't invoke 'print' in production code • lib/data/services/apple_music_service.dart:16:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:44:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:104:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:108:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:120:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:128:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:130:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:139:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:225:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:237:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:261:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:280:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:297:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:299:7 • avoid_print
+   info • Use 'const' for final variables initialized to a constant value • lib/data/services/spotify_service.dart:17:7 • prefer_const_declarations
+   info • Don't invoke 'print' in production code • lib/data/services/toxicity_service.dart:36:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/toxicity_service.dart:43:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/toxicity_service.dart:46:7 • avoid_print
+  error • The named parameter 'shape' isn't defined • lib/features/auth/screens/change_password_screen.dart:118:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/change_password_screen.dart:120:19 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 8 found • lib/features/auth/screens/change_password_screen.dart:123:17 • extra_positional_arguments_could_be_named
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/change_password_screen.dart:158:23 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/change_password_screen.dart:160:23 • curly_braces_in_flow_control_structures
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/change_password_screen.dart:179:25 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/auth/screens/change_password_screen.dart:180:25 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/change_password_screen.dart:182:21 • expected_token
+  error • Expected to find ')' • lib/features/auth/screens/change_password_screen.dart:204:15 • expected_token
+  error • The named parameter 'focusedBorder' isn't defined • lib/features/auth/screens/change_password_screen.dart:253:9 • undefined_named_parameter
+  error • The named parameter 'errorStyle' isn't defined • lib/features/auth/screens/change_password_screen.dart:257:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/change_password_screen.dart:259:6 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/auth/screens/create_profile_screen.dart:132:13 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/create_profile_screen.dart:133:13 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/create_profile_screen.dart:135:11 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/create_profile_screen.dart:165:6 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/create_profile_screen.dart:189:11 • extra_positional_arguments_could_be_named
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/create_profile_screen.dart:204:11 • extra_positional_arguments_could_be_named
+  error • The named parameter 'width' isn't defined • lib/features/auth/screens/create_profile_screen.dart:250:37 • undefined_named_parameter
+  error • The named parameter 'gradient' isn't defined • lib/features/auth/screens/create_profile_screen.dart:252:35 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 2 found • lib/features/auth/screens/create_profile_screen.dart:263:29 • extra_positional_arguments_could_be_named
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/create_profile_screen.dart:273:37 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/auth/screens/create_profile_screen.dart:274:37 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/create_profile_screen.dart:276:33 • expected_token
+  error • Expected to find ')' • lib/features/auth/screens/create_profile_screen.dart:318:27 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/create_profile_screen.dart:359:29 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/auth/screens/create_profile_screen.dart:360:29 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/create_profile_screen.dart:362:25 • expected_token
+  error • Expected to find ')' • lib/features/auth/screens/create_profile_screen.dart:401:9 • expected_token
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/features/auth/screens/forgot_password_screen.dart:3:8 • unnecessary_import
+  error • The named parameter 'shape' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:93:17 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:95:15 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 6 found • lib/features/auth/screens/forgot_password_screen.dart:98:13 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/forgot_password_screen.dart:137:11 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/forgot_password_screen.dart:164:25 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/forgot_password_screen.dart:165:23 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:189:29 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:190:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:193:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/forgot_password_screen.dart:197:21 • expected_token
+  error • The named parameter 'width' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:229:41 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/forgot_password_screen.dart:232:36 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/forgot_password_screen.dart:241:41 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/forgot_password_screen.dart:242:39 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:248:41 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/forgot_password_screen.dart:250:37 • expected_token
+  error • The named parameter 'fontSize' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:284:29 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:285:29 • undefined_named_parameter
+  error • Too many positional arguments: 1 expected, but 3 found • lib/features/auth/screens/forgot_password_screen.dart:289:25 • extra_positional_arguments_could_be_named
+  error • The named parameter 'prefixIcon' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:300:29 • undefined_named_parameter
+  error • The named parameter 'filled' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:305:29 • undefined_named_parameter
+  error • The named parameter 'fillColor' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:306:29 • undefined_named_parameter
+  error • The named parameter 'contentPadding' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:307:29 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:309:29 • undefined_named_parameter
+  error • The named parameter 'enabledBorder' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:313:29 • undefined_named_parameter
+  error • The named parameter 'focusedBorder' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:318:29 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 3 found • lib/features/auth/screens/forgot_password_screen.dart:326:25 • extra_positional_arguments_could_be_named
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:341:35 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/auth/screens/forgot_password_screen.dart:342:35 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/forgot_password_screen.dart:344:31 • expected_token
+  error • Expected to find ')' • lib/features/auth/screens/forgot_password_screen.dart:372:23 • expected_token
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/features/auth/screens/login_screen.dart:3:8 • unnecessary_import
+  error • The named parameter 'counterText' isn't defined • lib/features/auth/screens/login_screen.dart:168:23 • undefined_named_parameter
+  error • The named parameter 'filled' isn't defined • lib/features/auth/screens/login_screen.dart:169:23 • undefined_named_parameter
+  error • The named parameter 'fillColor' isn't defined • lib/features/auth/screens/login_screen.dart:170:23 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/login_screen.dart:171:23 • undefined_named_parameter
+  error • The named parameter 'focusedBorder' isn't defined • lib/features/auth/screens/login_screen.dart:175:23 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/login_screen.dart:182:17 • expected_token
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/auth/screens/login_screen.dart:208:45 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/auth/screens/login_screen.dart:209:44 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/auth/screens/login_screen.dart:217:50 • use_build_context_synchronously
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/login_screen.dart:273:25 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/login_screen.dart:274:23 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/auth/screens/login_screen.dart:298:29 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/login_screen.dart:299:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/login_screen.dart:302:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/login_screen.dart:306:21 • expected_token
+  error • Too many positional arguments: 1 expected, but 9 found • lib/features/auth/screens/login_screen.dart:338:27 • extra_positional_arguments_could_be_named
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/login_screen.dart:399:37 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/auth/screens/login_screen.dart:400:37 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/login_screen.dart:402:33 • expected_token
+  error • Expected to find ')' • lib/features/auth/screens/login_screen.dart:421:25 • expected_token
+  error • The named parameter 'prefixIcon' isn't defined • lib/features/auth/screens/login_screen.dart:449:9 • undefined_named_parameter
+  error • The named parameter 'suffixIcon' isn't defined • lib/features/auth/screens/login_screen.dart:453:9 • undefined_named_parameter
+  error • The named parameter 'filled' isn't defined • lib/features/auth/screens/login_screen.dart:466:9 • undefined_named_parameter
+  error • The named parameter 'fillColor' isn't defined • lib/features/auth/screens/login_screen.dart:467:9 • undefined_named_parameter
+  error • The named parameter 'contentPadding' isn't defined • lib/features/auth/screens/login_screen.dart:468:9 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/login_screen.dart:470:9 • undefined_named_parameter
+  error • The named parameter 'enabledBorder' isn't defined • lib/features/auth/screens/login_screen.dart:474:9 • undefined_named_parameter
+  error • The named parameter 'focusedBorder' isn't defined • lib/features/auth/screens/login_screen.dart:478:9 • undefined_named_parameter
+  error • The named parameter 'errorStyle' isn't defined • lib/features/auth/screens/login_screen.dart:482:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/login_screen.dart:484:6 • expected_token
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/features/auth/screens/signup_screen.dart:3:8 • unnecessary_import
+  error • The named parameter 'shape' isn't defined • lib/features/auth/screens/signup_screen.dart:107:17 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/signup_screen.dart:109:15 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 6 found • lib/features/auth/screens/signup_screen.dart:112:13 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/signup_screen.dart:151:11 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/signup_screen.dart:178:25 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/signup_screen.dart:179:23 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/auth/screens/signup_screen.dart:203:29 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/signup_screen.dart:204:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/signup_screen.dart:207:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/signup_screen.dart:211:21 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/auth/screens/signup_screen.dart:231:31 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/signup_screen.dart:232:31 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/signup_screen.dart:235:29 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 4 found • lib/features/auth/screens/signup_screen.dart:254:27 • extra_positional_arguments_could_be_named
+  error • Too many positional arguments: 1 expected, but 10 found • lib/features/auth/screens/signup_screen.dart:274:27 • extra_positional_arguments_could_be_named
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/signup_screen.dart:283:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/signup_screen.dart:285:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/signup_screen.dart:300:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/signup_screen.dart:302:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/signup_screen.dart:317:33 • curly_braces_in_flow_control_structures
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/signup_screen.dart:337:37 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/auth/screens/signup_screen.dart:338:37 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/signup_screen.dart:340:33 • expected_token
+  error • Expected to find ')' • lib/features/auth/screens/signup_screen.dart:370:25 • expected_token
+  error • The named parameter 'prefixIcon' isn't defined • lib/features/auth/screens/signup_screen.dart:401:9 • undefined_named_parameter
+  error • The named parameter 'suffixIcon' isn't defined • lib/features/auth/screens/signup_screen.dart:405:9 • undefined_named_parameter
+  error • The named parameter 'filled' isn't defined • lib/features/auth/screens/signup_screen.dart:423:9 • undefined_named_parameter
+  error • The named parameter 'fillColor' isn't defined • lib/features/auth/screens/signup_screen.dart:424:9 • undefined_named_parameter
+  error • The named parameter 'contentPadding' isn't defined • lib/features/auth/screens/signup_screen.dart:425:9 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/signup_screen.dart:427:9 • undefined_named_parameter
+  error • The named parameter 'enabledBorder' isn't defined • lib/features/auth/screens/signup_screen.dart:431:9 • undefined_named_parameter
+  error • The named parameter 'focusedBorder' isn't defined • lib/features/auth/screens/signup_screen.dart:435:9 • undefined_named_parameter
+  error • The named parameter 'errorStyle' isn't defined • lib/features/auth/screens/signup_screen.dart:439:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/signup_screen.dart:441:6 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/welcome_screen.dart:184:19 • extra_positional_arguments_could_be_named
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/welcome_screen.dart:185:19 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:186:17 • expected_token
+  error • The named parameter 'height' isn't defined • lib/features/auth/screens/welcome_screen.dart:234:21 • undefined_named_parameter
+  error • The named parameter 'fontWeight' isn't defined • lib/features/auth/screens/welcome_screen.dart:235:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:238:15 • expected_token
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:341:68 • expected_token
+   info • Use 'const' for final variables initialized to a constant value • lib/features/auth/screens/welcome_screen.dart:352:21 • prefer_const_declarations
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:388:41 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:389:35 • expected_token
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/welcome_screen.dart:425:25 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/welcome_screen.dart:426:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:427:20 • expected_token
+  error • The named parameter 'width' isn't defined • lib/features/auth/screens/welcome_screen.dart:476:11 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/auth/screens/welcome_screen.dart:478:9 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:481:13 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/auth/screens/welcome_screen.dart:482:13 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/welcome_screen.dart:484:11 • extra_positional_arguments_could_be_named
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:486:13 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:487:13 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:489:9 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/welcome_screen.dart:491:7 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:506:6 • expected_token
+  error • The named parameter 'height' isn't defined • lib/features/auth/screens/welcome_screen.dart:541:17 • undefined_named_parameter
+  error • Too many positional arguments: 1 expected, but 2 found • lib/features/auth/screens/welcome_screen.dart:544:13 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:545:11 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/welcome_screen.dart:564:11 • extra_positional_arguments_could_be_named
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/welcome_screen.dart:571:11 • extra_positional_arguments_could_be_named
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/welcome_screen.dart:581:19 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:582:17 • expected_token
+  error • The named parameter 'width' isn't defined • lib/features/auth/screens/welcome_screen.dart:584:78 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/auth/screens/welcome_screen.dart:585:15 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:588:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:590:15 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/welcome_screen.dart:592:13 • undefined_named_parameter
+   info • Use 'const' with the constructor to improve performance • lib/features/auth/screens/welcome_screen.dart:608:37 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/auth/screens/welcome_screen.dart:609:37 • prefer_const_literals_to_create_immutables
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:618:31 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:619:31 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:621:27 • expected_token
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:658:9 • expected_token
+  error • The named parameter 'height' isn't defined • lib/features/auth/screens/welcome_screen.dart:710:17 • undefined_named_parameter
+  error • Too many positional arguments: 1 expected, but 2 found • lib/features/auth/screens/welcome_screen.dart:713:13 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:714:11 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/welcome_screen.dart:734:19 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:735:17 • expected_token
+  error • The named parameter 'boxShadow' isn't defined • lib/features/auth/screens/welcome_screen.dart:747:15 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:750:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:752:15 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/welcome_screen.dart:754:13 • undefined_named_parameter
+   info • Use 'const' with the constructor to improve performance • lib/features/auth/screens/welcome_screen.dart:762:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/auth/screens/welcome_screen.dart:764:35 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/auth/screens/welcome_screen.dart:765:35 • prefer_const_literals_to_create_immutables
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/welcome_screen.dart:817:37 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:818:35 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/welcome_screen.dart:832:11 • extra_positional_arguments_could_be_named
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:843:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:845:17 • expected_token
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:851:9 • expected_token
+  error • The named parameter 'height' isn't defined • lib/features/auth/screens/welcome_screen.dart:888:17 • undefined_named_parameter
+  error • Too many positional arguments: 1 expected, but 2 found • lib/features/auth/screens/welcome_screen.dart:891:13 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:892:11 • expected_token
+  error • The named parameter 'width' isn't defined • lib/features/auth/screens/welcome_screen.dart:916:23 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:919:18 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/auth/screens/welcome_screen.dart:926:29 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/auth/screens/welcome_screen.dart:927:29 • prefer_const_literals_to_create_immutables
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:932:23 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:934:19 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:954:9 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/welcome_screen.dart:955:9 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/welcome_screen.dart:957:7 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:973:6 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/auth/screens/welcome_screen.dart:996:57 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:996:89 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:1034:27 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/auth/screens/welcome_screen.dart:1035:27 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/auth/screens/welcome_screen.dart:1038:25 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 2 found • lib/features/auth/screens/welcome_screen.dart:1051:19 • extra_positional_arguments_could_be_named
+  error • The named parameter 'blurRadius' isn't defined • lib/features/auth/screens/welcome_screen.dart:1064:31 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/auth/screens/welcome_screen.dart:1065:31 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:1067:27 • expected_token
+  error • Expected to find ')' • lib/features/auth/screens/welcome_screen.dart:1093:17 • expected_token
+   info • Don't invoke 'print' in production code • lib/features/chat/screens/call_screen.dart:83:7 • avoid_print
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:112:21 • prefer_const_constructors
+   info • 'memberListConfig' is deprecated and shouldn't be used. use memberList instead, deprecated since 4.1.9, will be removed after 4.5.0,Migrate Guide:https://pub.dev/documentation/zego_uikit_prebuilt_call/latest/topics/Migration_4.x-topic.html#419 • lib/features/chat/screens/call_screen.dart:148:12 • deprecated_member_use
+   info • 'ZegoMemberListConfig' is deprecated and shouldn't be used. use ZegoCallMemberListConfig instead, deprecated since 4.1.9, will be removed after 4.5.0,Migrate Guide:https://pub.dev/documentation/zego_uikit_prebuilt_call/latest/topics/Migration_4.x-topic.html#419 • lib/features/chat/screens/call_screen.dart:148:31 • deprecated_member_use
+  error • The named parameter 'borderRadius' isn't defined • lib/features/chat/screens/call_screen.dart:156:13 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/chat/screens/call_screen.dart:157:13 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/chat/screens/call_screen.dart:159:11 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/screens/call_screen.dart:170:70 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:171:19 • expected_token
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:200:10 • expected_token
+  error • Too many positional arguments: 0 expected, but 2 found • lib/features/chat/screens/call_screen.dart:313:11 • extra_positional_arguments_could_be_named
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/chat/screens/call_screen.dart:324:21 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:325:19 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/chat/screens/call_screen.dart:341:21 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:342:19 • expected_token
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:347:9 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/screens/call_screen.dart:366:15 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/chat/screens/call_screen.dart:367:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:369:11 • expected_token
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:376:71 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:382:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:394:54 • prefer_const_constructors
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/screens/call_screen.dart:442:19 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/chat/screens/call_screen.dart:443:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:445:15 • expected_token
+   info • Use a 'SizedBox' to add whitespace to a layout • lib/features/chat/screens/call_screen.dart:501:16 • sized_box_for_whitespace
+  error • The named parameter 'width' isn't defined • lib/features/chat/screens/call_screen.dart:516:23 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/chat/screens/call_screen.dart:521:15 • extra_positional_arguments_could_be_named
+  error • The named parameter 'width' isn't defined • lib/features/chat/screens/call_screen.dart:530:23 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/chat/screens/call_screen.dart:535:15 • extra_positional_arguments_could_be_named
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:540:29 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/chat/screens/call_screen.dart:541:29 • prefer_const_literals_to_create_immutables
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/screens/call_screen.dart:548:23 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/chat/screens/call_screen.dart:549:23 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:551:19 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:555:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:568:37 • prefer_const_constructors
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:596:13 • expected_token
+  error • The named parameter 'boxShadow' isn't defined • lib/features/chat/screens/call_screen.dart:649:17 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/screens/call_screen.dart:652:21 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/chat/screens/call_screen.dart:653:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:655:17 • expected_token
+  error • Expected to find ')' • lib/features/chat/screens/call_screen.dart:657:14 • expected_token
+  error • The named parameter 'child' is required, but there's no corresponding argument • lib/features/chat/screens/chat_screen.dart:210:11 • missing_required_argument
+  error • The named parameter 'onPressed' is required, but there's no corresponding argument • lib/features/chat/screens/chat_screen.dart:210:11 • missing_required_argument
+  error • The named parameter 'foregroundColor' isn't defined • lib/features/chat/screens/chat_screen.dart:213:15 • undefined_named_parameter
+  error • The named parameter 'elevation' isn't defined • lib/features/chat/screens/chat_screen.dart:214:15 • undefined_named_parameter
+  error • The named parameter 'onPressed' isn't defined • lib/features/chat/screens/chat_screen.dart:216:13 • undefined_named_parameter
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/chat/screens/chat_screen.dart:220:38 • use_build_context_synchronously
+  error • The named parameter 'child' isn't defined • lib/features/chat/screens/chat_screen.dart:229:13 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/screens/chat_screen.dart:231:9 • expected_token
+   info • Don't use 'BuildContext's across async gaps • lib/features/chat/screens/chat_screen.dart:392:9 • use_build_context_synchronously
+  error • Expected to find ')' • lib/features/chat/screens/chat_screen.dart:516:82 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/screens/chat_screen.dart:572:19 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/chat/screens/chat_screen.dart:573:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/screens/chat_screen.dart:574:13 • expected_token
+  error • Expected to find ')' • lib/features/chat/screens/chat_screen.dart:589:21 • expected_token
+  error • Expected an identifier • lib/features/chat/screens/chat_screen.dart:594:16 • missing_identifier
+  error • Expected to find ':' • lib/features/chat/screens/chat_screen.dart:594:16 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/chat/screens/chat_screen.dart:595:15 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/chat/screens/chat_screen.dart:602:11 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/chat/screens/chat_screen.dart:613:29 • expected_token
+  error • Expected an identifier • lib/features/chat/screens/chat_screen.dart:614:24 • missing_identifier
+  error • Expected to find ':' • lib/features/chat/screens/chat_screen.dart:614:24 • expected_token
+  error • The named parameter 'border' isn't defined • lib/features/chat/screens/chat_screen.dart:615:23 • undefined_named_parameter
+  error • The named parameter 'contentPadding' isn't defined • lib/features/chat/screens/chat_screen.dart:616:23 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/chat/screens/chat_screen.dart:618:11 • extra_positional_arguments_could_be_named
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/screens/chat_screen.dart:636:25 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/chat/screens/chat_screen.dart:637:25 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/screens/chat_screen.dart:638:19 • expected_token
+  error • Expected to find ')' • lib/features/chat/screens/chat_screen.dart:655:9 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/chat/screens/chat_screen.dart:669:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/screens/chat_screen.dart:673:50 • expected_token
+  error • The named parameter 'onChanged' is required, but there's no corresponding argument • lib/features/chat/screens/messages_screen.dart:184:19 • missing_required_argument
+  error • The named parameter 'value' is required, but there's no corresponding argument • lib/features/chat/screens/messages_screen.dart:184:19 • missing_required_argument
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/features/chat/screens/messages_screen.dart:185:21 • deprecated_member_use
+  error • The named parameter 'inactiveThumbColor' isn't defined • lib/features/chat/screens/messages_screen.dart:187:21 • undefined_named_parameter
+  error • The named parameter 'inactiveTrackColor' isn't defined • lib/features/chat/screens/messages_screen.dart:188:21 • undefined_named_parameter
+  error • The named parameter 'contentPadding' isn't defined • lib/features/chat/screens/messages_screen.dart:189:21 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/features/chat/screens/messages_screen.dart:190:21 • undefined_named_parameter
+  error • The named parameter 'subtitle' isn't defined • lib/features/chat/screens/messages_screen.dart:193:21 • undefined_named_parameter
+  error • The named parameter 'fontSize' isn't defined • lib/features/chat/screens/messages_screen.dart:196:72 • undefined_named_parameter
+  error • The named parameter 'value' isn't defined • lib/features/chat/screens/messages_screen.dart:198:21 • undefined_named_parameter
+  error • The named parameter 'onChanged' isn't defined • lib/features/chat/screens/messages_screen.dart:199:21 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 2 found • lib/features/chat/screens/messages_screen.dart:206:19 • extra_positional_arguments
+  error • The named parameter 'onChanged' is required, but there's no corresponding argument • lib/features/chat/screens/messages_screen.dart:209:19 • missing_required_argument
+  error • The named parameter 'value' is required, but there's no corresponding argument • lib/features/chat/screens/messages_screen.dart:209:19 • missing_required_argument
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/features/chat/screens/messages_screen.dart:210:21 • deprecated_member_use
+  error • The named parameter 'inactiveThumbColor' isn't defined • lib/features/chat/screens/messages_screen.dart:212:21 • undefined_named_parameter
+  error • The named parameter 'inactiveTrackColor' isn't defined • lib/features/chat/screens/messages_screen.dart:213:21 • undefined_named_parameter
+  error • The named parameter 'contentPadding' isn't defined • lib/features/chat/screens/messages_screen.dart:214:21 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/features/chat/screens/messages_screen.dart:215:21 • undefined_named_parameter
+  error • The named parameter 'subtitle' isn't defined • lib/features/chat/screens/messages_screen.dart:218:21 • undefined_named_parameter
+  error • The named parameter 'fontSize' isn't defined • lib/features/chat/screens/messages_screen.dart:223:72 • undefined_named_parameter
+  error • The named parameter 'value' isn't defined • lib/features/chat/screens/messages_screen.dart:225:21 • undefined_named_parameter
+  error • The named parameter 'onChanged' isn't defined • lib/features/chat/screens/messages_screen.dart:226:21 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/chat/screens/messages_screen.dart:232:19 • extra_positional_arguments
+  error • Expected to find ')' • lib/features/chat/screens/messages_screen.dart:233:17 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/chat/screens/messages_screen.dart:355:19 • undefined_named_parameter
+  error • The named parameter 'prefixIcon' isn't defined • lib/features/chat/screens/messages_screen.dart:365:23 • undefined_named_parameter
+  error • The named parameter 'suffixIcon' isn't defined • lib/features/chat/screens/messages_screen.dart:367:23 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/chat/screens/messages_screen.dart:377:23 • undefined_named_parameter
+  error • The named parameter 'contentPadding' isn't defined • lib/features/chat/screens/messages_screen.dart:378:23 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/screens/messages_screen.dart:382:15 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/chat/screens/messages_screen.dart:402:23 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 2 found • lib/features/chat/screens/messages_screen.dart:408:21 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/chat/screens/messages_screen.dart:441:19 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/screens/messages_screen.dart:468:37 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/screens/messages_screen.dart:469:31 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/widgets/chat_widgets.dart:134:25 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/chat/widgets/chat_widgets.dart:135:25 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:136:19 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/chat/widgets/chat_widgets.dart:162:19 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/chat/widgets/chat_widgets.dart:163:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:168:5 • expected_token
+  error • The named parameter 'fontSize' isn't defined • lib/features/chat/widgets/chat_widgets.dart:190:27 • undefined_named_parameter
+  error • The named parameter 'fontWeight' isn't defined • lib/features/chat/widgets/chat_widgets.dart:191:27 • undefined_named_parameter
+  error • Expected an identifier • lib/features/chat/widgets/chat_widgets.dart:192:19 • missing_identifier
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:192:19 • expected_token
+  error • Expected to find ',' • lib/features/chat/widgets/chat_widgets.dart:192:19 • expected_token
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:203:19 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/widgets/chat_widgets.dart:482:27 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/chat/widgets/chat_widgets.dart:483:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:485:23 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/chat/widgets/chat_widgets.dart:573:11 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/chat/widgets/chat_widgets.dart:574:11 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/chat/widgets/chat_widgets.dart:576:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:593:6 • expected_token
+  error • The named parameter 'child' is required, but there's no corresponding argument • lib/features/chat/widgets/flippable_chat_card.dart:96:13 • missing_required_argument
+  error • The named parameter 'onPressed' is required, but there's no corresponding argument • lib/features/chat/widgets/flippable_chat_card.dart:96:13 • missing_required_argument
+  error • The named parameter 'foregroundColor' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:99:17 • undefined_named_parameter
+  error • The named parameter 'elevation' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:100:17 • undefined_named_parameter
+  error • The named parameter 'onPressed' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:102:15 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:106:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/flippable_chat_card.dart:108:11 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:154:11 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:155:11 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:157:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/flippable_chat_card.dart:284:6 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:295:11 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:296:11 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:297:11 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:298:72 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/flippable_chat_card.dart:299:11 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:301:9 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:349:29 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/chat/widgets/flippable_chat_card.dart:350:29 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/flippable_chat_card.dart:351:23 • expected_token
+  error • Expected to find ')' • lib/features/chat/widgets/flippable_chat_card.dart:360:6 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/create_post_screen.dart:419:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/create_post_screen.dart:419:52 • prefer_const_constructors
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/create_post_screen.dart:728:29 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/create_post/screens/create_post_screen.dart:736:21 • extra_positional_arguments_could_be_named
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/create_post_screen.dart:749:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/screens/create_post_screen.dart:759:19 • expected_token
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/features/create_post/screens/edit_post_screen.dart:4:8 • unnecessary_import
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:243:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:244:17 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:247:15 • undefined_named_parameter
+  error • The named parameter 'onTap' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:249:15 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/create_post/screens/edit_post_screen.dart:256:13 • extra_positional_arguments_could_be_named
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:261:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:262:17 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:265:15 • undefined_named_parameter
+  error • The named parameter 'onTap' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:267:15 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/create_post/screens/edit_post_screen.dart:272:13 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:273:11 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:396:17 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:398:15 • undefined_named_parameter
+  error • Expected an identifier • lib/features/create_post/screens/edit_post_screen.dart:412:13 • missing_identifier
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:412:13 • expected_token
+  error • Expected to find ',' • lib/features/create_post/screens/edit_post_screen.dart:412:13 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:449:37 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:450:37 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:452:35 • undefined_named_parameter
+  error • Expected an identifier • lib/features/create_post/screens/edit_post_screen.dart:459:29 • missing_identifier
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:459:29 • expected_token
+  error • Expected to find ',' • lib/features/create_post/screens/edit_post_screen.dart:459:29 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:468:37 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:470:35 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/create_post/screens/edit_post_screen.dart:481:29 • extra_positional_arguments_could_be_named
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:529:37 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:530:37 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:533:35 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:548:27 • expected_token
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:597:23 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:598:19 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:599:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:602:25 • expected_token
+  error • Expected an identifier • lib/features/create_post/screens/edit_post_screen.dart:604:18 • missing_identifier
+  error • Expected to find ':' • lib/features/create_post/screens/edit_post_screen.dart:604:18 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:605:17 • undefined_named_parameter
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:661:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:663:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:667:21 • expected_token
+  error • Too many positional arguments: 0 expected, but 4 found • lib/features/create_post/screens/edit_post_screen.dart:675:13 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:691:23 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:692:19 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:693:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:696:25 • expected_token
+  error • Expected an identifier • lib/features/create_post/screens/edit_post_screen.dart:698:18 • missing_identifier
+  error • Expected to find ':' • lib/features/create_post/screens/edit_post_screen.dart:698:18 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:699:17 • undefined_named_parameter
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:736:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:738:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:742:19 • expected_token
+  error • Expected an identifier • lib/features/create_post/screens/edit_post_screen.dart:750:13 • missing_identifier
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:750:13 • expected_token
+  error • Expected to find ',' • lib/features/create_post/screens/edit_post_screen.dart:750:13 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:771:23 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/edit_post_screen.dart:773:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/screens/edit_post_screen.dart:794:20 • expected_token
+warning • The declaration '_togglePlay' isn't referenced • lib/features/create_post/screens/music_picker_screen.dart:86:16 • unused_element
+  error • The named parameter 'border' isn't defined • lib/features/create_post/screens/music_picker_screen.dart:167:17 • undefined_named_parameter
+  error • The named parameter 'contentPadding' isn't defined • lib/features/create_post/screens/music_picker_screen.dart:171:17 • undefined_named_parameter
+  error • The named parameter 'onChanged' isn't defined • lib/features/create_post/screens/music_picker_screen.dart:174:15 • undefined_named_parameter
+  error • Expected an identifier • lib/features/create_post/screens/music_picker_screen.dart:179:11 • missing_identifier
+  error • Expected to find ')' • lib/features/create_post/screens/music_picker_screen.dart:179:11 • expected_token
+  error • Expected to find ',' • lib/features/create_post/screens/music_picker_screen.dart:179:11 • expected_token
+  error • Too many positional arguments: 1 expected, but 5 found • lib/features/create_post/screens/music_picker_screen.dart:191:21 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/create_post/screens/music_picker_screen.dart:207:19 • expected_token
+warning • The value of the local variable 'albumImage' isn't used • lib/features/create_post/screens/music_picker_screen.dart:228:25 • unused_local_variable
+warning • The value of the local variable 'artistName' isn't used • lib/features/create_post/screens/music_picker_screen.dart:229:25 • unused_local_variable
+warning • The value of the local variable 'hasPreview' isn't used • lib/features/create_post/screens/music_picker_screen.dart:232:25 • unused_local_variable
+  error • Expected to find ')' • lib/features/create_post/screens/music_picker_screen.dart:241:29 • expected_token
+  error • Expected an identifier • lib/features/create_post/screens/music_picker_screen.dart:310:22 • missing_identifier
+  error • Expected to find ':' • lib/features/create_post/screens/music_picker_screen.dart:310:22 • expected_token
+  error • Expected to find ')' • lib/features/create_post/screens/music_picker_screen.dart:311:20 • expected_token
+   info • The private field _textOverlays could be 'final' • lib/features/create_post/screens/photo_editor_screen.dart:42:21 • prefer_final_fields
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:54:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:78:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:102:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:126:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:150:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:174:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:198:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:222:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:246:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:270:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:294:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:318:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:342:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:366:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:536:34 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:537:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:538:34 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:539:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:861:19 • prefer_const_constructors
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/screens/photo_editor_screen.dart:1029:15 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/photo_editor_screen.dart:1031:13 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 2 found • lib/features/create_post/screens/photo_editor_screen.dart:1033:11 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/create_post/screens/photo_editor_screen.dart:1036:9 • expected_token
+  error • The named parameter 'border' isn't defined • lib/features/create_post/screens/photo_tag_screen.dart:176:23 • undefined_named_parameter
+  error • The named parameter 'onChanged' isn't defined • lib/features/create_post/screens/photo_tag_screen.dart:181:21 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 2 found • lib/features/create_post/screens/photo_tag_screen.dart:186:19 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/create_post/screens/photo_tag_screen.dart:239:17 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/screens/photo_tag_screen.dart:343:35 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/create_post/screens/photo_tag_screen.dart:344:35 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/photo_tag_screen.dart:349:33 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/screens/photo_tag_screen.dart:379:28 • expected_token
+   info • Unnecessary use of 'toList' in a spread • lib/features/create_post/screens/photo_tag_screen.dart:380:28 • unnecessary_to_list_in_spreads
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:65:29 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:66:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:68:27 • undefined_named_parameter
+  error • Expected an identifier • lib/features/create_post/widgets/image_preview_gallery.dart:73:21 • missing_identifier
+  error • Expected to find ')' • lib/features/create_post/widgets/image_preview_gallery.dart:73:21 • expected_token
+  error • Expected to find ',' • lib/features/create_post/widgets/image_preview_gallery.dart:73:21 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:82:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:84:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/widgets/image_preview_gallery.dart:93:19 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:113:23 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/widgets/image_preview_gallery.dart:119:9 • expected_token
+warning • Unused import: 'package:google_fonts/google_fonts.dart' • lib/features/create_post/widgets/location_picker_button.dart:5:8 • unused_import
+  error • Expected to find ')' • lib/features/create_post/widgets/location_picker_button.dart:32:15 • expected_token
+  error • Expected an identifier • lib/features/create_post/widgets/location_picker_button.dart:88:6 • missing_identifier
+  error • Expected to find ')' • lib/features/create_post/widgets/location_picker_button.dart:88:6 • expected_token
+  error • Expected to find ':' • lib/features/create_post/widgets/location_picker_button.dart:88:6 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/widgets/selected_music_card.dart:22:11 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/create_post/widgets/selected_music_card.dart:23:11 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/widgets/selected_music_card.dart:27:9 • undefined_named_parameter
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/widgets/selected_music_card.dart:82:19 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/widgets/selected_music_card.dart:84:17 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/widgets/selected_music_card.dart:87:11 • expected_token
+  error • Expected to find ')' • lib/features/create_post/widgets/selected_music_card.dart:90:6 • expected_token
+warning • Unused import: 'package:google_fonts/google_fonts.dart' • lib/features/create_post/widgets/visibility_option.dart:5:8 • unused_import
+  error • Expected to find ')' • lib/features/create_post/widgets/visibility_option.dart:35:15 • expected_token
+  error • Expected an identifier • lib/features/create_post/widgets/visibility_option.dart:61:8 • missing_identifier
+  error • Expected to find ':' • lib/features/create_post/widgets/visibility_option.dart:61:8 • expected_token
+  error • Expected to find ')' • lib/features/create_post/widgets/visibility_option.dart:62:6 • expected_token
+  error • The named parameter 'builder' is required, but there's no corresponding argument • lib/features/home/screens/home_screen.dart:129:5 • missing_required_argument
+  error • The named parameter 'builder' isn't defined • lib/features/home/screens/home_screen.dart:133:7 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:158:6 • expected_token
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/home/screens/home_screen.dart:222:31 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/home/screens/home_screen.dart:228:29 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/home/screens/home_screen.dart:238:40 • use_build_context_synchronously
+  error • The named parameter 'borderRadius' isn't defined • lib/features/home/screens/home_screen.dart:250:23 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/home/screens/home_screen.dart:251:23 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/home/screens/home_screen.dart:254:29 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/home/screens/home_screen.dart:255:29 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:256:23 • expected_token
+  error • The named parameter 'border' isn't defined • lib/features/home/screens/home_screen.dart:257:23 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/home/screens/home_screen.dart:259:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:292:16 • expected_token
+   info • 'WillPopScope' is deprecated and shouldn't be used. Use PopScope instead. The Android predictive back feature will not work with WillPopScope. This feature was deprecated after v3.12.0-1.0.pre • lib/features/home/screens/home_screen.dart:324:12 • deprecated_member_use
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/home/screens/home_screen.dart:584:19 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:585:17 • expected_token
+  error • The named parameter 'width' isn't defined • lib/features/home/screens/home_screen.dart:589:17 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/home/screens/home_screen.dart:591:15 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/home/screens/home_screen.dart:594:19 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/home/screens/home_screen.dart:595:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:597:15 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/home/screens/home_screen.dart:599:13 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/features/home/screens/home_screen.dart:658:35 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:661:30 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/home/screens/home_screen.dart:684:31 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/home/screens/home_screen.dart:685:31 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:687:27 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/home/screens/home_screen.dart:736:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/home/screens/home_screen.dart:738:19 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 2 found • lib/features/home/screens/home_screen.dart:746:17 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:778:15 • expected_token
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:783:6 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/home/screens/home_screen.dart:812:19 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/home/screens/home_screen.dart:813:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:815:15 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/home/widgets/appbar_buttons.dart:150:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/home/widgets/home_feed.dart:26:14 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/home/widgets/home_feed.dart:27:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/home/widgets/home_feed.dart:36:13 • prefer_const_constructors
+  error • The named parameter 'borderRadius' isn't defined • lib/features/home/widgets/post_card.dart:112:17 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/home/widgets/post_card.dart:113:17 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/features/home/widgets/post_card.dart:114:77 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/home/widgets/post_card.dart:116:15 • undefined_named_parameter
+  error • The named parameter 'fontSize' isn't defined • lib/features/home/widgets/post_card.dart:221:29 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/features/home/widgets/post_card.dart:222:29 • undefined_named_parameter
+  error • Expected 'else' or comma • lib/features/home/widgets/post_card.dart:226:19 • expected_else_or_comma
+  error • Expected an identifier • lib/features/home/widgets/post_card.dart:226:19 • missing_identifier
+  error • Expected to find ')' • lib/features/home/widgets/post_card.dart:226:19 • expected_token
+  error • Expected to find ')' • lib/features/home/widgets/post_card.dart:330:6 • expected_token
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/features/notifications/screens/notifications_screen.dart:3:8 • unnecessary_import
+  error • The named parameter 'onPressed' is required, but there's no corresponding argument • lib/features/notifications/screens/notifications_screen.dart:126:22 • missing_required_argument
+  error • The named parameter 'borderRadius' isn't defined • lib/features/notifications/screens/notifications_screen.dart:131:19 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:133:17 • undefined_named_parameter
+  error • The named parameter 'onPressed' isn't defined • lib/features/notifications/screens/notifications_screen.dart:136:15 • undefined_named_parameter
+  error • The named parameter 'flexibleSpace' isn't defined • lib/features/notifications/screens/notifications_screen.dart:138:13 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/notifications/screens/notifications_screen.dart:149:27 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:150:25 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/notifications/screens/notifications_screen.dart:175:23 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:176:21 • expected_token
+  error • Too many positional arguments: 0 expected, but 3 found • lib/features/notifications/screens/notifications_screen.dart:184:11 • extra_positional_arguments_could_be_named
+   info • Statements in an if should be enclosed in a block • lib/features/notifications/screens/notifications_screen.dart:189:19 • curly_braces_in_flow_control_structures
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/notifications/screens/notifications_screen.dart:217:27 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:218:25 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:223:21 • undefined_named_parameter
+  error • The named parameter 'borderRadius' isn't defined • lib/features/notifications/screens/notifications_screen.dart:293:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:295:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:298:23 • expected_token
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:301:18 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/features/notifications/screens/notifications_screen.dart:333:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:335:27 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 4 found • lib/features/notifications/screens/notifications_screen.dart:338:25 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:350:23 • expected_token
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:378:9 • expected_token
+   info • Don't use 'BuildContext's across async gaps • lib/features/notifications/screens/notifications_screen.dart:418:13 • use_build_context_synchronously
+  error • The named parameter 'boxShadow' isn't defined • lib/features/notifications/screens/notifications_screen.dart:482:13 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/notifications/screens/notifications_screen.dart:485:17 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/notifications/screens/notifications_screen.dart:486:17 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:488:13 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:490:11 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:500:84 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/notifications/screens/notifications_screen.dart:600:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:602:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:605:15 • expected_token
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:610:6 • expected_token
+   info • Unnecessary braces in a string interpolation • lib/features/post/screens/post_detail_screen.dart:538:35 • unnecessary_brace_in_string_interps
+   info • Use 'const' with the constructor to improve performance • lib/features/post/screens/post_detail_screen.dart:1355:18 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:52:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:52:29 • prefer_const_constructors
+  error • The named parameter 'backgroundImage' isn't defined • lib/features/post/widgets/comment_input.dart:72:17 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/comment_input.dart:75:17 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 4 found • lib/features/post/widgets/comment_input.dart:79:15 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/post/widgets/comment_input.dart:115:13 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/post/widgets/comment_input.dart:129:9 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/post/widgets/comment_input.dart:130:9 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/comment_input.dart:132:7 • undefined_named_parameter
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:134:11 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:148:22 • prefer_const_constructors
+  error • Expected to find ')' • lib/features/post/widgets/comment_input.dart:152:6 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/post/widgets/comment_input.dart:168:11 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/comment_input.dart:170:9 • undefined_named_parameter
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:173:13 • prefer_const_constructors
+  error • Expected to find ')' • lib/features/post/widgets/comment_input.dart:182:6 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:192:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:199:15 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:228:15 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:231:24 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_item.dart:58:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_item.dart:60:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_item.dart:111:32 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_item.dart:113:34 • prefer_const_constructors
+  error • The named parameter 'size' isn't defined • lib/features/post/widgets/comment_item.dart:126:31 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/comment_item.dart:129:19 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/post_comments_list.dart:97:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/post_comments_list.dart:99:26 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/post_comments_list.dart:155:40 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/post_comments_list.dart:157:42 • prefer_const_constructors
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/taggable_post_image.dart:118:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:127:18 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:145:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/taggable_post_image.dart:147:19 • undefined_named_parameter
+  error • Expected 'else' or comma • lib/features/post/widgets/taggable_post_image.dart:167:11 • expected_else_or_comma
+  error • Expected an identifier • lib/features/post/widgets/taggable_post_image.dart:167:11 • missing_identifier
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:167:11 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:192:25 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/post/widgets/taggable_post_image.dart:193:25 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/post/widgets/taggable_post_image.dart:197:25 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:200:29 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:202:25 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/taggable_post_image.dart:204:23 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:232:16 • expected_token
+   info • Unnecessary use of 'toList' in a spread • lib/features/post/widgets/taggable_post_image.dart:233:16 • unnecessary_to_list_in_spreads
+  error • The named parameter 'borderRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:249:21 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/post/widgets/taggable_post_image.dart:250:21 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/post/widgets/taggable_post_image.dart:252:21 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:255:25 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:256:25 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:258:21 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/taggable_post_image.dart:260:19 • undefined_named_parameter
+  error • Expected 'else' or comma • lib/features/post/widgets/taggable_post_image.dart:301:11 • expected_else_or_comma
+  error • Expected an identifier • lib/features/post/widgets/taggable_post_image.dart:301:11 • missing_identifier
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:301:11 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/features/post/widgets/taggable_post_image.dart:311:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/taggable_post_image.dart:313:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:317:9 • expected_token
+  error • The named parameter 'builder' is required, but there's no corresponding argument • lib/features/profile/screens/follow_list_screen.dart:142:5 • missing_required_argument
+  error • The named parameter 'builder' isn't defined • lib/features/profile/screens/follow_list_screen.dart:145:7 • undefined_named_parameter
+  error • The named parameter 'borderRadius' isn't defined • lib/features/profile/screens/follow_list_screen.dart:155:17 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/profile/screens/follow_list_screen.dart:156:17 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/profile/screens/follow_list_screen.dart:157:17 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/profile/screens/follow_list_screen.dart:160:21 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/profile/screens/follow_list_screen.dart:161:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:163:17 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/profile/screens/follow_list_screen.dart:165:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:257:10 • expected_token
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:259:6 • expected_token
+  error • The named parameter 'height' isn't defined • lib/features/profile/screens/follow_list_screen.dart:285:13 • undefined_named_parameter
+  error • The named parameter 'body' isn't defined • lib/features/profile/screens/follow_list_screen.dart:289:7 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:341:6 • expected_token
+  error • The named parameter 'child' is required, but there's no corresponding argument • lib/features/profile/screens/follow_list_screen.dart:423:24 • missing_required_argument
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:435:29 • expected_token
+  error • Expected an identifier • lib/features/profile/screens/follow_list_screen.dart:436:34 • missing_identifier
+  error • Expected to find ':' • lib/features/profile/screens/follow_list_screen.dart:436:34 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/features/profile/screens/follow_list_screen.dart:437:21 • undefined_named_parameter
+  error • The named parameter 'padding' isn't defined • lib/features/profile/screens/follow_list_screen.dart:440:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/profile/screens/follow_list_screen.dart:442:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:454:11 • expected_token
+warning • Unused import: '../../../shared/widgets/image_carousel.dart' • lib/features/profile/screens/profile_screen.dart:18:8 • unused_import
+warning • Unused import: '../widgets/profile_badges.dart' • lib/features/profile/screens/profile_screen.dart:19:8 • unused_import
+warning • Unused import: '../../post/screens/post_detail_screen.dart' • lib/features/profile/screens/profile_screen.dart:28:8 • unused_import
+   info • Don't invoke 'print' in production code • lib/features/profile/screens/profile_screen.dart:119:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/profile/screens/profile_screen.dart:131:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/profile/screens/profile_screen.dart:134:9 • avoid_print
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/profile_screen.dart:217:9 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps • lib/features/profile/screens/profile_screen.dart:301:28 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/profile_screen.dart:327:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/profile_screen.dart:466:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/profile_screen.dart:496:19 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/user_list_screen.dart:127:7 • curly_braces_in_flow_control_structures
+   info • Empty catch block • lib/features/profile/screens/user_list_screen.dart:187:17 • empty_catches
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/user_list_screen.dart:200:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/user_list_screen.dart:235:9 • curly_braces_in_flow_control_structures
+  error • The named parameter 'width' isn't defined • lib/features/profile/widgets/profile_badges.dart:34:73 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/profile/widgets/profile_badges.dart:35:9 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/profile/widgets/profile_badges.dart:38:13 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/profile/widgets/profile_badges.dart:39:13 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/profile/widgets/profile_badges.dart:40:13 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/widgets/profile_badges.dart:42:9 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/profile/widgets/profile_badges.dart:44:7 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/widgets/profile_badges.dart:51:6 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_body.dart:24:14 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_body.dart:25:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_body.dart:26:18 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_body.dart:28:20 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_body.dart:41:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_header.dart:261:45 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_header.dart:281:47 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_header.dart:295:47 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_header.dart:354:33 • prefer_const_constructors
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/search/screens/search_screen.dart:170:52 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/features/search/screens/search_screen.dart:230:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/search/screens/search_screen.dart:245:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/search/screens/search_screen.dart:266:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/search/screens/search_screen.dart:268:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/search/screens/search_screen.dart:457:7 • curly_braces_in_flow_control_structures
+   info • Use 'const' with the constructor to improve performance • lib/features/search/screens/search_screen.dart:724:51 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/screens/search_screen.dart:937:7 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/explore_feed.dart:27:14 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/explore_feed.dart:28:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/explore_feed.dart:37:13 • prefer_const_constructors
+  error • Expected to find ')' • lib/features/search/widgets/search_bar_widget.dart:36:13 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/search/widgets/search_bar_widget.dart:37:9 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/search/widgets/search_bar_widget.dart:38:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/search/widgets/search_bar_widget.dart:40:70 • expected_token
+  error • Expected an identifier • lib/features/search/widgets/search_bar_widget.dart:42:10 • missing_identifier
+  error • Expected to find ':' • lib/features/search/widgets/search_bar_widget.dart:42:10 • expected_token
+  error • The named parameter 'boxShadow' isn't defined • lib/features/search/widgets/search_bar_widget.dart:43:9 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/search/widgets/search_bar_widget.dart:47:19 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/search/widgets/search_bar_widget.dart:48:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/search/widgets/search_bar_widget.dart:50:15 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/search/widgets/search_bar_widget.dart:53:7 • undefined_named_parameter
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_bar_widget.dart:89:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_bar_widget.dart:93:24 • prefer_const_constructors
+  error • Expected to find ')' • lib/features/search/widgets/search_bar_widget.dart:104:6 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/search/widgets/search_header.dart:43:13 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/search/widgets/search_header.dart:44:11 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_header.dart:65:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_header.dart:67:31 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/search/widgets/search_header.dart:68:31 • prefer_const_literals_to_create_immutables
+  error • Expected to find ')' • lib/features/search/widgets/search_header.dart:102:13 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/search/widgets/search_header.dart:103:9 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/search/widgets/search_header.dart:104:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/search/widgets/search_header.dart:107:15 • expected_token
+  error • Expected an identifier • lib/features/search/widgets/search_header.dart:109:10 • missing_identifier
+  error • Expected to find ':' • lib/features/search/widgets/search_header.dart:109:10 • expected_token
+  error • The named parameter 'boxShadow' isn't defined • lib/features/search/widgets/search_header.dart:110:9 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/search/widgets/search_header.dart:114:19 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/search/widgets/search_header.dart:115:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/search/widgets/search_header.dart:117:15 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/search/widgets/search_header.dart:120:7 • undefined_named_parameter
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_header.dart:153:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_header.dart:157:24 • prefer_const_constructors
+  error • Expected to find ')' • lib/features/search/widgets/search_header.dart:164:6 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_user_item.dart:41:27 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_user_item.dart:43:27 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/search/widgets/search_user_item.dart:44:27 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_user_item.dart:76:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_user_item.dart:96:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/main.dart:37:18 • prefer_const_constructors
+   info • Don't use 'BuildContext's across async gaps • lib/main.dart:144:38 • use_build_context_synchronously
+   info • Use 'const' with the constructor to improve performance • lib/main.dart:462:39 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/main.dart:463:39 • prefer_const_literals_to_create_immutables
+   info • Unnecessary braces in a string interpolation • lib/models/photo_emoji.dart:57:41 • unnecessary_brace_in_string_interps
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/auth/forgot_password_screen.dart:3:8 • unnecessary_import
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/auth/login_screen.dart:3:8 • unnecessary_import
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/auth/login_screen.dart:208:45 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/auth/login_screen.dart:209:44 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/auth/login_screen.dart:217:50 • use_build_context_synchronously
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/auth/signup_screen.dart:3:8 • unnecessary_import
+   info • Statements in an if should be enclosed in a block • lib/screens/auth/signup_screen.dart:283:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/auth/signup_screen.dart:285:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/auth/signup_screen.dart:300:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/auth/signup_screen.dart:302:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/auth/signup_screen.dart:317:33 • curly_braces_in_flow_control_structures
+warning • Unused import: 'dart:math' • lib/screens/auth/welcome_screen.dart:3:8 • unused_import
+   info • Use 'const' for final variables initialized to a constant value • lib/screens/auth/welcome_screen.dart:342:21 • prefer_const_declarations
+   info • Use 'const' with the constructor to improve performance • lib/screens/auth/welcome_screen.dart:592:37 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/screens/auth/welcome_screen.dart:593:37 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/screens/auth/welcome_screen.dart:746:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/auth/welcome_screen.dart:748:35 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/screens/auth/welcome_screen.dart:749:35 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/screens/auth/welcome_screen.dart:910:29 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/screens/auth/welcome_screen.dart:911:29 • prefer_const_literals_to_create_immutables
+   info • Don't invoke 'print' in production code • lib/screens/content/call_screen.dart:83:7 • avoid_print
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:112:21 • prefer_const_constructors
+   info • 'memberListConfig' is deprecated and shouldn't be used. use memberList instead, deprecated since 4.1.9, will be removed after 4.5.0,Migrate Guide:https://pub.dev/documentation/zego_uikit_prebuilt_call/latest/topics/Migration_4.x-topic.html#419 • lib/screens/content/call_screen.dart:148:12 • deprecated_member_use
+   info • 'ZegoMemberListConfig' is deprecated and shouldn't be used. use ZegoCallMemberListConfig instead, deprecated since 4.1.9, will be removed after 4.5.0,Migrate Guide:https://pub.dev/documentation/zego_uikit_prebuilt_call/latest/topics/Migration_4.x-topic.html#419 • lib/screens/content/call_screen.dart:148:31 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:382:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:394:54 • prefer_const_constructors
+   info • Use a 'SizedBox' to add whitespace to a layout • lib/screens/content/call_screen.dart:501:16 • sized_box_for_whitespace
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:540:29 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/screens/content/call_screen.dart:541:29 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:555:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:568:37 • prefer_const_constructors
+warning • Unused import: 'package:font_awesome_flutter/font_awesome_flutter.dart' • lib/screens/content/create_post_screen.dart:9:8 • unused_import
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/create_post_screen.dart:418:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/create_post_screen.dart:418:52 • prefer_const_constructors
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/content/edit_post_screen.dart:4:8 • unnecessary_import
+   info • The private field _textOverlays could be 'final' • lib/screens/content/photo_editor_screen.dart:42:21 • prefer_final_fields
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:54:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:78:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:102:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:126:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:150:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:174:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:198:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:222:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:246:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:270:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:294:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:318:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:342:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:366:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:536:34 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:537:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:538:34 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:539:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:861:19 • prefer_const_constructors
+   info • Unnecessary use of 'toList' in a spread • lib/screens/content/photo_tag_screen.dart:380:28 • unnecessary_to_list_in_spreads
+warning • Unused import: 'dart:math' • lib/screens/main/home_screen.dart:4:8 • unused_import
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/main/home_screen.dart:222:31 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/main/home_screen.dart:228:29 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/main/home_screen.dart:238:40 • use_build_context_synchronously
+   info • 'WillPopScope' is deprecated and shouldn't be used. Use PopScope instead. The Android predictive back feature will not work with WillPopScope. This feature was deprecated after v3.12.0-1.0.pre • lib/screens/main/home_screen.dart:324:12 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/home_screen.dart:634:21 • prefer_const_constructors
+   info • Don't invoke 'print' in production code • lib/screens/main/profile_screen.dart:158:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/screens/main/profile_screen.dart:170:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/screens/main/profile_screen.dart:173:9 • avoid_print
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:256:9 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps • lib/screens/main/profile_screen.dart:340:28 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:366:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:459:9 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps • lib/screens/main/profile_screen.dart:462:28 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:546:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:576:19 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:792:41 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:794:41 • curly_braces_in_flow_control_structures
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/profile_screen.dart:922:57 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/profile_screen.dart:942:59 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/profile_screen.dart:956:59 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/profile_screen.dart:1068:33 • prefer_const_constructors
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/main/search_screen.dart:170:52 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/screens/main/search_screen.dart:231:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/search_screen.dart:246:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/search_screen.dart:267:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/search_screen.dart:269:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/search_screen.dart:458:7 • curly_braces_in_flow_control_structures
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/search_screen.dart:725:45 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/search_screen.dart:939:11 • prefer_const_constructors
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/social/messages_screen.dart:5:8 • unnecessary_import
+   info • The private field _lastChats could be 'final' • lib/screens/social/messages_screen.dart:57:30 • prefer_final_fields
+warning • The value of the field '_lastChats' isn't used • lib/screens/social/messages_screen.dart:57:30 • unused_field
+   info • Don't invoke 'print' in production code • lib/screens/social/messages_screen.dart:160:7 • avoid_print
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/screens/social/messages_screen.dart:204:21 • deprecated_member_use
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/screens/social/messages_screen.dart:229:21 • deprecated_member_use
+   info • Use 'const' for final variables initialized to a constant value • lib/screens/social/messages_screen.dart:322:23 • prefer_const_declarations
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/messages_screen.dart:447:27 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/messages_screen.dart:449:36 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/screens/social/messages_screen.dart:450:41 • prefer_const_literals_to_create_immutables
+   info • Statements in an if should be enclosed in a block • lib/screens/social/messages_screen.dart:998:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/social/messages_screen.dart:1023:9 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/social/messages_screen.dart:1063:38 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/screens/social/messages_screen.dart:1235:9 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/screens/social/messages_screen.dart:1328:17 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/social/messages_screen.dart:1344:17 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/social/messages_screen.dart:1373:25 • curly_braces_in_flow_control_structures
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/social/notifications_screen.dart:3:8 • unnecessary_import
+   info • Statements in an if should be enclosed in a block • lib/screens/social/notifications_screen.dart:188:19 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps • lib/screens/social/notifications_screen.dart:417:13 • use_build_context_synchronously
+   info • Unnecessary braces in a string interpolation • lib/screens/social/post_detail_screen.dart:549:35 • unnecessary_brace_in_string_interps
+   info • Don't use 'BuildContext's across async gaps • lib/screens/social/post_detail_screen.dart:662:28 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/screens/social/post_detail_screen.dart:665:28 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/screens/social/post_detail_screen.dart:1032:19 • use_build_context_synchronously
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/post_detail_screen.dart:1742:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/post_detail_screen.dart:2048:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/post_detail_screen.dart:2050:26 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/post_detail_screen.dart:2106:40 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/post_detail_screen.dart:2108:42 • prefer_const_constructors
+   info • Statements in an if should be enclosed in a block • lib/screens/social/user_list_screen.dart:127:7 • curly_braces_in_flow_control_structures
+   info • Empty catch block • lib/screens/social/user_list_screen.dart:187:17 • empty_catches
+   info • Statements in an if should be enclosed in a block • lib/screens/social/user_list_screen.dart:200:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/social/user_list_screen.dart:235:9 • curly_braces_in_flow_control_structures
+   info • Don't invoke 'print' in production code • lib/services/apple_music_service.dart:16:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:44:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:104:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:108:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:120:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:128:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:130:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:139:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:225:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:237:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:261:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:280:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:297:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:299:7 • avoid_print
+   info • Use 'const' for final variables initialized to a constant value • lib/services/spotify_service.dart:17:7 • prefer_const_declarations
+   info • Don't invoke 'print' in production code • lib/services/toxicity_service.dart:36:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/toxicity_service.dart:43:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/toxicity_service.dart:46:7 • avoid_print
+  error • Expected to find ')' • lib/shared/widgets/double_tap_overlay.dart:108:23 • expected_token
+  error • Expected to find ')' • lib/shared/widgets/fuel_button.dart:126:53 • expected_token
+   info • Use 'const' for final variables initialized to a constant value • lib/shared/widgets/fuel_button.dart:130:5 • prefer_const_declarations
+   info • Use 'const' for final variables initialized to a constant value • lib/shared/widgets/fuel_button.dart:131:5 • prefer_const_declarations
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/shared/widgets/fuel_button.dart:180:40 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:181:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:183:43 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/shared/widgets/fuel_button.dart:206:40 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:207:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:209:43 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:289:43 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/shared/widgets/fuel_button.dart:292:44 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:292:45 • prefer_const_constructors
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/image_carousel.dart:129:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/image_carousel.dart:135:7 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/image_carousel.dart:178:11 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/image_carousel.dart:180:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/image_carousel.dart:197:6 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/image_carousel.dart:212:13 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/shared/widgets/image_carousel.dart:213:13 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/image_carousel.dart:215:11 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/image_carousel.dart:236:6 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/image_carousel.dart:258:17 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/shared/widgets/image_carousel.dart:259:17 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/image_carousel.dart:261:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/image_carousel.dart:271:8 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/location_display_sheet.dart:14:9 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/shared/widgets/location_display_sheet.dart:15:9 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/shared/widgets/location_display_sheet.dart:16:9 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/shared/widgets/location_display_sheet.dart:19:13 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/shared/widgets/location_display_sheet.dart:20:13 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/location_display_sheet.dart:22:9 • expected_token
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/location_display_sheet.dart:24:7 • undefined_named_parameter
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/location_display_sheet.dart:33:19 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/location_display_sheet.dart:35:17 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 3 found • lib/shared/widgets/location_display_sheet.dart:38:15 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/shared/widgets/location_display_sheet.dart:67:13 • expected_token
+  error • Expected to find ')' • lib/shared/widgets/location_display_sheet.dart:72:4 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/music_player_card.dart:274:17 • undefined_named_parameter
+  error • The named parameter 'leading' isn't defined • lib/shared/widgets/music_player_card.dart:276:17 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/shared/widgets/music_player_card.dart:278:17 • undefined_named_parameter
+  error • The named parameter 'onTap' isn't defined • lib/shared/widgets/music_player_card.dart:280:17 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:285:13 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/music_player_card.dart:288:17 • undefined_named_parameter
+  error • The named parameter 'leading' isn't defined • lib/shared/widgets/music_player_card.dart:290:17 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/shared/widgets/music_player_card.dart:292:17 • undefined_named_parameter
+  error • The named parameter 'trailing' isn't defined • lib/shared/widgets/music_player_card.dart:294:17 • undefined_named_parameter
+  error • The named parameter 'onTap' isn't defined • lib/shared/widgets/music_player_card.dart:296:17 • undefined_named_parameter
+  error • Expected an identifier • lib/shared/widgets/music_player_card.dart:304:13 • missing_identifier
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:304:13 • expected_token
+  error • Expected to find ',' • lib/shared/widgets/music_player_card.dart:304:13 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/music_player_card.dart:307:17 • undefined_named_parameter
+  error • The named parameter 'leading' isn't defined • lib/shared/widgets/music_player_card.dart:309:17 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/shared/widgets/music_player_card.dart:311:17 • undefined_named_parameter
+  error • The named parameter 'onTap' isn't defined • lib/shared/widgets/music_player_card.dart:313:17 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:328:13 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/music_player_card.dart:331:17 • undefined_named_parameter
+  error • The named parameter 'leading' isn't defined • lib/shared/widgets/music_player_card.dart:333:17 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/shared/widgets/music_player_card.dart:335:17 • undefined_named_parameter
+  error • The named parameter 'trailing' isn't defined • lib/shared/widgets/music_player_card.dart:337:17 • undefined_named_parameter
+  error • The named parameter 'onTap' isn't defined • lib/shared/widgets/music_player_card.dart:339:17 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/shared/widgets/music_player_card.dart:344:13 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:345:11 • expected_token
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/music_player_card.dart:444:7 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:472:6 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/shared/widgets/music_player_card.dart:538:15 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/shared/widgets/music_player_card.dart:539:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:541:11 • expected_token
+  error • The named parameter 'width' isn't defined • lib/shared/widgets/music_player_card.dart:578:74 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/music_player_card.dart:580:23 • undefined_named_parameter
+  error • Expected an identifier • lib/shared/widgets/music_player_card.dart:651:21 • missing_identifier
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:651:21 • expected_token
+  error • Expected to find ',' • lib/shared/widgets/music_player_card.dart:651:21 • expected_token
+  error • The named parameter 'border' isn't defined • lib/shared/widgets/music_player_card.dart:658:27 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/music_player_card.dart:661:25 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:671:19 • expected_token
+  error • Expected an identifier • lib/shared/widgets/music_player_card.dart:677:15 • missing_identifier
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:677:15 • expected_token
+  error • Expected to find ',' • lib/shared/widgets/music_player_card.dart:677:15 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/music_player_card.dart:692:27 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/music_player_card.dart:696:25 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:705:13 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:221:15 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 3 found • lib/shared/widgets/photo_emoji_picker.dart:226:11 • extra_positional_arguments_could_be_named
+  error • The named parameter 'fontSize' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:243:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:246:15 • expected_token
+  error • The named parameter 'fontSize' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:290:74 • undefined_named_parameter
+  error • The named parameter 'textAlign' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:291:15 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/shared/widgets/photo_emoji_picker.dart:296:11 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:297:9 • expected_token
+  error • The named parameter 'image' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:343:21 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:349:21 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:353:23 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:355:21 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:359:33 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:360:27 • expected_token
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:363:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:373:23 • expected_token
+  error • Expected an identifier • lib/shared/widgets/photo_emoji_picker.dart:374:18 • missing_identifier
+  error • Expected to find ':' • lib/shared/widgets/photo_emoji_picker.dart:374:18 • expected_token
+  error • Expected an identifier • lib/shared/widgets/photo_emoji_picker.dart:376:17 • missing_identifier
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:376:17 • expected_token
+  error • Expected to find ',' • lib/shared/widgets/photo_emoji_picker.dart:376:17 • expected_token
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:400:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:411:15 • expected_token
+  error • The named parameter 'fontSize' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:419:17 • undefined_named_parameter
+  error • The named parameter 'fontWeight' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:420:17 • undefined_named_parameter
+  error • The named parameter 'maxLines' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:422:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:424:11 • expected_token
+   info • Use 'const' for final variables initialized to a constant value • lib/widgets/fuel_button.dart:130:5 • prefer_const_declarations
+   info • Use 'const' for final variables initialized to a constant value • lib/widgets/fuel_button.dart:131:5 • prefer_const_declarations
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/widgets/fuel_button.dart:180:40 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:181:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:183:43 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/widgets/fuel_button.dart:206:40 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:207:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:209:43 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:289:43 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/widgets/fuel_button.dart:292:44 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:292:45 • prefer_const_constructors
+   info • Unnecessary use of 'toList' in a spread • lib/widgets/taggable_post_image.dart:233:16 • unnecessary_to_list_in_spreads
+
+1027 issues found. (ran in 2.7s)
