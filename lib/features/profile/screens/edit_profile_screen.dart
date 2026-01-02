@@ -6,11 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:country_code_picker/country_code_picker.dart';
-import '../../../core/theme/theme_manager.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../create_post/screens/photo_editor_screen.dart';
+import '../../../core/constants/border_colors.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> currentProfile;
@@ -43,17 +42,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
 
   // 🎨 HALKA (BORDER) SEÇENEKLERİ
   int _selectedBorderIndex = 0;
-  final List<List<Color>> _borderOptions = [
-    [const Color(0xFF6C63FF), const Color(0xFF448AFF)], // 1. Orijinal (Mor-Mavi)
-    [const Color(0xFFf5a5cf), const Color(0xFFE084B0)], // 2. Yeni Pembe (#f5a5cf)
-    [Colors.orange, Colors.deepOrange],                 // 3. Turuncu (Yeni)
-    [Colors.black, const Color(0xFF2C2C2C)],            // 4. Siyah (Yeni)
-    [Colors.white, const Color(0xFFE0E0E0)],            // 5. Beyaz (Yeni)
-    [const Color(0xFFFF512F), const Color(0xFFDD2476)], // 6. Ateş (Kırmızı)
-    [const Color(0xFF00b09b), const Color(0xFF96c93d)], // 7. Doğa (Yeşil)
-    [const Color(0xFFFFD700), const Color(0xFFFDB931)], // 8. Altın
-    [Colors.transparent, Colors.transparent],           // 9. Yok
-  ];
+  // BorderColors.options kullanılıyor (lib/core/constants/border_colors.dart)
 
   late AnimationController _animController1;
   late AnimationController _animController2;
@@ -70,22 +59,25 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _is2FAEnabled = widget.currentProfile['is_2fa_enabled'] ?? false;
     _verifiedPhone = widget.currentProfile['phone'];
 
+    // 🎨 Kaydedilen halka rengini yükle
+    _selectedBorderIndex = widget.currentProfile['border_color_index'] ?? 0;
+
     // Animasyonlar
     _animController1 =
-    AnimationController(vsync: this, duration: const Duration(seconds: 5))
-      ..repeat(reverse: true);
+        AnimationController(vsync: this, duration: const Duration(seconds: 5))
+          ..repeat(reverse: true);
     _animOffset1 = Tween<Offset>(
-        begin: const Offset(-0.2, -0.2), end: const Offset(0.2, 0.2))
+            begin: const Offset(-0.2, -0.2), end: const Offset(0.2, 0.2))
         .animate(
-        CurvedAnimation(parent: _animController1, curve: Curves.easeInOut));
+            CurvedAnimation(parent: _animController1, curve: Curves.easeInOut));
 
     _animController2 =
-    AnimationController(vsync: this, duration: const Duration(seconds: 4))
-      ..repeat(reverse: true);
+        AnimationController(vsync: this, duration: const Duration(seconds: 4))
+          ..repeat(reverse: true);
     _animOffset2 = Tween<Offset>(
-        begin: const Offset(0.2, 0.2), end: const Offset(-0.2, -0.2))
+            begin: const Offset(0.2, 0.2), end: const Offset(-0.2, -0.2))
         .animate(
-        CurvedAnimation(parent: _animController2, curve: Curves.easeInOut));
+            CurvedAnimation(parent: _animController2, curve: Curves.easeInOut));
   }
 
   @override
@@ -102,7 +94,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image =
-    await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
 
     if (image != null && mounted) {
       final File? editedImage = await Navigator.push<File>(
@@ -158,73 +150,77 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        return StatefulBuilder( // BottomSheet içinde anlık güncelleme için
+        return StatefulBuilder(// BottomSheet içinde anlık güncelleme için
             builder: (context, setSheetState) {
-              return Container(
-                height: 180,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
-                  border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("Profil Halka Rengi",
-                        style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      height: 50, // Yüksekliği azalttım
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _borderOptions.length,
-                        itemBuilder: (context, index) {
-                          final colors = _borderOptions[index];
-                          final isSelected = _selectedBorderIndex == index;
+          return Container(
+            height: 180,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(25)),
+              border: Border(
+                  top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Profil Halka Rengi",
+                    style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 50, // Yüksekliği azalttım
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: BorderColors.options.length,
+                    itemBuilder: (context, index) {
+                      final colors = BorderColors.options[index];
+                      final isSelected = _selectedBorderIndex == index;
 
-                          // Açık renkli butonlarda siyah tik, koyu renklerde beyaz tik
-                          final bool isLightColor = colors.first.computeLuminance() > 0.5;
+                      // Açık renkli butonlarda siyah tik, koyu renklerde beyaz tik
+                      final bool isLightColor =
+                          colors.first.computeLuminance() > 0.5;
 
-                          return GestureDetector(
-                            onTap: () {
-                              // Hem ana ekranı hem sheet'i güncelle
-                              setState(() => _selectedBorderIndex = index);
-                              setSheetState(() => _selectedBorderIndex = index);
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 8),
-                              width: 42, // Boyutu küçülttüm
-                              height: 42,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                    colors: colors,
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight),
-                                border: Border.all(
-                                    color: isSelected ? Colors.white : Colors.white12,
-                                    width: isSelected ? 2 : 1
-                                ),
-                              ),
-                              child: isSelected
-                                  ? Icon(Icons.check,
-                                  size: 20,
-                                  color: isLightColor ? Colors.black : Colors.white)
-                                  : null,
-                            ),
-                          );
+                      return GestureDetector(
+                        onTap: () {
+                          // Hem ana ekranı hem sheet'i güncelle
+                          setState(() => _selectedBorderIndex = index);
+                          setSheetState(() => _selectedBorderIndex = index);
                         },
-                      ),
-                    ),
-                  ],
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                          width: 42, // Boyutu küçülttüm
+                          height: 42,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                                colors: colors,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight),
+                            border: Border.all(
+                                color:
+                                    isSelected ? Colors.white : Colors.white12,
+                                width: isSelected ? 2 : 1),
+                          ),
+                          child: isSelected
+                              ? Icon(Icons.check,
+                                  size: 20,
+                                  color: isLightColor
+                                      ? Colors.black
+                                      : Colors.white)
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              );
-            }
-        );
+              ],
+            ),
+          );
+        });
       },
     );
   }
@@ -232,20 +228,81 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   // --- KAYDET ---
   Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
-    // ... Kaydetme işlemleri ...
+    debugPrint('🔄 Profil kaydetme başladı...');
+
     try {
-      await Future.delayed(const Duration(seconds: 1)); // Simülasyon
+      final userId = Supabase.instance.client.auth.currentUser!.id;
+      String? avatarUrl;
+      String? videoUrl;
+
+      // Resim yükleme
+      if (_imageFile != null) {
+        debugPrint('📷 Resim yükleniyor...');
+        final fileExt = _imageFile!.path.split('.').last;
+        final fileName =
+            'avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final filePath = 'avatars/$fileName';
+
+        await Supabase.instance.client.storage
+            .from('uploads')
+            .upload(filePath, _imageFile!);
+        avatarUrl = Supabase.instance.client.storage
+            .from('uploads')
+            .getPublicUrl(filePath);
+        debugPrint('✅ Resim yüklendi: $avatarUrl');
+      }
+
+      // Video yükleme
+      if (_videoFile != null) {
+        debugPrint('🎥 Video yükleniyor...');
+        final fileExt = _videoFile!.path.split('.').last;
+        final fileName =
+            'video_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final filePath = 'videos/$fileName';
+
+        await Supabase.instance.client.storage
+            .from('uploads')
+            .upload(filePath, _videoFile!);
+        videoUrl = Supabase.instance.client.storage
+            .from('uploads')
+            .getPublicUrl(filePath);
+        debugPrint('✅ Video yüklendi: $videoUrl');
+      }
+
+      // Profil güncelleme
+      final updateData = <String, dynamic>{
+        'full_name': _nameController.text.trim(),
+        'username': _usernameController.text.trim(),
+        'bio': _bioController.text.trim(),
+        'border_color_index': _selectedBorderIndex,
+      };
+
+      if (avatarUrl != null) updateData['avatar_url'] = avatarUrl;
+      if (videoUrl != null) updateData['avatar_video_url'] = videoUrl;
+
+      debugPrint('📤 Supabase güncelleniyor: $updateData');
+
+      await Supabase.instance.client
+          .from('profiles')
+          .update(updateData)
+          .eq('id', userId);
+
+      debugPrint('✅ Profil güncellendi!');
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Profil güncellendi! 🚀', style: GoogleFonts.poppins()),
-          backgroundColor: _colorGreen,
-        ));
         Navigator.pop(context, true);
       }
-    } catch(e) {
-      // Hata
+    } catch (e, stackTrace) {
+      debugPrint('❌ HATA: $e');
+      debugPrint('📍 Stack: $stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Hata: $e', style: GoogleFonts.poppins()),
+          backgroundColor: Colors.redAccent,
+        ));
+      }
     } finally {
-      if(mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -261,7 +318,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       bgImage = NetworkImage(currentAvatarUrl);
     }
 
-    final List<Color> activeBorderColors = _borderOptions[_selectedBorderIndex];
+    final List<Color> activeBorderColors =
+        BorderColors.options[_selectedBorderIndex];
 
     return Stack(
       children: [
@@ -272,7 +330,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
             child: Align(
                 alignment: Alignment.topLeft,
                 child: Container(
-                    width: 300, height: 300,
+                    width: 300,
+                    height: 300,
                     decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _colorPurple.withValues(alpha: 0.25))))),
@@ -281,7 +340,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
             child: Align(
                 alignment: Alignment.bottomRight,
                 child: Container(
-                    width: 300, height: 300,
+                    width: 300,
+                    height: 300,
                     decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _colorBlue.withValues(alpha: 0.25))))),
@@ -315,8 +375,14 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20))),
                       child: _isLoading
-                          ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                          : Text('Kaydet', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+                          ? const SizedBox(
+                              height: 14,
+                              width: 14,
+                              child: CircularProgressIndicator(
+                                  color: Colors.black, strokeWidth: 2))
+                          : Text('Kaydet',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
                   ),
                 ),
@@ -346,7 +412,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                                       end: Alignment.bottomRight),
                                   boxShadow: [
                                     BoxShadow(
-                                        color: activeBorderColors.first.withValues(alpha: 0.5),
+                                        color: activeBorderColors.first
+                                            .withValues(alpha: 0.5),
                                         blurRadius: 20,
                                         spreadRadius: 2)
                                   ]),
@@ -355,18 +422,22 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                                   backgroundColor: const Color(0xFF1F1F1F),
                                   backgroundImage: bgImage,
                                   child: bgImage == null
-                                      ? const Icon(Icons.person, size: 60, color: Colors.white24)
+                                      ? const Icon(Icons.person,
+                                          size: 60, color: Colors.white24)
                                       : null),
                             ),
                             Positioned(
-                                bottom: 5, right: 5,
+                                bottom: 5,
+                                right: 5,
                                 child: Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
                                         color: _colorGreen,
                                         shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.black, width: 2)),
-                                    child: const Icon(Icons.camera_alt, color: Colors.black, size: 18))),
+                                        border: Border.all(
+                                            color: Colors.black, width: 2)),
+                                    child: const Icon(Icons.camera_alt,
+                                        color: Colors.black, size: 18))),
                           ],
                         ),
                       ),
@@ -379,9 +450,14 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                         children: [
                           // 1. LIVE VIDEO BUTONU (Solda)
                           _buildActionButton(
-                            icon: _videoFile != null ? Icons.check_circle : Icons.slow_motion_video,
-                            label: _videoFile != null ? "Live Seçildi" : "Live Video Ekle", // Metin güncellendi
-                            color: _videoFile != null ? _colorGreen : Colors.white,
+                            icon: _videoFile != null
+                                ? Icons.check_circle
+                                : Icons.slow_motion_video,
+                            label: _videoFile != null
+                                ? "Live Seçildi"
+                                : "Live Video Ekle", // Metin güncellendi
+                            color:
+                                _videoFile != null ? _colorGreen : Colors.white,
                             onTap: _pickVideo,
                             isActive: _videoFile != null,
                           ),
@@ -412,14 +488,18 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.08))),
                   child: Column(
                     children: [
-                      _buildTextField("Adın Soyadın", _nameController, icon: Icons.person_outline),
+                      _buildTextField("Adın Soyadın", _nameController,
+                          icon: Icons.person_outline),
                       const SizedBox(height: 24),
-                      _buildTextField("Kullanıcı Adı", _usernameController, icon: Icons.alternate_email),
+                      _buildTextField("Kullanıcı Adı", _usernameController,
+                          icon: Icons.alternate_email),
                       const SizedBox(height: 24),
-                      _buildTextField("Biyografi", _bioController, maxLines: 3, maxLength: 150, icon: Icons.short_text),
+                      _buildTextField("Biyografi", _bioController,
+                          maxLines: 3, maxLength: 150, icon: Icons.short_text),
                       // ... Switchler buraya gelecek ...
                     ],
                   ),
@@ -447,7 +527,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isActive ? _colorGreen.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.08),
+          color: isActive
+              ? _colorGreen.withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isActive ? _colorGreen : Colors.white12,
@@ -480,7 +562,10 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(label,
-                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500))),
+                style: GoogleFonts.poppins(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500))),
         TextField(
           controller: controller,
           maxLines: maxLines,
@@ -489,11 +574,15 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFF1A1A1A),
-            prefixIcon: icon != null ? Icon(icon, color: _colorBlue.withValues(alpha: 0.7)) : null,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            prefixIcon: icon != null
+                ? Icon(icon, color: _colorBlue.withValues(alpha: 0.7))
+                : null,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+                borderSide:
+                    BorderSide(color: Colors.white.withValues(alpha: 0.05))),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide(color: _colorPurple, width: 1.5)),

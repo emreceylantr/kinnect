@@ -126,7 +126,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.arrow_back_ios_new,
@@ -144,8 +144,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          kAccentPurple.withOpacity(0.3),
-                          kAccentPurple.withOpacity(0.1)
+                          kAccentPurple.withValues(alpha: 0.3),
+                          kAccentPurple.withValues(alpha: 0.1)
                         ],
                       ),
                       borderRadius: BorderRadius.circular(10),
@@ -170,7 +170,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      kAccentPurple.withOpacity(0.15),
+                      kAccentPurple.withValues(alpha: 0.15),
                       kBgColor,
                     ],
                   ),
@@ -184,8 +184,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _friendService.getPendingRequests(_currentUserId),
               builder: (context, snapshot) {
-                if (!snapshot.hasData || snapshot.data!.isEmpty)
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const SizedBox();
+                }
                 final requests = snapshot.data!;
                 final firstUser = requests[0];
 
@@ -212,12 +213,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          kAccentPurple.withOpacity(0.2),
-                          kAccentPurple.withOpacity(0.05),
+                          kAccentPurple.withValues(alpha: 0.2),
+                          kAccentPurple.withValues(alpha: 0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: kAccentPurple.withOpacity(0.3)),
+                      border: Border.all(
+                          color: kAccentPurple.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
@@ -288,7 +290,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: kAccentPurple.withOpacity(0.2),
+                            color: kAccentPurple.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.arrow_forward_ios,
@@ -328,7 +330,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
+                            color: Colors.white.withValues(alpha: 0.05),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(FontAwesomeIcons.bellSlash,
@@ -477,10 +479,10 @@ class _NotificationCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: kCardColor,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: config.color.withOpacity(0.15)),
+            border: Border.all(color: config.color.withValues(alpha: 0.15)),
             boxShadow: [
               BoxShadow(
-                color: config.color.withOpacity(0.08),
+                color: config.color.withValues(alpha: 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -496,7 +498,10 @@ class _NotificationCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [config.color, config.color.withOpacity(0.5)],
+                        colors: [
+                          config.color,
+                          config.color.withValues(alpha: 0.5)
+                        ],
                       ),
                     ),
                     child: CircleAvatar(
@@ -595,7 +600,7 @@ class _NotificationCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: config.color.withOpacity(0.15),
+                    color: config.color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child:

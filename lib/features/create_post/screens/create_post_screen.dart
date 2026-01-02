@@ -134,7 +134,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     final ImagePicker picker = ImagePicker();
 
     if (source == ImageSource.gallery) {
-      final List<XFile> images = await picker.pickMultiImage(imageQuality: 70);
+      final List<XFile> images = await picker.pickMultiImage(imageQuality: 90);
       if (images.isNotEmpty && mounted) {
         List<File> editedFiles = [];
 
@@ -182,7 +182,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       }
     } else {
       final XFile? image =
-          await picker.pickImage(source: source, imageQuality: 70);
+          await picker.pickImage(source: source, imageQuality: 90);
       if (image != null && mounted) {
         final originalFile = File(image.path);
 

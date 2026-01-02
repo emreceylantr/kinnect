@@ -115,10 +115,13 @@ class LikersSheet extends StatelessWidget {
                           radius: 22,
                           backgroundColor: AppColors.bgCard,
                           child: avatarUrl != null
-                              ? KinnectImage(
-                                  imageUrl: avatarUrl,
-                                  isCircle: true,
-                                  fit: BoxFit.cover,
+                              ? ClipOval(
+                                  child: KinnectImage(
+                                    imageUrl: avatarUrl,
+                                    width: 44,
+                                    height: 44,
+                                    fit: BoxFit.cover,
+                                  ),
                                 )
                               : const Icon(Icons.person,
                                   color: Colors.white54, size: 20),

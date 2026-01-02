@@ -127,7 +127,7 @@ class _PhotoEmojiPickerState extends State<PhotoEmojiPicker> {
       final XFile? photo = await _picker.pickImage(
         source: ImageSource.camera,
         preferredCameraDevice: CameraDevice.front,
-        imageQuality: 80,
+        imageQuality: 90,
         maxWidth: 500,
         maxHeight: 500,
       );

@@ -141,7 +141,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
   void _showRemoveDialog(Map<String, dynamic> user) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.3),
+      barrierColor: Colors.black.withValues(alpha: 0.3),
       builder: (context) {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
@@ -151,12 +151,12 @@ class _FollowListScreenState extends State<FollowListScreen> {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF252525).withOpacity(0.85),
+                color: const Color(0xFF252525).withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -281,7 +281,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             height: 1.0,
           ),
         ),
@@ -431,7 +431,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
                         color: widget.type == 'followers'
-                            ? Colors.blueAccent.withOpacity(0.5)
+                            ? Colors.blueAccent.withValues(alpha: 0.5)
                             : Colors.grey.shade800,
                         width: 1),
                     shape: RoundedRectangleBorder(
