@@ -27,7 +27,8 @@ class UserListScreen extends StatefulWidget {
 }
 
 class _UserListScreenState extends State<UserListScreen> {
-  final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
+  final String _currentUserId =
+      Supabase.instance.client.auth.currentUser?.id ?? '';
   late final FriendService _friendService;
   late List<Map<String, dynamic>> _users;
 

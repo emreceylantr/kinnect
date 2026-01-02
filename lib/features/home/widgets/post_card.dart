@@ -36,7 +36,7 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   bool isLiked = false;
-  final String myId = Supabase.instance.client.auth.currentUser!.id;
+  final String myId = Supabase.instance.client.auth.currentUser?.id ?? '';
 
   @override
   void initState() {
@@ -53,7 +53,7 @@ class _PostCardState extends State<PostCard> {
         const end = Offset.zero;
         const curve = Curves.easeOutQuart;
         var tween =
-        Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         return SlideTransition(position: animation.drive(tween), child: child);
       },
     );
@@ -100,12 +100,12 @@ class _PostCardState extends State<PostCard> {
                     leading: const BackButton(color: Colors.white)),
                 body: Center(
                     child: InteractiveViewer(
-                      child: KinnectImage(
-                        imageUrl: url,
-                        fit: BoxFit.contain,
-                        useShimmer: true,
-                      ),
-                    )))));
+                  child: KinnectImage(
+                    imageUrl: url,
+                    fit: BoxFit.contain,
+                    useShimmer: true,
+                  ),
+                )))));
   }
 
   @override
@@ -143,7 +143,7 @@ class _PostCardState extends State<PostCard> {
                 color: Colors.white.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(24),
                 border:
-                Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                    Border.all(color: Colors.white.withOpacity(0.1), width: 1),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +198,7 @@ class _PostCardState extends State<PostCard> {
                                           context, p['location']),
                                       child: Container(
                                         constraints:
-                                        const BoxConstraints(maxWidth: 120),
+                                            const BoxConstraints(maxWidth: 120),
                                         color: Colors.transparent,
                                         child: Text(
                                           p['location'],
@@ -255,14 +255,17 @@ class _PostCardState extends State<PostCard> {
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                       child: DoubleTapOverlay(
                         // Eğer süresi dolduysa çift tıklama çalışmaz (veya uyarı verir)
-                        onDoubleTap: isExpired ? _showExpiredMessage : _toggleLike,
+                        onDoubleTap:
+                            isExpired ? _showExpiredMessage : _toggleLike,
                         icon: isPublicPost
                             ? FontAwesomeIcons.fire
                             : FontAwesomeIcons.solidHeart,
                         // Süresi dolmuşsa gri, değilse Turuncu/Mor
                         iconColor: isExpired
                             ? Colors.grey
-                            : (isPublicPost ? Colors.orange : AppColors.primary),
+                            : (isPublicPost
+                                ? Colors.orange
+                                : AppColors.primary),
                         child: ImageCarousel(
                           imageUrls: (p['image_urls'] as List).cast<String>(),
                           height: 350,
@@ -291,14 +294,17 @@ class _PostCardState extends State<PostCard> {
                             borderRadius: BorderRadius.circular(18),
                             child: DoubleTapOverlay(
                               // Eğer süresi dolduysa çift tıklama çalışmaz
-                              onDoubleTap: isExpired ? _showExpiredMessage : _toggleLike,
+                              onDoubleTap:
+                                  isExpired ? _showExpiredMessage : _toggleLike,
                               icon: isPublicPost
                                   ? FontAwesomeIcons.fire
                                   : FontAwesomeIcons.solidHeart,
                               // Süresi dolmuşsa gri, değilse Turuncu/Mor
                               iconColor: isExpired
                                   ? Colors.grey
-                                  : (isPublicPost ? Colors.orange : AppColors.primary),
+                                  : (isPublicPost
+                                      ? Colors.orange
+                                      : AppColors.primary),
                               child: KinnectImage(
                                 imageUrl: p['image_url'],
                                 width: double.infinity,
@@ -329,31 +335,33 @@ class _PostCardState extends State<PostCard> {
                                   isPublicPost
                                       ? FontAwesomeIcons.fire
                                       : (isLiked
-                                      ? FontAwesomeIcons.solidHeart
-                                      : FontAwesomeIcons.heart),
+                                          ? FontAwesomeIcons.solidHeart
+                                          : FontAwesomeIcons.heart),
 
                                   // RENK SEÇİMİ (Mantık Burada)
                                   color: isExpired
                                       ? Colors.grey // Süre bittiyse GRİ
                                       : (isLiked
-                                      ? (isPublicPost
-                                      ? Colors.orange // Aktif Alev
-                                      : AppColors.primary) // Aktif Kalp
-                                      : Colors.grey.shade400), // Henüz beğenilmemiş
+                                          ? (isPublicPost
+                                              ? Colors.orange // Aktif Alev
+                                              : AppColors.primary) // Aktif Kalp
+                                          : Colors.grey
+                                              .shade400), // Henüz beğenilmemiş
                                   size: 22,
                                 ),
                                 if (likeCount > 0) ...[
                                   const SizedBox(width: 6),
                                   Text("$likeCount",
                                       style: GoogleFonts.poppins(
-                                        // Sayı rengi de ikona uysun
+                                          // Sayı rengi de ikona uysun
                                           color: isExpired
-                                              ? Colors.grey // Süre bittiyse sayı da gri
+                                              ? Colors
+                                                  .grey // Süre bittiyse sayı da gri
                                               : (isLiked
-                                              ? (isPublicPost
-                                              ? Colors.orange
-                                              : AppColors.primary)
-                                              : Colors.grey.shade400),
+                                                  ? (isPublicPost
+                                                      ? Colors.orange
+                                                      : AppColors.primary)
+                                                  : Colors.grey.shade400),
                                           fontWeight: FontWeight.w600)),
                                 ]
                               ],

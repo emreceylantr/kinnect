@@ -42,7 +42,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   // Mevcut kullanıcı ID'si
-  final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
+  String get _currentUserId =>
+      Supabase.instance.client.auth.currentUser?.id ?? '';
 
   // Servisler
   final ChatService _chatService = ChatService();

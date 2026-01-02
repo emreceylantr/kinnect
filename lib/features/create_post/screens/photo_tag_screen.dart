@@ -36,7 +36,7 @@ class _PhotoTagScreenState extends State<PhotoTagScreen> {
   // Geçici tap pozisyonu (kullanıcı seçerken)
   Offset? pendingTagPosition;
 
-  String get myId => client.auth.currentUser!.id;
+  String get myId => client.auth.currentUser?.id ?? '';
 
   @override
   void initState() {

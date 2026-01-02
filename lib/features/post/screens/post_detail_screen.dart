@@ -89,7 +89,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   // ✏️ Yorum düzenleme state
   final TextEditingController _editCommentController = TextEditingController();
 
-  String get myId => client.auth.currentUser!.id;
+  String get myId => client.auth.currentUser?.id ?? '';
 
   // 📸 Emoji tipinden varsayılan emoji karakterini al
 

@@ -3,7 +3,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SafetyService {
-  final SupabaseClient _client = Supabase.instance.client;
+  final SupabaseClient _client;
+
+  SafetyService({SupabaseClient? client})
+      : _client = client ?? Supabase.instance.client;
 
   // --- 1. KULLANICIYI ENGELLE ---
   Future<void> blockUser(String targetUserId) async {

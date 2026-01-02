@@ -23,7 +23,8 @@ class FollowListScreen extends StatefulWidget {
 }
 
 class _FollowListScreenState extends State<FollowListScreen> {
-  final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
+  final String _currentUserId =
+      Supabase.instance.client.auth.currentUser?.id ?? '';
   final TextEditingController _searchController = TextEditingController();
 
   List<Map<String, dynamic>> _allUsers = [];

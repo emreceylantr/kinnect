@@ -231,7 +231,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     debugPrint('🔄 Profil kaydetme başladı...');
 
     try {
-      final userId = Supabase.instance.client.auth.currentUser!.id;
+      final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
       String? avatarUrl;
       String? videoUrl;
 
