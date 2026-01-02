@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../data/services/feed_service.dart';
-import '../../../co../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/image_carousel.dart';
 import '../../../shared/widgets/location_display_sheet.dart';
 import '../../../shared/widgets/double_tap_overlay.dart';
@@ -53,7 +53,7 @@ class _PostCardState extends State<PostCard> {
         const end = Offset.zero;
         const curve = Curves.easeOutQuart;
         var tween =
-            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         return SlideTransition(position: animation.drive(tween), child: child);
       },
     );
@@ -62,6 +62,19 @@ class _PostCardState extends State<PostCard> {
   void _toggleLike() async {
     setState(() => isLiked = !isLiked);
     await FeedService().toggleLike(widget.post['id']);
+  }
+
+  void _showExpiredMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "Bu gönderinin alev süresi doldu! 🔥",
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+        backgroundColor: Colors.grey.shade800,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _goToDetail() async {
@@ -87,12 +100,12 @@ class _PostCardState extends State<PostCard> {
                     leading: const BackButton(color: Colors.white)),
                 body: Center(
                     child: InteractiveViewer(
-                  child: KinnectImage(
-                    imageUrl: url,
-                    fit: BoxFit.contain,
-                    useShimmer: true,
-                  ),
-                )))));
+                      child: KinnectImage(
+                        imageUrl: url,
+                        fit: BoxFit.contain,
+                        useShimmer: true,
+                      ),
+                    )))));
   }
 
   @override
@@ -103,6 +116,18 @@ class _PostCardState extends State<PostCard> {
     final dateStr = date != null ? '${date.day}/${date.month}' : '';
     final likeCount = (p['likes'] as List?)?.length ?? 0;
     final commentCount = (p['comments'] as List?)?.length ?? 0;
+
+    // 🔥 GÖRÜNÜRLÜK VE SÜRE KONTROLÜ
+    final bool isPublicPost = (p['visibility'] == 'public');
+
+    // Süre doldu mu kontrolü (24 saat)
+    bool isExpired = false;
+    if (isPublicPost && date != null) {
+      final difference = DateTime.now().difference(date);
+      if (difference.inHours >= 24) {
+        isExpired = true;
+      }
+    }
 
     return GestureDetector(
       onTap: _goToDetail,
@@ -118,7 +143,7 @@ class _PostCardState extends State<PostCard> {
                 color: Colors.white.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(24),
                 border:
-                    Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                Border.all(color: Colors.white.withOpacity(0.1), width: 1),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,34 +156,12 @@ class _PostCardState extends State<PostCard> {
                         // 📸 AVATAR
                         GestureDetector(
                           onTap: () => _goToProfile(p['user_id']),
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: const LinearGradient(
-                                colors: [
-                                  AppColors.accentOrange,
-                                  AppColors.accentAmber
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      AppColors.accentOrange.withOpacity(0.4),
-                                  blurRadius: 10,
-                                  spreadRadius: 1,
-                                )
-                              ],
-                            ),
-                            child: KinnectImage(
-                              imageUrl: profile['avatar_url'] ?? '',
-                              width: 48,
-                              height: 48,
-                              isCircle: true,
-                              backgroundColor: Colors.white24,
-                            ),
+                          child: KinnectImage(
+                            imageUrl: profile['avatar_url'] ?? '',
+                            width: 44,
+                            height: 44,
+                            isCircle: true,
+                            backgroundColor: Colors.white10,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -195,7 +198,7 @@ class _PostCardState extends State<PostCard> {
                                           context, p['location']),
                                       child: Container(
                                         constraints:
-                                            const BoxConstraints(maxWidth: 120),
+                                        const BoxConstraints(maxWidth: 120),
                                         color: Colors.transparent,
                                         child: Text(
                                           p['location'],
@@ -212,6 +215,17 @@ class _PostCardState extends State<PostCard> {
                                 ],
                               ),
                             ],
+                          ),
+                        ),
+                        // SAĞ ÜSTTE GÖRÜNÜRLÜK İKONU
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Icon(
+                            isPublicPost
+                                ? FontAwesomeIcons.earthAmericas
+                                : FontAwesomeIcons.userGroup,
+                            color: Colors.white24,
+                            size: 14,
                           ),
                         ),
                         Text(dateStr,
@@ -240,9 +254,15 @@ class _PostCardState extends State<PostCard> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                       child: DoubleTapOverlay(
-                        onDoubleTap: _toggleLike,
-                        icon: Icons.favorite,
-                        iconColor: Colors.red,
+                        // Eğer süresi dolduysa çift tıklama çalışmaz (veya uyarı verir)
+                        onDoubleTap: isExpired ? _showExpiredMessage : _toggleLike,
+                        icon: isPublicPost
+                            ? FontAwesomeIcons.fire
+                            : FontAwesomeIcons.solidHeart,
+                        // Süresi dolmuşsa gri, değilse Turuncu/Mor
+                        iconColor: isExpired
+                            ? Colors.grey
+                            : (isPublicPost ? Colors.orange : AppColors.primary),
                         child: ImageCarousel(
                           imageUrls: (p['image_urls'] as List).cast<String>(),
                           height: 350,
@@ -270,7 +290,15 @@ class _PostCardState extends State<PostCard> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(18),
                             child: DoubleTapOverlay(
-                              onDoubleTap: _toggleLike,
+                              // Eğer süresi dolduysa çift tıklama çalışmaz
+                              onDoubleTap: isExpired ? _showExpiredMessage : _toggleLike,
+                              icon: isPublicPost
+                                  ? FontAwesomeIcons.fire
+                                  : FontAwesomeIcons.solidHeart,
+                              // Süresi dolmuşsa gri, değilse Turuncu/Mor
+                              iconColor: isExpired
+                                  ? Colors.grey
+                                  : (isPublicPost ? Colors.orange : AppColors.primary),
                               child: KinnectImage(
                                 imageUrl: p['image_url'],
                                 width: double.infinity,
@@ -287,29 +315,45 @@ class _PostCardState extends State<PostCard> {
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        // Like Button
+                        // 🔥 ALEV veya 💜 KALP BUTONU
                         GestureDetector(
-                          onTap: _toggleLike,
+                          // Süresi dolduysa tıklanamaz (uyarı verir), dolmadıysa beğenilir
+                          onTap: isExpired ? _showExpiredMessage : _toggleLike,
                           child: Container(
                             color: Colors.transparent,
                             child: Row(
                               children: [
+                                // İKON SEÇİMİ
                                 Icon(
-                                  isLiked
+                                  // Public ise ALEV, değilse KALP
+                                  isPublicPost
+                                      ? FontAwesomeIcons.fire
+                                      : (isLiked
                                       ? FontAwesomeIcons.solidHeart
-                                      : FontAwesomeIcons.heart,
-                                  color: isLiked
-                                      ? AppColors.primary
-                                      : Colors.grey.shade400,
+                                      : FontAwesomeIcons.heart),
+
+                                  // RENK SEÇİMİ (Mantık Burada)
+                                  color: isExpired
+                                      ? Colors.grey // Süre bittiyse GRİ
+                                      : (isLiked
+                                      ? (isPublicPost
+                                      ? Colors.orange // Aktif Alev
+                                      : AppColors.primary) // Aktif Kalp
+                                      : Colors.grey.shade400), // Henüz beğenilmemiş
                                   size: 22,
                                 ),
                                 if (likeCount > 0) ...[
                                   const SizedBox(width: 6),
                                   Text("$likeCount",
                                       style: GoogleFonts.poppins(
-                                          color: isLiked
-                                              ? AppColors.primary
-                                              : Colors.grey.shade400,
+                                        // Sayı rengi de ikona uysun
+                                          color: isExpired
+                                              ? Colors.grey // Süre bittiyse sayı da gri
+                                              : (isLiked
+                                              ? (isPublicPost
+                                              ? Colors.orange
+                                              : AppColors.primary)
+                                              : Colors.grey.shade400),
                                           fontWeight: FontWeight.w600)),
                                 ]
                               ],

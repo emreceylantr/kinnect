@@ -16,6 +16,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../../data/services/chat_service.dart';
 import 'call_screen.dart';
 import '../widgets/chat_widgets.dart'; // Yardımcı widget'lar
+import '../../profile/screens/profile_screen.dart'; // 👤 Profil Ekranı Eklendi
 
 // ==========================================
 // 🎨 RENK PALETİ
@@ -128,7 +129,7 @@ class _ChatScreenState extends State<ChatScreen> {
   // 🔒 Karşı tarafın ayarını çek
   Future<void> _loadOtherUserPrivacy() async {
     final show =
-        await _chatService.getReadReceiptSetting(widget.otherUser['id']);
+    await _chatService.getReadReceiptSetting(widget.otherUser['id']);
     if (mounted) setState(() => _otherUserShowReadReceipts = show);
   }
 
@@ -152,6 +153,14 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_isTextFieldEmpty != isEmpty) {
       setState(() => _isTextFieldEmpty = isEmpty);
     }
+  }
+
+  // 👤 PROFİLE GİTME FONKSİYONU
+  void _goToProfile(String userId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ProfileScreen(userId: userId)),
+    );
   }
 
   void _sendMessage([String? fileUrl]) async {
@@ -296,7 +305,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
     final XFile? image =
-        await picker.pickImage(source: source, imageQuality: 70);
+    await picker.pickImage(source: source, imageQuality: 70);
     if (image == null) return;
     setState(() => _isUploading = true);
     try {
@@ -307,7 +316,7 @@ class _ChatScreenState extends State<ChatScreen> {
           .from('uploads')
           .upload(path, File(image.path));
       final imageUrl =
-          Supabase.instance.client.storage.from('uploads').getPublicUrl(path);
+      Supabase.instance.client.storage.from('uploads').getPublicUrl(path);
       _sendMessage(imageUrl);
     } catch (_) {
     } finally {
@@ -326,24 +335,24 @@ class _ChatScreenState extends State<ChatScreen> {
               color: kListCardColor,
               child: SafeArea(
                   child: Wrap(children: [
-                ListTile(
-                    leading: const Icon(Icons.camera_alt, color: Colors.white),
-                    title: const Text("Kamera",
-                        style: TextStyle(color: Colors.white)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickImage(ImageSource.camera);
-                    }),
-                ListTile(
-                    leading:
+                    ListTile(
+                        leading: const Icon(Icons.camera_alt, color: Colors.white),
+                        title: const Text("Kamera",
+                            style: TextStyle(color: Colors.white)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _pickImage(ImageSource.camera);
+                        }),
+                    ListTile(
+                        leading:
                         const Icon(Icons.photo_library, color: Colors.white),
-                    title: const Text("Galeri",
-                        style: TextStyle(color: Colors.white)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickImage(ImageSource.gallery);
-                    }),
-              ])),
+                        title: const Text("Galeri",
+                            style: TextStyle(color: Colors.white)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _pickImage(ImageSource.gallery);
+                        }),
+                  ])),
             ),
           );
         });
@@ -427,58 +436,74 @@ class _ChatScreenState extends State<ChatScreen> {
         IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context)),
-        Hero(
-            tag: widget.heroTag,
-            child: CircleAvatar(
-                radius: 22,
-                backgroundImage: widget.otherUser['avatar_url'] != null
-                    ? NetworkImage(widget.otherUser['avatar_url'])
-                    : null,
-                backgroundColor: Colors.grey[800],
-                child: widget.otherUser['avatar_url'] == null
-                    ? const Icon(Icons.person, color: Colors.white70)
-                    : null)),
+
+        // 👤 PROFİL FOTOĞRAFI (Tıklanabilir)
+        GestureDetector(
+          onTap: () {
+            final userId = widget.otherUser['id']?.toString();
+            if (userId != null) _goToProfile(userId);
+          },
+          child: Hero(
+              tag: widget.heroTag,
+              child: CircleAvatar(
+                  radius: 22,
+                  backgroundImage: widget.otherUser['avatar_url'] != null
+                      ? NetworkImage(widget.otherUser['avatar_url'])
+                      : null,
+                  backgroundColor: Colors.grey[800],
+                  child: widget.otherUser['avatar_url'] == null
+                      ? const Icon(Icons.person, color: Colors.white70)
+                      : null)),
+        ),
+
         const SizedBox(width: 12),
+
+        // 👤 İSİM (Tıklanabilir)
         Expanded(
-            child: Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(targetName,
-                        style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                        overflow: TextOverflow.ellipsis),
-                    if (_lastSeenText.isNotEmpty)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (_lastSeenText == 'Çevrimiçi')
-                            Container(
-                              width: 8,
-                              height: 8,
-                              margin: const EdgeInsets.only(right: 4),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF00D26A),
-                                shape: BoxShape.circle,
+            child: GestureDetector(
+                onTap: () {
+                  final userId = widget.otherUser['id']?.toString();
+                  if (userId != null) _goToProfile(userId);
+                },
+                child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(targetName,
+                            style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                            overflow: TextOverflow.ellipsis),
+                        if (_lastSeenText.isNotEmpty)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_lastSeenText == 'Çevrimiçi')
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  margin: const EdgeInsets.only(right: 4),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF00D26A),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              Text(
+                                _lastSeenText,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _lastSeenText == 'Çevrimiçi'
+                                      ? const Color(0xFF00D26A)
+                                      : Colors.white54,
+                                ),
                               ),
-                            ),
-                          Text(
-                            _lastSeenText,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _lastSeenText == 'Çevrimiçi'
-                                  ? const Color(0xFF00D26A)
-                                  : Colors.white54,
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                  ],
-                ))),
+                      ],
+                    )))),
         _buildHeaderButton(
             Icons.videocam_outlined, () => _startDirectCall(true),
             iconSize: 20),
@@ -514,7 +539,7 @@ class _ChatScreenState extends State<ChatScreen> {
           return Center(
               child: Text("Henüz mesaj yok.",
                   style:
-                      TextStyle(color: Colors.white.withValues(alpha: 0.3))));
+                  TextStyle(color: Colors.white.withValues(alpha: 0.3))));
         }
 
         // 🔥 Duplicate mesajları filtrele
@@ -615,7 +640,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       border: InputBorder.none,
                       contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 10)))),
+                      const EdgeInsets.symmetric(horizontal: 10)))),
           GestureDetector(
             onTap: _isTextFieldEmpty ? _toggleRecording : () => _sendMessage(),
             child: Container(
@@ -631,26 +656,26 @@ class _ChatScreenState extends State<ChatScreen> {
                   boxShadow: [
                     BoxShadow(
                         color: (_isEphemeralMode
-                                ? Colors.orange
-                                : const Color(0xFF335FA1))
+                            ? Colors.orange
+                            : const Color(0xFF335FA1))
                             .withValues(alpha: 0.4),
                         blurRadius: 10,
                         offset: const Offset(0, 4))
                   ]),
               child: _isRecording
                   ? Text(
-                      '$_recordingDuration',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    )
+                '$_recordingDuration',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              )
                   : Icon(
-                      _isTextFieldEmpty ? Icons.mic : Icons.send,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                _isTextFieldEmpty ? Icons.mic : Icons.send,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ]),
@@ -675,19 +700,20 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageBubble(
-    Map<String, dynamic> msg,
-    bool isMe,
-    bool showAvatar, {
-    bool isEphemeral = false,
-    bool isViewed = false,
-  }) {
+      Map<String, dynamic> msg,
+      bool isMe,
+      bool showAvatar, {
+        bool isEphemeral = false,
+        bool isViewed = false,
+      }) {
     final content = msg['content'] as String;
     final messageId = msg['id'].toString();
+    final senderId = msg['sender_id'].toString();
     final createdAtRaw = msg['created_at'] as String;
     final ephemeralDuration = msg['ephemeral_duration'] as int? ?? 5;
 
     final time =
-        DateFormat('HH:mm').format(DateTime.parse(createdAtRaw).toLocal());
+    DateFormat('HH:mm').format(DateTime.parse(createdAtRaw).toLocal());
     bool isImage = content.startsWith('http') &&
         (content.contains('.jpg') ||
             content.contains('.png') ||
@@ -731,6 +757,8 @@ class _ChatScreenState extends State<ChatScreen> {
         isImage: isImg,
         chatService: _chatService,
         onBurned: () {},
+        // 👤 MESAJDAKİ PROFİLE TIKLAMA (Eğer widget destekliyorsa)
+        onAvatarTap: () => _goToProfile(senderId),
       );
     }
 
@@ -748,6 +776,8 @@ class _ChatScreenState extends State<ChatScreen> {
         isViewed: isViewed,
         showReadReceipts: _myShowReadReceipts,
         otherUserShowReadReceipts: _otherUserShowReadReceipts,
+        // 👤 MESAJDAKİ PROFİLE TIKLAMA (Eğer widget destekliyorsa)
+        onAvatarTap: () => _goToProfile(senderId),
       ),
     );
   }
