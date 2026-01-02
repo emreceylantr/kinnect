@@ -359,7 +359,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _startDirectCall(bool isVideo) async {
-    final myId = Supabase.instance.client.auth.currentUser!.id;
+    final myId = Supabase.instance.client.auth.currentUser?.id ?? '';
     final otherId = widget.otherUser['id'].toString();
     final otherName = widget.otherUser['full_name']?.toString() ?? 'Kullanıcı';
     List<String> ids = [myId, otherId];
@@ -558,7 +558,7 @@ class _ChatScreenState extends State<ChatScreen> {
             itemBuilder: (context, index) {
               final msg = uniqueMessages[index];
               final isMe = msg['sender_id'] ==
-                  Supabase.instance.client.auth.currentUser!.id;
+                  (Supabase.instance.client.auth.currentUser?.id ?? '');
 
               // Avatar için önceki mesaja bak
               bool showAvatar = true;

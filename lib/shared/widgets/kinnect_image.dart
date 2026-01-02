@@ -39,7 +39,7 @@ class KinnectImage extends StatelessWidget {
       fit: fit,
       memCacheWidth: (width != null && width!.isFinite)
           ? (width! * 3).toInt()
-          : null, // 🔧 Optimizasyon - 3x for retina displays
+          : 1000, // 🔧 Varsayılan güvenli boyut (OOM önlemek için)
       placeholder: (context, url) => _buildPlaceholder(),
       errorWidget: (context, url, error) => _buildErrorPlaceholder(),
       fadeInDuration: const Duration(milliseconds: 300),

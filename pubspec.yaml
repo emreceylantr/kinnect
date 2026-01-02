@@ -1,7 +1,7 @@
 name: kinnect
 description: AI supported social media app
 publish_to: 'none'
-version: 1.0.3+1
+version: 1.0.7+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -78,6 +78,7 @@ dev_dependencies:
 
   # --- SPLASH SCREEN ---
   flutter_native_splash: ^2.4.3
+  mocktail: ^1.0.4
 
 flutter:
   uses-material-design: true

@@ -227,17 +227,23 @@ class _SearchScreenState extends State<SearchScreen> {
       setState(() => searchResults = []);
       return;
     }
-    final blockedMeIds = await _safetyService.getIdsThatBlockedMe();
-    blockedMeIds.add(myId);
-    final res = await client
-        .from("profiles")
-        .select()
-        .ilike("username", "%$text%")
-        .not('id', 'in', blockedMeIds)
-        .limit(15);
-    if (mounted)
-      setState(
-          () => searchResults = List<Map<String, dynamic>>.from(res as List));
+    try {
+      final blockedMeIds = await _safetyService.getIdsThatBlockedMe();
+      blockedMeIds.add(myId);
+      final res = await client
+          .from("profiles")
+          .select()
+          .ilike("username", "%$text%")
+          .not('id', 'in', blockedMeIds)
+          .limit(15);
+      if (mounted) {
+        setState(() => searchResults =
+            List<Map<String, dynamic>>.from(res as List? ?? []));
+      }
+    } catch (e) {
+      debugPrint("Arama Hatası: $e");
+      if (mounted) setState(() => searchResults = []);
+    }
   }
 
   Future<void> _fetchExplore() async {
@@ -376,7 +382,8 @@ class _SearchScreenState extends State<SearchScreen> {
                         height: currentSize,
                         width: currentSize,
                         child: Lottie.asset(
-                          avatarOptions[selectedAvatarKey]!,
+                          avatarOptions[selectedAvatarKey] ??
+                              avatarOptions.values.first,
                           fit: BoxFit.contain,
                           key: ValueKey(selectedAvatarKey),
                         ),
@@ -546,17 +553,31 @@ class _SearchScreenState extends State<SearchScreen> {
 
   // 🏆 VİTRİN KARTI
   Widget _buildFeaturedCard(Map<String, dynamic> post, {required int rank}) {
-    final likes = post["likes"] as List? ?? [];
-    final likeCount = likes.length;
-    final profile = post["profiles"] ?? {};
-    final content = post["content"] ?? "";
-    final imageUrl = post["image_url"];
+    // 🔥 GÜVENLİ VERİ OKUMA BAŞLANGICI
+    List likes = [];
+    int likeCount = 0;
+    Map<String, dynamic> profile = {};
+    String content = "";
+    String? imageUrl;
+    bool isAlive = false;
 
-    final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
-    final now = DateTime.now();
-    final isAlive = date != null && now.difference(date).inHours < 24;
+    try {
+      likes = (post["likes"] is List) ? post["likes"] as List : [];
+      likeCount = likes.length;
+      profile = (post["profiles"] is Map)
+          ? post["profiles"] as Map<String, dynamic>
+          : {};
+      content = post["content"] as String? ?? "";
+      imageUrl = post["image_url"] as String?;
+
+      final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
+      final now = DateTime.now();
+      isAlive = date != null && now.difference(date).inHours < 24;
+    } catch (e) {
+      debugPrint("Featured Card Data Error: $e");
+    }
+
     final bool isRank1 = rank == 1;
-
     Color statusColor = Colors.grey;
     String statusText = "";
     IconData statusIcon = FontAwesomeIcons.wind;
@@ -621,6 +642,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: KinnectImage(
                     imageUrl: imageUrl,
                     fit: BoxFit.cover,
+                    width: 350, // 🔥 OPTİMİZASYON: Hafifletilmiş boyut
                   ),
                 )
               else
@@ -773,14 +795,26 @@ class _SearchScreenState extends State<SearchScreen> {
 
   // 📝 NORMAL LİSTE KARTI
   Widget _buildPostCard(Map<String, dynamic> post, int index) {
-    final profile = post["profiles"] ?? {};
-    final likes = post["likes"] as List? ?? [];
-    final comments = post["comments"] as List? ?? [];
-    final likeCount = likes.length;
-    final isFueled = likes.any((l) => l["user_id"] == myId);
-    final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
-    final now = DateTime.now();
-    final isAlive = date != null && now.difference(date).inHours < 24;
+    // 🔥 GÜVENLİ VERİ OKUMA
+    Map<String, dynamic> profile = {};
+    List likes = [];
+    List comments = [];
+    int likeCount = 0;
+    bool isFueled = false;
+    bool isAlive = false;
+
+    try {
+      profile = post["profiles"] ?? {};
+      likes = post["likes"] as List? ?? [];
+      comments = post["comments"] as List? ?? [];
+      likeCount = likes.length;
+      isFueled = likes.any((l) => l["user_id"] == myId);
+      final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
+      final now = DateTime.now();
+      isAlive = date != null && now.difference(date).inHours < 24;
+    } catch (e) {
+      debugPrint("Post Card Data Error: $e");
+    }
 
     Color statusColor = Colors.grey;
     String statusText = "";

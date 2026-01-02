@@ -29,7 +29,8 @@ class CreatePostScreen extends StatefulWidget {
 class _CreatePostScreenState extends State<CreatePostScreen>
     with SingleTickerProviderStateMixin {
   final _textController = TextEditingController();
-  final String _currentUserId = Supabase.instance.client.auth.currentUser!.id;
+  final String _currentUserId =
+      Supabase.instance.client.auth.currentUser?.id ?? '';
 
   List<File> _imageFiles = [];
   int _currentImageIndex = 0;

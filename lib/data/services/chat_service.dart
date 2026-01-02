@@ -8,7 +8,7 @@ class ChatService {
   ChatService({SupabaseClient? client})
       : client = client ?? Supabase.instance.client;
 
-  String get _myId => client.auth.currentUser!.id;
+  String get _myId => client.auth.currentUser?.id ?? '';
 
   // 1. SOHBET ODASI BAŞLAT / GETİR
   Future<String> createOrGetChatRoom(String otherUserId) async {

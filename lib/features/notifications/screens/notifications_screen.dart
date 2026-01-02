@@ -38,7 +38,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
-    _currentUserId = Supabase.instance.client.auth.currentUser!.id;
+    _currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
     _friendService = FriendService();
   }
 

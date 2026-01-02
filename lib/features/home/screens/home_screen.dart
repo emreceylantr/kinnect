@@ -43,7 +43,8 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<List<Map<String, dynamic>>> _feedFuture;
 
   late final RealtimeChannel _notificationChannel;
-  String get _currentUserId => Supabase.instance.client.auth.currentUser!.id;
+  String get _currentUserId =>
+      Supabase.instance.client.auth.currentUser?.id ?? '';
 
   @override
   void initState() {

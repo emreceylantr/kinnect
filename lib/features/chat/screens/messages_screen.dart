@@ -32,7 +32,7 @@ class MessagesScreen extends StatefulWidget {
 
 class _MessagesScreenState extends State<MessagesScreen> {
   final ChatService _chatService = ChatService();
-  String get _myId => Supabase.instance.client.auth.currentUser!.id;
+  String get _myId => Supabase.instance.client.auth.currentUser?.id ?? '';
 
   late Future<List<Map<String, dynamic>>> _chatsFuture;
 
@@ -135,7 +135,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
   // 🔒 GİZLİLİK AYARLARINI GÜNCELLE
   Future<void> _updatePrivacySetting(String field, bool value) async {
     try {
-      final userId = Supabase.instance.client.auth.currentUser!.id;
+      final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
       await Supabase.instance.client.from('profiles').update({
         field: value,
       }).eq('id', userId);
