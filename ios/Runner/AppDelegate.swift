@@ -3,7 +3,108 @@ import Flutter
 import MediaPlayer // Müzik çalar erişimi için şart
 import FirebaseCore
 import FirebaseMessaging
+import CoreBluetooth // BLE Spark Mode için
 
+// MARK: - BLE Advertiser (Spark Mode)
+class BLEAdvertiser: NSObject, CBPeripheralManagerDelegate {
+    private var peripheralManager: CBPeripheralManager?
+    private var deviceToken: String?
+    var isAdvertising = false
+    
+    private let kinnectServiceUUID = CBUUID(string: "0000FE01-0000-1000-8000-00805F9B34FB")
+    
+    static let shared = BLEAdvertiser()
+    
+    private override init() {
+        super.init()
+    }
+    
+    func startAdvertising(deviceToken: String) {
+        self.deviceToken = deviceToken
+        if peripheralManager == nil {
+            peripheralManager = CBPeripheralManager(delegate: self, queue: nil)
+        } else {
+            beginAdvertising()
+        }
+    }
+    
+    func stopAdvertising() {
+        peripheralManager?.stopAdvertising()
+        isAdvertising = false
+        print("🔇 BLE Advertising stopped")
+    }
+    
+    func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
+        if peripheral.state == .poweredOn {
+            print("✅ Bluetooth powered on")
+            beginAdvertising()
+        } else {
+            isAdvertising = false
+        }
+    }
+    
+    private func beginAdvertising() {
+        guard let token = deviceToken, !isAdvertising else { return }
+        guard peripheralManager?.state == .poweredOn else { return }
+        
+        let localName = "KINNECT_\(token)"
+        let advertisementData: [String: Any] = [
+            CBAdvertisementDataLocalNameKey: localName,
+            CBAdvertisementDataServiceUUIDsKey: [kinnectServiceUUID]
+        ]
+        
+        peripheralManager?.startAdvertising(advertisementData)
+        isAdvertising = true
+        print("📡 BLE Advertising started: \(localName)")
+    }
+    
+    func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
+        if let error = error {
+            print("❌ Advertising error: \(error.localizedDescription)")
+        } else {
+            print("✅ Advertising started successfully")
+        }
+    }
+}
+
+// MARK: - BLE Advertiser Flutter Plugin
+class BLEAdvertiserPlugin: NSObject {
+    static let shared = BLEAdvertiserPlugin()
+    private let channelName = "com.kinnect.ble_advertiser"
+    
+    private override init() {
+        super.init()
+    }
+    
+    func register(with messenger: FlutterBinaryMessenger) {
+        let channel = FlutterMethodChannel(name: channelName, binaryMessenger: messenger)
+        channel.setMethodCallHandler { [weak self] (call, result) in
+            self?.handle(call, result: result)
+        }
+    }
+    
+    private func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        switch call.method {
+        case "startAdvertising":
+            if let args = call.arguments as? [String: Any],
+               let token = args["deviceToken"] as? String {
+                BLEAdvertiser.shared.startAdvertising(deviceToken: token)
+                result(true)
+            } else {
+                result(FlutterError(code: "INVALID_ARGS", message: "deviceToken required", details: nil))
+            }
+        case "stopAdvertising":
+            BLEAdvertiser.shared.stopAdvertising()
+            result(true)
+        case "isAdvertising":
+            result(BLEAdvertiser.shared.isAdvertising)
+        default:
+            result(FlutterMethodNotImplemented)
+        }
+    }
+}
+
+// MARK: - AppDelegate
 @main
 @objc class AppDelegate: FlutterAppDelegate, MessagingDelegate {
     override func application(
@@ -43,6 +144,9 @@ import FirebaseMessaging
                 result(FlutterMethodNotImplemented)
             }
         })
+        
+        // 🔥 BLE Advertiser Plugin kaydet (Spark Mode için)
+        BLEAdvertiserPlugin.shared.register(with: controller.binaryMessenger)
 
         GeneratedPluginRegistrant.register(with: self)
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
@@ -50,75 +154,44 @@ import FirebaseMessaging
 
     // Şarkı bilgisini çeken fonksiyon
     private func getNowPlaying(result: FlutterResult) {
-        // Önce izin durumunu kontrol et
         let authStatus = MPMediaLibrary.authorizationStatus()
-        print("🍎 Apple Music Auth Status: \(authStatus.rawValue)")
         
         if authStatus != .authorized {
-            print("❌ Apple Music izni yok!")
             result(nil)
             return
         }
         
-        // systemMusicPlayer'dan şarkı bilgisi al
         let systemPlayer = MPMusicPlayerController.systemMusicPlayer
         let isPlaying = systemPlayer.playbackState == .playing
         
-        print("🎵 systemMusicPlayer - isPlaying: \(isPlaying), item: \(systemPlayer.nowPlayingItem?.title ?? "NIL")")
-        
         if let nowPlayingItem = systemPlayer.nowPlayingItem {
-            let songName = nowPlayingItem.title ?? ""
-            let artistName = nowPlayingItem.artist ?? ""
-            let storeId = nowPlayingItem.playbackStoreID
-            
-            print("✅ Track found: \(songName) - \(artistName) (storeId: \(storeId))")
-
             let trackInfo: [String: Any] = [
-                "name": songName,
-                "artist": artistName,
-                "storeId": storeId,
+                "name": nowPlayingItem.title ?? "",
+                "artist": nowPlayingItem.artist ?? "",
+                "storeId": nowPlayingItem.playbackStoreID,
                 "is_playing": isPlaying
             ]
             result(trackInfo)
             return
         }
         
-        // systemMusicPlayer çalışmadıysa applicationMusicPlayer dene
         let appPlayer = MPMusicPlayerController.applicationMusicPlayer
-        let appIsPlaying = appPlayer.playbackState == .playing
-        
-        print("🎵 applicationMusicPlayer - isPlaying: \(appIsPlaying), item: \(appPlayer.nowPlayingItem?.title ?? "NIL")")
-        
         if let nowPlayingItem = appPlayer.nowPlayingItem {
-            let songName = nowPlayingItem.title ?? ""
-            let artistName = nowPlayingItem.artist ?? ""
-            let storeId = nowPlayingItem.playbackStoreID
-            
-            print("✅ Track found from appPlayer: \(songName) - \(artistName)")
-
             let trackInfo: [String: Any] = [
-                "name": songName,
-                "artist": artistName,
-                "storeId": storeId,
-                "is_playing": appIsPlaying
+                "name": nowPlayingItem.title ?? "",
+                "artist": nowPlayingItem.artist ?? "",
+                "storeId": nowPlayingItem.playbackStoreID,
+                "is_playing": appPlayer.playbackState == .playing
             ]
             result(trackInfo)
             return
         }
         
-        // Hala nil ise MPNowPlayingInfoCenter dene (diğer uygulamalar için)
-        let nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo
-        print("🎵 MPNowPlayingInfoCenter: \(nowPlayingInfo ?? [:])")
-        
-        if let info = nowPlayingInfo,
+        if let info = MPNowPlayingInfoCenter.default().nowPlayingInfo,
            let title = info[MPMediaItemPropertyTitle] as? String {
-            let artist = info[MPMediaItemPropertyArtist] as? String ?? ""
-            
-            print("✅ NowPlayingInfoCenter Track: \(title) - \(artist)")
-            
             let trackInfo: [String: Any] = [
                 "name": title,
-                "artist": artist,
+                "artist": info[MPMediaItemPropertyArtist] as? String ?? "",
                 "storeId": "0",
                 "is_playing": true
             ]
@@ -126,14 +199,12 @@ import FirebaseMessaging
             return
         }
         
-        print("❌ No music found from any source")
         result(nil)
     }
     
     // FCM Token alındığında
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         print("FCM Token: \(fcmToken ?? "nil")")
-        // Token'ı Flutter tarafına gönder
         let dataDict: [String: String] = ["token": fcmToken ?? ""]
         NotificationCenter.default.post(
             name: Notification.Name("FCMToken"),

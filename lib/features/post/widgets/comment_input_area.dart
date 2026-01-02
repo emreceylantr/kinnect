@@ -19,6 +19,7 @@ class CommentInputArea extends StatelessWidget {
   final bool isRecording;
   final int recordDuration;
   final Map<String, dynamic>? replyingToComment;
+  final bool isSending; // 🔒 Yorum gönderilirken disable
 
   // Callbacks
   final OnSendTextComment onSendTextComment;
@@ -35,6 +36,7 @@ class CommentInputArea extends StatelessWidget {
     required this.isRecording,
     required this.recordDuration,
     this.replyingToComment,
+    this.isSending = false,
     required this.onSendTextComment,
     required this.onStartRecording,
     required this.onStopRecording,
@@ -145,19 +147,31 @@ class CommentInputArea extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               GestureDetector(
-                onLongPress: isComposing ? null : onStartRecording,
+                onLongPress:
+                    (isComposing || isSending) ? null : onStartRecording,
                 onLongPressUp: onStopRecording,
-                onTap: isComposing ? onSendTextComment : null,
+                onTap: (isComposing && !isSending) ? onSendTextComment : null,
                 child: CircleAvatar(
                   radius: 22,
-                  backgroundColor: isRecording
-                      ? AppColors.accentRedAccent
-                      : AppColors.primary,
-                  child: Icon(
-                    isComposing ? Icons.send : Icons.mic,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  backgroundColor: isSending
+                      ? Colors.grey
+                      : (isRecording
+                          ? AppColors.accentRedAccent
+                          : AppColors.primary),
+                  child: isSending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Icon(
+                          isComposing ? Icons.send : Icons.mic,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                 ),
               ),
             ],

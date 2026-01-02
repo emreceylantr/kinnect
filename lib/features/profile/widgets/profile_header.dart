@@ -7,6 +7,7 @@ import 'package:kinnect/shared/widgets/kinnect_image.dart';
 
 import '../../../co../../../core/theme/app_colors.dart';
 import 'profile_badges.dart';
+import '../../spark/screens/spark_mode_screen.dart';
 
 class ProfileHeader extends StatelessWidget {
   final Map<String, dynamic>? profileData;
@@ -104,6 +105,23 @@ class ProfileHeader extends StatelessWidget {
 
             // BUTONLAR (Top Bar)
             if (isMe) ...[
+              // Kıvılcım Modu butonu 🔥
+              Positioned(
+                  top: 50,
+                  right: 124,
+                  child: GestureDetector(
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const SparkModeScreen())),
+                      child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white24)),
+                          child: const Icon(Icons.local_fire_department,
+                              color: AppColors.accentOrange, size: 18)))),
               Positioned(
                   top: 50,
                   right: 70,
