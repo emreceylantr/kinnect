@@ -1,0 +1,914 @@
+Analyzing kinnect...                                            
+
+   info • Don't invoke 'print' in production code • lib/data/services/apple_music_service.dart:16:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:44:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:104:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:108:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:120:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:128:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:130:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:139:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:225:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:237:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:261:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:280:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:297:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/chat_service.dart:299:7 • avoid_print
+   info • Use 'const' for final variables initialized to a constant value • lib/data/services/spotify_service.dart:17:7 • prefer_const_declarations
+   info • Don't invoke 'print' in production code • lib/data/services/toxicity_service.dart:36:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/toxicity_service.dart:43:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/data/services/toxicity_service.dart:46:7 • avoid_print
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/change_password_screen.dart:158:23 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/change_password_screen.dart:160:23 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/auth/screens/login_screen.dart:207:45 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/auth/screens/login_screen.dart:208:44 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/auth/screens/login_screen.dart:216:50 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/signup_screen.dart:282:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/signup_screen.dart:284:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/signup_screen.dart:299:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/signup_screen.dart:301:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/auth/screens/signup_screen.dart:316:33 • curly_braces_in_flow_control_structures
+   info • Use 'const' for final variables initialized to a constant value • lib/features/auth/screens/welcome_screen.dart:352:21 • prefer_const_declarations
+   info • Use 'const' with the constructor to improve performance • lib/features/auth/screens/welcome_screen.dart:610:37 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/auth/screens/welcome_screen.dart:611:37 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/features/auth/screens/welcome_screen.dart:764:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/auth/screens/welcome_screen.dart:766:35 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/auth/screens/welcome_screen.dart:767:35 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/features/auth/screens/welcome_screen.dart:928:29 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/auth/screens/welcome_screen.dart:929:29 • prefer_const_literals_to_create_immutables
+   info • Don't invoke 'print' in production code • lib/features/chat/screens/call_screen.dart:83:7 • avoid_print
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:112:21 • prefer_const_constructors
+   info • 'memberListConfig' is deprecated and shouldn't be used. use memberList instead, deprecated since 4.1.9, will be removed after 4.5.0,Migrate Guide:https://pub.dev/documentation/zego_uikit_prebuilt_call/latest/topics/Migration_4.x-topic.html#419 • lib/features/chat/screens/call_screen.dart:148:12 • deprecated_member_use
+   info • 'ZegoMemberListConfig' is deprecated and shouldn't be used. use ZegoCallMemberListConfig instead, deprecated since 4.1.9, will be removed after 4.5.0,Migrate Guide:https://pub.dev/documentation/zego_uikit_prebuilt_call/latest/topics/Migration_4.x-topic.html#419 • lib/features/chat/screens/call_screen.dart:148:31 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:384:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:396:54 • prefer_const_constructors
+   info • Use a 'SizedBox' to add whitespace to a layout • lib/features/chat/screens/call_screen.dart:503:16 • sized_box_for_whitespace
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:542:29 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/chat/screens/call_screen.dart:543:29 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:557:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/chat/screens/call_screen.dart:570:37 • prefer_const_constructors
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/chat/screens/chat_screen.dart:220:38 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/features/chat/screens/chat_screen.dart:392:9 • use_build_context_synchronously
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/features/chat/screens/messages_screen.dart:185:21 • deprecated_member_use
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/features/chat/screens/messages_screen.dart:212:21 • deprecated_member_use
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/widgets/chat_widgets.dart:134:25 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/chat/widgets/chat_widgets.dart:135:25 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:136:19 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/chat/widgets/chat_widgets.dart:162:19 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/chat/widgets/chat_widgets.dart:163:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:168:5 • expected_token
+  error • The named parameter 'fontSize' isn't defined • lib/features/chat/widgets/chat_widgets.dart:190:27 • undefined_named_parameter
+  error • The named parameter 'fontWeight' isn't defined • lib/features/chat/widgets/chat_widgets.dart:191:27 • undefined_named_parameter
+  error • Expected an identifier • lib/features/chat/widgets/chat_widgets.dart:192:19 • missing_identifier
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:192:19 • expected_token
+  error • Expected to find ',' • lib/features/chat/widgets/chat_widgets.dart:192:19 • expected_token
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:203:19 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/chat/widgets/chat_widgets.dart:482:27 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/chat/widgets/chat_widgets.dart:483:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:485:23 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/chat/widgets/chat_widgets.dart:573:11 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/chat/widgets/chat_widgets.dart:574:11 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/chat/widgets/chat_widgets.dart:576:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/chat/widgets/chat_widgets.dart:593:6 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/create_post_screen.dart:419:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/create_post_screen.dart:419:52 • prefer_const_constructors
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/create_post_screen.dart:728:29 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/create_post/screens/create_post_screen.dart:736:21 • extra_positional_arguments_could_be_named
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/create_post_screen.dart:749:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/screens/create_post_screen.dart:759:19 • expected_token
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/features/create_post/screens/edit_post_screen.dart:4:8 • unnecessary_import
+warning • The declaration '_togglePlay' isn't referenced • lib/features/create_post/screens/music_picker_screen.dart:86:16 • unused_element
+  error • The named parameter 'border' isn't defined • lib/features/create_post/screens/music_picker_screen.dart:167:17 • undefined_named_parameter
+  error • The named parameter 'contentPadding' isn't defined • lib/features/create_post/screens/music_picker_screen.dart:171:17 • undefined_named_parameter
+  error • The named parameter 'onChanged' isn't defined • lib/features/create_post/screens/music_picker_screen.dart:174:15 • undefined_named_parameter
+  error • Expected an identifier • lib/features/create_post/screens/music_picker_screen.dart:179:11 • missing_identifier
+  error • Expected to find ')' • lib/features/create_post/screens/music_picker_screen.dart:179:11 • expected_token
+  error • Expected to find ',' • lib/features/create_post/screens/music_picker_screen.dart:179:11 • expected_token
+  error • Too many positional arguments: 1 expected, but 5 found • lib/features/create_post/screens/music_picker_screen.dart:191:21 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/create_post/screens/music_picker_screen.dart:207:19 • expected_token
+warning • The value of the local variable 'albumImage' isn't used • lib/features/create_post/screens/music_picker_screen.dart:228:25 • unused_local_variable
+warning • The value of the local variable 'artistName' isn't used • lib/features/create_post/screens/music_picker_screen.dart:229:25 • unused_local_variable
+warning • The value of the local variable 'hasPreview' isn't used • lib/features/create_post/screens/music_picker_screen.dart:232:25 • unused_local_variable
+  error • Expected to find ')' • lib/features/create_post/screens/music_picker_screen.dart:241:29 • expected_token
+  error • Expected an identifier • lib/features/create_post/screens/music_picker_screen.dart:310:22 • missing_identifier
+  error • Expected to find ':' • lib/features/create_post/screens/music_picker_screen.dart:310:22 • expected_token
+  error • Expected to find ')' • lib/features/create_post/screens/music_picker_screen.dart:311:20 • expected_token
+   info • The private field _textOverlays could be 'final' • lib/features/create_post/screens/photo_editor_screen.dart:42:21 • prefer_final_fields
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:54:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:78:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:102:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:126:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:150:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:174:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:198:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:222:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:246:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:270:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:294:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:318:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:342:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:366:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:536:34 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:537:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:538:34 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:539:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/create_post/screens/photo_editor_screen.dart:861:19 • prefer_const_constructors
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/screens/photo_editor_screen.dart:1029:15 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/photo_editor_screen.dart:1031:13 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 2 found • lib/features/create_post/screens/photo_editor_screen.dart:1033:11 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/create_post/screens/photo_editor_screen.dart:1036:9 • expected_token
+  error • The named parameter 'border' isn't defined • lib/features/create_post/screens/photo_tag_screen.dart:176:23 • undefined_named_parameter
+  error • The named parameter 'onChanged' isn't defined • lib/features/create_post/screens/photo_tag_screen.dart:181:21 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 2 found • lib/features/create_post/screens/photo_tag_screen.dart:186:19 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/create_post/screens/photo_tag_screen.dart:239:17 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/screens/photo_tag_screen.dart:343:35 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/create_post/screens/photo_tag_screen.dart:344:35 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/screens/photo_tag_screen.dart:349:33 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/screens/photo_tag_screen.dart:379:28 • expected_token
+   info • Unnecessary use of 'toList' in a spread • lib/features/create_post/screens/photo_tag_screen.dart:380:28 • unnecessary_to_list_in_spreads
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:65:29 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:66:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:68:27 • undefined_named_parameter
+  error • Expected an identifier • lib/features/create_post/widgets/image_preview_gallery.dart:73:21 • missing_identifier
+  error • Expected to find ')' • lib/features/create_post/widgets/image_preview_gallery.dart:73:21 • expected_token
+  error • Expected to find ',' • lib/features/create_post/widgets/image_preview_gallery.dart:73:21 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:82:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:84:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/widgets/image_preview_gallery.dart:93:19 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/widgets/image_preview_gallery.dart:113:23 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/widgets/image_preview_gallery.dart:119:9 • expected_token
+warning • Unused import: 'package:google_fonts/google_fonts.dart' • lib/features/create_post/widgets/location_picker_button.dart:5:8 • unused_import
+  error • Expected to find ')' • lib/features/create_post/widgets/location_picker_button.dart:32:15 • expected_token
+  error • Expected an identifier • lib/features/create_post/widgets/location_picker_button.dart:88:6 • missing_identifier
+  error • Expected to find ')' • lib/features/create_post/widgets/location_picker_button.dart:88:6 • expected_token
+  error • Expected to find ':' • lib/features/create_post/widgets/location_picker_button.dart:88:6 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/create_post/widgets/selected_music_card.dart:22:11 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/create_post/widgets/selected_music_card.dart:23:11 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/widgets/selected_music_card.dart:27:9 • undefined_named_parameter
+  error • The named parameter 'shape' isn't defined • lib/features/create_post/widgets/selected_music_card.dart:82:19 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/create_post/widgets/selected_music_card.dart:84:17 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/create_post/widgets/selected_music_card.dart:87:11 • expected_token
+  error • Expected to find ')' • lib/features/create_post/widgets/selected_music_card.dart:90:6 • expected_token
+warning • Unused import: 'package:google_fonts/google_fonts.dart' • lib/features/create_post/widgets/visibility_option.dart:5:8 • unused_import
+  error • Expected to find ')' • lib/features/create_post/widgets/visibility_option.dart:35:15 • expected_token
+  error • Expected an identifier • lib/features/create_post/widgets/visibility_option.dart:61:8 • missing_identifier
+  error • Expected to find ':' • lib/features/create_post/widgets/visibility_option.dart:61:8 • expected_token
+  error • Expected to find ')' • lib/features/create_post/widgets/visibility_option.dart:62:6 • expected_token
+  error • The named parameter 'builder' is required, but there's no corresponding argument • lib/features/home/screens/home_screen.dart:129:5 • missing_required_argument
+  error • The named parameter 'builder' isn't defined • lib/features/home/screens/home_screen.dart:133:7 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:158:6 • expected_token
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/home/screens/home_screen.dart:222:31 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/home/screens/home_screen.dart:228:29 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/home/screens/home_screen.dart:238:40 • use_build_context_synchronously
+  error • The named parameter 'borderRadius' isn't defined • lib/features/home/screens/home_screen.dart:250:23 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/home/screens/home_screen.dart:251:23 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/home/screens/home_screen.dart:254:29 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/home/screens/home_screen.dart:255:29 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:256:23 • expected_token
+  error • The named parameter 'border' isn't defined • lib/features/home/screens/home_screen.dart:257:23 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/home/screens/home_screen.dart:259:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:292:16 • expected_token
+   info • 'WillPopScope' is deprecated and shouldn't be used. Use PopScope instead. The Android predictive back feature will not work with WillPopScope. This feature was deprecated after v3.12.0-1.0.pre • lib/features/home/screens/home_screen.dart:324:12 • deprecated_member_use
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/home/screens/home_screen.dart:584:19 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:585:17 • expected_token
+  error • The named parameter 'width' isn't defined • lib/features/home/screens/home_screen.dart:589:17 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/home/screens/home_screen.dart:591:15 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/home/screens/home_screen.dart:594:19 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/home/screens/home_screen.dart:595:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:597:15 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/home/screens/home_screen.dart:599:13 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/features/home/screens/home_screen.dart:658:35 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:661:30 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/home/screens/home_screen.dart:684:31 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/home/screens/home_screen.dart:685:31 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:687:27 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/home/screens/home_screen.dart:736:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/home/screens/home_screen.dart:738:19 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 2 found • lib/features/home/screens/home_screen.dart:746:17 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:778:15 • expected_token
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:783:6 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/features/home/screens/home_screen.dart:812:19 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/home/screens/home_screen.dart:813:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/home/screens/home_screen.dart:815:15 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/home/widgets/appbar_buttons.dart:150:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/home/widgets/home_feed.dart:26:14 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/home/widgets/home_feed.dart:27:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/home/widgets/home_feed.dart:36:13 • prefer_const_constructors
+  error • The named parameter 'borderRadius' isn't defined • lib/features/home/widgets/post_card.dart:112:17 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/home/widgets/post_card.dart:113:17 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/features/home/widgets/post_card.dart:114:77 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/home/widgets/post_card.dart:116:15 • undefined_named_parameter
+  error • The named parameter 'fontSize' isn't defined • lib/features/home/widgets/post_card.dart:221:29 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/features/home/widgets/post_card.dart:222:29 • undefined_named_parameter
+  error • Expected 'else' or comma • lib/features/home/widgets/post_card.dart:226:19 • expected_else_or_comma
+  error • Expected an identifier • lib/features/home/widgets/post_card.dart:226:19 • missing_identifier
+  error • Expected to find ')' • lib/features/home/widgets/post_card.dart:226:19 • expected_token
+  error • Expected to find ')' • lib/features/home/widgets/post_card.dart:330:6 • expected_token
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/features/notifications/screens/notifications_screen.dart:3:8 • unnecessary_import
+  error • The named parameter 'onPressed' is required, but there's no corresponding argument • lib/features/notifications/screens/notifications_screen.dart:126:22 • missing_required_argument
+  error • The named parameter 'borderRadius' isn't defined • lib/features/notifications/screens/notifications_screen.dart:131:19 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:133:17 • undefined_named_parameter
+  error • The named parameter 'onPressed' isn't defined • lib/features/notifications/screens/notifications_screen.dart:136:15 • undefined_named_parameter
+  error • The named parameter 'flexibleSpace' isn't defined • lib/features/notifications/screens/notifications_screen.dart:138:13 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/notifications/screens/notifications_screen.dart:149:27 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:150:25 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/notifications/screens/notifications_screen.dart:175:23 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:176:21 • expected_token
+  error • Too many positional arguments: 0 expected, but 3 found • lib/features/notifications/screens/notifications_screen.dart:184:11 • extra_positional_arguments_could_be_named
+   info • Statements in an if should be enclosed in a block • lib/features/notifications/screens/notifications_screen.dart:189:19 • curly_braces_in_flow_control_structures
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/notifications/screens/notifications_screen.dart:217:27 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:218:25 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:223:21 • undefined_named_parameter
+  error • The named parameter 'borderRadius' isn't defined • lib/features/notifications/screens/notifications_screen.dart:293:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:295:27 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:298:23 • expected_token
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:301:18 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/features/notifications/screens/notifications_screen.dart:333:29 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:335:27 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 4 found • lib/features/notifications/screens/notifications_screen.dart:338:25 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:350:23 • expected_token
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:378:9 • expected_token
+   info • Don't use 'BuildContext's across async gaps • lib/features/notifications/screens/notifications_screen.dart:418:13 • use_build_context_synchronously
+  error • The named parameter 'boxShadow' isn't defined • lib/features/notifications/screens/notifications_screen.dart:482:13 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/notifications/screens/notifications_screen.dart:485:17 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/notifications/screens/notifications_screen.dart:486:17 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:488:13 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:490:11 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:500:84 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/notifications/screens/notifications_screen.dart:600:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/notifications/screens/notifications_screen.dart:602:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:605:15 • expected_token
+  error • Expected to find ')' • lib/features/notifications/screens/notifications_screen.dart:610:6 • expected_token
+   info • Unnecessary braces in a string interpolation • lib/features/post/screens/post_detail_screen.dart:538:35 • unnecessary_brace_in_string_interps
+   info • Use 'const' with the constructor to improve performance • lib/features/post/screens/post_detail_screen.dart:1355:18 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:52:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:52:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:134:11 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:148:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:173:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:192:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:199:15 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:228:15 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_input.dart:231:24 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_item.dart:58:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_item.dart:60:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_item.dart:111:32 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/comment_item.dart:113:34 • prefer_const_constructors
+  error • The named parameter 'size' isn't defined • lib/features/post/widgets/comment_item.dart:126:31 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/comment_item.dart:129:19 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/post_comments_list.dart:97:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/post_comments_list.dart:99:26 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/post_comments_list.dart:155:40 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/post/widgets/post_comments_list.dart:157:42 • prefer_const_constructors
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/taggable_post_image.dart:118:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:127:18 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:145:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/taggable_post_image.dart:147:19 • undefined_named_parameter
+  error • Expected 'else' or comma • lib/features/post/widgets/taggable_post_image.dart:167:11 • expected_else_or_comma
+  error • Expected an identifier • lib/features/post/widgets/taggable_post_image.dart:167:11 • missing_identifier
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:167:11 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:192:25 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/post/widgets/taggable_post_image.dart:193:25 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/post/widgets/taggable_post_image.dart:197:25 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:200:29 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:202:25 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/taggable_post_image.dart:204:23 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:232:16 • expected_token
+   info • Unnecessary use of 'toList' in a spread • lib/features/post/widgets/taggable_post_image.dart:233:16 • unnecessary_to_list_in_spreads
+  error • The named parameter 'borderRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:249:21 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/post/widgets/taggable_post_image.dart:250:21 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/post/widgets/taggable_post_image.dart:252:21 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:255:25 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/post/widgets/taggable_post_image.dart:256:25 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:258:21 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/taggable_post_image.dart:260:19 • undefined_named_parameter
+  error • Expected 'else' or comma • lib/features/post/widgets/taggable_post_image.dart:301:11 • expected_else_or_comma
+  error • Expected an identifier • lib/features/post/widgets/taggable_post_image.dart:301:11 • missing_identifier
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:301:11 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/features/post/widgets/taggable_post_image.dart:311:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/post/widgets/taggable_post_image.dart:313:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/post/widgets/taggable_post_image.dart:317:9 • expected_token
+  error • The named parameter 'builder' is required, but there's no corresponding argument • lib/features/profile/screens/follow_list_screen.dart:142:5 • missing_required_argument
+  error • The named parameter 'builder' isn't defined • lib/features/profile/screens/follow_list_screen.dart:145:7 • undefined_named_parameter
+  error • The named parameter 'borderRadius' isn't defined • lib/features/profile/screens/follow_list_screen.dart:155:17 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/profile/screens/follow_list_screen.dart:156:17 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/profile/screens/follow_list_screen.dart:157:17 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/profile/screens/follow_list_screen.dart:160:21 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/profile/screens/follow_list_screen.dart:161:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:163:17 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/profile/screens/follow_list_screen.dart:165:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:257:10 • expected_token
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:259:6 • expected_token
+  error • The named parameter 'height' isn't defined • lib/features/profile/screens/follow_list_screen.dart:285:13 • undefined_named_parameter
+  error • The named parameter 'body' isn't defined • lib/features/profile/screens/follow_list_screen.dart:289:7 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:341:6 • expected_token
+  error • The named parameter 'child' is required, but there's no corresponding argument • lib/features/profile/screens/follow_list_screen.dart:423:24 • missing_required_argument
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:435:29 • expected_token
+  error • Expected an identifier • lib/features/profile/screens/follow_list_screen.dart:436:34 • missing_identifier
+  error • Expected to find ':' • lib/features/profile/screens/follow_list_screen.dart:436:34 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/features/profile/screens/follow_list_screen.dart:437:21 • undefined_named_parameter
+  error • The named parameter 'padding' isn't defined • lib/features/profile/screens/follow_list_screen.dart:440:21 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/features/profile/screens/follow_list_screen.dart:442:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/screens/follow_list_screen.dart:454:11 • expected_token
+warning • Unused import: '../../../shared/widgets/image_carousel.dart' • lib/features/profile/screens/profile_screen.dart:18:8 • unused_import
+warning • Unused import: '../widgets/profile_badges.dart' • lib/features/profile/screens/profile_screen.dart:19:8 • unused_import
+warning • Unused import: '../../post/screens/post_detail_screen.dart' • lib/features/profile/screens/profile_screen.dart:28:8 • unused_import
+   info • Don't invoke 'print' in production code • lib/features/profile/screens/profile_screen.dart:119:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/profile/screens/profile_screen.dart:131:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/profile/screens/profile_screen.dart:134:9 • avoid_print
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/profile_screen.dart:217:9 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps • lib/features/profile/screens/profile_screen.dart:301:28 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/profile_screen.dart:327:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/profile_screen.dart:466:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/profile_screen.dart:496:19 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/user_list_screen.dart:127:7 • curly_braces_in_flow_control_structures
+   info • Empty catch block • lib/features/profile/screens/user_list_screen.dart:187:17 • empty_catches
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/user_list_screen.dart:200:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/profile/screens/user_list_screen.dart:235:9 • curly_braces_in_flow_control_structures
+  error • The named parameter 'width' isn't defined • lib/features/profile/widgets/profile_badges.dart:34:73 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/features/profile/widgets/profile_badges.dart:35:9 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/profile/widgets/profile_badges.dart:38:13 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/profile/widgets/profile_badges.dart:39:13 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/features/profile/widgets/profile_badges.dart:40:13 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/widgets/profile_badges.dart:42:9 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/profile/widgets/profile_badges.dart:44:7 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/profile/widgets/profile_badges.dart:51:6 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_body.dart:24:14 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_body.dart:25:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_body.dart:26:18 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_body.dart:28:20 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_body.dart:41:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_header.dart:261:45 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_header.dart:281:47 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_header.dart:295:47 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/profile/widgets/profile_header.dart:354:33 • prefer_const_constructors
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/search/screens/search_screen.dart:170:52 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/features/search/screens/search_screen.dart:230:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/search/screens/search_screen.dart:245:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/search/screens/search_screen.dart:266:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/search/screens/search_screen.dart:268:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/search/screens/search_screen.dart:457:7 • curly_braces_in_flow_control_structures
+   info • Use 'const' with the constructor to improve performance • lib/features/search/screens/search_screen.dart:724:51 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/screens/search_screen.dart:937:7 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/explore_feed.dart:27:14 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/explore_feed.dart:28:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/explore_feed.dart:37:13 • prefer_const_constructors
+  error • Expected to find ')' • lib/features/search/widgets/search_bar_widget.dart:36:13 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/search/widgets/search_bar_widget.dart:37:9 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/search/widgets/search_bar_widget.dart:38:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/search/widgets/search_bar_widget.dart:40:70 • expected_token
+  error • Expected an identifier • lib/features/search/widgets/search_bar_widget.dart:42:10 • missing_identifier
+  error • Expected to find ':' • lib/features/search/widgets/search_bar_widget.dart:42:10 • expected_token
+  error • The named parameter 'boxShadow' isn't defined • lib/features/search/widgets/search_bar_widget.dart:43:9 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/search/widgets/search_bar_widget.dart:47:19 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/search/widgets/search_bar_widget.dart:48:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/search/widgets/search_bar_widget.dart:50:15 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/search/widgets/search_bar_widget.dart:53:7 • undefined_named_parameter
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_bar_widget.dart:89:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_bar_widget.dart:93:24 • prefer_const_constructors
+  error • Expected to find ')' • lib/features/search/widgets/search_bar_widget.dart:104:6 • expected_token
+  error • Too many positional arguments: 0 expected, but 1 found • lib/features/search/widgets/search_header.dart:43:13 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/features/search/widgets/search_header.dart:44:11 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_header.dart:65:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_header.dart:67:31 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/search/widgets/search_header.dart:68:31 • prefer_const_literals_to_create_immutables
+  error • Expected to find ')' • lib/features/search/widgets/search_header.dart:102:13 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/features/search/widgets/search_header.dart:103:9 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/features/search/widgets/search_header.dart:104:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/search/widgets/search_header.dart:107:15 • expected_token
+  error • Expected an identifier • lib/features/search/widgets/search_header.dart:109:10 • missing_identifier
+  error • Expected to find ':' • lib/features/search/widgets/search_header.dart:109:10 • expected_token
+  error • The named parameter 'boxShadow' isn't defined • lib/features/search/widgets/search_header.dart:110:9 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/features/search/widgets/search_header.dart:114:19 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/features/search/widgets/search_header.dart:115:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/features/search/widgets/search_header.dart:117:15 • expected_token
+  error • The named parameter 'child' isn't defined • lib/features/search/widgets/search_header.dart:120:7 • undefined_named_parameter
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_header.dart:153:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_header.dart:157:24 • prefer_const_constructors
+  error • Expected to find ')' • lib/features/search/widgets/search_header.dart:164:6 • expected_token
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_user_item.dart:41:27 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_user_item.dart:43:27 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/features/search/widgets/search_user_item.dart:44:27 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_user_item.dart:76:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/search/widgets/search_user_item.dart:96:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/main.dart:37:18 • prefer_const_constructors
+   info • Don't use 'BuildContext's across async gaps • lib/main.dart:144:38 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/main.dart:408:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/main.dart:438:36 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/main.dart:451:36 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/main.dart:462:39 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/main.dart:463:39 • prefer_const_literals_to_create_immutables
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/main.dart:467:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/main.dart:516:47 • deprecated_member_use
+   info • Unnecessary braces in a string interpolation • lib/models/photo_emoji.dart:57:41 • unnecessary_brace_in_string_interps
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:133:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:134:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:212:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:230:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:256:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:258:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:301:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:320:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:322:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:373:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:407:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:434:24 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:441:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:444:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:518:23 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/auth_screen.dart:519:23 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/change_password_screen.dart:112:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/change_password_screen.dart:167:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/change_password_screen.dart:237:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/create_profile_screen.dart:131:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/create_profile_screen.dart:133:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/create_profile_screen.dart:184:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/create_profile_screen.dart:199:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/create_profile_screen.dart:249:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/create_profile_screen.dart:272:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/create_profile_screen.dart:358:60 • deprecated_member_use
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/auth/forgot_password_screen.dart:3:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:92:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:163:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:188:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:191:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:228:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:240:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:241:55 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:247:60 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:283:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:299:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:316:55 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/forgot_password_screen.dart:340:54 • deprecated_member_use
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/auth/login_screen.dart:3:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/login_screen.dart:167:57 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/auth/login_screen.dart:208:45 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/auth/login_screen.dart:209:44 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/auth/login_screen.dart:217:50 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/login_screen.dart:272:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/login_screen.dart:297:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/login_screen.dart:300:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/login_screen.dart:335:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/login_screen.dart:398:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/login_screen.dart:448:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/login_screen.dart:476:54 • deprecated_member_use
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/auth/signup_screen.dart:3:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/signup_screen.dart:106:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/signup_screen.dart:177:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/signup_screen.dart:202:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/signup_screen.dart:205:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/signup_screen.dart:230:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/signup_screen.dart:233:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/signup_screen.dart:271:53 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/screens/auth/signup_screen.dart:283:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/auth/signup_screen.dart:285:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/auth/signup_screen.dart:300:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/auth/signup_screen.dart:302:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/auth/signup_screen.dart:317:33 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/signup_screen.dart:336:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/signup_screen.dart:400:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/signup_screen.dart:433:54 • deprecated_member_use
+warning • Unused import: 'dart:math' • lib/screens/auth/welcome_screen.dart:3:8 • unused_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:184:30 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:185:30 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:234:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:332:44 • deprecated_member_use
+   info • Use 'const' for final variables initialized to a constant value • lib/screens/auth/welcome_screen.dart:342:21 • prefer_const_declarations
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:374:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:407:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:459:24 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:464:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:469:26 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:524:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:545:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:552:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:564:31 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:565:31 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:568:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:571:38 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/screens/auth/welcome_screen.dart:592:37 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/screens/auth/welcome_screen.dart:593:37 • prefer_const_literals_to_create_immutables
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:601:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:693:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:717:31 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:730:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:733:38 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/screens/auth/welcome_screen.dart:746:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/auth/welcome_screen.dart:748:35 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/screens/auth/welcome_screen.dart:749:35 • prefer_const_literals_to_create_immutables
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:800:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:801:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:826:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:871:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:899:43 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/screens/auth/welcome_screen.dart:910:29 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/screens/auth/welcome_screen.dart:911:29 • prefer_const_literals_to_create_immutables
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:915:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:937:22 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:939:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:980:32 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:980:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:1017:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:1020:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/welcome_screen.dart:1047:49 • deprecated_member_use
+   info • Don't invoke 'print' in production code • lib/screens/content/call_screen.dart:83:7 • avoid_print
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:112:21 • prefer_const_constructors
+   info • 'memberListConfig' is deprecated and shouldn't be used. use memberList instead, deprecated since 4.1.9, will be removed after 4.5.0,Migrate Guide:https://pub.dev/documentation/zego_uikit_prebuilt_call/latest/topics/Migration_4.x-topic.html#419 • lib/screens/content/call_screen.dart:148:12 • deprecated_member_use
+   info • 'ZegoMemberListConfig' is deprecated and shouldn't be used. use ZegoCallMemberListConfig instead, deprecated since 4.1.9, will be removed after 4.5.0,Migrate Guide:https://pub.dev/documentation/zego_uikit_prebuilt_call/latest/topics/Migration_4.x-topic.html#419 • lib/screens/content/call_screen.dart:148:31 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:155:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:157:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:170:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:311:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:323:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:340:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:365:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:376:48 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:382:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:394:54 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:441:39 • deprecated_member_use
+   info • Use a 'SizedBox' to add whitespace to a layout • lib/screens/content/call_screen.dart:501:16 • sized_box_for_whitespace
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:515:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:529:42 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:540:29 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/screens/content/call_screen.dart:541:29 • prefer_const_literals_to_create_immutables
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:547:43 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:555:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/call_screen.dart:568:37 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:648:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/call_screen.dart:651:41 • deprecated_member_use
+warning • Unused import: 'package:font_awesome_flutter/font_awesome_flutter.dart' • lib/screens/content/create_post_screen.dart:9:8 • unused_import
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/create_post_screen.dart:418:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/create_post_screen.dart:418:52 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:435:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:453:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:713:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:736:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:771:64 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:790:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:794:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:855:61 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:898:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:901:55 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:919:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:922:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:954:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:956:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/create_post_screen.dart:1058:62 • deprecated_member_use
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/content/edit_post_screen.dart:4:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:242:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:260:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:395:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:448:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:467:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:528:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:531:61 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:596:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:597:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:601:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:602:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:660:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:690:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:691:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:695:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:696:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:735:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/edit_post_screen.dart:770:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/music_picker_screen.dart:166:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/music_picker_screen.dart:189:28 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/music_picker_screen.dart:240:55 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/music_picker_screen.dart:241:44 • deprecated_member_use
+   info • The private field _textOverlays could be 'final' • lib/screens/content/photo_editor_screen.dart:42:21 • prefer_final_fields
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:54:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:78:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:102:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:126:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:150:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:174:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:198:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:222:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:246:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:270:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:294:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:318:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:342:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:366:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:536:34 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:537:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:538:34 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:539:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/content/photo_editor_screen.dart:861:19 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/photo_editor_screen.dart:1028:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/photo_tag_screen.dart:175:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/content/photo_tag_screen.dart:342:55 • deprecated_member_use
+   info • Unnecessary use of 'toList' in a spread • lib/screens/content/photo_tag_screen.dart:380:28 • unnecessary_to_list_in_spreads
+warning • Unused import: 'dart:math' • lib/screens/main/home_screen.dart:4:8 • unused_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:132:34 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/main/home_screen.dart:222:31 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/main/home_screen.dart:228:29 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/main/home_screen.dart:238:40 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:249:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:253:49 • deprecated_member_use
+   info • 'WillPopScope' is deprecated and shouldn't be used. Use PopScope instead. The Android predictive back feature will not work with WillPopScope. This feature was deprecated after v3.12.0-1.0.pre • lib/screens/main/home_screen.dart:324:12 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/home_screen.dart:634:21 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:749:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:752:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:857:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:1044:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:1045:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:1049:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:1054:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:1118:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:1144:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:1196:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/home_screen.dart:1272:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/profile_screen.dart:49:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/profile_screen.dart:52:44 • deprecated_member_use
+   info • Don't invoke 'print' in production code • lib/screens/main/profile_screen.dart:158:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/screens/main/profile_screen.dart:170:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/screens/main/profile_screen.dart:173:9 • avoid_print
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:256:9 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps • lib/screens/main/profile_screen.dart:340:28 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:366:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:459:9 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps • lib/screens/main/profile_screen.dart:462:28 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:546:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:576:19 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/profile_screen.dart:777:61 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/profile_screen.dart:780:63 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:792:41 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/profile_screen.dart:794:41 • curly_braces_in_flow_control_structures
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/profile_screen.dart:922:57 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/profile_screen.dart:942:59 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/profile_screen.dart:956:59 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/profile_screen.dart:1068:33 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/profile_screen.dart:1193:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/profile_screen.dart:1196:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/profile_screen.dart:1274:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/profile_screen.dart:1299:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main/profile_screen.dart:1368:51 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/main/search_screen.dart:170:52 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/screens/main/search_screen.dart:231:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/search_screen.dart:246:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/search_screen.dart:267:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/search_screen.dart:269:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/main/search_screen.dart:458:7 • curly_braces_in_flow_control_structures
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/search_screen.dart:725:45 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/main/search_screen.dart:939:11 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/follow_list_screen.dart:144:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/follow_list_screen.dart:154:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/follow_list_screen.dart:156:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/follow_list_screen.dart:159:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/follow_list_screen.dart:283:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/follow_list_screen.dart:427:49 • deprecated_member_use
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/social/messages_screen.dart:5:8 • unnecessary_import
+   info • The private field _lastChats could be 'final' • lib/screens/social/messages_screen.dart:57:30 • prefer_final_fields
+warning • The value of the field '_lastChats' isn't used • lib/screens/social/messages_screen.dart:57:30 • unused_field
+   info • Don't invoke 'print' in production code • lib/screens/social/messages_screen.dart:160:7 • avoid_print
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/screens/social/messages_screen.dart:204:21 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:205:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:215:47 • deprecated_member_use
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/screens/social/messages_screen.dart:229:21 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:230:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:242:47 • deprecated_member_use
+   info • Use 'const' for final variables initialized to a constant value • lib/screens/social/messages_screen.dart:322:23 • prefer_const_declarations
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:374:60 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:385:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:421:60 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/messages_screen.dart:447:27 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/messages_screen.dart:449:36 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/screens/social/messages_screen.dart:450:41 • prefer_const_literals_to_create_immutables
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:488:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:609:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:664:31 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:666:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:806:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:808:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:810:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:860:47 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/screens/social/messages_screen.dart:998:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/social/messages_screen.dart:1023:9 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:1055:49 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/social/messages_screen.dart:1063:38 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/screens/social/messages_screen.dart:1235:9 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/screens/social/messages_screen.dart:1328:17 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/social/messages_screen.dart:1344:17 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:1347:59 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/screens/social/messages_screen.dart:1373:25 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:1403:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:1421:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:1446:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:1473:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:1508:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:1709:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:1737:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:1765:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:1780:32 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:2101:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/messages_screen.dart:2194:36 • deprecated_member_use
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/social/notifications_screen.dart:3:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:129:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:147:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:148:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:173:37 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/screens/social/notifications_screen.dart:188:19 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:215:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:216:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:220:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:291:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:331:49 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/screens/social/notifications_screen.dart:417:13 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:480:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:483:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:499:61 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/social/notifications_screen.dart:598:41 • deprecated_member_use
+   info • Unnecessary braces in a string interpolation • lib/screens/social/post_detail_screen.dart:549:35 • unnecessary_brace_in_string_interps
+   info • Don't use 'BuildContext's across async gaps • lib/screens/social/post_detail_screen.dart:662:28 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/screens/social/post_detail_screen.dart:665:28 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/screens/social/post_detail_screen.dart:1032:19 • use_build_context_synchronously
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/post_detail_screen.dart:1742:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/post_detail_screen.dart:2048:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/post_detail_screen.dart:2050:26 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/post_detail_screen.dart:2106:40 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/screens/social/post_detail_screen.dart:2108:42 • prefer_const_constructors
+   info • Statements in an if should be enclosed in a block • lib/screens/social/user_list_screen.dart:127:7 • curly_braces_in_flow_control_structures
+   info • Empty catch block • lib/screens/social/user_list_screen.dart:187:17 • empty_catches
+   info • Statements in an if should be enclosed in a block • lib/screens/social/user_list_screen.dart:200:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/social/user_list_screen.dart:235:9 • curly_braces_in_flow_control_structures
+   info • Don't invoke 'print' in production code • lib/services/apple_music_service.dart:16:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:44:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:104:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:108:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:120:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:128:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:130:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:139:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:225:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:237:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:261:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:280:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:297:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/chat_service.dart:299:7 • avoid_print
+   info • Use 'const' for final variables initialized to a constant value • lib/services/spotify_service.dart:17:7 • prefer_const_declarations
+   info • Don't invoke 'print' in production code • lib/services/toxicity_service.dart:36:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/toxicity_service.dart:43:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/toxicity_service.dart:46:7 • avoid_print
+  error • Expected to find ')' • lib/shared/widgets/double_tap_overlay.dart:108:23 • expected_token
+  error • Expected to find ')' • lib/shared/widgets/fuel_button.dart:126:53 • expected_token
+   info • Use 'const' for final variables initialized to a constant value • lib/shared/widgets/fuel_button.dart:130:5 • prefer_const_declarations
+   info • Use 'const' for final variables initialized to a constant value • lib/shared/widgets/fuel_button.dart:131:5 • prefer_const_declarations
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/shared/widgets/fuel_button.dart:180:40 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:181:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:183:43 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/shared/widgets/fuel_button.dart:206:40 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:207:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:209:43 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:289:43 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/shared/widgets/fuel_button.dart:292:44 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/shared/widgets/fuel_button.dart:292:45 • prefer_const_constructors
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/image_carousel.dart:129:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/image_carousel.dart:135:7 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/image_carousel.dart:178:11 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/image_carousel.dart:180:9 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/image_carousel.dart:197:6 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/image_carousel.dart:212:13 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/shared/widgets/image_carousel.dart:213:13 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/image_carousel.dart:215:11 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/image_carousel.dart:236:6 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/image_carousel.dart:258:17 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/shared/widgets/image_carousel.dart:259:17 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/image_carousel.dart:261:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/image_carousel.dart:271:8 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/location_display_sheet.dart:14:9 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/shared/widgets/location_display_sheet.dart:15:9 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/shared/widgets/location_display_sheet.dart:16:9 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/shared/widgets/location_display_sheet.dart:19:13 • undefined_named_parameter
+  error • The named parameter 'spreadRadius' isn't defined • lib/shared/widgets/location_display_sheet.dart:20:13 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/location_display_sheet.dart:22:9 • expected_token
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/location_display_sheet.dart:24:7 • undefined_named_parameter
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/location_display_sheet.dart:33:19 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/location_display_sheet.dart:35:17 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 3 found • lib/shared/widgets/location_display_sheet.dart:38:15 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/shared/widgets/location_display_sheet.dart:67:13 • expected_token
+  error • Expected to find ')' • lib/shared/widgets/location_display_sheet.dart:72:4 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/music_player_card.dart:274:17 • undefined_named_parameter
+  error • The named parameter 'leading' isn't defined • lib/shared/widgets/music_player_card.dart:276:17 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/shared/widgets/music_player_card.dart:278:17 • undefined_named_parameter
+  error • The named parameter 'onTap' isn't defined • lib/shared/widgets/music_player_card.dart:280:17 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:285:13 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/music_player_card.dart:288:17 • undefined_named_parameter
+  error • The named parameter 'leading' isn't defined • lib/shared/widgets/music_player_card.dart:290:17 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/shared/widgets/music_player_card.dart:292:17 • undefined_named_parameter
+  error • The named parameter 'trailing' isn't defined • lib/shared/widgets/music_player_card.dart:294:17 • undefined_named_parameter
+  error • The named parameter 'onTap' isn't defined • lib/shared/widgets/music_player_card.dart:296:17 • undefined_named_parameter
+  error • Expected an identifier • lib/shared/widgets/music_player_card.dart:304:13 • missing_identifier
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:304:13 • expected_token
+  error • Expected to find ',' • lib/shared/widgets/music_player_card.dart:304:13 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/music_player_card.dart:307:17 • undefined_named_parameter
+  error • The named parameter 'leading' isn't defined • lib/shared/widgets/music_player_card.dart:309:17 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/shared/widgets/music_player_card.dart:311:17 • undefined_named_parameter
+  error • The named parameter 'onTap' isn't defined • lib/shared/widgets/music_player_card.dart:313:17 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:328:13 • expected_token
+  error • The named parameter 'shape' isn't defined • lib/shared/widgets/music_player_card.dart:331:17 • undefined_named_parameter
+  error • The named parameter 'leading' isn't defined • lib/shared/widgets/music_player_card.dart:333:17 • undefined_named_parameter
+  error • The named parameter 'title' isn't defined • lib/shared/widgets/music_player_card.dart:335:17 • undefined_named_parameter
+  error • The named parameter 'trailing' isn't defined • lib/shared/widgets/music_player_card.dart:337:17 • undefined_named_parameter
+  error • The named parameter 'onTap' isn't defined • lib/shared/widgets/music_player_card.dart:339:17 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/shared/widgets/music_player_card.dart:344:13 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:345:11 • expected_token
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/music_player_card.dart:444:7 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:472:6 • expected_token
+  error • The named parameter 'blurRadius' isn't defined • lib/shared/widgets/music_player_card.dart:538:15 • undefined_named_parameter
+  error • The named parameter 'offset' isn't defined • lib/shared/widgets/music_player_card.dart:539:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:541:11 • expected_token
+  error • The named parameter 'width' isn't defined • lib/shared/widgets/music_player_card.dart:578:74 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/music_player_card.dart:580:23 • undefined_named_parameter
+  error • Expected an identifier • lib/shared/widgets/music_player_card.dart:651:21 • missing_identifier
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:651:21 • expected_token
+  error • Expected to find ',' • lib/shared/widgets/music_player_card.dart:651:21 • expected_token
+  error • The named parameter 'border' isn't defined • lib/shared/widgets/music_player_card.dart:658:27 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/music_player_card.dart:661:25 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:671:19 • expected_token
+  error • Expected an identifier • lib/shared/widgets/music_player_card.dart:677:15 • missing_identifier
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:677:15 • expected_token
+  error • Expected to find ',' • lib/shared/widgets/music_player_card.dart:677:15 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/music_player_card.dart:692:27 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/music_player_card.dart:696:25 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/music_player_card.dart:705:13 • expected_token
+  error • The named parameter 'borderRadius' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:221:15 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 3 found • lib/shared/widgets/photo_emoji_picker.dart:226:11 • extra_positional_arguments_could_be_named
+  error • The named parameter 'fontSize' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:243:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:246:15 • expected_token
+  error • The named parameter 'fontSize' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:290:74 • undefined_named_parameter
+  error • The named parameter 'textAlign' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:291:15 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/shared/widgets/photo_emoji_picker.dart:296:11 • extra_positional_arguments_could_be_named
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:297:9 • expected_token
+  error • The named parameter 'image' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:343:21 • undefined_named_parameter
+  error • The named parameter 'border' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:349:21 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:353:23 • undefined_named_parameter
+  error • The named parameter 'boxShadow' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:355:21 • undefined_named_parameter
+  error • The named parameter 'blurRadius' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:359:33 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:360:27 • expected_token
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:363:19 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:373:23 • expected_token
+  error • Expected an identifier • lib/shared/widgets/photo_emoji_picker.dart:374:18 • missing_identifier
+  error • Expected to find ':' • lib/shared/widgets/photo_emoji_picker.dart:374:18 • expected_token
+  error • Expected an identifier • lib/shared/widgets/photo_emoji_picker.dart:376:17 • missing_identifier
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:376:17 • expected_token
+  error • Expected to find ',' • lib/shared/widgets/photo_emoji_picker.dart:376:17 • expected_token
+  error • The named parameter 'child' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:400:21 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:411:15 • expected_token
+  error • The named parameter 'fontSize' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:419:17 • undefined_named_parameter
+  error • The named parameter 'fontWeight' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:420:17 • undefined_named_parameter
+  error • The named parameter 'maxLines' isn't defined • lib/shared/widgets/photo_emoji_picker.dart:422:15 • undefined_named_parameter
+  error • Expected to find ')' • lib/shared/widgets/photo_emoji_picker.dart:424:11 • expected_token
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/theme/app_colors.dart:68:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/double_tap_overlay.dart:106:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/fuel_button.dart:126:29 • deprecated_member_use
+   info • Use 'const' for final variables initialized to a constant value • lib/widgets/fuel_button.dart:130:5 • prefer_const_declarations
+   info • Use 'const' for final variables initialized to a constant value • lib/widgets/fuel_button.dart:131:5 • prefer_const_declarations
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/widgets/fuel_button.dart:180:40 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:181:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:183:43 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/widgets/fuel_button.dart:206:40 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:207:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:209:43 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:289:43 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/widgets/fuel_button.dart:292:44 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/widgets/fuel_button.dart:292:45 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/image_carousel.dart:128:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/image_carousel.dart:177:31 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/image_carousel.dart:211:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/image_carousel.dart:213:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/image_carousel.dart:257:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/location_display_sheet.dart:13:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/location_display_sheet.dart:18:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/location_display_sheet.dart:32:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/music_player_card.dart:273:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/music_player_card.dart:287:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/music_player_card.dart:306:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/music_player_card.dart:330:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/music_player_card.dart:442:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/music_player_card.dart:537:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/music_player_card.dart:562:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/music_player_card.dart:578:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/music_player_card.dart:657:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/music_player_card.dart:659:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/music_player_card.dart:691:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/photo_emoji_picker.dart:220:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/photo_emoji_picker.dart:242:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/photo_emoji_picker.dart:290:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/photo_emoji_picker.dart:342:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/photo_emoji_picker.dart:352:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/photo_emoji_picker.dart:358:55 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/photo_emoji_picker.dart:369:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/photo_emoji_picker.dart:398:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/photo_emoji_picker.dart:418:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/taggable_post_image.dart:117:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/taggable_post_image.dart:144:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/taggable_post_image.dart:191:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/taggable_post_image.dart:199:49 • deprecated_member_use
+   info • Unnecessary use of 'toList' in a spread • lib/widgets/taggable_post_image.dart:233:16 • unnecessary_to_list_in_spreads
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/taggable_post_image.dart:248:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/taggable_post_image.dart:254:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/taggable_post_image.dart:310:41 • deprecated_member_use
+
