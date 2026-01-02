@@ -7,7 +7,9 @@ class SafetyService {
 
   // --- 1. KULLANICIYI ENGELLE ---
   Future<void> blockUser(String targetUserId) async {
-    final myId = _client.auth.currentUser!.id;
+    final user = _client.auth.currentUser;
+    if (user == null) return; // Oturum yoksa sessizce çık
+    final myId = user.id;
     if (myId == targetUserId) throw Exception("Kendini engelleyemezsin.");
 
     try {
@@ -18,9 +20,14 @@ class SafetyService {
       });
 
       // Bağları kopar (İki taraflı takibi sil)
-      await _client.from('friendships').delete().match({'user_id': myId, 'friend_id': targetUserId});
-      await _client.from('friendships').delete().match({'user_id': targetUserId, 'friend_id': myId});
-
+      await _client
+          .from('friendships')
+          .delete()
+          .match({'user_id': myId, 'friend_id': targetUserId});
+      await _client
+          .from('friendships')
+          .delete()
+          .match({'user_id': targetUserId, 'friend_id': myId});
     } catch (e) {
       throw Exception("Engelleme hatası: $e");
     }
@@ -28,9 +35,15 @@ class SafetyService {
 
   // --- 2. ENGELİ KALDIR ---
   Future<void> unblockUser(String targetUserId) async {
-    final myId = _client.auth.currentUser!.id;
+    final user = _client.auth.currentUser;
+    if (user == null) return; // Oturum yoksa sessizce çık
+    final myId = user.id;
     try {
-      await _client.from('blocked_users').delete().eq('user_id', myId).eq('blocked_user_id', targetUserId);
+      await _client
+          .from('blocked_users')
+          .delete()
+          .eq('user_id', myId)
+          .eq('blocked_user_id', targetUserId);
     } catch (e) {
       throw Exception("Engel kaldırma hatası: $e");
     }
@@ -43,7 +56,9 @@ class SafetyService {
     required String reason,
     String? description,
   }) async {
-    final myId = _client.auth.currentUser!.id;
+    final user = _client.auth.currentUser;
+    if (user == null) return; // Oturum yoksa sessizce çık
+    final myId = user.id;
     try {
       await _client.from('reports').insert({
         'reporter_id': myId,
@@ -60,7 +75,9 @@ class SafetyService {
   // 🔥 4. BENİ ENGELLEYENLER (Aramada ve Listelerde GİZLE) 🔥
   // Bu kişiler beni engellediği için onları hiçbir yerde görmemeliyim.
   Future<List<String>> getIdsThatBlockedMe() async {
-    final myId = _client.auth.currentUser!.id;
+    final user = _client.auth.currentUser;
+    if (user == null) return []; // Oturum yoksa boş liste dön
+    final myId = user.id;
     try {
       // 'blocked_users' tablosunda, user_id (engelleyen) ONLAR, blocked_user_id (engellenen) BEN.
       final response = await _client
@@ -78,7 +95,9 @@ class SafetyService {
   // 🔥 5. BENİM ENGELLEDİKLERİM (Feed'de GİZLE) 🔥
   // Bunları ben engelledim. Postlarını görmemeliyim ama profilini bulup engelini kaldırabilmeliyim.
   Future<List<String>> getIdsIBlocked() async {
-    final myId = _client.auth.currentUser!.id;
+    final user = _client.auth.currentUser;
+    if (user == null) return []; // Oturum yoksa boş liste dön
+    final myId = user.id;
     try {
       final response = await _client
           .from('blocked_users')
@@ -94,9 +113,16 @@ class SafetyService {
 
   // --- 6. TEKİL KONTROL (Profil Sayfası İçin) ---
   Future<bool> isUserBlocked(String targetUserId) async {
-    final myId = _client.auth.currentUser!.id;
+    final user = _client.auth.currentUser;
+    if (user == null) return false; // Oturum yoksa false dön
+    final myId = user.id;
     // Ben onu engelledim mi?
-    final response = await _client.from('blocked_users').select().eq('user_id', myId).eq('blocked_user_id', targetUserId).maybeSingle();
+    final response = await _client
+        .from('blocked_users')
+        .select()
+        .eq('user_id', myId)
+        .eq('blocked_user_id', targetUserId)
+        .maybeSingle();
     return response != null;
   }
 }
