@@ -21,7 +21,6 @@ import '../widgets/profile_header.dart';
 import '../../home/widgets/post_card.dart';
 
 // --- EKRANLAR ---
-// --- EKRANLAR ---
 import '../../chat/screens/chat_screen.dart';
 import 'follow_list_screen.dart';
 import 'edit_profile_screen.dart';
@@ -93,15 +92,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-      // Profili yeniden yükle (sadece önemli değişikliklerde)
-      if (data.event == AuthChangeEvent.signedIn ||
-          data.event == AuthChangeEvent.tokenRefreshed ||
-          data.event == AuthChangeEvent.userUpdated) {
-        if (mounted) {
-          _loadProfileData();
-        }
-      }
-    });
+          // Profili yeniden yükle (sadece önemli değişikliklerde)
+          if (data.event == AuthChangeEvent.signedIn ||
+              data.event == AuthChangeEvent.tokenRefreshed ||
+              data.event == AuthChangeEvent.userUpdated) {
+            if (mounted) {
+              _loadProfileData();
+            }
+          }
+        });
   }
 
   @override
@@ -204,7 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
+              (route) => false,
         );
       }
     } catch (e) {
@@ -290,7 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _updateCoverPhoto() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image == null) {
       return;
     }
@@ -428,7 +427,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return AlertDialog(
           backgroundColor: AppColors.bgCard,
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text("Kullanıcıyı Şikayet Et",
               style: GoogleFonts.poppins(
                   color: Colors.white, fontWeight: FontWeight.bold)),
@@ -607,104 +606,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: _isLoading
           ? const ProfileHeaderShimmer()
           : RefreshIndicator(
-              onRefresh: _loadProfileData,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
+        onRefresh: _loadProfileData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              // HEADER WIDGET
+              ProfileHeader(
+                profileData: _profileData,
+                isMe: isMe,
+                isAdmin: isAdmin,
+                friendshipStatus: _friendshipStatus,
+                postCount: _postCount,
+                followersCount: _followersCount,
+                followingCount: _followingCount,
+                showBackButton: widget.showBackButton,
+                hasLiveVideo: _hasLiveVideo,
+                isPlayingLiveVideo: _isPlayingLiveVideo,
+                videoController: _videoController,
+                onUpdateCoverPhoto: _updateCoverPhoto,
+                onLogout: _logout,
+                onBack: () => Navigator.pop(context),
+                onMenuAction: (val) {
+                  if (val == 'report') _showReportDialog();
+                  if (val == 'block') _confirmBlockAction();
+                },
+                onLiveVideoStateChange: (isPlaying) {
+                  if (!_hasLiveVideo || _videoController == null) return;
+                  setState(() => _isPlayingLiveVideo = isPlaying);
+                  if (isPlaying) {
+                    _videoController!.play();
+                  } else {
+                    _videoController!.pause();
+                    _videoController!.seekTo(Duration.zero);
+                  }
+                },
+                onOpenFollowList: _openFollowList,
+                onEditProfile: () async {
+                  if (_profileData == null) return;
+                  final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => EditProfileScreen(
+                              currentProfile: _profileData!)));
+                  if (result == true) _loadProfileData();
+                },
+                onFollowAction: _handleFollowAction,
+                onMessage: _startMessage,
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: [
-                    // HEADER WIDGET
-                    ProfileHeader(
-                      profileData: _profileData,
-                      isMe: isMe,
-                      isAdmin: isAdmin,
-                      friendshipStatus: _friendshipStatus,
-                      postCount: _postCount,
-                      followersCount: _followersCount,
-                      followingCount: _followingCount,
-                      showBackButton: widget.showBackButton,
-                      hasLiveVideo: _hasLiveVideo,
-                      isPlayingLiveVideo: _isPlayingLiveVideo,
-                      videoController: _videoController,
-                      onUpdateCoverPhoto: _updateCoverPhoto,
-                      onLogout: _logout,
-                      onBack: () => Navigator.pop(context),
-                      onMenuAction: (val) {
-                        if (val == 'report') _showReportDialog();
-                        if (val == 'block') _confirmBlockAction();
-                      },
-                      onLiveVideoStateChange: (isPlaying) {
-                        if (!_hasLiveVideo || _videoController == null) return;
-                        setState(() => _isPlayingLiveVideo = isPlaying);
-                        if (isPlaying) {
-                          _videoController!.play();
-                        } else {
-                          _videoController!.pause();
-                          _videoController!.seekTo(Duration.zero);
-                        }
-                      },
-                      onOpenFollowList: _openFollowList,
-                      onEditProfile: () async {
-                        if (_profileData == null) return;
-                        final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => EditProfileScreen(
-                                    currentProfile: _profileData!)));
-                        if (result == true) _loadProfileData();
-                      },
-                      onFollowAction: _handleFollowAction,
-                      onMessage: _startMessage,
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        children: [
-                          // 🔥 MÜZİK OYNATICI KARTI
-                          MusicPlayerCard(userId: widget.userId, isMe: isMe),
-                          const SizedBox(height: 10),
-                        ],
-                      ),
-                    ),
-
-                    // GÖNDERİ LİSTESİ
-                    showLockScreen
-                        ? Padding(
-                            padding: const EdgeInsets.only(top: 40),
-                            child: Column(children: [
-                              const Icon(Icons.lock_outline,
-                                  size: 40, color: Colors.white24),
-                              const SizedBox(height: 10),
-                              Text("Bu hesap gizli.",
-                                  style: GoogleFonts.poppins(
-                                      color: Colors.white24))
-                            ]))
-                        : (visiblePosts.isEmpty
-                            ? Padding(
-                                padding: const EdgeInsets.only(top: 40),
-                                child: Column(children: [
-                                  const Icon(Icons.feed_outlined,
-                                      size: 40, color: Colors.white24),
-                                  const SizedBox(height: 10),
-                                  Text("Henüz gönderi yok.",
-                                      style: GoogleFonts.poppins(
-                                          color: Colors.white24))
-                                ]))
-                            : ListView.builder(
-                                shrinkWrap: true,
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: visiblePosts.length,
-                                itemBuilder: (context, index) => PostCard(
-                                  post: visiblePosts[index],
-                                  onRefresh: _loadProfileData,
-                                ),
-                              )),
-                    const SizedBox(height: 40),
+                    // 🔥 MÜZİK OYNATICI KARTI
+                    MusicPlayerCard(userId: widget.userId, isMe: isMe),
+                    const SizedBox(height: 10),
                   ],
                 ),
               ),
-            ),
+
+              // GÖNDERİ LİSTESİ
+              showLockScreen
+                  ? Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: Column(children: [
+                    const Icon(Icons.lock_outline,
+                        size: 40, color: Colors.white24),
+                    const SizedBox(height: 10),
+                    Text("Bu hesap gizli.",
+                        style: GoogleFonts.poppins(
+                            color: Colors.white24))
+                  ]))
+                  : (visiblePosts.isEmpty
+                  ? Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: Column(children: [
+                    const Icon(Icons.feed_outlined,
+                        size: 40, color: Colors.white24),
+                    const SizedBox(height: 10),
+                    Text("Henüz gönderi yok.",
+                        style: GoogleFonts.poppins(
+                            color: Colors.white24))
+                  ]))
+                  : ListView.separated(
+                shrinkWrap: true,
+                // Alt kısma ekstra boşluk ekledik
+                padding: const EdgeInsets.only(bottom: 24),
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: visiblePosts.length,
+                // Elemanlar arası boşluk (16px)
+                separatorBuilder: (context, index) =>
+                const SizedBox(height: 16),
+                itemBuilder: (context, index) => PostCard(
+                  post: visiblePosts[index],
+                  onRefresh: _loadProfileData,
+                ),
+              )),
+              const SizedBox(height: 40),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
