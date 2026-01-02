@@ -129,7 +129,7 @@ class _ChatScreenState extends State<ChatScreen> {
   // 🔒 Karşı tarafın ayarını çek
   Future<void> _loadOtherUserPrivacy() async {
     final show =
-    await _chatService.getReadReceiptSetting(widget.otherUser['id']);
+        await _chatService.getReadReceiptSetting(widget.otherUser['id']);
     if (mounted) setState(() => _otherUserShowReadReceipts = show);
   }
 
@@ -305,7 +305,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
     final XFile? image =
-    await picker.pickImage(source: source, imageQuality: 70);
+        await picker.pickImage(source: source, imageQuality: 90);
     if (image == null) return;
     setState(() => _isUploading = true);
     try {
@@ -316,7 +316,7 @@ class _ChatScreenState extends State<ChatScreen> {
           .from('uploads')
           .upload(path, File(image.path));
       final imageUrl =
-      Supabase.instance.client.storage.from('uploads').getPublicUrl(path);
+          Supabase.instance.client.storage.from('uploads').getPublicUrl(path);
       _sendMessage(imageUrl);
     } catch (_) {
     } finally {
@@ -335,24 +335,24 @@ class _ChatScreenState extends State<ChatScreen> {
               color: kListCardColor,
               child: SafeArea(
                   child: Wrap(children: [
-                    ListTile(
-                        leading: const Icon(Icons.camera_alt, color: Colors.white),
-                        title: const Text("Kamera",
-                            style: TextStyle(color: Colors.white)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _pickImage(ImageSource.camera);
-                        }),
-                    ListTile(
-                        leading:
+                ListTile(
+                    leading: const Icon(Icons.camera_alt, color: Colors.white),
+                    title: const Text("Kamera",
+                        style: TextStyle(color: Colors.white)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.camera);
+                    }),
+                ListTile(
+                    leading:
                         const Icon(Icons.photo_library, color: Colors.white),
-                        title: const Text("Galeri",
-                            style: TextStyle(color: Colors.white)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _pickImage(ImageSource.gallery);
-                        }),
-                  ])),
+                    title: const Text("Galeri",
+                        style: TextStyle(color: Colors.white)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.gallery);
+                    }),
+              ])),
             ),
           );
         });
@@ -539,7 +539,7 @@ class _ChatScreenState extends State<ChatScreen> {
           return Center(
               child: Text("Henüz mesaj yok.",
                   style:
-                  TextStyle(color: Colors.white.withValues(alpha: 0.3))));
+                      TextStyle(color: Colors.white.withValues(alpha: 0.3))));
         }
 
         // 🔥 Duplicate mesajları filtrele
@@ -640,7 +640,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       border: InputBorder.none,
                       contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 10)))),
+                          const EdgeInsets.symmetric(horizontal: 10)))),
           GestureDetector(
             onTap: _isTextFieldEmpty ? _toggleRecording : () => _sendMessage(),
             child: Container(
@@ -656,26 +656,26 @@ class _ChatScreenState extends State<ChatScreen> {
                   boxShadow: [
                     BoxShadow(
                         color: (_isEphemeralMode
-                            ? Colors.orange
-                            : const Color(0xFF335FA1))
+                                ? Colors.orange
+                                : const Color(0xFF335FA1))
                             .withValues(alpha: 0.4),
                         blurRadius: 10,
                         offset: const Offset(0, 4))
                   ]),
               child: _isRecording
                   ? Text(
-                '$_recordingDuration',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              )
+                      '$_recordingDuration',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    )
                   : Icon(
-                _isTextFieldEmpty ? Icons.mic : Icons.send,
-                color: Colors.white,
-                size: 20,
-              ),
+                      _isTextFieldEmpty ? Icons.mic : Icons.send,
+                      color: Colors.white,
+                      size: 20,
+                    ),
             ),
           ),
         ]),
@@ -700,12 +700,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageBubble(
-      Map<String, dynamic> msg,
-      bool isMe,
-      bool showAvatar, {
-        bool isEphemeral = false,
-        bool isViewed = false,
-      }) {
+    Map<String, dynamic> msg,
+    bool isMe,
+    bool showAvatar, {
+    bool isEphemeral = false,
+    bool isViewed = false,
+  }) {
     final content = msg['content'] as String;
     final messageId = msg['id'].toString();
     final senderId = msg['sender_id'].toString();
@@ -713,7 +713,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final ephemeralDuration = msg['ephemeral_duration'] as int? ?? 5;
 
     final time =
-    DateFormat('HH:mm').format(DateTime.parse(createdAtRaw).toLocal());
+        DateFormat('HH:mm').format(DateTime.parse(createdAtRaw).toLocal());
     bool isImage = content.startsWith('http') &&
         (content.contains('.jpg') ||
             content.contains('.png') ||

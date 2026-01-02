@@ -123,12 +123,13 @@ class _UserListItemState extends State<_UserListItem> {
     setState(() => _isLoading = true);
     final status = await widget.friendService.getFollowStatus(
         currentUserId: widget.currentUserId, targetUserId: widget.user['id']);
-    if (mounted)
+    if (mounted) {
       setState(() {
         _status = status;
         _isLoading = false;
         _statusChecked = true;
       });
+    }
   }
 
   // --- İŞLEMLER ---

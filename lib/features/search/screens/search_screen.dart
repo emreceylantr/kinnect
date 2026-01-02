@@ -37,7 +37,7 @@ class _SearchScreenState extends State<SearchScreen> {
   final FeedService feedService = FeedService();
   final SafetyService _safetyService = SafetyService();
 
-  late final String myId;
+  String myId = ''; // 🔧 Değiştirildi: late final yerine boş string ile başlat
   final TextEditingController searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
@@ -72,20 +72,28 @@ class _SearchScreenState extends State<SearchScreen> {
     _loadAvatarPreference(); // 🔥 EKLENDİ: Uygulama açılınca kayıtlı karakteri yükle
 
     final user = client.auth.currentUser;
+    myId = user?.id ?? ''; // 🔧 Null-safe: boş string fallback
+
     if (user != null) {
-      myId = user.id;
       _fetchExplore();
     }
+
     _pageController.addListener(() {
-      setState(() {
-        _currentPage = _pageController.page!;
-      });
+      if (mounted &&
+          _pageController.hasClients &&
+          _pageController.page != null) {
+        setState(() {
+          _currentPage = _pageController.page!;
+        });
+      }
     });
 
     _searchFocusNode.addListener(() {
-      setState(() {
-        // Klavye açılıp kapanınca arayüz güncellensin
-      });
+      if (mounted) {
+        setState(() {
+          // Klavye açılıp kapanınca arayüz güncellensin
+        });
+      }
     });
   }
 

@@ -5,7 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import 'package:kinnect/shared/widgets/kinnect_image.dart';
 
-import '../../../co../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/constants/border_colors.dart';
 import 'profile_badges.dart';
 import '../../spark/screens/spark_mode_screen.dart';
 
@@ -223,35 +224,44 @@ class ProfileHeader extends StatelessWidget {
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        // Simple CircleAvatar
-                        Container(
-                          width: 106,
-                          height: 106,
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border:
-                                Border.all(color: AppColors.primary, width: 0),
-                            color: AppColors.primary,
-                          ),
-                          child: isPlayingLiveVideo
-                              ? null
-                              : (profileData?['avatar_url'] != null
-                                  ? KinnectImage(
-                                      imageUrl: profileData!['avatar_url'],
-                                      width: 100,
-                                      height: 100,
-                                      isCircle: true,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Container(
-                                      decoration: BoxDecoration(
-                                          color: AppColors.bgCard,
-                                          shape: BoxShape.circle),
-                                      child: const Icon(Icons.person,
-                                          size: 50, color: Colors.white30),
-                                    )),
-                        ),
+                        // Simple CircleAvatar with dynamic border color
+                        Builder(builder: (context) {
+                          // 🎨 BorderColors.options kullanılıyor
+                          final int borderIndex =
+                              profileData?['border_color_index'] ?? 0;
+                          final colors = BorderColors.getColors(borderIndex);
+
+                          return Container(
+                            width: 106,
+                            height: 106,
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: colors,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: isPlayingLiveVideo
+                                ? null
+                                : (profileData?['avatar_url'] != null
+                                    ? KinnectImage(
+                                        imageUrl: profileData!['avatar_url'],
+                                        width: 100,
+                                        height: 100,
+                                        isCircle: true,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        decoration: BoxDecoration(
+                                            color: AppColors.bgCard,
+                                            shape: BoxShape.circle),
+                                        child: const Icon(Icons.person,
+                                            size: 50, color: Colors.white30),
+                                      )),
+                          );
+                        }),
                         // Live video overlay when pressed
                         if (hasLiveVideo &&
                             isPlayingLiveVideo &&
