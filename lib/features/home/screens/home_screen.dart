@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 // Servis ve Ekranlar
 import '../../../data/services/feed_service.dart';
 import '../../../data/services/chat_service.dart';
+import '../../../data/services/friend_service.dart'; // 🆕 FriendService eklendi
 import '../../create_post/screens/create_post_screen.dart';
 import '../../notifications/screens/notifications_screen.dart';
 import '../../post/screens/post_detail_screen.dart';
@@ -33,8 +34,10 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final FeedService _feedService = FeedService();
+  final FriendService _friendService =
+      FriendService(); // 🆕 FriendService eklendi
   int _currentIndex = 0;
 
   // 🔥 Bildirim Sayacı
@@ -49,8 +52,34 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // 🆕 Observer eklendi
     _setupRealtimeSubscription();
     _refreshFeed();
+    _fetchUnreadCount(); // 🆕 Başlangıçta sayıyı çek
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Uygulama öne geldiğinde okunmamış bildirim sayısını güncelle
+      _fetchUnreadCount();
+      // Feed'i de yenilemek istersen: _refreshFeed();
+    }
+  }
+
+  Future<void> _fetchUnreadCount() async {
+    if (_currentUserId.isEmpty) return;
+    try {
+      final count =
+          await _friendService.getUnreadNotificationCount(_currentUserId);
+      if (mounted) {
+        setState(() {
+          _unreadCount = count;
+        });
+      }
+    } catch (e) {
+      debugPrint("Bildirim sayısı alınamadı: $e");
+    }
   }
 
   void _refreshFeed() {
@@ -61,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // 🆕 Observer kaldırıldı
     Supabase.instance.client.removeChannel(_notificationChannel);
     super.dispose();
   }
@@ -346,10 +376,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   // --- 🔥 BİLDİRİM ÇANI (Padding kalktı, birbirine yanaştı) 🔥 ---
                   LottieBellButton(
                     notificationCount: _unreadCount,
-                    onTap: () {
+                    onTap: () async {
                       setState(() => _unreadCount = 0);
-                      Navigator.of(context)
+                      await Navigator.of(context)
                           .push(_createSlideRoute(const NotificationsScreen()));
+                      // Geri dönünce garanti olsun diye tekrar çek
+                      _fetchUnreadCount();
                     },
                   ),
 

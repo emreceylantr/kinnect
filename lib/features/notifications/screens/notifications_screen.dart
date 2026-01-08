@@ -31,15 +31,54 @@ class NotificationsScreen extends StatefulWidget {
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
+class _NotificationsScreenState extends State<NotificationsScreen>
+    with WidgetsBindingObserver {
   late final String _currentUserId;
   late final FriendService _friendService;
+  late Stream<List<FollowNotification>> _notificationsStream;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
     _friendService = FriendService();
+    _markNotificationsAsRead(); // 🆕 Async method call
+    _refreshNotifications();
+  }
+
+  Future<void> _markNotificationsAsRead() async {
+    if (_currentUserId.isEmpty) {
+      debugPrint('⚠️ markAllNotificationsAsRead: userId boş!');
+      return;
+    }
+    try {
+      await _friendService.markAllNotificationsAsRead(_currentUserId);
+      debugPrint('✅ Tüm bildirimler okundu olarak işaretlendi');
+    } catch (e) {
+      debugPrint('❌ markAllNotificationsAsRead hatası: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Uygulama öne geldiğinde bildirimleri yenile
+      _refreshNotifications();
+    }
+  }
+
+  void _refreshNotifications() {
+    setState(() {
+      _notificationsStream =
+          _friendService.getNotificationsStream(_currentUserId);
+    });
   }
 
   List<GroupedNotification> _groupNotifications(
@@ -306,7 +345,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
           // 📋 BİLDİRİM LİSTESİ
           StreamBuilder<List<FollowNotification>>(
-            stream: _friendService.getNotificationsStream(_currentUserId),
+            stream: _notificationsStream,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const SliverFillRemaining(
