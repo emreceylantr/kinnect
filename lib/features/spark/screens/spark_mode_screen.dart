@@ -216,9 +216,14 @@ class _SparkModeScreenState extends State<SparkModeScreen>
                     ),
                   ),
 
-                // Yakındaki kullanıcılar listesi
+                // Yakındaki kullanıcılar listesi - sabit konumda (spark butonunu etkilemesin)
                 if (isActive && nearbyUsers.isNotEmpty)
-                  _buildNearbyUsersList(nearbyUsers),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 60),
+                    child: _buildNearbyUsersList(nearbyUsers),
+                  )
+                else
+                  const SizedBox(height: 200), // Boş alan - layout sabit kalsın
 
                 // Alt bilgi
                 Padding(

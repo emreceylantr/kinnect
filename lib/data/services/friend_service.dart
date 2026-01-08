@@ -4,7 +4,13 @@
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-enum FollowStatus { self, following, notFollowing, pendingOutgoing, pendingIncoming }
+enum FollowStatus {
+  self,
+  following,
+  notFollowing,
+  pendingOutgoing,
+  pendingIncoming
+}
 
 class FollowNotification {
   final String id;
@@ -37,18 +43,30 @@ class FriendService {
       : client = client ?? Supabase.instance.client;
 
   // --- DURUM SORGULA ---
-  Future<FollowStatus> getFollowStatus({required String currentUserId, required String targetUserId}) async {
+  Future<FollowStatus> getFollowStatus(
+      {required String currentUserId, required String targetUserId}) async {
     if (currentUserId == targetUserId) return FollowStatus.self;
 
-    final myRequest = await client.from('friendships').select()
-        .eq('user_id', currentUserId).eq('friend_id', targetUserId).maybeSingle();
+    final myRequest = await client
+        .from('friendships')
+        .select()
+        .eq('user_id', currentUserId)
+        .eq('friend_id', targetUserId)
+        .maybeSingle();
 
     if (myRequest != null) {
-      return myRequest['status'] == 'accepted' ? FollowStatus.following : FollowStatus.pendingOutgoing;
+      return myRequest['status'] == 'accepted'
+          ? FollowStatus.following
+          : FollowStatus.pendingOutgoing;
     }
 
-    final theirRequest = await client.from('friendships').select()
-        .eq('user_id', targetUserId).eq('friend_id', currentUserId).eq('status', 'pending').maybeSingle();
+    final theirRequest = await client
+        .from('friendships')
+        .select()
+        .eq('user_id', targetUserId)
+        .eq('friend_id', currentUserId)
+        .eq('status', 'pending')
+        .maybeSingle();
 
     if (theirRequest != null) return FollowStatus.pendingIncoming;
 
@@ -56,121 +74,236 @@ class FriendService {
   }
 
   // --- BİLDİRİM AKIŞI (FİLTRELİ) ---
-  Stream<List<FollowNotification>> getNotificationsStream(String currentUserId) {
+  Stream<List<FollowNotification>> getNotificationsStream(
+      String currentUserId) {
     return client
         .from('notifications')
         .stream(primaryKey: ['id'])
         .eq('user_id', currentUserId)
         .order('created_at', ascending: false)
         .asyncMap((rows) async {
+          if (rows.isEmpty) return <FollowNotification>[];
 
-      if (rows.isEmpty) return <FollowNotification>[];
+          final actorIds =
+              rows.map<String>((r) => r['actor_id'] as String).toList();
+          final postIds = rows
+              .where((r) => r['post_id'] != null)
+              .map((r) => r['post_id'] as String)
+              .toList();
 
-      final actorIds = rows.map<String>((r) => r['actor_id'] as String).toList();
-      final postIds = rows.where((r) => r['post_id'] != null).map((r) => r['post_id'] as String).toList();
+          final profiles =
+              await client.from('profiles').select().inFilter('id', actorIds);
+          final profileMap = {
+            for (final p in profiles as List)
+              p['id'] as String: Map<String, dynamic>.from(p)
+          };
 
-      final profiles = await client.from('profiles').select().inFilter('id', actorIds);
-      final profileMap = { for (final p in profiles as List) p['id'] as String: Map<String, dynamic>.from(p) };
+          Map<String, String> postImages = {};
+          if (postIds.isNotEmpty) {
+            final postsData = await client
+                .from('posts')
+                .select('id, image_url')
+                .inFilter('id', postIds);
+            for (final p in postsData as List) {
+              if (p['image_url'] != null) postImages[p['id']] = p['image_url'];
+            }
+          }
 
-      Map<String, String> postImages = {};
-      if (postIds.isNotEmpty) {
-        final postsData = await client.from('posts').select('id, image_url').inFilter('id', postIds);
-        for (final p in postsData as List) {
-          if (p['image_url'] != null) postImages[p['id']] = p['image_url'];
-        }
-      }
+          final friendships = await client
+              .from('friendships')
+              .select('user_id, status')
+              .eq('friend_id', currentUserId)
+              .inFilter('user_id', actorIds);
+          final statusMap = {
+            for (final f in friendships as List)
+              f['user_id'] as String: f['status'] as String
+          };
 
-      final friendships = await client.from('friendships').select('user_id, status').eq('friend_id', currentUserId).inFilter('user_id', actorIds);
-      final statusMap = { for (final f in friendships as List) f['user_id'] as String : f['status'] as String };
+          List<FollowNotification> result = [];
 
-      List<FollowNotification> result = [];
+          for (var r in rows) {
+            final actorId = r['actor_id'] as String;
+            final type = r['type'] ?? 'unknown';
+            final fStatus = statusMap[actorId] ?? 'none';
 
-      for (var r in rows) {
-        final actorId = r['actor_id'] as String;
-        final type = r['type'] ?? 'unknown';
-        final fStatus = statusMap[actorId] ?? 'none';
+            // --- FİLTRELEME MANTIĞI ---
+            // Eğer bildirim tipi 'follow' İSE ve durumu 'pending' (bekliyor) İSE
+            // Ana listeye ekleme (Çünkü yukarıdaki kutuda gözükecek)
+            if (type == 'follow' && fStatus == 'pending') {
+              continue;
+            }
 
-        // --- FİLTRELEME MANTIĞI ---
-        // Eğer bildirim tipi 'follow' İSE ve durumu 'pending' (bekliyor) İSE
-        // Ana listeye ekleme (Çünkü yukarıdaki kutuda gözükecek)
-        if (type == 'follow' && fStatus == 'pending') {
-          continue;
-        }
-
-        result.add(FollowNotification(
-          id: r['id'],
-          userId: actorId,
-          userProfile: profileMap[actorId] ?? {},
-          createdAt: DateTime.tryParse(r['created_at'] ?? '') ?? DateTime.now(),
-          type: type,
-          postId: r['post_id'],
-          postImage: postImages[r['post_id']],
-          isRead: r['is_read'] ?? false,
-          friendshipStatus: fStatus,
-        ));
-      }
-      return result;
-    });
+            result.add(FollowNotification(
+              id: r['id'],
+              userId: actorId,
+              userProfile: profileMap[actorId] ?? {},
+              createdAt:
+                  DateTime.tryParse(r['created_at'] ?? '') ?? DateTime.now(),
+              type: type,
+              postId: r['post_id'],
+              postImage: postImages[r['post_id']],
+              isRead: r['is_read'] ?? false,
+              friendshipStatus: fStatus,
+            ));
+          }
+          return result;
+        });
   }
 
   // --- BEKLEYEN İSTEKLER ---
-  Future<List<Map<String, dynamic>>> getPendingRequests(String currentUserId) async {
+  Future<List<Map<String, dynamic>>> getPendingRequests(
+      String currentUserId) async {
     try {
-      final response = await client.from('friendships').select('user_id').eq('friend_id', currentUserId).eq('status', 'pending');
+      final response = await client
+          .from('friendships')
+          .select('user_id')
+          .eq('friend_id', currentUserId)
+          .eq('status', 'pending');
       if ((response as List).isEmpty) return [];
       final ids = response.map((e) => e['user_id'] as String).toList();
-      final profiles = await client.from('profiles').select().inFilter('id', ids);
+      final profiles =
+          await client.from('profiles').select().inFilter('id', ids);
       return List<Map<String, dynamic>>.from(profiles);
-    } catch (e) { return []; }
+    } catch (e) {
+      return [];
+    }
   }
 
   // --- DİĞER FONKSİYONLAR ---
-  Future<void> sendFollowRequest({required String currentUserId, required String targetUserId}) async {
-    final existing = await client.from('friendships').select().eq('user_id', currentUserId).eq('friend_id', targetUserId).maybeSingle();
+  Future<void> sendFollowRequest(
+      {required String currentUserId, required String targetUserId}) async {
+    final existing = await client
+        .from('friendships')
+        .select()
+        .eq('user_id', currentUserId)
+        .eq('friend_id', targetUserId)
+        .maybeSingle();
     if (existing != null) return;
-    await client.from('friendships').insert({'user_id': currentUserId, 'friend_id': targetUserId, 'status': 'pending', 'created_at': DateTime.now().toIso8601String()});
+    await client.from('friendships').insert({
+      'user_id': currentUserId,
+      'friend_id': targetUserId,
+      'status': 'pending',
+      'created_at': DateTime.now().toIso8601String()
+    });
   }
-  Future<void> acceptFollowRequest({required String currentUserId, required String targetUserId}) async {
-    await client.from('friendships').update({'status': 'accepted'}).eq('user_id', targetUserId).eq('friend_id', currentUserId);
+
+  Future<void> acceptFollowRequest(
+      {required String currentUserId, required String targetUserId}) async {
+    await client
+        .from('friendships')
+        .update({'status': 'accepted'})
+        .eq('user_id', targetUserId)
+        .eq('friend_id', currentUserId);
   }
-  Future<void> removeFollowerOrDecline({required String currentUserId, required String targetUserId}) async {
-    await client.from('friendships').delete().eq('user_id', targetUserId).eq('friend_id', currentUserId);
+
+  Future<void> removeFollowerOrDecline(
+      {required String currentUserId, required String targetUserId}) async {
+    await client
+        .from('friendships')
+        .delete()
+        .eq('user_id', targetUserId)
+        .eq('friend_id', currentUserId);
   }
-  Future<void> unfollowOrCancel({required String currentUserId, required String targetUserId}) async {
-    await client.from('friendships').delete().eq('user_id', currentUserId).eq('friend_id', targetUserId);
+
+  Future<void> unfollowOrCancel(
+      {required String currentUserId, required String targetUserId}) async {
+    await client
+        .from('friendships')
+        .delete()
+        .eq('user_id', currentUserId)
+        .eq('friend_id', targetUserId);
   }
-  Future<void> removeFollower({required String currentUserId, required String targetUserId}) async {
-    await removeFollowerOrDecline(currentUserId: currentUserId, targetUserId: targetUserId);
+
+  Future<void> removeFollower(
+      {required String currentUserId, required String targetUserId}) async {
+    await removeFollowerOrDecline(
+        currentUserId: currentUserId, targetUserId: targetUserId);
   }
+
   Future<int> getFollowerCount(String userId) async {
-    return await client.from('friendships').count(CountOption.exact).eq('friend_id', userId).eq('status', 'accepted');
+    return await client
+        .from('friendships')
+        .count(CountOption.exact)
+        .eq('friend_id', userId)
+        .eq('status', 'accepted');
   }
+
   Future<int> getFollowingCount(String userId) async {
-    return await client.from('friendships').count(CountOption.exact).eq('user_id', userId).eq('status', 'accepted');
+    return await client
+        .from('friendships')
+        .count(CountOption.exact)
+        .eq('user_id', userId)
+        .eq('status', 'accepted');
   }
+
   Future<List<Map<String, dynamic>>> getFollowersList(String userId) async {
     try {
-      final response = await client.from('friendships').select('user_id').eq('friend_id', userId).eq('status', 'accepted');
+      final response = await client
+          .from('friendships')
+          .select('user_id')
+          .eq('friend_id', userId)
+          .eq('status', 'accepted');
       if ((response as List).isEmpty) return [];
       final ids = response.map((e) => e['user_id'] as String).toList();
-      final profiles = await client.from('profiles').select().inFilter('id', ids);
+      final profiles =
+          await client.from('profiles').select().inFilter('id', ids);
       return List<Map<String, dynamic>>.from(profiles);
-    } catch (e) { return []; }
+    } catch (e) {
+      return [];
+    }
   }
+
   Future<List<Map<String, dynamic>>> getFollowingList(String userId) async {
     try {
-      final response = await client.from('friendships').select('friend_id').eq('user_id', userId).eq('status', 'accepted');
+      final response = await client
+          .from('friendships')
+          .select('friend_id')
+          .eq('user_id', userId)
+          .eq('status', 'accepted');
       if ((response as List).isEmpty) return [];
       final ids = response.map((e) => e['friend_id'] as String).toList();
-      final profiles = await client.from('profiles').select().inFilter('id', ids);
+      final profiles =
+          await client.from('profiles').select().inFilter('id', ids);
       return List<Map<String, dynamic>>.from(profiles);
-    } catch (e) { return []; }
+    } catch (e) {
+      return [];
+    }
   }
-  Future<List<Map<String, dynamic>>> getProfilePosts({required String targetUserId, required FollowStatus status}) async {
-    bool canSee = (status == FollowStatus.self || status == FollowStatus.following);
-    var query = client.from('posts').select('*, profiles(*), likes(user_id), comments(id)').eq('user_id', targetUserId);
+
+  Future<List<Map<String, dynamic>>> getProfilePosts(
+      {required String targetUserId, required FollowStatus status}) async {
+    bool canSee =
+        (status == FollowStatus.self || status == FollowStatus.following);
+    var query = client
+        .from('posts')
+        .select('*, profiles(*), likes(user_id), comments(id)')
+        .eq('user_id', targetUserId);
     if (!canSee) query = query.eq('visibility', 'public');
     final res = await query.order('created_at', ascending: false);
     return List<Map<String, dynamic>>.from(res as List);
+  }
+
+  Future<int> getUnreadNotificationCount(String userId) async {
+    return await client
+        .from('notifications')
+        .count(CountOption.exact)
+        .eq('user_id', userId)
+        .eq('is_read', false);
+  }
+
+  Future<void> markAllNotificationsAsRead(String userId) async {
+    if (userId.isEmpty) {
+      print('⚠️ markAllNotificationsAsRead: userId boş, işlem yapılmadı');
+      return;
+    }
+    try {
+      print('🔄 markAllNotificationsAsRead başlıyor: userId=$userId');
+      final response = await client
+          .from('notifications')
+          .update({'is_read': true}).eq('user_id', userId);
+      print('✅ markAllNotificationsAsRead tamamlandı: $response');
+    } catch (e) {
+      print('❌ markAllNotificationsAsRead hatası: $e');
+    }
   }
 }
