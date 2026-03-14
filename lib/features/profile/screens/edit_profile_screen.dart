@@ -26,11 +26,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   final _usernameController = TextEditingController();
   final _bioController = TextEditingController();
 
-  // 2FA Değişkenleri
-  bool _is2FAEnabled = false;
-  String? _verifiedPhone;
-  final String _selectedCountryCode = "+90";
-
   bool _isLoading = false;
   File? _imageFile;
   File? _videoFile;
@@ -55,9 +50,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _nameController.text = widget.currentProfile['full_name'] ?? '';
     _usernameController.text = widget.currentProfile['username'] ?? '';
     _bioController.text = widget.currentProfile['bio'] ?? '';
-
-    _is2FAEnabled = widget.currentProfile['is_2fa_enabled'] ?? false;
-    _verifiedPhone = widget.currentProfile['phone'];
 
     // 🎨 Kaydedilen halka rengini yükle
     _selectedBorderIndex = widget.currentProfile['border_color_index'] ?? 0;
