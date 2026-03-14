@@ -20,6 +20,7 @@ import '../../chat/screens/messages_screen.dart';
 import '../../chat/screens/chat_screen.dart';
 import '../../chat/screens/call_screen.dart';
 import '../../search/screens/search_screen.dart';
+import '../../ai_matching/screens/ai_matching_screen.dart';
 
 // Widget'lar
 import '../../../shared/widgets/shimmer/post_card_shimmer.dart';
@@ -255,8 +256,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                   roomId: roomId, otherUser: userProfile)));
                         }
                       } catch (e) {
-                        Navigator.push(
-                            context, _createSlideRoute(const MessagesScreen()));
+                        if (mounted) {
+                          Navigator.push(context,
+                              _createSlideRoute(const MessagesScreen()));
+                        }
                       }
                     } else if (postId != null) {
                       final postRes = await Supabase.instance.client
@@ -270,8 +273,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             _createSlideRoute(PostDetailScreen(post: postRes)));
                       }
                     } else {
-                      Navigator.push(context,
-                          _createSlideRoute(const NotificationsScreen()));
+                      if (mounted) {
+                        Navigator.push(context,
+                            _createSlideRoute(const NotificationsScreen()));
+                      }
                     }
                   },
                   child: Container(
@@ -460,25 +465,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildAiTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(FontAwesomeIcons.wandMagicSparkles,
-              size: 60, color: AppColors.primary),
-          const SizedBox(height: 20),
-          Text('Yapay Zeka Asistanı',
-              style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          Text('Yakında burada senin için\nöneriler hazırlayacağım!',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(color: Colors.white54)),
-        ],
-      ),
-    );
+    return const AiMatchingScreen();
   }
 
   Widget _buildBottomNavBar() {
