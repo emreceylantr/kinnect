@@ -8,6 +8,7 @@ import '../../../data/services/matching_service.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../create_post/screens/create_post_screen.dart';
 import 'quiz_screen.dart';
+import 'match_evidence_screen.dart';
 
 class AiMatchingScreen extends StatefulWidget {
   const AiMatchingScreen({super.key});
@@ -364,6 +365,9 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
     final percent = (similarity * 100).toInt();
     final interests = List<String>.from(match['interests'] ?? []);
     final matchReasons = List<String>.from(match['match_reasons'] ?? []);
+    final matchReasonSources = (match['match_reason_sources'] as List?)
+        ?.map((s) => s as Map<String, dynamic>)
+        .toList() ?? [];
     final profileSummary = (match['profile_summary'] as String?) ?? '';
     final bestSummary = interests.isNotEmpty ? interests.take(3).join(' · ') : profileSummary;
     final avatarUrl = profile['avatar_url']?.toString();
@@ -485,22 +489,59 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                     Wrap(
                       spacing: 6,
                       runSpacing: 4,
-                      children: matchReasons.take(2).map((reason) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-                        ),
-                        child: Text(
-                          reason,
-                          style: GoogleFonts.poppins(
-                            color: AppColors.primary.withOpacity(0.9),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      )).toList(),
+                      children: List.generate(
+                        matchReasons.take(2).length,
+                        (i) {
+                          final reason = matchReasons[i];
+                          final source = i < matchReasonSources.length ? matchReasonSources[i] : null;
+                          final myPosts = (source?['my_posts'] as List?)
+                              ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
+                          final otherPosts = (source?['other_posts'] as List?)
+                              ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
+                          final hasPosts = myPosts.isNotEmpty || otherPosts.isNotEmpty;
+                          return GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MatchEvidenceScreen(
+                                  reason: reason,
+                                  otherUserName: fullName,
+                                  otherUserAvatarUrl: avatarUrl,
+                                  myPosts: myPosts,
+                                  otherPosts: otherPosts,
+                                ),
+                              ),
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    reason,
+                                    style: GoogleFonts.poppins(
+                                      color: AppColors.primary.withOpacity(0.9),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  if (hasPosts) ...[
+                                    const SizedBox(width: 4),
+                                    Icon(Icons.chevron_right_rounded,
+                                        size: 13,
+                                        color: AppColors.primary.withOpacity(0.6)),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ] else if (bestSummary.isNotEmpty) ...[
                     const SizedBox(height: 6),
@@ -550,6 +591,8 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
     final otherProfile   = (match['profile_summary'] as String?) ?? '';
     final otherInterests = List<String>.from(match['interests'] ?? []);
     final matchReasons   = List<String>.from(match['match_reasons'] ?? []);
+    final matchReasonSources = (match['match_reason_sources'] as List?)
+        ?.map((s) => s as Map<String, dynamic>).toList() ?? [];
 
     final Future<String> explanationFuture = _matchingService.getAiExplanation(
       otherUserId:      userId,
@@ -687,22 +730,58 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: matchReasons.map((reason) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-                        ),
-                        child: Text(
-                          reason,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                      children: List.generate(matchReasons.length, (i) {
+                        final reason = matchReasons[i];
+                        final source = i < matchReasonSources.length ? matchReasonSources[i] : null;
+                        final myPosts = (source?['my_posts'] as List?)
+                            ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
+                        final otherPosts = (source?['other_posts'] as List?)
+                            ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
+                        final hasPosts = myPosts.isNotEmpty || otherPosts.isNotEmpty;
+                        return GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MatchEvidenceScreen(
+                                reason: reason,
+                                otherUserName: fullName,
+                                otherUserAvatarUrl: avatarUrl,
+                                myPosts: myPosts,
+                                otherPosts: otherPosts,
+                              ),
+                            ),
                           ),
-                        ),
-                      )).toList(),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  reason,
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                if (hasPosts) ...[
+                                  const SizedBox(width: 6),
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 16,
+                                    color: AppColors.primary.withOpacity(0.7),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
                     ),
                   ],
 
