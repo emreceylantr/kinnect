@@ -1,7 +1,8 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-// permission_handler'ı sildik, artık gerek yok.
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppleMusicService {
   static const platform = MethodChannel('com.kinnect.app/music');
@@ -60,6 +61,69 @@ class AppleMusicService {
       return _searchFallback(song, artist, isPlaying);
     } catch (_) {}
     return null;
+  }
+
+  // Top şarkı/sanatçıları çek ve user_profiles'a kaydet
+  Future<bool> syncTopMusic(String userId) async {
+    try {
+      final granted = await requestPermission();
+      if (!granted) return false;
+
+      final List<dynamic>? tracks =
+          await platform.invokeMethod('getTopAppleMusicTracks');
+
+      final List<String> topArtists = [];
+      final List<String> topTracks = [];
+      final Set<String> seenArtists = {};
+
+      for (final t in (tracks ?? [])) {
+        final artist = (t['artist'] as String?) ?? '';
+        final track = (t['track'] as String?) ?? '';
+        if (artist.isNotEmpty && !seenArtists.contains(artist)) {
+          topArtists.add(artist);
+          seenArtists.add(artist);
+        }
+        if (track.isNotEmpty) topTracks.add(track);
+      }
+
+      // Kütüphane boşsa şu an çalan şarkıyı fallback olarak kullan
+      if (topArtists.isEmpty) {
+        final current = await getCurrentTrack();
+        if (current != null) {
+          final artist = current['artist_name'] as String? ?? '';
+          final track = current['song_name'] as String? ?? '';
+          if (artist.isNotEmpty) topArtists.add(artist);
+          if (track.isNotEmpty) topTracks.add(track);
+        }
+      }
+
+      if (topArtists.isEmpty && topTracks.isEmpty) return false;
+
+      await Supabase.instance.client.from('user_profiles').upsert({
+        'user_id': userId,
+        'spotify_top_artists': topArtists.take(20).toList(),
+        'spotify_top_tracks': topTracks.take(20).toList(),
+        'spotify_synced_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'user_id');
+
+      debugPrint(
+          '✅ Apple Music sync: ${topArtists.length} sanatçı, ${topTracks.length} şarkı');
+      return true;
+    } catch (e) {
+      debugPrint('Apple Music syncTopMusic Error: $e');
+      return false;
+    }
+  }
+
+  // Apple Music izni var mı kontrol et
+  Future<bool> isConnected() async {
+    try {
+      final bool granted =
+          await platform.invokeMethod('requestAppleMusicPermission');
+      return granted;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<Map<String, dynamic>?> _searchFallback(

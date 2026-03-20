@@ -8,6 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
+import 'package:video_compress/video_compress.dart';
 import '../../../shared/widgets/location_picker_sheet.dart';
 
 import 'photo_tag_screen.dart';
@@ -48,6 +50,11 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   // 📍 Konum bilgisi
   String? _location;
   bool _isGettingLocation = false;
+
+  // 🎥 Video bilgisi
+  File? _videoFile;
+  VideoPlayerController? _videoController;
+  bool _isVideoCompressing = false;
 
   double _hintOpacity = 0.0;
 
@@ -228,10 +235,62 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     });
   }
 
+  Future<void> _pickVideo() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? video = await picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: const Duration(seconds: 7),
+    );
+    if (video == null || !mounted) return;
+
+    setState(() => _isVideoCompressing = true);
+    try {
+      // Validate duration
+      final info = await VideoCompress.getMediaInfo(video.path);
+      final durationMs = info.duration ?? 0;
+      if (durationMs > 7500) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Video en fazla 7 saniye olabilir. iOS trim arayüzünü kullanın.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+        return;
+      }
+
+      final file = File(video.path);
+      final controller = VideoPlayerController.file(file);
+      await controller.initialize();
+      controller.setLooping(true);
+
+      if (mounted) {
+        setState(() {
+          _videoFile = file;
+          _videoController?.dispose();
+          _videoController = controller;
+          // Clear images when video selected
+          _imageFiles = [];
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _isVideoCompressing = false);
+    }
+  }
+
+  void _removeVideo() {
+    _videoController?.dispose();
+    setState(() {
+      _videoFile = null;
+      _videoController = null;
+    });
+  }
+
   Future<void> _sharePost() async {
     if (_isLoading) return;
     final content = _textController.text.trim();
-    if (content.isEmpty && _imageFiles.isEmpty) return;
+    if (content.isEmpty && _imageFiles.isEmpty && _videoFile == null) return;
 
     setState(() => _isLoading = true);
 
@@ -243,6 +302,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         selectedMusic: _selectedMusic,
         location: _location,
         photoTags: _photoTags,
+        videoFile: _videoFile,
       );
 
       if (mounted) {
@@ -268,6 +328,98 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   // UI Helpers moved to sub-widgets
 
+  // 🎥 VİDEO ÖNİZLEME
+  Widget _buildVideoPreview() {
+    if (_videoFile == null) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      height: 280,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.black,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (_videoController != null && _videoController!.value.isInitialized)
+              AspectRatio(
+                aspectRatio: _videoController!.value.aspectRatio,
+                child: VideoPlayer(_videoController!),
+              ),
+            // Play/Pause button
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _videoController!.value.isPlaying
+                      ? _videoController!.pause()
+                      : _videoController!.play();
+                });
+              },
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _videoController?.value.isPlaying == true
+                      ? Icons.pause
+                      : Icons.play_arrow,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ),
+            // Remove button
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: _removeVideo,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 18),
+                ),
+              ),
+            ),
+            // Duration badge
+            Positioned(
+              bottom: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${(_videoController?.value.duration.inSeconds ?? 0)}s',
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ),
+            ),
+            // Compressing overlay
+            if (_isVideoCompressing)
+              Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // 📍 KONUM SEÇİCİ
   void _showLocationPicker() {
     showModalBottomSheet(
@@ -288,6 +440,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   void dispose() {
     _textController.dispose();
     _auroraController.dispose();
+    _videoController?.dispose();
     super.dispose();
   }
 
@@ -368,6 +521,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                           images: _imageFiles,
                           onRemove: _removeImage,
                         ),
+                        _buildVideoPreview(),
                         // 🎧 Seçilen Müzik Gösterimi
                         if (_selectedMusic != null)
                           SelectedMusicCard(
@@ -402,6 +556,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           CreatePostBottomBar(
             onPickFromGallery: () => _pickImage(ImageSource.gallery),
             onPickFromCamera: () => _pickImage(ImageSource.camera),
+            onPickVideo: _pickVideo,
             onPickMusic: () async {
               final music = await Navigator.push<Map<String, dynamic>>(
                 context,

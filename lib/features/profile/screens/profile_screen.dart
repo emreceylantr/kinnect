@@ -19,6 +19,8 @@ import '../../../shared/widgets/shimmer/profile_header_shimmer.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/profile_header.dart';
 import '../../home/widgets/post_card.dart';
+import '../../../data/services/spotify_service.dart';
+import '../../../data/services/apple_music_service.dart';
 
 // --- EKRANLAR ---
 import '../../chat/screens/chat_screen.dart';
@@ -48,6 +50,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Servisler
   final ChatService _chatService = ChatService();
   final SafetyService _safetyService = SafetyService();
+  final SpotifyService _spotifyService = SpotifyService();
+  final AppleMusicService _appleMusicService = AppleMusicService();
+
+  // Spotify durumu
+  bool _spotifyConnected = false;
+  bool _spotifySyncing = false;
+
+  // Apple Music durumu
+  bool _appleMusicConnected = false;
+  bool _appleMusicSyncing = false;
 
   // Veri Değişkenleri
   Map<String, dynamic>? _profileData;
@@ -144,9 +156,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (_isBlockedByMe) return;
 
+      // Kendi profilimse müzik servis durumlarını kontrol et
+      if (widget.userId == _currentUserId) {
+        final spotifyConnected =
+            await _spotifyService.isConnected(_currentUserId);
+        final appleMusicConnected =
+            Platform.isIOS ? await _appleMusicService.isConnected() : false;
+        if (mounted) {
+          setState(() {
+            _spotifyConnected = spotifyConnected;
+            _appleMusicConnected = appleMusicConnected;
+          });
+        }
+      }
+
       if (mounted) setState(() => _isLoading = false);
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _connectSpotify() async {
+    await _spotifyService.authenticate();
+  }
+
+  Future<void> _syncSpotify() async {
+    if (_spotifySyncing) return;
+    setState(() => _spotifySyncing = true);
+    final success = await _spotifyService.syncTopMusic(_currentUserId);
+    if (mounted) {
+      setState(() => _spotifySyncing = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(success
+            ? 'Spotify müzik geçmişin eşleşmelere eklendi!'
+            : 'Spotify sync başarısız, tekrar dene.'),
+        backgroundColor: success ? const Color(0xFF1DB954) : Colors.red,
+      ));
+    }
+  }
+
+  Future<void> _syncAppleMusic() async {
+    if (_appleMusicSyncing) return;
+    setState(() => _appleMusicSyncing = true);
+    final success = await _appleMusicService.syncTopMusic(_currentUserId);
+    if (mounted) {
+      setState(() {
+        _appleMusicSyncing = false;
+        if (success) _appleMusicConnected = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(success
+            ? 'Apple Music geçmişin eşleşmelere eklendi!'
+            : 'Apple Music izni gerekli veya kütüphane boş.'),
+        backgroundColor: success ? const Color(0xFFFC3C44) : Colors.orange,
+      ));
     }
   }
 
@@ -709,6 +772,168 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildAppleMusicSyncButton() {
+    const appleRed = Color(0xFFFC3C44);
+    return GestureDetector(
+      onTap: _appleMusicSyncing ? null : _syncAppleMusic,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: _appleMusicConnected
+              ? appleRed.withOpacity(0.12)
+              : Colors.white.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: _appleMusicConnected
+                ? appleRed.withOpacity(0.3)
+                : Colors.white12,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.music_note,
+                color: _appleMusicConnected ? appleRed : Colors.white38,
+                size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _appleMusicSyncing
+                  ? Text(
+                      'Apple Music senkronize ediliyor...',
+                      style: GoogleFonts.poppins(
+                          color: appleRed, fontSize: 13, fontWeight: FontWeight.w500),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _appleMusicConnected
+                              ? 'Apple Music — Eşleşmeleri güncelle'
+                              : 'Apple Music\'i Bağla',
+                          style: GoogleFonts.poppins(
+                            color: _appleMusicConnected
+                                ? appleRed
+                                : Colors.white70,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (!_appleMusicConnected)
+                          Text(
+                            'Dinleme alışkanlıklarına göre eşleşmeler bul',
+                            style: GoogleFonts.poppins(
+                                color: Colors.white38, fontSize: 11),
+                          ),
+                      ],
+                    ),
+            ),
+            if (_appleMusicSyncing)
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                    color: appleRed, strokeWidth: 2),
+              )
+            else
+              Icon(
+                _appleMusicConnected ? Icons.sync : Icons.chevron_right,
+                color: _appleMusicConnected ? appleRed : Colors.white24,
+                size: 18,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpotifyConnectButton() {
+    if (_spotifyConnected) {
+      return GestureDetector(
+        onTap: _spotifySyncing ? null : _syncSpotify,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1DB954).withOpacity(0.12),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.music_note, color: Color(0xFF1DB954), size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _spotifySyncing
+                      ? 'Müzik geçmişi senkronize ediliyor...'
+                      : 'Spotify bağlı — Eşleşmeleri güncelle',
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFF1DB954),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (_spotifySyncing)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF1DB954),
+                    strokeWidth: 2,
+                  ),
+                )
+              else
+                const Icon(Icons.sync, color: Color(0xFF1DB954), size: 18),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: _connectSpotify,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.music_note, color: Colors.white38, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Spotify\'ı Bağla',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    'Müzik zevkine göre daha iyi eşleşmeler bul',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white38,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.white24, size: 20),
+          ],
+        ),
+      ),
     );
   }
 }

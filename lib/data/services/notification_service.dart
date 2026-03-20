@@ -96,11 +96,11 @@ class NotificationService {
         }
       }
 
-      if (apnsToken != null) {
-        debugPrint('🍎 APNs Token alındı');
-      } else {
-        debugPrint('⚠️ APNs Token alınamadı (bu simülatörde normaldir)');
+      if (apnsToken == null) {
+        debugPrint('⚠️ APNs Token yok — simülatör veya izin verilmedi, FCM atlanıyor');
+        return;
       }
+      debugPrint('🍎 APNs Token alındı');
 
       _fcmToken = await _messaging.getToken();
       debugPrint('🔑 FCM Token alındı: ${_fcmToken?.substring(0, 20)}...');

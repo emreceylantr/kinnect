@@ -3,19 +3,20 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/constants/api_keys.dart';
 
 class SpotifyService {
   // Spotify API credentials
-  final String _clientId = "b4d97f8903084d738c777a1dfe07e1fe";
-  final String _clientSecret = "712f7a6b8d8a48498ef3e15161abc8b2";
-  final String _redirectUri = "kinnect://spotify-callback";
+  final String _clientId = ApiKeys.spotifyClientId;
+  final String _clientSecret = ApiKeys.spotifyClientSecret;
+  final String _redirectUri = ApiKeys.spotifyRedirectUri;
 
   // 1. BAĞLANTIYI BAŞLAT - Direkt Spotify OAuth (Supabase Auth DEĞİL!)
   // Bu sayede mevcut hesaba Spotify bağlanır, yeni hesap OLUŞMAZ.
   Future<void> authenticate() async {
     try {
       final scopes =
-          'user-read-currently-playing user-read-playback-state user-read-recently-played';
+          'user-read-currently-playing user-read-playback-state user-read-recently-played user-top-read';
 
       final authUrl = Uri.https('accounts.spotify.com', '/authorize', {
         'client_id': _clientId,
@@ -204,5 +205,94 @@ class SpotifyService {
       debugPrint("Spotify API Error: $e");
     }
     return null;
+  }
+
+  // 4. TOP SANATÇI & ŞARKILARI ÇEK ve user_profiles'a kaydet
+  Future<bool> syncTopMusic(String userId) async {
+    try {
+      final profile = await Supabase.instance.client
+          .from('profiles')
+          .select('spotify_refresh_token')
+          .eq('id', userId)
+          .maybeSingle();
+
+      final refreshToken = profile?['spotify_refresh_token'];
+      if (refreshToken == null) return false;
+
+      // Token yenile
+      final tokenRes = await http.post(
+        Uri.parse('https://accounts.spotify.com/api/token'),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization':
+              'Basic ${base64Encode(utf8.encode("$_clientId:$_clientSecret"))}',
+        },
+        body: {'grant_type': 'refresh_token', 'refresh_token': refreshToken},
+      );
+      if (tokenRes.statusCode != 200) return false;
+      final accessToken = jsonDecode(tokenRes.body)['access_token'];
+
+      // Top sanatçılar (uzun dönem)
+      final artistsRes = await http.get(
+        Uri.parse(
+            'https://api.spotify.com/v1/me/top/artists?limit=20&time_range=long_term'),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+
+      // Top şarkılar (uzun dönem)
+      final tracksRes = await http.get(
+        Uri.parse(
+            'https://api.spotify.com/v1/me/top/tracks?limit=20&time_range=long_term'),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+
+      final List<String> topArtists = [];
+      final List<String> topTracks = [];
+
+      if (artistsRes.statusCode == 200) {
+        final data = jsonDecode(artistsRes.body);
+        for (final item in (data['items'] as List)) {
+          topArtists.add(item['name'] as String);
+        }
+      }
+
+      if (tracksRes.statusCode == 200) {
+        final data = jsonDecode(tracksRes.body);
+        for (final item in (data['items'] as List)) {
+          topTracks.add(item['name'] as String);
+        }
+      }
+
+      if (topArtists.isEmpty && topTracks.isEmpty) return false;
+
+      // user_profiles'a kaydet (upsert)
+      await Supabase.instance.client.from('user_profiles').upsert({
+        'user_id': userId,
+        'spotify_top_artists': topArtists,
+        'spotify_top_tracks': topTracks,
+        'spotify_synced_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'user_id');
+
+      debugPrint(
+          '✅ Spotify sync: ${topArtists.length} sanatçı, ${topTracks.length} şarkı');
+      return true;
+    } catch (e) {
+      debugPrint('Spotify syncTopMusic Error: $e');
+      return false;
+    }
+  }
+
+  // Spotify bağlı mı kontrol et
+  Future<bool> isConnected(String userId) async {
+    try {
+      final profile = await Supabase.instance.client
+          .from('profiles')
+          .select('spotify_refresh_token')
+          .eq('id', userId)
+          .maybeSingle();
+      return profile?['spotify_refresh_token'] != null;
+    } catch (_) {
+      return false;
+    }
   }
 }

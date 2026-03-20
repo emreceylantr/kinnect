@@ -140,6 +140,9 @@ class BLEAdvertiserPlugin: NSObject {
                     result(isGranted)
                 }
             }
+            else if call.method == "getTopAppleMusicTracks" {
+                self.getTopTracks(result: result)
+            }
             else {
                 result(FlutterMethodNotImplemented)
             }
@@ -202,6 +205,62 @@ class BLEAdvertiserPlugin: NSObject {
         result(nil)
     }
     
+    // En çok çalınan şarkıları döndür
+    private func getTopTracks(result: FlutterResult) {
+        let authStatus = MPMediaLibrary.authorizationStatus()
+        guard authStatus == .authorized else {
+            result([])
+            return
+        }
+
+        var tracks: [[String: Any]] = []
+        let seen = NSMutableSet()
+
+        // 1. Şu an çalan / son çalınan (her zaman önce ekle)
+        let players = [
+            MPMusicPlayerController.systemMusicPlayer,
+            MPMusicPlayerController.applicationMusicPlayer
+        ]
+        for player in players {
+            if let item = player.nowPlayingItem,
+               let title = item.title, !title.isEmpty,
+               let artist = item.artist, !artist.isEmpty {
+                let key = "\(artist)|\(title)"
+                if !seen.contains(key) {
+                    seen.add(key)
+                    tracks.append(["track": title, "artist": artist, "playCount": 999])
+                }
+            }
+        }
+
+        // 2. Kütüphanedeki şarkılar (play count sıralı)
+        let query = MPMediaQuery.songs()
+        let items = (query.items ?? []).sorted { $0.playCount > $1.playCount }
+        for item in items.prefix(50) {
+            let title = item.title ?? ""
+            let artist = item.artist ?? ""
+            guard !title.isEmpty, !artist.isEmpty else { continue }
+            let key = "\(artist)|\(title)"
+            if !seen.contains(key) {
+                seen.add(key)
+                tracks.append(["track": title, "artist": artist, "playCount": item.playCount])
+            }
+        }
+
+        // 3. NowPlayingInfo (Media Center üzerinden çalanlar — AirPlay vs)
+        if let info = MPNowPlayingInfoCenter.default().nowPlayingInfo,
+           let title = info[MPMediaItemPropertyTitle] as? String, !title.isEmpty,
+           let artist = info[MPMediaItemPropertyArtist] as? String, !artist.isEmpty {
+            let key = "\(artist)|\(title)"
+            if !seen.contains(key) {
+                seen.add(key)
+                tracks.append(["track": title, "artist": artist, "playCount": 999])
+            }
+        }
+
+        result(Array(tracks.prefix(30)))
+    }
+
     // FCM Token alındığında
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         print("FCM Token: \(fcmToken ?? "nil")")

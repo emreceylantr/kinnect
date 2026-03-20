@@ -39,6 +39,7 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
 
   bool _isPlayingPreview = false;
   bool _isLoading = true;
+  bool _isSyncing = false;
 
   @override
   void initState() {
@@ -209,8 +210,26 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
 
   // --- UI ACTIONS ---
 
+  Future<void> _syncTopMusic() async {
+    if (_isSyncing) return;
+    setState(() => _isSyncing = true);
+    try {
+      final profile = await Supabase.instance.client
+          .from('profiles')
+          .select('spotify_refresh_token, music_provider')
+          .eq('id', widget.userId)
+          .maybeSingle();
+
+      final hasSpotify = profile?['spotify_refresh_token'] != null;
+      final hasApple = profile?['music_provider'] == 'apple';
+
+      if (hasSpotify) await _spotifyService.syncTopMusic(widget.userId);
+      if (hasApple) await _appleMusicService.syncTopMusic(widget.userId);
+    } catch (_) {}
+    if (mounted) setState(() => _isSyncing = false);
+  }
+
   void _showConnectionSheet() async {
-    // Veritabanından bağlantı durumunu kontrol et
     bool isSpotifyConnected = false;
     bool isAppleMusicConnected = false;
 
@@ -223,8 +242,6 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
 
       if (profile != null) {
         isSpotifyConnected = profile['spotify_refresh_token'] != null;
-        // Apple Music için: music_provider alanına bakıyoruz
-        // Kullanıcı her iki servise de aynı anda bağlı olabilir
         isAppleMusicConnected = profile['music_provider'] == 'apple';
       }
     } catch (_) {}
@@ -237,114 +254,109 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24, borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Müzik Hesaplarını Yönet",
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 20),
+              Text(
+                "Müzik Hesaplarını Yönet",
+                style: GoogleFonts.poppins(
+                    color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Bağlı olmayan servisi buradan ekleyebilir veya değiştirebilirsin.",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // SPOTIFY BUTTON - Bağlan veya Çık
-            if (!isSpotifyConnected)
-              ListTile(
-                tileColor: Colors.white.withOpacity(0.05),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                leading: const FaIcon(FontAwesomeIcons.spotify,
-                    color: Color(0xFF1DB954)),
-                title: const Text("Spotify ile Bağlan",
-                    style: TextStyle(color: Colors.white)),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await _spotifyService.authenticate();
-                },
-              )
-            else
-              ListTile(
-                tileColor: Colors.red.withOpacity(0.1),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                leading: const FaIcon(FontAwesomeIcons.spotify,
-                    color: Color(0xFF1DB954)),
-                title: const Text("Spotify Bağlantısını Kes",
-                    style: TextStyle(color: Colors.redAccent)),
-                trailing:
-                    const Icon(Icons.logout, color: Colors.redAccent, size: 20),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await _disconnectSpotify();
-                },
-              ),
-            const SizedBox(height: 10),
+              // ── SPOTIFY ──────────────────────────────────────────────
+              if (!isSpotifyConnected)
+                _sheetTile(
+                  icon: const FaIcon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954)),
+                  title: "Spotify ile Bağlan",
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _spotifyService.authenticate();
+                  },
+                )
+              else
+                _sheetTile(
+                  icon: const FaIcon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954)),
+                  title: "Spotify Bağlantısını Kes",
+                  titleColor: Colors.redAccent,
+                  tileColor: Colors.red.withOpacity(0.08),
+                  trailing: const Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _disconnectSpotify();
+                  },
+                ),
+              const SizedBox(height: 10),
 
-            // APPLE MUSIC BUTTON - Bağlan veya Çık
-            if (!isAppleMusicConnected)
-              ListTile(
-                tileColor: Colors.white.withOpacity(0.05),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                leading:
-                    const FaIcon(FontAwesomeIcons.apple, color: Colors.white),
-                title: const Text("Apple Music ile Bağlan",
-                    style: TextStyle(color: Colors.white)),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final allowed = await _appleMusicService.requestPermission();
-                  if (allowed) {
-                    setState(() => _isLoading = true);
-                    // Önce veritabanında music_provider'ı apple olarak işaretle
-                    await Supabase.instance.client.from('profiles').update({
-                      'music_provider': 'apple',
-                    }).eq('id', widget.userId);
-                    // Sonra müzik verisini çek
-                    await _syncMusicData();
-                    setState(() => _isLoading = false);
-                  }
-                },
-              )
-            else
-              ListTile(
-                tileColor: Colors.red.withOpacity(0.1),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                leading:
-                    const FaIcon(FontAwesomeIcons.apple, color: Colors.white),
-                title: const Text("Apple Music Bağlantısını Kes",
-                    style: TextStyle(color: Colors.redAccent)),
-                trailing:
-                    const Icon(Icons.logout, color: Colors.redAccent, size: 20),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await _disconnectAppleMusic();
-                },
-              ),
-            const SizedBox(height: 20),
-          ],
+              // ── APPLE MUSIC ───────────────────────────────────────────
+              if (!isAppleMusicConnected)
+                _sheetTile(
+                  icon: const FaIcon(FontAwesomeIcons.apple, color: Colors.white),
+                  title: "Apple Music ile Bağlan",
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final allowed = await _appleMusicService.requestPermission();
+                    if (allowed) {
+                      setState(() => _isLoading = true);
+                      await Supabase.instance.client.from('profiles').update({
+                        'music_provider': 'apple',
+                      }).eq('id', widget.userId);
+                      await _syncMusicData();
+                      setState(() => _isLoading = false);
+                    }
+                  },
+                )
+              else
+                _sheetTile(
+                  icon: const FaIcon(FontAwesomeIcons.apple, color: Colors.white),
+                  title: "Apple Music Bağlantısını Kes",
+                  titleColor: Colors.redAccent,
+                  tileColor: Colors.red.withOpacity(0.08),
+                  trailing: const Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _disconnectAppleMusic();
+                  },
+                ),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _sheetTile({
+    required Widget icon,
+    required String title,
+    String? subtitle,
+    Color? titleColor,
+    Color? tileColor,
+    Widget? trailing,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      tileColor: tileColor ?? Colors.white.withOpacity(0.05),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      leading: icon,
+      title: Text(title,
+          style: TextStyle(color: titleColor ?? Colors.white, fontSize: 14)),
+      subtitle: subtitle != null
+          ? Text(subtitle,
+              style: const TextStyle(color: Colors.white38, fontSize: 11))
+          : null,
+      trailing: trailing,
+      onTap: onTap,
     );
   }
 
@@ -672,33 +684,52 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
                 ),
               ),
 
-              // === EKLEME: BAĞLANTI AYAR BUTONU ===
-              // Sadece profil sahibiyse (isMe) ve kart doluysa sağ üste bu butonu koyuyoruz.
+              // Sağ üst: refresh + ayar ikonları
               if (widget.isMe)
                 Positioned(
                   top: 0,
                   right: 0,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.3),
                       borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(12),
-                          topRight: Radius.circular(16)),
-                      onTap: _showConnectionSheet, // Sheet'i tekrar açar
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
-                          borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(12),
-                              topRight: Radius.circular(16)),
-                        ),
-                        child: const Icon(
-                          Icons.link, // Veya settings ikonu
-                          color: Colors.white70,
-                          size: 16,
-                        ),
+                        bottomLeft: Radius.circular(12),
+                        topRight: Radius.circular(16),
                       ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Refresh ikonu
+                        InkWell(
+                          borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(12)),
+                          onTap: _syncTopMusic,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),
+                            child: _isSyncing
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white54, strokeWidth: 1.5),
+                                  )
+                                : const Icon(Icons.sync,
+                                    color: Colors.white54, size: 14),
+                          ),
+                        ),
+                        // Ayar ikonu
+                        InkWell(
+                          borderRadius: const BorderRadius.only(
+                              topRight: Radius.circular(16)),
+                          onTap: _showConnectionSheet,
+                          child: const Padding(
+                            padding: EdgeInsets.fromLTRB(4, 8, 8, 8),
+                            child: Icon(Icons.link,
+                                color: Colors.white54, size: 14),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
