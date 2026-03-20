@@ -6,6 +6,34 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// ─── Post özeti tipi ─────────────────────────────────────────────────────────
+interface PostSummary {
+  id: string
+  image_urls: string[] | null
+  content: string | null
+  spotify_track_name: string | null
+  spotify_artist_name: string | null
+  location: string | null
+}
+
+// ─── Sebep + kaynak post tipi ─────────────────────────────────────────────────
+interface ReasonWithSource {
+  reason: string
+  my_posts: PostSummary[]
+  other_posts: PostSummary[]
+}
+
+function toPostSummary(p: any): PostSummary {
+  return {
+    id: p.id,
+    image_urls: p.image_urls ?? null,
+    content: p.content ? (p.content as string).slice(0, 120) : null,
+    spotify_track_name: p.spotify_track_name ?? null,
+    spotify_artist_name: p.spotify_artist_name ?? null,
+    location: p.location ?? null,
+  }
+}
+
 // ─── Jaccard benzerliği (kısmi eşleşme de sayılır) ───────────────────────────
 function jaccardSimilarity(a: string[], b: string[]): number {
   if (!a?.length || !b?.length) return 0
@@ -48,22 +76,27 @@ function findCommonInterests(a: string[], b: string[]): string[] {
   return result
 }
 
-// ─── Eşleşme sebepleri ────────────────────────────────────────────────────────
+// ─── Eşleşme sebepleri (kaynak postlarla birlikte) ────────────────────────────
 function findMatchReasons(
   myInterests: string[],
   myPosts: any[],
   otherInterests: string[],
   otherPosts: any[],
-): string[] {
-  const reasons: string[] = []
+): ReasonWithSource[] {
+  const reasons: ReasonWithSource[] = []
 
-  // 1. Ortak Spotify sanatçı
+  // 1. Ortak Spotify sanatçı (post bazlı)
   const myArtistSet = new Set(
     myPosts.map(p => p.spotify_artist_name).filter(Boolean).map(s => s.toLowerCase()),
   )
   for (const post of otherPosts) {
     if (post.spotify_artist_name && myArtistSet.has(post.spotify_artist_name.toLowerCase())) {
-      reasons.push(`Her ikiniz de ${post.spotify_artist_name} dinliyorsunuz 🎵`)
+      const artistLower = post.spotify_artist_name.toLowerCase()
+      reasons.push({
+        reason: `Her ikiniz de ${post.spotify_artist_name} dinliyorsunuz 🎵`,
+        my_posts: myPosts.filter(p => p.spotify_artist_name?.toLowerCase() === artistLower).slice(0, 4).map(toPostSummary),
+        other_posts: otherPosts.filter(p => p.spotify_artist_name?.toLowerCase() === artistLower).slice(0, 4).map(toPostSummary),
+      })
       break
     }
   }
@@ -74,7 +107,12 @@ function findMatchReasons(
   )
   for (const post of otherPosts) {
     if (post.location && myLocSet.has(post.location.toLowerCase().trim())) {
-      reasons.push(`İkiniz de ${post.location}'dan paylaşım yaptınız 📍`)
+      const locLower = post.location.toLowerCase().trim()
+      reasons.push({
+        reason: `İkiniz de ${post.location}'dan paylaşım yaptınız 📍`,
+        my_posts: myPosts.filter(p => p.location?.toLowerCase().trim() === locLower).slice(0, 4).map(toPostSummary),
+        other_posts: otherPosts.filter(p => p.location?.toLowerCase().trim() === locLower).slice(0, 4).map(toPostSummary),
+      })
       break
     }
   }
@@ -86,7 +124,12 @@ function findMatchReasons(
     )
     for (const post of otherPosts) {
       if (post.spotify_track_name && myTrackSet.has(post.spotify_track_name.toLowerCase())) {
-        reasons.push(`"${post.spotify_track_name}" şarkısını ikiniz de paylaştınız 🎶`)
+        const trackLower = post.spotify_track_name.toLowerCase()
+        reasons.push({
+          reason: `"${post.spotify_track_name}" şarkısını ikiniz de paylaştınız 🎶`,
+          my_posts: myPosts.filter(p => p.spotify_track_name?.toLowerCase() === trackLower).slice(0, 4).map(toPostSummary),
+          other_posts: otherPosts.filter(p => p.spotify_track_name?.toLowerCase() === trackLower).slice(0, 4).map(toPostSummary),
+        })
         break
       }
     }
@@ -94,9 +137,6 @@ function findMatchReasons(
 
   // 4. Post içeriğindeki konu eşleşmeleri
   if (reasons.length < 3) {
-    const myContent = myPosts.map(p => p.content || '').join(' ').toLowerCase()
-    const otherContent = otherPosts.map(p => p.content || '').join(' ').toLowerCase()
-
     const topicGroups = [
       { keywords: ['valorant', 'cs2', 'pubg', 'lol', 'fortnite', 'gaming', 'maplestory', 'dota'], label: 'Oyun tutkunusunuz 🎮' },
       { keywords: ['istanbul', 'kadıköy', 'beşiktaş', 'taksim', 'bağcılar'], label: 'İstanbul\'u seviyorsunuz 🏙️' },
@@ -110,9 +150,15 @@ function findMatchReasons(
 
     for (const group of topicGroups) {
       if (reasons.length >= 3) break
-      const myHas = group.keywords.some(k => myContent.includes(k))
-      const otherHas = group.keywords.some(k => otherContent.includes(k))
-      if (myHas && otherHas) reasons.push(group.label)
+      const myMatchPosts = myPosts.filter(p => group.keywords.some(k => (p.content || '').toLowerCase().includes(k)))
+      const otherMatchPosts = otherPosts.filter(p => group.keywords.some(k => (p.content || '').toLowerCase().includes(k)))
+      if (myMatchPosts.length > 0 && otherMatchPosts.length > 0) {
+        reasons.push({
+          reason: group.label,
+          my_posts: myMatchPosts.slice(0, 4).map(toPostSummary),
+          other_posts: otherMatchPosts.slice(0, 4).map(toPostSummary),
+        })
+      }
     }
   }
 
@@ -120,7 +166,15 @@ function findMatchReasons(
   const commonInterests = findCommonInterests(myInterests, otherInterests)
   for (const interest of commonInterests) {
     if (reasons.length >= 3) break
-    reasons.push(`${interest} ilginiz örtüşüyor ✨`)
+    // İlgi alanı bazlı - içerikte geçen postları ara
+    const interestLower = interest.toLowerCase()
+    const myMatchPosts = myPosts.filter(p => (p.content || '').toLowerCase().includes(interestLower)).slice(0, 4).map(toPostSummary)
+    const otherMatchPosts = otherPosts.filter(p => (p.content || '').toLowerCase().includes(interestLower)).slice(0, 4).map(toPostSummary)
+    reasons.push({
+      reason: `${interest} ilginiz örtüşüyor ✨`,
+      my_posts: myMatchPosts,
+      other_posts: otherMatchPosts,
+    })
   }
 
   return reasons.slice(0, 3)
@@ -231,30 +285,58 @@ serve(async (req) => {
     const postOwnerMap: Record<string, string> = {}
     for (const post of (allOtherPosts || [])) postOwnerMap[post.id] = post.user_id
 
+    // Post ID → post data map (diğer kullanıcıların postları)
+    const postDataMap: Record<string, any> = {}
+    for (const post of (allOtherPosts || [])) postDataMap[post.id] = post
+
+    // Post ID → post data map (benim postlarım)
+    const myPostDataMap: Record<string, any> = {}
+    for (const post of (myPosts || [])) myPostDataMap[post.id] = post
+
     // Benim beğenilerim: otherUserId → count
     const myLikesPerUser: Record<string, number> = {}
+    // Benim beğendiğim postların ID seti: otherUserId → post_id[]
+    const myLikedPostIdsByUser: Record<string, string[]> = {}
     for (const like of (myLikesData || [])) {
       const owner = postOwnerMap[like.post_id]
-      if (owner) myLikesPerUser[owner] = (myLikesPerUser[owner] || 0) + 1
+      if (owner) {
+        myLikesPerUser[owner] = (myLikesPerUser[owner] || 0) + 1
+        if (!myLikedPostIdsByUser[owner]) myLikedPostIdsByUser[owner] = []
+        myLikedPostIdsByUser[owner].push(like.post_id)
+      }
     }
 
     // Diğerlerinin bana beğenileri: otherUserId → count
     const likesOnMePerUser: Record<string, number> = {}
+    // Diğerlerinin beğendiği benim postlarım: otherUserId → post_id[]
+    const likedMyPostIdsByUser: Record<string, string[]> = {}
     for (const like of (likesOnMyPostsData || [])) {
       likesOnMePerUser[like.user_id] = (likesOnMePerUser[like.user_id] || 0) + 1
+      if (!likedMyPostIdsByUser[like.user_id]) likedMyPostIdsByUser[like.user_id] = []
+      likedMyPostIdsByUser[like.user_id].push(like.post_id)
     }
 
     // Benim yorumlarım: otherUserId → count
     const myCommentsPerUser: Record<string, number> = {}
+    // Yorum yaptığım postların ID'leri: otherUserId → post_id[]
+    const myCommentedPostIdsByUser: Record<string, string[]> = {}
     for (const comment of (myCommentsData || [])) {
       const owner = postOwnerMap[comment.post_id]
-      if (owner) myCommentsPerUser[owner] = (myCommentsPerUser[owner] || 0) + 1
+      if (owner) {
+        myCommentsPerUser[owner] = (myCommentsPerUser[owner] || 0) + 1
+        if (!myCommentedPostIdsByUser[owner]) myCommentedPostIdsByUser[owner] = []
+        myCommentedPostIdsByUser[owner].push(comment.post_id)
+      }
     }
 
     // Diğerlerinin bana yorumları: otherUserId → count
     const commentsOnMePerUser: Record<string, number> = {}
+    // Diğerlerinin yorum yaptığı benim postlarım: otherUserId → post_id[]
+    const commentedMyPostIdsByUser: Record<string, string[]> = {}
     for (const comment of (commentsOnMyPostsData || [])) {
       commentsOnMePerUser[comment.user_id] = (commentsOnMePerUser[comment.user_id] || 0) + 1
+      if (!commentedMyPostIdsByUser[comment.user_id]) commentedMyPostIdsByUser[comment.user_id] = []
+      commentedMyPostIdsByUser[comment.user_id].push(comment.post_id)
     }
 
     const myPostCount = myPostIds.length
@@ -265,6 +347,8 @@ serve(async (req) => {
       const otherPosts = postsByUser[otherProfile.user_id] || []
       const profileInfo = profileInfoMap[otherProfile.user_id]
       if (!profileInfo) continue
+
+      const otherId = otherProfile.user_id
 
       // ── 1. İlgi alanı skoru (0–1) ─────────────────────────────────────────
       const interestScore = jaccardSimilarity(
@@ -343,7 +427,6 @@ serve(async (req) => {
         : 0
 
       // ── 5. Engagement skoru (beğeni + yorum) (0–1) ────────────────────────
-      const otherId = otherProfile.user_id
       const otherPostCount = otherPosts.length
 
       const myLikesOnOther = myLikesPerUser[otherId] || 0
@@ -375,65 +458,131 @@ serve(async (req) => {
         otherProfile.interests || [],
       )
 
-      // ── Match reasons ─────────────────────────────────────────────────────
-      const spotifyReasons: string[] = []
+      // ── Match reasons (kaynak postlarla) ─────────────────────────────────
+      const reasonsWithSources: ReasonWithSource[] = []
+
+      // Engagement sebepleri
+      const isMutualLike = myLikesOnOther >= 1 && othersLikesOnMe >= 1
+      const isMutualComment = myCommentsOnOther >= 1 && othersCommentsOnMe >= 1
+      const highLikeRate = otherPostCount >= 3 && likeRateMyToOther >= 0.5
+
+      if (isMutualComment || (myCommentsOnOther >= 2) || (othersCommentsOnMe >= 2)) {
+        const myCommentedIds = (myCommentedPostIdsByUser[otherId] || []).slice(0, 4)
+        const commentedMyIds = (commentedMyPostIdsByUser[otherId] || []).slice(0, 4)
+        reasonsWithSources.push({
+          reason: 'Birbirinizin paylaşımlarına yorum yapıyorsunuz 💬',
+          my_posts: commentedMyIds.map(id => myPostDataMap[id]).filter(Boolean).map(toPostSummary),
+          other_posts: myCommentedIds.map(id => postDataMap[id]).filter(Boolean).map(toPostSummary),
+        })
+      } else if (isMutualLike) {
+        const myLikedIds = (myLikedPostIdsByUser[otherId] || []).slice(0, 4)
+        const likedMyIds = (likedMyPostIdsByUser[otherId] || []).slice(0, 4)
+        reasonsWithSources.push({
+          reason: 'Birbirinizin paylaşımlarını harlıyorsunuz 🔥',
+          my_posts: likedMyIds.map(id => myPostDataMap[id]).filter(Boolean).map(toPostSummary),
+          other_posts: myLikedIds.map(id => postDataMap[id]).filter(Boolean).map(toPostSummary),
+        })
+      } else if (highLikeRate) {
+        const myLikedIds = (myLikedPostIdsByUser[otherId] || []).slice(0, 4)
+        reasonsWithSources.push({
+          reason: 'Paylaşımları genellikle ilgini çekiyor 🔥',
+          my_posts: [],
+          other_posts: myLikedIds.map(id => postDataMap[id]).filter(Boolean).map(toPostSummary),
+        })
+      }
+
+      // Sosyal graf sebepleri
+      if (commonSceneTags.length >= 3) {
+        const mySceneTagPosts = (myPosts || []).filter(p =>
+          ((p.photo_scene_tags as string[]) || []).some(t => commonSceneTags.includes(t.toLowerCase()))
+        ).slice(0, 4).map(toPostSummary)
+        const otherSceneTagPosts = otherPosts.filter(p =>
+          ((p.photo_scene_tags as string[]) || []).some(t => commonSceneTags.includes(t.toLowerCase()))
+        ).slice(0, 4).map(toPostSummary)
+        reasonsWithSources.push({
+          reason: 'Benzer ortamları paylaşıyorsunuz 📸',
+          my_posts: mySceneTagPosts,
+          other_posts: otherSceneTagPosts,
+        })
+      }
+
+      if (myMentionsOther && otherMentionsMe) {
+        const myMentionPosts = (myPosts || []).filter(p => {
+          const mentions = ((p.mentioned_usernames as string[]) || []).map(m => m.toLowerCase())
+          return mentions.includes(otherUsername) || (otherFirstName.length >= 4 && (p.content || '').toLowerCase().includes(otherFirstName))
+        }).slice(0, 4).map(toPostSummary)
+        const otherMentionPosts = otherPosts.filter(p => {
+          const mentions = ((p.mentioned_usernames as string[]) || []).map(m => m.toLowerCase())
+          return mentions.includes(myUsername) || (myFirstName.length >= 4 && (p.content || '').toLowerCase().includes(myFirstName))
+        }).slice(0, 4).map(toPostSummary)
+        reasonsWithSources.push({
+          reason: 'Birbirinizin paylaşımlarında görünüyorsunuz 👥',
+          my_posts: myMentionPosts,
+          other_posts: otherMentionPosts,
+        })
+      } else if (myMentionsOther || otherMentionsMe) {
+        reasonsWithSources.push({
+          reason: 'Birbirinizi etiketlediniz 🔗',
+          my_posts: [],
+          other_posts: [],
+        })
+      }
+
+      // Spotify top artists sebepleri
       if (commonTopArtists.length > 0) {
         const artistDisplay = otherProfile.spotify_top_artists?.find(
           (a: string) => myTopArtistSet.has(a.toLowerCase()),
         ) || commonTopArtists[0]
-        spotifyReasons.push(`Her ikiniz de ${artistDisplay} dinliyorsunuz 🎵`)
+        const artistLower = artistDisplay.toLowerCase()
+        const myArtistPosts = (myPosts || []).filter(p => p.spotify_artist_name?.toLowerCase() === artistLower).slice(0, 4).map(toPostSummary)
+        const otherArtistPosts = otherPosts.filter(p => p.spotify_artist_name?.toLowerCase() === artistLower).slice(0, 4).map(toPostSummary)
+        reasonsWithSources.push({
+          reason: `Her ikiniz de ${artistDisplay} dinliyorsunuz 🎵`,
+          my_posts: myArtistPosts,
+          other_posts: otherArtistPosts,
+        })
         if (commonTopArtists.length >= 3) {
-          spotifyReasons.push(`${commonTopArtists.length} ortak favori sanatçınız var 🎶`)
+          reasonsWithSources.push({
+            reason: `${commonTopArtists.length} ortak favori sanatçınız var 🎶`,
+            my_posts: [],
+            other_posts: [],
+          })
         }
       }
 
+      // Social style sebepleri
       const socialStyleLabels: Record<string, string> = {
         "yalnız": "İkiniz de bağımsız ruhlar — tek başına vakit geçirmeyi seviyorsunuz 🌙",
         "ikili": "İkiniz de yakın çevrenizle birlikteyken en mutlusunuz 🤝",
         "sosyal": "İkiniz de kalabalık ortamları seviyorsunuz 🎉",
         "karma": "İkiniz de hem sosyal hem de sessiz anlara değer veriyorsunuz ⚖️",
       }
-
-      const socialStyleReasons: string[] = socialStyleMatch && socialStyleLabels[mySocialStyle]
-        ? [socialStyleLabels[mySocialStyle]]
-        : []
-
-      const socialGraphReasons: string[] = []
-      if (myMentionsOther && otherMentionsMe) {
-        socialGraphReasons.push('Birbirinizin paylaşımlarında görünüyorsunuz 👥')
-      } else if (myMentionsOther || otherMentionsMe) {
-        socialGraphReasons.push('Birbirinizi etiketlediniz 🔗')
-      }
-      if (commonSceneTags.length >= 3) {
-        socialGraphReasons.push(`Benzer ortamları paylaşıyorsunuz 📸`)
+      if (socialStyleMatch && socialStyleLabels[mySocialStyle]) {
+        reasonsWithSources.push({
+          reason: socialStyleLabels[mySocialStyle],
+          my_posts: [],
+          other_posts: [],
+        })
       }
 
-      // Engagement sebepleri
-      const engagementReasons: string[] = []
-      const isMutualLike = myLikesOnOther >= 1 && othersLikesOnMe >= 1
-      const isMutualComment = myCommentsOnOther >= 1 && othersCommentsOnMe >= 1
-      const highLikeRate = otherPostCount >= 3 && likeRateMyToOther >= 0.5
+      // findMatchReasons sonuçları (dinliyorsunuz içerenleri filtrele)
+      const extraReasons = findMatchReasons(
+        myProfile.interests || [],
+        myPosts || [],
+        otherProfile.interests || [],
+        otherPosts,
+      ).filter(r => !r.reason.includes('dinliyorsunuz'))
 
-      if (isMutualComment || (myCommentsOnOther >= 2) || (othersCommentsOnMe >= 2)) {
-        engagementReasons.push('Birbirinizin paylaşımlarına yorum yapıyorsunuz 💬')
-      } else if (isMutualLike) {
-        engagementReasons.push('Birbirinizin paylaşımlarını harlıyorsunuz 🔥')
-      } else if (highLikeRate) {
-        engagementReasons.push('Paylaşımları genellikle ilgini çekiyor 🔥')
+      for (const r of extraReasons) {
+        reasonsWithSources.push(r)
       }
 
-      const matchReasons = [
-        ...engagementReasons,
-        ...socialGraphReasons,
-        ...spotifyReasons,
-        ...socialStyleReasons,
-        ...findMatchReasons(
-          myProfile.interests || [],
-          myPosts || [],
-          otherProfile.interests || [],
-          otherPosts,
-        ).filter(r => !r.includes('dinliyorsunuz')),
-      ].slice(0, 3)
+      const finalReasons = reasonsWithSources.slice(0, 3)
+      const matchReasons = finalReasons.map(r => r.reason)
+      const matchReasonSources = finalReasons.map(r => ({
+        my_posts: r.my_posts,
+        other_posts: r.other_posts,
+      }))
 
       results.push({
         user_id: otherProfile.user_id,
@@ -442,6 +591,7 @@ serve(async (req) => {
         interests: otherProfile.interests || [],
         common_interests: commonInterests,
         match_reasons: matchReasons,
+        match_reason_sources: matchReasonSources,
         profile: profileInfo,
       })
     }
