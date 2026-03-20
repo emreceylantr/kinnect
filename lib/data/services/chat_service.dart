@@ -1,5 +1,6 @@
 // Kinnect - Mesajlasma servisi
 
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatService {
@@ -41,7 +42,7 @@ class ChatService {
 
       return newRoom['id'];
     } catch (e) {
-      print('Chat Room Hatası: $e');
+      debugPrint('Chat Room Hatası: $e');
       rethrow;
     }
   }
@@ -101,11 +102,11 @@ class ChatService {
             'target_id': roomId,
           });
         } catch (e) {
-          print('Push bildirim hatası: $e');
+          debugPrint('Push bildirim hatası: $e');
         }
       }
     } catch (e) {
-      print('Mesaj Gönderme Hatası: $e');
+      debugPrint('Mesaj Gönderme Hatası: $e');
     }
   }
 
@@ -117,7 +118,7 @@ class ChatService {
         'viewed_at': DateTime.now().toIso8601String(),
       }).eq('id', messageId);
     } catch (e) {
-      print('Mesaj görüntüleme işareti hatası: $e');
+      debugPrint('Mesaj görüntüleme işareti hatası: $e');
     }
   }
 
@@ -125,9 +126,9 @@ class ChatService {
   Future<void> deleteEphemeralMessage(String messageId) async {
     try {
       await client.from('messages').delete().eq('id', messageId);
-      print('🔥 Kül olan mesaj silindi: $messageId');
+      debugPrint('🔥 Kül olan mesaj silindi: $messageId');
     } catch (e) {
-      print('Ephemeral mesaj silme hatası: $e');
+      debugPrint('Ephemeral mesaj silme hatası: $e');
     }
   }
 
@@ -136,7 +137,7 @@ class ChatService {
     try {
       await client.from('messages').delete().eq('id', messageId);
     } catch (e) {
-      print('Mesaj Silme Hatası: $e');
+      debugPrint('Mesaj Silme Hatası: $e');
       rethrow;
     }
   }
@@ -241,7 +242,7 @@ class ChatService {
         'last_seen': DateTime.now().toIso8601String(),
       }).eq('id', _myId);
     } catch (e) {
-      print('Last seen güncelleme hatası: $e');
+      debugPrint('Last seen güncelleme hatası: $e');
     }
   }
 
@@ -265,7 +266,7 @@ class ChatService {
       }
       return null;
     } catch (e) {
-      print('Last seen çekme hatası: $e');
+      debugPrint('Last seen çekme hatası: $e');
       return null;
     }
   }
@@ -284,7 +285,7 @@ class ChatService {
       }
       return true; // Varsayılan açık
     } catch (e) {
-      print('Privacy setting çekme hatası: $e');
+      debugPrint('Privacy setting çekme hatası: $e');
       return true;
     }
   }
@@ -301,9 +302,9 @@ class ChatService {
         'receiver_id': _myId,
         'is_viewed': false,
       }).select();
-      print('📩 Okundu işaretlenen mesaj sayısı: ${result.length}');
+      debugPrint('📩 Okundu işaretlenen mesaj sayısı: ${result.length}');
     } catch (e) {
-      print('Tüm mesajları okundu işaretleme hatası: $e');
+      debugPrint('Tüm mesajları okundu işaretleme hatası: $e');
     }
   }
 }

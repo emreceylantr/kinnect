@@ -2,8 +2,11 @@
 // Manages post feeds, comments, likes, and social interactions
 
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:video_compress/video_compress.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 import 'safety_service.dart';
 
 /// Ana akış ve keşfet sayfası için post yönetim servisi.
@@ -539,7 +542,47 @@ class FeedService {
     });
   }
 
-  /// Yeni gönderi oluştur (Resim, Müzik, Etiket, Konum)
+  // --- VIDEO UPLOAD ---
+  Future<String> uploadVideo(File videoFile) async {
+    final fileName = '$_myId/video_${DateTime.now().millisecondsSinceEpoch}.mp4';
+    final bytes = await videoFile.readAsBytes();
+    await client.storage.from('uploads').uploadBinary(
+      fileName,
+      bytes,
+      fileOptions: const FileOptions(upsert: true, contentType: 'video/mp4'),
+    );
+    return client.storage.from('uploads').getPublicUrl(fileName);
+  }
+
+  // --- VIDEO FRAME EXTRACT & UPLOAD ---
+  Future<List<String>> extractAndUploadVideoFrames(String videoPath) async {
+    final List<String> frameUrls = [];
+    final info = await VideoCompress.getMediaInfo(videoPath);
+    final duration = info.duration?.toInt() ?? 7000; // ms
+    final timestamps = [0, (duration * 0.5).toInt(), duration - 100];
+
+    for (int i = 0; i < timestamps.length; i++) {
+      try {
+        final Uint8List? thumbData = await VideoThumbnail.thumbnailData(
+          video: videoPath,
+          imageFormat: ImageFormat.JPEG,
+          timeMs: timestamps[i].clamp(0, duration),
+          quality: 80,
+        );
+        if (thumbData == null) continue;
+        final frameName = '$_myId/frame_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+        await client.storage.from('uploads').uploadBinary(
+          frameName,
+          thumbData,
+          fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+        );
+        frameUrls.add(client.storage.from('uploads').getPublicUrl(frameName));
+      } catch (_) {}
+    }
+    return frameUrls;
+  }
+
+  /// Yeni gönderi oluştur (Resim, Müzik, Etiket, Konum, Video)
   Future<String> createPost({
     required String content,
     required List<File> imageFiles,
@@ -547,6 +590,7 @@ class FeedService {
     Map<String, dynamic>? selectedMusic,
     String? location,
     List<Map<String, dynamic>> photoTags = const [],
+    File? videoFile, // NEW
   }) async {
     List<String> imageUrls = [];
 
@@ -567,6 +611,23 @@ class FeedService {
       imageUrls.add(url);
     }
 
+    // 1b. Video Yükle (varsa)
+    String? videoUrl;
+    List<String> videoFrameUrls = [];
+    if (videoFile != null) {
+      // Compress video
+      final MediaInfo? compressed = await VideoCompress.compressVideo(
+        videoFile.path,
+        quality: VideoQuality.HighestQuality,
+        deleteOrigin: false,
+        includeAudio: true,
+      );
+      final fileToUpload = compressed?.file ?? videoFile;
+      videoUrl = await uploadVideo(fileToUpload);
+      videoFrameUrls = await extractAndUploadVideoFrames(videoFile.path);
+      VideoCompress.cancelCompression();
+    }
+
     // 2. Postu Oluştur
     final postResponse = await client
         .from('posts')
@@ -584,6 +645,10 @@ class FeedService {
             'spotify_album_image': selectedMusic['album_image'],
           },
           'location': location,
+          if (videoUrl != null) ...{
+            'video_url': videoUrl,
+            'video_frame_urls': videoFrameUrls,
+          },
         })
         .select('id')
         .single();
@@ -631,6 +696,9 @@ class FeedService {
         } catch (_) {}
       }
     }
+
+    // Analizi arka planda tetikle (fire-and-forget)
+    client.functions.invoke('analyze-user-profile', body: {'user_id': _myId}).ignore();
 
     return postId;
   }

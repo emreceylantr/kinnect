@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../data/services/feed_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -15,6 +16,142 @@ import '../../../shared/widgets/double_tap_overlay.dart';
 import '../../post/screens/post_detail_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../../shared/widgets/kinnect_image.dart';
+
+// ==========================================
+// 🎥 VIDEO PLAYER WIDGET
+// ==========================================
+
+class _PostVideoPlayer extends StatefulWidget {
+  final String videoUrl;
+  final String? thumbnailUrl;
+
+  const _PostVideoPlayer({required this.videoUrl, this.thumbnailUrl});
+
+  @override
+  State<_PostVideoPlayer> createState() => _PostVideoPlayerState();
+}
+
+class _PostVideoPlayerState extends State<_PostVideoPlayer> {
+  VideoPlayerController? _controller;
+  bool _isInitializing = false;
+  bool _isPlaying = false;
+
+  Future<void> _initAndPlay() async {
+    if (_controller != null) {
+      if (_controller!.value.isPlaying) {
+        await _controller!.pause();
+        setState(() => _isPlaying = false);
+      } else {
+        await _controller!.play();
+        setState(() => _isPlaying = true);
+      }
+      return;
+    }
+
+    setState(() => _isInitializing = true);
+    try {
+      final controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+      await controller.initialize();
+      controller.setLooping(true);
+      await controller.play();
+      if (mounted) {
+        setState(() {
+          _controller = controller;
+          _isPlaying = true;
+          _isInitializing = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isInitializing = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _initAndPlay,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          width: double.infinity,
+          height: 350,
+          color: Colors.black,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Video veya thumbnail
+              if (_controller != null && _controller!.value.isInitialized)
+                SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller!.value.size.width,
+                      height: _controller!.value.size.height,
+                      child: VideoPlayer(_controller!),
+                    ),
+                  ),
+                )
+              else if (widget.thumbnailUrl != null)
+                KinnectImage(
+                  imageUrl: widget.thumbnailUrl!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  useShimmer: true,
+                )
+              else
+                Container(color: Colors.grey.shade900),
+
+              // Play/Pause overlay
+              if (!_isPlaying)
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: _isInitializing
+                      ? const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(Icons.play_arrow, color: Colors.white, size: 32),
+                ),
+
+              // Video badge
+              Positioned(
+                bottom: 8,
+                left: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.videocam, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text('Video', style: TextStyle(color: Colors.white, fontSize: 11)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 // ==========================================
 // 🔥 BUZLU CAM (GLASSMORPHISM) EFEKTLİ POST KARTI
@@ -314,6 +451,17 @@ class _PostCardState extends State<PostCard> {
                             ),
                           ),
                         ),
+                      ),
+                    ),
+                  // --- VIDEO ---
+                  if (p['video_url'] != null && p['video_url'].toString().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      child: _PostVideoPlayer(
+                        videoUrl: p['video_url'] as String,
+                        thumbnailUrl: (p['video_frame_urls'] as List?)?.isNotEmpty == true
+                            ? (p['video_frame_urls'] as List).first as String
+                            : null,
                       ),
                     ),
                   // --- ACTION BUTTONS ---

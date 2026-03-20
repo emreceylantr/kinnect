@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:video_player/video_player.dart';
 
 import 'package:kinnect/core/theme/app_colors.dart';
 import 'package:kinnect/shared/widgets/fuel_button.dart';
@@ -12,6 +13,139 @@ import 'package:kinnect/shared/widgets/image_carousel.dart';
 import 'package:kinnect/shared/widgets/double_tap_overlay.dart';
 import 'package:kinnect/features/profile/screens/profile_screen.dart';
 import 'package:kinnect/shared/widgets/kinnect_image.dart';
+
+// 🎥 Post detail video player
+class _PostVideoPlayerDetail extends StatefulWidget {
+  final String videoUrl;
+  final String? thumbnailUrl;
+
+  const _PostVideoPlayerDetail({required this.videoUrl, this.thumbnailUrl});
+
+  @override
+  State<_PostVideoPlayerDetail> createState() => _PostVideoPlayerDetailState();
+}
+
+class _PostVideoPlayerDetailState extends State<_PostVideoPlayerDetail> {
+  VideoPlayerController? _controller;
+  bool _isInitializing = false;
+  bool _isPlaying = false;
+
+  Future<void> _initAndPlay() async {
+    if (_controller != null) {
+      if (_controller!.value.isPlaying) {
+        await _controller!.pause();
+        setState(() => _isPlaying = false);
+      } else {
+        await _controller!.play();
+        setState(() => _isPlaying = true);
+      }
+      return;
+    }
+
+    setState(() => _isInitializing = true);
+    try {
+      final controller =
+          VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+      await controller.initialize();
+      controller.setLooping(true);
+      await controller.play();
+      if (mounted) {
+        setState(() {
+          _controller = controller;
+          _isPlaying = true;
+          _isInitializing = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isInitializing = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _initAndPlay,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: double.infinity,
+          height: 350,
+          color: Colors.black,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (_controller != null && _controller!.value.isInitialized)
+                SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller!.value.size.width,
+                      height: _controller!.value.size.height,
+                      child: VideoPlayer(_controller!),
+                    ),
+                  ),
+                )
+              else if (widget.thumbnailUrl != null)
+                KinnectImage(
+                  imageUrl: widget.thumbnailUrl!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  useShimmer: true,
+                )
+              else
+                Container(color: Colors.grey.shade900),
+              if (!_isPlaying)
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: _isInitializing
+                      ? const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(Icons.play_arrow,
+                          color: Colors.white, size: 32),
+                ),
+              Positioned(
+                bottom: 8,
+                left: 8,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.videocam, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text('Video',
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 11)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 // Callback typedefs
 typedef OnToggleLike = void Function();
@@ -415,6 +549,21 @@ class _PostDetailCardState extends State<PostDetailCard> {
                           musicArtistName: widget.post['spotify_artist_name'],
                         ),
                       ),
+                    ),
+                  ),
+                ] else if (widget.post['video_url'] != null &&
+                    widget.post['video_url'].toString().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: _PostVideoPlayerDetail(
+                      videoUrl: widget.post['video_url'] as String,
+                      thumbnailUrl: (widget.post['video_frame_urls'] as List?)
+                                  ?.isNotEmpty ==
+                              true
+                          ? (widget.post['video_frame_urls'] as List).first
+                              as String
+                          : null,
                     ),
                   ),
                 ] else if (widget.post['spotify_track_name'] != null) ...[

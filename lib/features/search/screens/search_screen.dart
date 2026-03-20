@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:video_player/video_player.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // 🔥 EKLENDİ: Kayıt için gerekli paket
 
 // Importları kendi proje yapına göre kontrol et
-import '../../../shared/widgets/fuel_button.dart';
-import '../../../shared/widgets/image_carousel.dart';
 import '../../../data/services/feed_service.dart';
 import '../../../data/services/safety_service.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../post/screens/post_detail_screen.dart';
 import '../../../shared/widgets/shimmer/post_card_shimmer.dart';
+import '../../../shared/widgets/fuel_button.dart';
+import '../../../shared/widgets/image_carousel.dart';
 import '../../../shared/widgets/double_tap_overlay.dart';
 import '../../../shared/widgets/kinnect_image.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../home/widgets/post_card.dart';
 
 // 🎨 TEMA RENKLERİ
 Color kBgColor = AppColors.bgDark; // Derin Siyah
@@ -266,25 +268,6 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  void _toggleFuel(int index, String postId) async {
-    final int realIndex = explorePosts.indexWhere((p) => p['id'] == postId);
-    if (realIndex == -1) return;
-    final post = explorePosts[realIndex];
-    final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
-    final isAlive =
-        date != null && DateTime.now().difference(date).inHours < 24;
-    if (!isAlive) return;
-    final likes = List<dynamic>.from(post["likes"] ?? []);
-    final isFueled = likes.any((l) => l["user_id"] == myId);
-    setState(() {
-      if (isFueled)
-        likes.removeWhere((l) => l["user_id"] == myId);
-      else
-        likes.add({"user_id": myId, "post_id": postId});
-      explorePosts[realIndex] = {...post, "likes": likes};
-    });
-    await feedService.toggleLike(postId, isFuel: true);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -559,6 +542,7 @@ class _SearchScreenState extends State<SearchScreen> {
     Map<String, dynamic> profile = {};
     String content = "";
     String? imageUrl;
+    String? videoUrl;
     bool isAlive = false;
 
     try {
@@ -569,6 +553,7 @@ class _SearchScreenState extends State<SearchScreen> {
           : {};
       content = post["content"] as String? ?? "";
       imageUrl = post["image_url"] as String?;
+      videoUrl = post["video_url"] as String?;
 
       final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
       final now = DateTime.now();
@@ -636,13 +621,17 @@ class _SearchScreenState extends State<SearchScreen> {
           borderRadius: BorderRadius.circular(24),
           child: Stack(
             children: [
-              // 🔥 GÖRSEL KATMANI - Önbellekli ve Optimize
-              if (imageUrl != null)
+              // 🔥 GÖRSEL / VİDEO KATMANI
+              if (videoUrl != null)
+                Positioned.fill(
+                  child: _TrendVideoBackground(videoUrl: videoUrl),
+                )
+              else if (imageUrl != null)
                 Positioned.fill(
                   child: KinnectImage(
                     imageUrl: imageUrl,
                     fit: BoxFit.cover,
-                    width: 350, // 🔥 OPTİMİZASYON: Hafifletilmiş boyut
+                    width: 350,
                   ),
                 )
               else
@@ -655,7 +644,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                   ),
                 ),
-              if (imageUrl != null)
+              if (imageUrl != null || videoUrl != null)
                 Container(
                     decoration: BoxDecoration(
                         gradient: LinearGradient(colors: [
@@ -698,12 +687,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 left: 16,
                 right: 16,
                 child: Column(
-                  mainAxisAlignment: imageUrl != null
+                  mainAxisAlignment: (imageUrl != null || videoUrl != null)
                       ? MainAxisAlignment.end
                       : MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (imageUrl == null) const SizedBox(height: 60),
+                    if (imageUrl == null && videoUrl == null) const SizedBox(height: 60),
                     Row(
                       children: [
                         KinnectImage(
@@ -723,7 +712,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               Text(profile["full_name"] ?? "Anonim",
                                   style: GoogleFonts.poppins(
                                       color: Colors.white,
-                                      fontSize: imageUrl != null
+                                      fontSize: (imageUrl != null || videoUrl != null)
                                           ? (isRank1 ? 14 : 12)
                                           : (isRank1 ? 16 : 14),
                                       fontWeight: FontWeight.bold),
@@ -732,7 +721,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               Text("@${profile["username"]}",
                                   style: GoogleFonts.poppins(
                                       color: Colors.white70,
-                                      fontSize: imageUrl != null ? 11 : 13),
+                                      fontSize: (imageUrl != null || videoUrl != null) ? 11 : 13),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis)
                             ])),
@@ -741,16 +730,16 @@ class _SearchScreenState extends State<SearchScreen> {
                     const SizedBox(height: 14),
                     if (content.isNotEmpty)
                       Text(content,
-                          maxLines: imageUrl == null ? 6 : 2,
+                          maxLines: (imageUrl == null && videoUrl == null) ? 6 : 2,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
                               color: Colors.white.withValues(
-                                  alpha: imageUrl != null ? 0.9 : 1.0),
-                              fontWeight: imageUrl == null
+                                  alpha: (imageUrl != null || videoUrl != null) ? 0.9 : 1.0),
+                              fontWeight: (imageUrl == null && videoUrl == null)
                                   ? FontWeight.normal
                                   : FontWeight.w500,
-                              fontSize: imageUrl == null ? 18 : 12,
-                              shadows: imageUrl != null
+                              fontSize: (imageUrl == null && videoUrl == null) ? 18 : 12,
+                              shadows: (imageUrl != null || videoUrl != null)
                                   ? [
                                       Shadow(
                                           blurRadius: 2,
@@ -758,7 +747,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                           offset: Offset(0, 1))
                                     ]
                                   : [])),
-                    if (imageUrl == null)
+                    if (imageUrl == null && videoUrl == null)
                       const Spacer()
                     else
                       const SizedBox(height: 12),
@@ -793,9 +782,29 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
+
+  void _toggleFuel(int index, String postId) async {
+    final int realIndex = explorePosts.indexWhere((p) => p['id'] == postId);
+    if (realIndex == -1) return;
+    final post = explorePosts[realIndex];
+    final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
+    final isAlive =
+        date != null && DateTime.now().difference(date).inHours < 24;
+    if (!isAlive) return;
+    final likes = List<dynamic>.from(post["likes"] ?? []);
+    final isFueled = likes.any((l) => l["user_id"] == myId);
+    setState(() {
+      if (isFueled)
+        likes.removeWhere((l) => l["user_id"] == myId);
+      else
+        likes.add({"user_id": myId, "post_id": postId});
+      explorePosts[realIndex] = {...post, "likes": likes};
+    });
+    await feedService.toggleLike(postId, isFuel: true);
+  }
+
   // 📝 NORMAL LİSTE KARTI
   Widget _buildPostCard(Map<String, dynamic> post, int index) {
-    // 🔥 GÜVENLİ VERİ OKUMA
     Map<String, dynamic> profile = {};
     List likes = [];
     List comments = [];
@@ -938,6 +947,18 @@ class _SearchScreenState extends State<SearchScreen> {
                 },
               ),
             ],
+            // 🎥 VIDEO
+            if (post["video_url"] != null &&
+                post["video_url"].toString().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              PostVideoPlayerExplore(
+                videoUrl: post["video_url"] as String,
+                thumbnailUrl:
+                    (post["video_frame_urls"] as List?)?.isNotEmpty == true
+                        ? (post["video_frame_urls"] as List).first as String
+                        : null,
+              ),
+            ],
             const SizedBox(height: 10),
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               FuelButton(
@@ -1009,5 +1030,185 @@ class _SearchScreenState extends State<SearchScreen> {
                   MaterialPageRoute(
                       builder: (_) => ProfileScreen(userId: u["id"]))));
         });
+  }
+}
+
+// 🎥 Gündem slider için otomatik mute video background
+class _TrendVideoBackground extends StatefulWidget {
+  final String videoUrl;
+  const _TrendVideoBackground({required this.videoUrl});
+
+  @override
+  State<_TrendVideoBackground> createState() => _TrendVideoBackgroundState();
+}
+
+class _TrendVideoBackgroundState extends State<_TrendVideoBackground> {
+  VideoPlayerController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    try {
+      final controller =
+          VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+      await controller.initialize();
+      controller.setLooping(true);
+      controller.setVolume(0); // mute
+      await controller.play();
+      if (mounted) setState(() => _controller = controller);
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_controller == null || !_controller!.value.isInitialized) {
+      return Container(color: Colors.black);
+    }
+    return FittedBox(
+      fit: BoxFit.cover,
+      child: SizedBox(
+        width: _controller!.value.size.width,
+        height: _controller!.value.size.height,
+        child: VideoPlayer(_controller!),
+      ),
+    );
+  }
+}
+
+// 🎥 Explore feed için video player (post_card.dart'taki private widget'ın kopyası)
+class PostVideoPlayerExplore extends StatefulWidget {
+  final String videoUrl;
+  final String? thumbnailUrl;
+
+  const PostVideoPlayerExplore({super.key, required this.videoUrl, this.thumbnailUrl});
+
+  @override
+  State<PostVideoPlayerExplore> createState() => _PostVideoPlayerExploreState();
+}
+
+class _PostVideoPlayerExploreState extends State<PostVideoPlayerExplore> {
+  dynamic _controller; // VideoPlayerController — video_player paketi zaten yüklü
+  bool _isInitializing = false;
+  bool _isPlaying = false;
+
+  Future<void> _initAndPlay() async {
+    if (_controller != null) {
+      if (_controller!.value.isPlaying) {
+        await _controller!.pause();
+        setState(() => _isPlaying = false);
+      } else {
+        await _controller!.play();
+        setState(() => _isPlaying = true);
+      }
+      return;
+    }
+
+    setState(() => _isInitializing = true);
+    try {
+      final controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+      await controller.initialize();
+      controller.setLooping(true);
+      await controller.play();
+      if (mounted) {
+        setState(() {
+          _controller = controller;
+          _isPlaying = true;
+          _isInitializing = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isInitializing = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _initAndPlay,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          height: 350,
+          color: Colors.black,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (_controller != null && _controller!.value.isInitialized)
+                SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller!.value.size.width,
+                      height: _controller!.value.size.height,
+                      child: VideoPlayer(_controller!),
+                    ),
+                  ),
+                )
+              else if (widget.thumbnailUrl != null)
+                KinnectImage(
+                  imageUrl: widget.thumbnailUrl!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  useShimmer: true,
+                )
+              else
+                Container(color: Colors.grey.shade900),
+              if (!_isPlaying)
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: _isInitializing
+                      ? const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(Icons.play_arrow, color: Colors.white, size: 32),
+                ),
+              Positioned(
+                bottom: 8,
+                left: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.videocam, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text('Video', style: TextStyle(color: Colors.white, fontSize: 11)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

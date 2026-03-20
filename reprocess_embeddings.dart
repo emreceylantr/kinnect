@@ -13,9 +13,10 @@ void main() async {
 
   print('Eskiden kalan "sadece yazı" olan analizleri güncelliyorum...');
 
-  // 1. Tüm postları çek
-  final posts =
-      await supabase.from('posts').select('id, user_id, content, image_url');
+  // 1. Tüm postları çek (konum ve müzik bilgisi dahil)
+  final posts = await supabase.from('posts').select(
+    'id, user_id, content, image_url, image_urls, location, spotify_track_name, spotify_artist_name, apple_music_track_name, apple_music_artist_name'
+  );
 
   print('Toplam ${posts.length} post bulundu.');
 

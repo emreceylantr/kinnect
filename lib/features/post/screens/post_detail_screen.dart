@@ -10,7 +10,7 @@ import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:kinnect/shared/widgets/photo_emoji_picker.dart';
-import '../../../co../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
 
 import '../../../data/services/feed_service.dart';
 import '../../../data/services/safety_service.dart';

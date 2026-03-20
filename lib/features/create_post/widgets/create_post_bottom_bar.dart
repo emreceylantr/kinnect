@@ -1,11 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../co../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
 
 class CreatePostBottomBar extends StatefulWidget {
   final VoidCallback onPickFromGallery;
   final VoidCallback onPickFromCamera;
+  final VoidCallback onPickVideo;
   final VoidCallback onPickMusic;
   final VoidCallback onPickLocation;
   final VoidCallback onShare;
@@ -16,6 +17,7 @@ class CreatePostBottomBar extends StatefulWidget {
     super.key,
     required this.onPickFromGallery,
     required this.onPickFromCamera,
+    required this.onPickVideo,
     required this.onPickMusic,
     required this.onPickLocation,
     required this.onShare,
@@ -27,6 +29,21 @@ class CreatePostBottomBar extends StatefulWidget {
   State<CreatePostBottomBar> createState() => _CreatePostBottomBarState();
 }
 
+class _BarIcon extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  const _BarIcon(this.icon, this.color, this.onTap);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Icon(icon, color: color, size: 24),
+    );
+  }
+}
+
 class _CreatePostBottomBarState extends State<CreatePostBottomBar> {
   bool _isShareButtonPressed = false;
 
@@ -36,70 +53,43 @@ class _CreatePostBottomBarState extends State<CreatePostBottomBar> {
       alignment: Alignment.bottomCenter,
       child: Container(
         margin: const EdgeInsets.only(bottom: 30, left: 16, right: 16),
-        height: 70,
+        height: 64,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(35),
+          borderRadius: BorderRadius.circular(20),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
                 color: AppColors.bgCard.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(35),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: Colors.white.withValues(alpha: 0.1),
                 ),
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(
-                    onPressed: widget.onPickFromGallery,
-                    icon: const Icon(Icons.image_outlined,
-                        color: Colors.greenAccent, size: 28),
-                    tooltip: 'Galeri',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                  // İkonlar grubu
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _BarIcon(Icons.image_outlined, Colors.greenAccent, widget.onPickFromGallery),
+                      const SizedBox(width: 18),
+                      _BarIcon(Icons.camera_alt_outlined, Colors.blueAccent, widget.onPickFromCamera),
+                      const SizedBox(width: 18),
+                      _BarIcon(Icons.videocam_outlined, Colors.orangeAccent, widget.onPickVideo),
+                      const SizedBox(width: 18),
+                      _BarIcon(Icons.audiotrack_outlined, const Color(0xFF6C63FF), widget.onPickMusic),
+                      const SizedBox(width: 18),
+                      widget.isGettingLocation
+                          ? const SizedBox(width: 22, height: 22,
+                              child: CircularProgressIndicator(color: Colors.orangeAccent, strokeWidth: 2))
+                          : _BarIcon(Icons.location_on_outlined, Colors.orangeAccent, widget.onPickLocation),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    onPressed: widget.onPickFromCamera,
-                    icon: const Icon(Icons.camera_alt_outlined,
-                        color: Colors.blueAccent, size: 28),
-                    tooltip: 'Kamera',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    onPressed: widget.onPickMusic,
-                    icon: const Icon(
-                      Icons.audiotrack_outlined,
-                      color: Color(0xFF6C63FF),
-                      size: 28,
-                    ),
-                    tooltip: 'Müzik Ekle',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    onPressed: widget.onPickLocation,
-                    icon: widget.isGettingLocation
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                color: Colors.orangeAccent, strokeWidth: 2))
-                        : const Icon(
-                            Icons.location_on_outlined,
-                            color: Colors.orangeAccent,
-                            size: 28,
-                          ),
-                    tooltip: 'Konum Ekle',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const Spacer(),
+
+                  // Paylaş butonu
                   GestureDetector(
                     onTapDown: (_) =>
                         setState(() => _isShareButtonPressed = true),
@@ -115,14 +105,10 @@ class _CreatePostBottomBarState extends State<CreatePostBottomBar> {
                       curve: Curves.easeInOut,
                       child: Container(
                         height: 42,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [
-                              AppColors.primary,
-                              Color(0xFF448AFF),
-                              Color(0xFF69F0AE)
-                            ],
+                            colors: [AppColors.primary, Color(0xFF9D89D9)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -142,7 +128,7 @@ class _CreatePostBottomBarState extends State<CreatePostBottomBar> {
                                   height: 20,
                                   child: CircularProgressIndicator(
                                       color: Colors.white, strokeWidth: 2))
-                              : Text("Paylaş",
+                              : Text('Paylaş',
                                   style: GoogleFonts.poppins(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,

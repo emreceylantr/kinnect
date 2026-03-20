@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 import 'data/services/notification_service.dart';
 import 'data/services/spotify_service.dart';
@@ -53,7 +54,7 @@ Future<void> main() async {
 void _initializeFirebaseInBackground() {
   Future.microtask(() async {
     try {
-      await Firebase.initializeApp();
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
       debugPrint('✅ Firebase arka planda başlatıldı');
 
       // Firebase hazır olduktan sonra notification service'i başlat

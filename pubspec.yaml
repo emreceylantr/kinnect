@@ -1,7 +1,7 @@
 name: kinnect
 description: AI supported social media app
 publish_to: 'none'
-version: 1.0.7+1
+version: 1.0.7+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -21,6 +21,7 @@ dependencies:
   record: ^6.0.0         # Ses kaydı (Zego ile uyumlu olması için senin sürümüne döndüm)
   audioplayers: ^6.0.0   # Ses çalma
   video_player: ^2.9.0   # 🎥 YENİ: Live Video oynatmak için gerekli!
+  video_compress: ^3.1.2 # 🎥 Video sıkıştırma
   path_provider: ^2.1.2
   image: ^4.1.7          # 📸 Selfie flip için
   permission_handler: ^12.0.1 # ✅ DÜZELTİLDİ: Zego için sürüm yükseltildi
@@ -67,7 +68,7 @@ dependencies:
   # --- SHIMMER LOADING ---
   shimmer: ^3.0.0
   flutter_blue_plus: ^2.1.0
-  vibration: ^2.0.1
+  vibration: ^3.1.8
   supabase: ^2.4.0
 
 dev_dependencies:
