@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-import '../../../co../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/language/app_l10n.dart';
 import '../../../shared/widgets/shimmer/comment_shimmer.dart';
 import '../../profile/screens/profile_screen.dart';
 
@@ -57,7 +58,7 @@ class PostCommentsList extends StatelessWidget {
         padding: const EdgeInsets.all(40),
         child: Center(
           child: Text(
-            isExploreMode ? "İlk odunu sen at 🔥" : "İlk yorumu sen yap!",
+            isExploreMode ? AppL10n.firstFuel : AppL10n.firstComment,
             style: GoogleFonts.poppins(color: Colors.white54),
           ),
         ),
@@ -123,7 +124,7 @@ class PostCommentsList extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(p["username"] ?? "Kullanıcı",
+                        Text(p["username"] ?? AppL10n.user,
                             style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold)),
@@ -134,7 +135,7 @@ class PostCommentsList extends StatelessWidget {
                               Padding(
                                 padding: const EdgeInsets.only(right: 6),
                                 child: Text(
-                                  "(düzenlendi)",
+                                  AppL10n.edited,
                                   style: GoogleFonts.poppins(
                                     color: Colors.white30,
                                     fontSize: 10,
@@ -194,7 +195,7 @@ class PostCommentsList extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                isPlaying ? "Çalıyor..." : "Sesli Yorum",
+                                isPlaying ? AppL10n.playing : AppL10n.voiceComment,
                                 style: GoogleFonts.poppins(color: Colors.white),
                               ),
                             ],
@@ -212,7 +213,7 @@ class PostCommentsList extends StatelessWidget {
                     GestureDetector(
                       onTap: () => onReplyToComment(c),
                       child: Text(
-                        "Yanıtla",
+                        AppL10n.replyLabel,
                         style: GoogleFonts.poppins(
                           color: AppColors.primary,
                           fontSize: 12,

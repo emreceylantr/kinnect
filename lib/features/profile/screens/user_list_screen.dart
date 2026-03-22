@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/language/app_l10n.dart';
 import '../../../data/services/friend_service.dart';
 import 'profile_screen.dart';
 
@@ -62,7 +63,7 @@ class _UserListScreenState extends State<UserListScreen> {
       ),
       body: _users.isEmpty
           ? Center(
-              child: Text('Liste boş.',
+              child: Text(AppL10n.listEmpty,
                   style: GoogleFonts.poppins(color: Colors.white54)))
           : ListView.builder(
               itemCount: _users.length,
@@ -194,7 +195,7 @@ class _UserListItemState extends State<_UserListItem> {
 
   @override
   Widget build(BuildContext context) {
-    final fullName = widget.user['full_name'] ?? 'Kullanıcı';
+    final fullName = widget.user['full_name'] ?? AppL10n.user;
     final username = widget.user['username'] ?? 'anonim';
     final avatarUrl = widget.user['avatar_url'];
 
@@ -209,10 +210,10 @@ class _UserListItemState extends State<_UserListItem> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildButton(
-              text: 'Kabul', color: Colors.green, onTap: _acceptRequest),
+              text: AppL10n.accept, color: Colors.green, onTap: _acceptRequest),
           const SizedBox(width: 8),
           _buildButton(
-              text: 'Sil',
+              text: AppL10n.delete,
               color: Colors.redAccent,
               isOutline: true,
               onTap: _declineRequest),
@@ -222,14 +223,14 @@ class _UserListItemState extends State<_UserListItem> {
     // 2. KENDİ TAKİPÇİLERİM (ÇIKAR)
     else if (widget.isOwnList && widget.listType == 'followers') {
       trailing = _buildButton(
-          text: 'Çıkar',
+          text: AppL10n.removeFromGroup,
           color: const Color(0xFF1E1E1E),
           onTap: _removeFollower);
     }
     // 3. KENDİ TAKİP ETTİKLERİM (TAKİPTESİN -> ÇIK)
     else if (widget.isOwnList && widget.listType == 'following') {
       trailing = _buildButton(
-          text: 'Takiptesin', color: const Color(0xFF1E1E1E), onTap: _unfollow);
+          text: AppL10n.following, color: const Color(0xFF1E1E1E), onTap: _unfollow);
     }
     // 4. BAŞKASININ LİSTESİ (GENEL TAKİP BUTONU)
     else {
@@ -244,13 +245,13 @@ class _UserListItemState extends State<_UserListItem> {
                 child: CircularProgressIndicator(
                     strokeWidth: 2, color: Colors.white)));
 
-      String t = 'Takip Et';
+      String t = AppL10n.followLabel;
       Color c = const Color(0xFF6C63FF);
       if (_status == FollowStatus.following) {
-        t = 'Takiptesin';
+        t = AppL10n.following;
         c = const Color(0xFF1E1E1E);
       } else if (_status == FollowStatus.pendingOutgoing) {
-        t = 'İstek yollandı';
+        t = AppL10n.requestSent;
         c = Colors.grey.shade800;
       }
 

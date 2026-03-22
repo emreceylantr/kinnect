@@ -10,6 +10,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../create_post/screens/photo_editor_screen.dart';
 import '../../../core/constants/border_colors.dart';
+import '../../../core/language/app_l10n.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> currentProfile;
@@ -129,7 +130,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("Live Video ve Kapak Resmi Ayarlandı! 🎬",
+            content: Text(AppL10n.liveVideoSet,
                 style: GoogleFonts.poppins()),
             backgroundColor: _colorGreen));
       }
@@ -156,7 +157,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Profil Halka Rengi",
+                Text(AppL10n.profileRingColor,
                     style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 16,
@@ -289,7 +290,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       debugPrint('📍 Stack: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Hata: $e', style: GoogleFonts.poppins()),
+          content: Text('${AppL10n.error}: $e', style: GoogleFonts.poppins()),
           backgroundColor: Colors.redAccent,
         ));
       }
@@ -348,7 +349,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
             elevation: 0,
             leading: const BackButton(color: Colors.white),
             centerTitle: true,
-            title: Text('Profili Düzenle',
+            title: Text(AppL10n.editProfileTitle,
                 style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -372,7 +373,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                               width: 14,
                               child: CircularProgressIndicator(
                                   color: Colors.black, strokeWidth: 2))
-                          : Text('Kaydet',
+                          : Text(AppL10n.save,
                               style: GoogleFonts.poppins(
                                   fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
@@ -446,8 +447,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                                 ? Icons.check_circle
                                 : Icons.slow_motion_video,
                             label: _videoFile != null
-                                ? "Live Seçildi"
-                                : "Live Video Ekle", // Metin güncellendi
+                                ? AppL10n.liveVideoAdded
+                                : AppL10n.addLiveVideo,
                             color:
                                 _videoFile != null ? _colorGreen : Colors.white,
                             onTap: _pickVideo,
@@ -459,7 +460,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                           // 2. HALKA RENGİ BUTONU (Sağda)
                           _buildActionButton(
                             icon: Icons.palette_outlined,
-                            label: "Halka Rengi",
+                            label: AppL10n.ringColor,
                             color: Colors.white,
                             onTap: _showColorPicker,
                             isActive: false,
@@ -484,13 +485,13 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                           color: Colors.white.withValues(alpha: 0.08))),
                   child: Column(
                     children: [
-                      _buildTextField("Adın Soyadın", _nameController,
+                      _buildTextField(AppL10n.fullName, _nameController,
                           icon: Icons.person_outline),
                       const SizedBox(height: 24),
-                      _buildTextField("Kullanıcı Adı", _usernameController,
+                      _buildTextField(AppL10n.username, _usernameController,
                           icon: Icons.alternate_email),
                       const SizedBox(height: 24),
-                      _buildTextField("Biyografi", _bioController,
+                      _buildTextField(AppL10n.bio, _bioController,
                           maxLines: 3, maxLength: 150, icon: Icons.short_text),
                       // ... Switchler buraya gelecek ...
                     ],

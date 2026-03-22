@@ -15,9 +15,11 @@ import '../../../shared/widgets/location_picker_sheet.dart';
 import 'photo_tag_screen.dart';
 import 'photo_editor_screen.dart';
 import 'music_picker_screen.dart';
+import 'video_edit_screen.dart';
 import '../widgets/image_preview_gallery.dart';
 import '../widgets/selected_music_card.dart';
 import '../widgets/create_post_bottom_bar.dart';
+import '../../../core/language/app_l10n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/services/feed_service.dart';
 
@@ -55,47 +57,17 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   File? _videoFile;
   VideoPlayerController? _videoController;
   bool _isVideoCompressing = false;
+  VideoEditResult? _videoEditResult;
 
   double _hintOpacity = 0.0;
 
   late AnimationController _auroraController;
 
   // 🔥 ORTALANACAK KISA SÖZLER
-  final Set<String> _centeredHints = {
-    "Neler düşünüyorsun?",
-    "Bugün nasılsın?",
-    "Aklında ne var?",
-    "Nasıl hissediyorsun?",
-    "Günün nasıl geçti?",
-    "Ne paylaşsam acaba…",
-    "Kendime bir not bırakıyorum.",
-    "Dur bak şimdi bir şey paylaşacağım…",
-    "Takipçilerine bir mesajın var mı?",
-    "İlham verici bir şeyler yaz...",
-    "Paylaşmak istediğin bir şey mi var?",
-  };
+  Set<String> get _centeredHints => Set.from(AppL10n.postHints.take(11));
 
   // 🔥 TÜM LİSTE
-  final List<String> _hintList = [
-    "Neler düşünüyorsun?",
-    "Bugün nasılsın?",
-    "Aklında ne var?",
-    "Nasıl hissediyorsun?",
-    "Günün nasıl geçti?",
-    "Ne paylaşsam acaba…",
-    "Kendime bir not bırakıyorum.",
-    "Dur bak şimdi bir şey paylaşacağım…",
-    "Takipçilerine bir mesajın var mı?",
-    "İlham verici bir şeyler yaz...",
-    "Paylaşmak istediğin bir şey mi var?",
-    "Bir şey yazacaktım… unuttum. Neyse yazıyorum.",
-    "Düşündüğüm bazı şeyleri paylaşmam gerekiyor sanki.",
-    "Buraya düşüncelerimden bir parça bırakıyorum.",
-    "Bugün biraz fazla iyi görünüyorum, paylaşayım dedim 👀",
-    "Şimdi öyle bir şey paylaşacağım ki… biri üstüne alınacak.",
-    "Post seçmek bu kadar zorsa, kod yazmayı düşünemiyorum bile… kahve getiriyorum.",
-    "Developerlarımız kadar yorulmadım ama post seçerken bile enerji tükendi, kahve şart."
-  ];
+  List<String> get _hintList => AppL10n.postHints;
 
   @override
   void initState() {
@@ -237,30 +209,37 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   Future<void> _pickVideo() async {
     final ImagePicker picker = ImagePicker();
+    // Limit 60 saniye — kullanıcı düzenleme ekranında 20sn seçer
     final XFile? video = await picker.pickVideo(
       source: ImageSource.gallery,
-      maxDuration: const Duration(seconds: 7),
+      maxDuration: const Duration(seconds: 60),
     );
     if (video == null || !mounted) return;
 
     setState(() => _isVideoCompressing = true);
     try {
-      // Validate duration
       final info = await VideoCompress.getMediaInfo(video.path);
-      final durationMs = info.duration ?? 0;
-      if (durationMs > 7500) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Video en fazla 7 saniye olabilir. iOS trim arayüzünü kullanın.'),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
-        }
-        return;
-      }
+      final durationSec = ((info.duration ?? 1000) / 1000.0).clamp(1.0, 60.0);
 
-      final file = File(video.path);
+      // Video düzenleme ekranını aç
+      if (!mounted) return;
+      setState(() => _isVideoCompressing = false);
+
+      final result = await Navigator.push<VideoEditResult?>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => VideoEditScreen(
+            videoPath: video.path,
+            videoDurationSeconds: durationSec,
+          ),
+          fullscreenDialog: true,
+        ),
+      );
+
+      if (result == null || !mounted) return; // Kullanıcı iptal etti
+
+      // VideoEditScreen zaten trim+compress yaptı, trimmedFile'ı kullan
+      final file = result.trimmedFile;
       final controller = VideoPlayerController.file(file);
       await controller.initialize();
       controller.setLooping(true);
@@ -268,13 +247,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       if (mounted) {
         setState(() {
           _videoFile = file;
+          _videoEditResult = result;
           _videoController?.dispose();
           _videoController = controller;
-          // Clear images when video selected
           _imageFiles = [];
         });
       }
-    } finally {
+    } catch (e) {
       if (mounted) setState(() => _isVideoCompressing = false);
     }
   }
@@ -284,6 +263,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     setState(() {
       _videoFile = null;
       _videoController = null;
+      _videoEditResult = null;
     });
   }
 
@@ -303,12 +283,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         location: _location,
         photoTags: _photoTags,
         videoFile: _videoFile,
+        videoThumbnailSeconds: _videoEditResult?.thumbnailSeconds,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Gönderildi! 🚀"),
+          SnackBar(
+            content: Text(AppL10n.postShared),
             backgroundColor: AppColors.primary,
           ),
         );
@@ -390,7 +371,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 ),
               ),
             ),
-            // Duration badge
+            // Duration / trim badge
             Positioned(
               bottom: 8,
               right: 8,
@@ -401,8 +382,49 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '${(_videoController?.value.duration.inSeconds ?? 0)}s',
+                  '${(_videoController?.value.duration.inSeconds ?? 0)}sn',
                   style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ),
+            ),
+            // Edit button overlay
+            Positioned(
+              bottom: 8,
+              left: 8,
+              child: GestureDetector(
+                onTap: () async {
+                  if (_videoFile == null) return;
+                  final info = await VideoCompress.getMediaInfo(_videoFile!.path);
+                  final durationSec = ((info.duration ?? 1000) / 1000.0).clamp(1.0, 60.0);
+                  if (!mounted) return;
+                  final result = await Navigator.push<VideoEditResult?>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => VideoEditScreen(
+                        videoPath: _videoFile!.path,
+                        videoDurationSeconds: durationSec,
+                      ),
+                      fullscreenDialog: true,
+                    ),
+                  );
+                  if (result != null && mounted) {
+                    setState(() => _videoEditResult = result);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.content_cut_rounded, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text('Düzenle', style: TextStyle(color: Colors.white, fontSize: 12)),
+                    ],
+                  ),
                 ),
               ),
             ),

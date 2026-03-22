@@ -67,8 +67,8 @@ class _TaggablePostImageState extends State<TaggablePostImage> {
   }
 
   void _toggleTags() {
-    if (tags.isNotEmpty) {
-      // Görüntü boyutunu al
+    // Etiket veya müzik varsa aç
+    if (tags.isNotEmpty || widget.musicTrackName != null) {
       _updateImageSize();
       setState(() => showTags = !showTags);
     }

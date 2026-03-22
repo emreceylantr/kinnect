@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'auth_screen.dart';
 import '../widgets/welcome_widgets.dart';
+import '../../../core/language/app_l10n.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -98,7 +99,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  "Kinnect'e\nHoş Geldin",
+                  AppL10n.welcomeTitle,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 42,
@@ -110,7 +111,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  "Sadece fotoğraf değil, anlam paylaş.",
+                  AppL10n.welcomeSubtitle,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 16,

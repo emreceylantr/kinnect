@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../data/services/auth_service.dart';
+import '../../../core/language/app_l10n.dart';
 
 // 🎨 TEMA
 const Color kBgDark = Color(0xFF06060A);
@@ -72,15 +73,15 @@ class _SignUpScreenState extends State<SignUpScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text("Hata: ${e.message}"),
+              content: Text("${AppL10n.error}: ${e.message}"),
               backgroundColor: Colors.redAccent),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("Beklenmedik bir hata oluştu."),
+          SnackBar(
+              content: Text(AppL10n.unexpectedError),
               backgroundColor: Colors.redAccent),
         );
       }
@@ -110,7 +111,7 @@ class _SignUpScreenState extends State<SignUpScreen>
             ),
             const SizedBox(height: 24),
             Text(
-              "Kayıt Başarılı! 🎉",
+              AppL10n.registrationSuccess,
               style: GoogleFonts.spaceGrotesk(
                 color: Colors.white,
                 fontSize: 22,
@@ -119,7 +120,7 @@ class _SignUpScreenState extends State<SignUpScreen>
             ),
             const SizedBox(height: 12),
             Text(
-              "E-posta adresine ($email) onay linki gönderdik. Lütfen kontrol et.",
+              AppL10n.checkEmailConfirmation(email),
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                   color: Colors.white60, fontSize: 14, height: 1.5),
@@ -140,7 +141,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                 ),
                 child: Center(
                   child: Text(
-                    "Tamam",
+                    AppL10n.ok,
                     style: GoogleFonts.inter(
                         color: Colors.white, fontWeight: FontWeight.w600),
                   ),
@@ -238,7 +239,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                     size: 12, color: kAccentPurple),
                                 const SizedBox(width: 8),
                                 Text(
-                                  "YENİ HESAP",
+                                  AppL10n.newAccount,
                                   style: GoogleFonts.spaceGrotesk(
                                     color: kAccentPurple,
                                     fontSize: 10,
@@ -254,7 +255,7 @@ class _SignUpScreenState extends State<SignUpScreen>
 
                           // Header
                           Text(
-                            "Hesap\nOluştur",
+                            AppL10n.createAccountTitle,
                             style: GoogleFonts.spaceGrotesk(
                               fontSize: 38,
                               fontWeight: FontWeight.w700,
@@ -264,7 +265,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            "Kinnect dünyasına adım at ve kabileni bul.",
+                            AppL10n.signupSubtitle,
                             style: GoogleFonts.inter(
                                 fontSize: 15,
                                 color: Colors.white.withValues(alpha: 0.5)),
@@ -275,13 +276,13 @@ class _SignUpScreenState extends State<SignUpScreen>
                           // E-posta
                           _buildTextField(
                             controller: _emailController,
-                            label: "E-posta Adresi",
+                            label: AppL10n.emailAddress,
                             icon: FontAwesomeIcons.envelope,
                             validator: (value) {
                               if (value == null || value.isEmpty)
-                                return 'E-posta gerekli';
+                                return AppL10n.emailRequired;
                               if (!value.contains('@'))
-                                return 'Geçerli bir e-posta girin';
+                                return AppL10n.enterValidEmail;
                               return null;
                             },
                           ),
@@ -290,15 +291,15 @@ class _SignUpScreenState extends State<SignUpScreen>
                           // Şifre
                           _buildTextField(
                             controller: _passwordController,
-                            label: "Şifre",
+                            label: AppL10n.password,
                             icon: FontAwesomeIcons.lock,
                             isPassword: true,
                             useConfirmObscure: false,
                             validator: (value) {
                               if (value == null || value.isEmpty)
-                                return 'Şifre gerekli';
+                                return AppL10n.passwordRequired;
                               if (value.length < 8)
-                                return 'En az 8 karakter olmalı';
+                                return AppL10n.passwordTooShort;
                               return null;
                             },
                           ),
@@ -307,13 +308,13 @@ class _SignUpScreenState extends State<SignUpScreen>
                           // Şifre tekrar
                           _buildTextField(
                             controller: _confirmPasswordController,
-                            label: "Şifre Tekrar",
+                            label: AppL10n.confirmPasswordLabel,
                             icon: FontAwesomeIcons.shieldHalved,
                             isPassword: true,
                             useConfirmObscure: true,
                             validator: (value) {
                               if (value != _passwordController.text)
-                                return 'Şifreler eşleşmiyor';
+                                return AppL10n.passwordsDontMatch;
                               return null;
                             },
                           ),
@@ -347,7 +348,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                             MainAxisAlignment.center,
                                         children: [
                                           Text(
-                                            "Kayıt Ol",
+                                            AppL10n.signUp,
                                             style: GoogleFonts.inter(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w600,

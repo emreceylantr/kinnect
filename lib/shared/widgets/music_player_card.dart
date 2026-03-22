@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 // Servis importlarını kendi proje yoluna göre ayarla
 import '../../data/services/spotify_service.dart';
 import '../../data/services/apple_music_service.dart';
+import '../../core/language/app_l10n.dart';
 
 class MusicPlayerCard extends StatefulWidget {
   final String userId;
@@ -268,7 +269,7 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
               ),
               const SizedBox(height: 20),
               Text(
-                "Müzik Hesaplarını Yönet",
+                AppL10n.manageMusicAccounts,
                 style: GoogleFonts.poppins(
                     color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
               ),
@@ -278,7 +279,7 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
               if (!isSpotifyConnected)
                 _sheetTile(
                   icon: const FaIcon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954)),
-                  title: "Spotify ile Bağlan",
+                  title: AppL10n.connectSpotify,
                   onTap: () async {
                     Navigator.pop(context);
                     await _spotifyService.authenticate();
@@ -287,7 +288,7 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
               else
                 _sheetTile(
                   icon: const FaIcon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954)),
-                  title: "Spotify Bağlantısını Kes",
+                  title: AppL10n.disconnectSpotify,
                   titleColor: Colors.redAccent,
                   tileColor: Colors.red.withOpacity(0.08),
                   trailing: const Icon(Icons.logout, color: Colors.redAccent, size: 20),
@@ -302,7 +303,7 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
               if (!isAppleMusicConnected)
                 _sheetTile(
                   icon: const FaIcon(FontAwesomeIcons.apple, color: Colors.white),
-                  title: "Apple Music ile Bağlan",
+                  title: AppL10n.connectAppleMusic,
                   onTap: () async {
                     Navigator.pop(context);
                     final allowed = await _appleMusicService.requestPermission();
@@ -319,7 +320,7 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
               else
                 _sheetTile(
                   icon: const FaIcon(FontAwesomeIcons.apple, color: Colors.white),
-                  title: "Apple Music Bağlantısını Kes",
+                  title: AppL10n.disconnectAppleMusic,
                   titleColor: Colors.redAccent,
                   tileColor: Colors.red.withOpacity(0.08),
                   trailing: const Icon(Icons.logout, color: Colors.redAccent, size: 20),
@@ -512,7 +513,7 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
                     color: Colors.white, size: 16),
                 const SizedBox(width: 12),
                 Text(
-                  "Spotify veya Apple Music Bağla",
+                  AppL10n.connectSpotifyOrAppleMusic,
                   style: GoogleFonts.poppins(
                       color: Colors.white, fontWeight: FontWeight.w500),
                 ),
@@ -533,8 +534,8 @@ class _MusicPlayerCardState extends State<MusicPlayerCard>
     final isAnimPlaying =
         isSpotify ? _trackData!['is_playing'] == true : _isPlayingPreview;
     final statusText = isSpotify
-        ? (isAnimPlaying ? "Şu an Dinleniyor" : "Son Dinlenen")
-        : (_isPlayingPreview ? "Önizleme Çalıyor" : "Apple Music");
+        ? (isAnimPlaying ? AppL10n.nowListening : AppL10n.lastListened)
+        : (_isPlayingPreview ? AppL10n.previewPlaying : "Apple Music");
 
     return GestureDetector(
       onTap: _handleTap,

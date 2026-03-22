@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kinnect/features/profile/screens/profile_screen.dart';
 import 'package:kinnect/core/theme/app_colors.dart';
+import 'package:kinnect/core/language/app_l10n.dart';
 
 // ==========================================
 // 📸 TÜM TEPKİLERİ GÖSTEREN DİALOG
@@ -163,7 +164,7 @@ class ReactionsBottomSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        profile['username'] ?? 'Kullanıcı',
+                        profile['username'] ?? AppL10n.user,
                         style: GoogleFonts.poppins(
                           color: Colors.white70,
                           fontSize: 10,
@@ -220,7 +221,7 @@ class LikersBottomSheet extends StatelessWidget {
             likers: snapshot.data ?? [],
             totalCount: likeCount,
             isLoading: snapshot.connectionState == ConnectionState.waiting,
-            errorMessage: snapshot.hasError ? 'Yüklenemedi' : null,
+            errorMessage: snapshot.hasError ? AppL10n.error : null,
           );
         },
       ),
@@ -252,7 +253,7 @@ class LikersBottomSheet extends StatelessWidget {
           const SizedBox(height: 16),
           // Başlık
           Text(
-            '❤️ Beğenenler ($totalCount)',
+            '❤️ ${AppL10n.likers} ($totalCount)',
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontSize: 18,
@@ -280,7 +281,7 @@ class LikersBottomSheet extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Text(
-                  'Henüz kimse beğenmedi',
+                  AppL10n.noOneLiked,
                   style: GoogleFonts.poppins(color: Colors.white54),
                 ),
               ),
@@ -293,7 +294,7 @@ class LikersBottomSheet extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final liker = likers[index];
                   final profile = liker['profiles'] ?? {};
-                  final username = profile['username'] ?? 'Kullanıcı';
+                  final username = profile['username'] ?? AppL10n.user;
                   final avatarUrl = profile['avatar_url'];
                   final userId = liker['user_id'];
 
@@ -474,7 +475,7 @@ class ReportDialog extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Vazgeç',
+                  AppL10n.cancel,
                   style: GoogleFonts.poppins(
                     color: Colors.white38,
                     fontSize: 13,
@@ -543,7 +544,7 @@ class ConfirmDeleteDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('İptal', style: TextStyle(color: Colors.grey)),
+          child: Text(AppL10n.cancel, style: const TextStyle(color: Colors.grey)),
         ),
         TextButton(
           onPressed: onConfirm,

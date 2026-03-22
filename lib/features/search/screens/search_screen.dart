@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // 🔥 EKLENDİ: Kayıt için gerekli paket
+import 'package:url_launcher/url_launcher.dart';
 
 // Importları kendi proje yapına göre kontrol et
 import '../../../data/services/feed_service.dart';
@@ -18,6 +19,8 @@ import '../../../shared/widgets/double_tap_overlay.dart';
 import '../../../shared/widgets/kinnect_image.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../home/widgets/post_card.dart';
+import '../../chat/widgets/share_post_modal.dart';
+import '../../../core/language/app_l10n.dart';
 
 // 🎨 TEMA RENKLERİ
 Color kBgColor = AppColors.bgDark; // Derin Siyah
@@ -146,13 +149,13 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              Text("Yoldaşını Seç",
+              Text(AppL10n.chooseCompanion,
                   style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
-              Text("Keşfet ekranında sana eşlik edecek karakteri seç.",
+              Text(AppL10n.companionSubtitle,
                   style:
                       GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
               const SizedBox(height: 20),
@@ -328,7 +331,7 @@ class _SearchScreenState extends State<SearchScreen> {
               Row(children: [
                 Icon(FontAwesomeIcons.fire, color: kAccentOrange, size: 22),
                 const SizedBox(width: 8),
-                Text("Keşfet",
+                Text(AppL10n.explore,
                     style: GoogleFonts.poppins(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -417,7 +420,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     (isFocused || hasText) ? TextAlign.start : TextAlign.center,
                 decoration: InputDecoration(
                   isDense: true,
-                  hintText: isFocused ? "" : "Kullanıcı ara...",
+                  hintText: isFocused ? "" : AppL10n.searchUsers,
                   hintStyle:
                       GoogleFonts.poppins(color: Colors.white30, fontSize: 13),
                   border: InputBorder.none,
@@ -554,6 +557,11 @@ class _SearchScreenState extends State<SearchScreen> {
       content = post["content"] as String? ?? "";
       imageUrl = post["image_url"] as String?;
       videoUrl = post["video_url"] as String?;
+      // YouTube linki varsa thumbnail'i arka plan olarak kullan
+      final ytId = _extractYouTubeId(content);
+      if (imageUrl == null && videoUrl == null && ytId != null) {
+        imageUrl = 'https://img.youtube.com/vi/$ytId/hqdefault.jpg';
+      }
 
       final date = DateTime.tryParse(post["created_at"] ?? "")?.toLocal();
       final now = DateTime.now();
@@ -569,19 +577,19 @@ class _SearchScreenState extends State<SearchScreen> {
 
     if (!isAlive) {
       statusColor = Colors.blueGrey;
-      statusText = "KÜL OLDU";
+      statusText = AppL10n.statusBurnedOut;
     } else {
       if (likeCount > 10) {
         statusColor = Colors.redAccent;
-        statusText = "CEHENNEM";
+        statusText = AppL10n.statusHellfire;
         statusIcon = FontAwesomeIcons.fire;
       } else if (likeCount > 5) {
         statusColor = kAccentOrange;
-        statusText = "ALEVLİ";
+        statusText = AppL10n.statusFlaming;
         statusIcon = FontAwesomeIcons.fire;
       } else if (likeCount > 0) {
         statusColor = kAmberGlow;
-        statusText = "ISINIYOR";
+        statusText = AppL10n.statusHeating;
         statusIcon = FontAwesomeIcons.fireFlameSimple;
       }
     }
@@ -651,6 +659,28 @@ class _SearchScreenState extends State<SearchScreen> {
                   Colors.transparent,
                   AppColors.bgBlack.withValues(alpha: 0.9)
                 ], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
+              // YouTube play butonu (thumbnail arka plan olarak gösteriliyorsa)
+              if (_extractYouTubeId(content) != null && videoUrl == null)
+                Center(
+                  child: GestureDetector(
+                    onTap: () => _openYouTube(_extractYouTubeId(content)!),
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF0000),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.4),
+                              blurRadius: 12)
+                        ],
+                      ),
+                      child: const Icon(Icons.play_arrow,
+                          color: Colors.white, size: 34),
+                    ),
+                  ),
+                ),
               Positioned(
                 top: 0,
                 left: 0,
@@ -670,7 +700,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               color: Colors.white, size: 14),
                           const SizedBox(width: 8)
                         ],
-                        Text(isRank1 ? "GÜNDEM #1" : "GÜNDEM #$rank",
+                        Text(AppL10n.trendingRank(rank),
                             style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
@@ -692,7 +722,8 @@ class _SearchScreenState extends State<SearchScreen> {
                       : MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (imageUrl == null && videoUrl == null) const SizedBox(height: 60),
+                    if (imageUrl == null && videoUrl == null)
+                      const SizedBox(height: 60),
                     Row(
                       children: [
                         KinnectImage(
@@ -729,8 +760,14 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                     const SizedBox(height: 14),
                     if (content.isNotEmpty)
-                      Text(content,
-                          maxLines: (imageUrl == null && videoUrl == null) ? 6 : 2,
+                      Text(
+                          // YouTube URL'yi metinden gizle (önizleme zaten gösteriyor)
+                          _extractYouTubeId(content) != null
+                              ? content
+                                  .replaceAll(RegExp(r'https?://\S+'), '')
+                                  .trim()
+                              : content,
+                          maxLines: (imageUrl == null && videoUrl == null) ? 4 : 2,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
                               color: Colors.white.withValues(
@@ -754,7 +791,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     Row(children: [
                       Icon(FontAwesomeIcons.fire, color: statusColor, size: 16),
                       const SizedBox(width: 6),
-                      Text("$likeCount Harlama",
+                      Text(AppL10n.fuelsCount(likeCount),
                           style: GoogleFonts.poppins(
                               color: statusColor,
                               fontSize: 14,
@@ -782,6 +819,83 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
+
+  static String? _extractYouTubeId(String text) {
+    final patterns = [
+      RegExp(r'youtu\.be/([A-Za-z0-9_\-]{11})'),
+      RegExp(r'youtube\.com/watch\?v=([A-Za-z0-9_\-]{11})'),
+      RegExp(r'youtube\.com/shorts/([A-Za-z0-9_\-]{11})'),
+    ];
+    for (final re in patterns) {
+      final m = re.firstMatch(text);
+      if (m != null) return m.group(1);
+    }
+    return null;
+  }
+
+  Future<void> _openYouTube(String videoId) async {
+    final uri = Uri.parse('https://www.youtube.com/watch?v=$videoId');
+    if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Widget _buildYouTubePreview(String videoId) {
+    final thumbUrl = 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+    return GestureDetector(
+      onTap: () => _openYouTube(videoId),
+      child: Container(
+        margin: const EdgeInsets.only(top: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white12),
+          color: Colors.white.withValues(alpha: 0.05),
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.network(
+                    thumbUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey.shade900,
+                      child: const Icon(Icons.videocam, color: Colors.white38, size: 40),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF0000),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.play_arrow, color: Colors.white, size: 30),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.smart_display, color: Color(0xFFFF0000), size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'YouTube\'da izle',
+                    style: GoogleFonts.poppins(color: Colors.white60, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _toggleFuel(int index, String postId) async {
     final int realIndex = explorePosts.indexWhere((p) => p['id'] == postId);
@@ -830,19 +944,19 @@ class _SearchScreenState extends State<SearchScreen> {
     IconData statusIcon = FontAwesomeIcons.wind;
 
     if (!isAlive) {
-      statusText = "KÜL OLDU";
+      statusText = AppL10n.statusBurnedOut;
       statusColor = Colors.blueGrey;
     } else {
       if (likeCount > 10) {
-        statusText = "CEHENNEM";
+        statusText = AppL10n.statusHellfire;
         statusColor = Colors.redAccent;
         statusIcon = FontAwesomeIcons.fire;
       } else if (likeCount > 5) {
-        statusText = "ALEVLİ";
+        statusText = AppL10n.statusFlaming;
         statusColor = kAccentOrange;
         statusIcon = FontAwesomeIcons.fire;
       } else if (likeCount > 0) {
-        statusText = "ISINIYOR";
+        statusText = AppL10n.statusHeating;
         statusColor = kAmberGlow;
         statusIcon = FontAwesomeIcons.fireFlameSimple;
       }
@@ -918,11 +1032,21 @@ class _SearchScreenState extends State<SearchScreen> {
             ]),
             const SizedBox(height: 12),
             if (post["content"] != null && post["content"].isNotEmpty)
-              Text(post["content"],
+              Text(
+                  _extractYouTubeId(post["content"].toString()) != null
+                      ? post["content"].toString()
+                          .replaceAll(RegExp(r'https?://\S+'), '')
+                          .trim()
+                      : post["content"],
                   style: GoogleFonts.poppins(
                       color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 14,
                       height: 1.5)),
+            // 🎬 YouTube önizleme
+            if (post["content"] != null &&
+                _extractYouTubeId(post["content"].toString()) != null)
+              _buildYouTubePreview(
+                  _extractYouTubeId(post["content"].toString())!),
             if (post["image_url"] != null ||
                 (post["image_urls"] as List?)?.isNotEmpty == true) ...[
               const SizedBox(height: 12),
@@ -990,7 +1114,29 @@ class _SearchScreenState extends State<SearchScreen> {
                         Text("${comments.length}",
                             style: GoogleFonts.poppins(
                                 color: Colors.white38, fontSize: 13))
-                      ])))
+                      ]))),
+              const SizedBox(width: 8),
+              Padding(
+                  padding: EdgeInsets.only(top: isAlive ? 32.0 : 38.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        isScrollControlled: true,
+                        builder: (_) => SharePostModal(post: post),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(FontAwesomeIcons.paperPlane,
+                          size: 16, color: Colors.white38),
+                    ),
+                  )),
             ]),
           ]),
         ),
@@ -1003,7 +1149,7 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Icon(FontAwesomeIcons.fireFlameCurved, size: 50, color: Colors.white10),
       const SizedBox(height: 16),
-      Text("Henüz ateş yok.", style: GoogleFonts.poppins(color: Colors.white38))
+      Text(AppL10n.noFlameYet, style: GoogleFonts.poppins(color: Colors.white38))
     ]));
   }
 

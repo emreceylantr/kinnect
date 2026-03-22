@@ -3,7 +3,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../co../../../core/theme/app_colors.dart';
+import '../../../core/language/app_l10n.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Profil gövdesi - post listesi gösterimi
 class ProfileBody extends StatelessWidget {
@@ -42,7 +43,7 @@ class ProfileBody extends StatelessWidget {
                     color: Colors.white24, size: 60),
                 const SizedBox(height: 16),
                 Text(
-                  'Henüz gönderi yok',
+                  AppL10n.noPostsYet,
                   style: GoogleFonts.poppins(
                     color: Colors.white38,
                     fontSize: 16,

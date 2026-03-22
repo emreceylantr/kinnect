@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../core/language/app_l10n.dart';
 import '../../../data/services/auth_service.dart';
 
 // 🎨 TEMA
@@ -47,8 +48,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Lütfen e-posta adresini gir."),
+        SnackBar(
+          content: Text(AppL10n.pleaseEnterEmail),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -66,7 +67,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Hata: ${e.toString()}"),
+          content: Text("${AppL10n.error}: ${e.toString()}"),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -96,7 +97,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             ),
             const SizedBox(height: 24),
             Text(
-              "Link Gönderildi! 🚀",
+              AppL10n.linkSent,
               style: GoogleFonts.spaceGrotesk(
                 color: Colors.white,
                 fontSize: 22,
@@ -105,7 +106,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             ),
             const SizedBox(height: 12),
             Text(
-              "$email adresine şifre sıfırlama linki gönderdik. E-postanı kontrol et.",
+              AppL10n.resetLinkSentTo(email),
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                   color: Colors.white60, fontSize: 14, height: 1.5),
@@ -126,7 +127,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 ),
                 child: Center(
                   child: Text(
-                    "Tamam",
+                    AppL10n.ok,
                     style: GoogleFonts.inter(
                         color: Colors.white, fontWeight: FontWeight.w600),
                   ),
@@ -264,7 +265,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
                         // Başlık
                         Text(
-                          "Şifreni\nSıfırla",
+                          AppL10n.resetPassword,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.spaceGrotesk(
                             fontSize: 38,
@@ -277,7 +278,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         const SizedBox(height: 16),
 
                         Text(
-                          "Hesabına bağlı e-posta adresini gir,\nsana şifreni yenilemen için bir link gönderelim.",
+                          AppL10n.resetPasswordSubtitle,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
                             color: Colors.white.withValues(alpha: 0.5),
@@ -294,7 +295,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                           style: GoogleFonts.inter(color: Colors.white),
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
-                            labelText: "E-posta Adresi",
+                            labelText: AppL10n.emailAddress,
                             labelStyle: GoogleFonts.inter(
                                 color: Colors.white.withValues(alpha: 0.4)),
                             prefixIcon: const Padding(
@@ -352,7 +353,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                                           MainAxisAlignment.center,
                                       children: [
                                         Text(
-                                          "Link Gönder",
+                                          AppL10n.sendLink,
                                           style: GoogleFonts.inter(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,

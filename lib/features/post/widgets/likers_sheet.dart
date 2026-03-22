@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/language/app_l10n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../../shared/widgets/kinnect_image.dart';
@@ -85,7 +86,7 @@ class LikersSheet extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(20),
                       child: Text(
-                        'Henüz kimse beğenmedi',
+                        AppL10n.noOneLiked,
                         style: GoogleFonts.poppins(color: Colors.white54),
                       ),
                     ),
@@ -97,7 +98,7 @@ class LikersSheet extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final liker = snapshot.data![index];
                       final profile = liker['profiles'] ?? {};
-                      final username = profile['username'] ?? 'Kullanıcı';
+                      final username = profile['username'] ?? AppL10n.user;
                       final avatarUrl = profile['avatar_url'];
                       final userId = liker['user_id'];
 

@@ -15,12 +15,12 @@ class ThemeManager {
   // Getter ile mevcut durumu kontrol et
   bool get isDark => themeNotifier.value == ThemeMode.dark;
 
-  // Başlangıçta tercihi yükle
+  // Başlangıçta tercihi yükle — her zaman dark mode
   Future<void> loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
-    final isDarkMode =
-        prefs.getBool('isDarkMode') ?? true; // Varsayılan true (Dark)
-    themeNotifier.value = isDarkMode ? ThemeMode.dark : ThemeMode.light;
+    // Eski light tercihini temizle, her zaman dark
+    await prefs.setBool('isDarkMode', true);
+    themeNotifier.value = ThemeMode.dark;
   }
 
   // Temayı değiştir ve kaydet

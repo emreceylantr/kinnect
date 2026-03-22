@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../core/language/app_l10n.dart';
 import '../../data/services/location_service.dart';
 
 class LocationPickerSheet extends StatefulWidget {
@@ -26,8 +27,8 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Konum alınamadı. Lütfen izinleri kontrol edin.")),
+        SnackBar(
+            content: Text(AppL10n.locationPermissionError)),
       );
     }
   }
@@ -53,7 +54,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
           ),
           const SizedBox(height: 24),
           Text(
-            "Konum Ekle",
+            AppL10n.addLocation,
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontSize: 20,
@@ -63,9 +64,9 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
           const SizedBox(height: 24),
           ListTile(
             leading: const Icon(Icons.my_location, color: AppColors.primary),
-            title: Text("Şu anki konumumu kullan",
+            title: Text(AppL10n.useCurrentLocation,
                 style: GoogleFonts.poppins(color: Colors.white)),
-            subtitle: Text("Otomatik olarak bulur",
+            subtitle: Text(AppL10n.autoDetects,
                 style:
                     GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
             trailing: _isGettingLocation
@@ -80,28 +81,28 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
           ListTile(
             leading:
                 const Icon(Icons.edit_location_alt, color: Colors.orangeAccent),
-            title: Text("Manuel konum gir",
+            title: Text(AppL10n.enterManualLocation,
                 style: GoogleFonts.poppins(color: Colors.white)),
             onTap: () {
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   backgroundColor: AppColors.bgCard,
-                  title: Text("Konum Gir",
+                  title: Text(AppL10n.enterLocation,
                       style: GoogleFonts.poppins(color: Colors.white)),
                   content: TextField(
                     controller: _manualController,
                     autofocus: true,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: "Örn: Beşiktaş, İstanbul",
+                    decoration: InputDecoration(
+                      hintText: AppL10n.locationPlaceholder,
                       hintStyle: TextStyle(color: Colors.white24),
                     ),
                   ),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text("İptal")),
+                        child: Text(AppL10n.cancel)),
                     TextButton(
                       onPressed: () {
                         if (_manualController.text.trim().isNotEmpty) {
@@ -111,7 +112,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                           Navigator.pop(context);
                         }
                       },
-                      child: const Text("Ekle"),
+                      child: Text(AppL10n.addLabel),
                     ),
                   ],
                 ),

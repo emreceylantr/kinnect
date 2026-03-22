@@ -31,7 +31,9 @@ serve(async (req) => {
       user1_interests,
       user2_interests,
       match_reasons,
+      language,
     } = await req.json()
+    const isEn = language === 'en'
 
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')
     if (!anthropicKey) throw new Error('ANTHROPIC_API_KEY eksik')
@@ -64,15 +66,40 @@ serve(async (req) => {
       const u1Formatted = (u1Posts.data || []).map(formatPost).filter(Boolean)
       const u2Formatted = (u2Posts.data || []).map(formatPost).filter(Boolean)
 
-      if (u1Formatted.length > 0) user1PostsText = `Son paylaşımları: ${u1Formatted.slice(0, 6).join(' | ')}`
-      if (u2Formatted.length > 0) user2PostsText = `Son paylaşımları: ${u2Formatted.slice(0, 6).join(' | ')}`
+      if (u1Formatted.length > 0) user1PostsText = isEn ? `Recent posts: ${u1Formatted.slice(0, 6).join(' | ')}` : `Son paylaşımları: ${u1Formatted.slice(0, 6).join(' | ')}`
+      if (u2Formatted.length > 0) user2PostsText = isEn ? `Recent posts: ${u2Formatted.slice(0, 6).join(' | ')}` : `Son paylaşımları: ${u2Formatted.slice(0, 6).join(' | ')}`
     }
 
     const reasonsText = match_reasons?.length > 0
-      ? `\nTespit edilen ortak noktalar: ${match_reasons.join(', ')}`
+      ? isEn
+        ? `\nDetected common points: ${match_reasons.join(', ')}`
+        : `\nTespit edilen ortak noktalar: ${match_reasons.join(', ')}`
       : ''
 
-    const prompt = `İki kullanıcının profilleri ve paylaşımları:
+    const prompt = isEn
+      ? `Two users' profiles and posts:
+
+**${user1_name}:**
+- Interests: ${(user1_interests || []).join(', ')}
+- Profile: ${user1_profile || 'No info'}
+${user1PostsText ? `- ${user1PostsText}` : ''}
+
+**${user2_name}:**
+- Interests: ${(user2_interests || []).join(', ')}
+- Profile: ${user2_profile || 'No info'}
+${user2PostsText ? `- ${user2PostsText}` : ''}
+${reasonsText}
+
+TASK: Write a short message to "${user1_name}" explaining why "${user2_name}" is a great match for them.
+
+RULES:
+- Address "${user1_name}" directly (use "you")
+- Talk about "${user2_name}" — their interests, posts, and shared things
+- Give concrete examples like "You both love X..." or "You share an interest in X..."
+- 2-3 sentences, warm and genuine tone
+- Do NOT use technical words like "AI", "algorithm", "embedding"
+- Write only the message, nothing else`
+      : `İki kullanıcının profilleri ve paylaşımları:
 
 **${user1_name}:**
 - İlgi alanları: ${(user1_interests || []).join(', ')}
@@ -111,7 +138,7 @@ KURALLAR:
 
     const data = await resp.json()
     const explanation = data.content?.[0]?.text?.trim()
-      || `${user2_name} ile harika ortak noktalarınız var, tanışmaya değer!`
+      || (isEn ? `You and ${user2_name} have great things in common, worth meeting!` : `${user2_name} ile harika ortak noktalarınız var, tanışmaya değer!`)
 
     return new Response(JSON.stringify({ explanation }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

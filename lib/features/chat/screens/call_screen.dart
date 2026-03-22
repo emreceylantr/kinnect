@@ -6,6 +6,7 @@ import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import 'package:zego_uikit/zego_uikit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../core/language/app_l10n.dart';
 
 // 🎨 MODERN VE SOFT RENK PALETİ
 const Color kCallPrimary = Color(0xFF8E84FF); // Soft mor
@@ -44,7 +45,7 @@ class _CallScreenState extends State<CallScreen> {
   Future<String> _fetchLocalUserName() async {
     final currentUser = Supabase.instance.client.auth.currentUser;
     if (currentUser == null) {
-      return 'Misafir';
+      return AppL10n.guest;
     }
 
     try {
@@ -77,11 +78,11 @@ class _CallScreenState extends State<CallScreen> {
             return metadata['username'];
           }
         }
-        return 'Misafir';
+        return AppL10n.guest;
       }
     } catch (e) {
       print('Kullanıcı ismi çekilemedi: $e');
-      return 'Misafir';
+      return AppL10n.guest;
     }
   }
 
@@ -112,7 +113,7 @@ class _CallScreenState extends State<CallScreen> {
                     CircularProgressIndicator(color: kCallPrimary),
                     const SizedBox(height: 16),
                     Text(
-                      'Arama hazırlanıyor...',
+                      AppL10n.preparingCall,
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 16,
@@ -126,7 +127,7 @@ class _CallScreenState extends State<CallScreen> {
         }
 
         // İsim yüklendi, artık Zego widget'ını göster
-        final localUserName = snapshot.data ?? 'Misafir';
+        final localUserName = snapshot.data ?? AppL10n.guest;
         return _buildCallUI(context, localUserName);
       },
     );
@@ -275,7 +276,7 @@ class _CallScreenState extends State<CallScreen> {
     }
 
     return ZegoUIKitPrebuiltCall(
-      appID: 1191288890,
+      appID: 2111311400,
       appSign:
           "REDACTED_ZEGO_APP_SIGN",
       userID: userId,

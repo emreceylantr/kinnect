@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 
 import '../screens/auth_screen.dart';
+import '../../../core/language/app_l10n.dart';
 
 // 🎨 EXTRA COLORS (Not in AuthScreen)
 const Color kAccentBlue = Color(0xFF3B82F6);
@@ -176,48 +177,29 @@ class _WelcomeFeatureHubState extends State<WelcomeFeatureHub>
   late AnimationController _streamController;
   late AnimationController _entranceController;
 
-  final inputWords = [
-    "Keşfeti gördün mü?",
-    "Selam!",
-    "Fotoğrafın harika",
-    "Naber?",
-    "Konum neresi?",
-    "Bu şarkı ne?",
-    "Tanışalım mı?",
-    "Harika!"
-  ];
-  final outputWords = [
-    "Bağ",
-    "Dostluk",
-    "Güven",
-    "Anlam",
-    "Kabile",
-    "Samimiyet",
-    "Gerçek",
-    "His"
-  ];
-
-  final features = [
+  List<String> get inputWords => AppL10n.welcomeInputWords;
+  List<String> get outputWords => AppL10n.welcomeOutputWords;
+  List<Map<String, dynamic>> get features => [
     {
-      'title': 'Yapay Zeka',
+      'title': AppL10n.featureAI,
       'icon': FontAwesomeIcons.wandMagicSparkles,
       'align': const Alignment(-0.95, -0.75),
       'slideBegin': const Offset(-0.5, -0.5),
     },
     {
-      'title': 'Yenilikçi ve Eğlenceli',
+      'title': AppL10n.featureInnovative,
       'icon': FontAwesomeIcons.faceSmileBeam,
       'align': const Alignment(0.95, -0.75),
       'slideBegin': const Offset(0.5, -0.5),
     },
     {
-      'title': 'Derin Analiz',
+      'title': AppL10n.featureDeepAnalysis,
       'icon': FontAwesomeIcons.chartPie,
       'align': const Alignment(-0.95, 0.75),
       'slideBegin': const Offset(-0.5, 0.5),
     },
     {
-      'title': 'Gizli ve Güvenli',
+      'title': AppL10n.featurePrivate,
       'icon': FontAwesomeIcons.shieldHeart,
       'align': const Alignment(0.95, 0.75),
       'slideBegin': const Offset(0.5, 0.5),
@@ -544,10 +526,10 @@ class _PhotoAnalysisSectionState extends State<PhotoAnalysisSection>
           ),
         ),
         const SizedBox(height: 40),
-        const WelcomeBadge(text: "GÖRSEL ZEKA", color: kAccentCyan),
+        WelcomeBadge(text: AppL10n.badgeVisualAI, color: kAccentCyan),
         const SizedBox(height: 20),
         Text(
-          "Fotoğraflarını\nAnaliz Ediyoruz",
+          AppL10n.photoAnalysisTitle,
           textAlign: TextAlign.center,
           style: GoogleFonts.spaceGrotesk(
             fontSize: 38,
@@ -559,7 +541,7 @@ class _PhotoAnalysisSectionState extends State<PhotoAnalysisSection>
         ),
         const SizedBox(height: 20),
         Text(
-          "Paylaştığın karelerdeki gizli hobileri,\ntarzını ve ilgi alanlarını AI ile keşfediyoruz.",
+          AppL10n.photoAnalysisSubtitle,
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             fontSize: 15,
@@ -752,10 +734,10 @@ class _TextAnalysisSectionState extends State<TextAnalysisSection>
           ),
         ),
         const SizedBox(height: 40),
-        const WelcomeBadge(text: "DOĞAL DİL İŞLEME", color: kAccentPink),
+        WelcomeBadge(text: AppL10n.badgeNLP, color: kAccentPink),
         const SizedBox(height: 20),
         Text(
-          "Yazılarını\nDeşifre Ediyoruz",
+          AppL10n.textAnalysisTitle,
           textAlign: TextAlign.center,
           style: GoogleFonts.spaceGrotesk(
             fontSize: 38,
@@ -767,7 +749,7 @@ class _TextAnalysisSectionState extends State<TextAnalysisSection>
         ),
         const SizedBox(height: 20),
         Text(
-          "Tweetlerin ve yazılarının satır aralarındaki\n'seni' okuyoruz. Yüzeysel değil, derin bağlar kur.",
+          AppL10n.textAnalysisSubtitle,
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             fontSize: 15,
@@ -859,10 +841,10 @@ class _MatchAnalysisSectionState extends State<MatchAnalysisSection>
           ),
         ),
         const SizedBox(height: 50),
-        const WelcomeBadge(text: "AI EŞLEŞTİRME", color: kAccentGreen),
+        WelcomeBadge(text: AppL10n.badgeAIMatching, color: kAccentGreen),
         const SizedBox(height: 20),
         Text(
-          "Kabileni Bul",
+          AppL10n.matchAnalysisTitle,
           textAlign: TextAlign.center,
           style: GoogleFonts.spaceGrotesk(
             fontSize: 42,
@@ -874,7 +856,7 @@ class _MatchAnalysisSectionState extends State<MatchAnalysisSection>
         ),
         const SizedBox(height: 20),
         Text(
-          "Fotoğraf ve yazı analizlerine göre sana\nen uygun insanları keşfet ve bağlan.",
+          AppL10n.matchAnalysisSubtitle,
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             fontSize: 15,
@@ -963,7 +945,7 @@ class WelcomeBottomSection extends StatelessWidget {
                         ),
                         child: Center(
                           child: Text(
-                            "Atla",
+                            AppL10n.skipLabel,
                             style: GoogleFonts.inter(
                               color: Colors.white60,
                               fontWeight: FontWeight.w500,
@@ -996,7 +978,7 @@ class WelcomeBottomSection extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              isLast ? "Başlayalım" : "Devam Et",
+                              isLast ? AppL10n.letsGo : AppL10n.continueLabel,
                               style: GoogleFonts.inter(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,

@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/language/app_l10n.dart';
 
 /// Kullanıcı profili tabanlı AI eşleştirme servisi
 class MatchingService {
@@ -13,7 +14,10 @@ class MatchingService {
     try {
       final response = await _client.functions.invoke(
         'match-users',
-        body: {'user_id': _currentUserId},
+        body: {
+          'user_id': _currentUserId,
+          'language': AppL10n.currentLanguageCode,
+        },
       );
 
       if (response.status != 200 || response.data == null) return [];
@@ -70,15 +74,20 @@ class MatchingService {
           'user1_interests': myInterests,
           'user2_interests': otherInterests,
           'match_reasons':   matchReasons,
+          'language':        AppL10n.currentLanguageCode,
         },
       );
 
       if (response.status == 200 && response.data != null) {
         return response.data['explanation'] as String;
       }
-      return '$otherUserName ile çok şey ortak görünüyor!';
+      return AppL10n.currentLanguageCode == 'en'
+          ? 'You and $otherUserName seem to have a lot in common!'
+          : '$otherUserName ile çok şey ortak görünüyor!';
     } catch (e) {
-      return '$otherUserName harika biri gibi görünüyor, tanışmaya değer!';
+      return AppL10n.currentLanguageCode == 'en'
+          ? '$otherUserName seems like a great person, worth meeting!'
+          : '$otherUserName harika biri gibi görünüyor, tanışmaya değer!';
     }
   }
 

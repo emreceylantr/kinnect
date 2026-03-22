@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/language/app_l10n.dart';
 import '../../../shared/widgets/location_picker_sheet.dart';
 import '../../../data/services/feed_service.dart';
 import 'music_picker_screen.dart';
@@ -111,7 +112,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
   Future<void> _saveChanges() async {
     if (_imageUrls.isEmpty && _textController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("En az bir görsel veya yazı olmalı!")),
+        SnackBar(content: Text(AppL10n.mediaRequired)),
       );
       return;
     }
@@ -130,8 +131,8 @@ class _EditPostScreenState extends State<EditPostScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Düzenlemeler kaydedildi! ✅"),
+          SnackBar(
+            content: Text(AppL10n.editsSaved),
             backgroundColor: Color(0xFF6C63FF),
           ),
         );
@@ -169,7 +170,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: const BackButton(color: Colors.white),
-        title: Text("Düzenle",
+        title: Text(AppL10n.edit,
             style: GoogleFonts.poppins(
                 color: Colors.white, fontWeight: FontWeight.bold)),
         actions: [
@@ -210,7 +211,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
                 maxLines: null,
                 decoration: InputDecoration(
                   border: InputBorder.none,
-                  hintText: "Bir şeyler yaz...",
+                  hintText: AppL10n.writeHint,
                   hintStyle: GoogleFonts.poppins(color: Colors.white38),
                 ),
               ),
@@ -222,7 +223,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Görseller (${_imageUrls.length})",
+                  Text(AppL10n.imagesCount(_imageUrls.length),
                       style: GoogleFonts.poppins(
                           color: Colors.white54,
                           fontSize: 13,
@@ -385,7 +386,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
             const SizedBox(height: 24),
 
             // 3. Müzik Yönetimi
-            Text("Müzik",
+            Text(AppL10n.music,
                 style: GoogleFonts.poppins(
                     color: Colors.white54,
                     fontSize: 13,
@@ -440,7 +441,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
                           Text(
                             _selectedMusic != null
                                 ? _selectedMusic!['name']
-                                : "Müzik Ekle (Opsiyonel)",
+                                : AppL10n.addMusicOptional,
                             style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
@@ -451,7 +452,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
                           Text(
                             _selectedMusic != null
                                 ? _selectedMusic!['artist']
-                                : "Dokunarak seç...",
+                                : AppL10n.tapToSelect,
                             style: GoogleFonts.poppins(
                                 color: Colors.white54, fontSize: 12),
                             maxLines: 1,
@@ -558,7 +559,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
 
             // 5. Etiket Yönetimi
             if (!_tagsLoading && _tags.isNotEmpty) ...[
-              Text("Etiketli Kişiler (${_tags.length})",
+              Text(AppL10n.taggedCount(_tags.length),
                   style: GoogleFonts.poppins(
                       color: Colors.white54,
                       fontSize: 13,

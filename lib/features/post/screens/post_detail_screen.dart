@@ -15,6 +15,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/services/feed_service.dart';
 import '../../../data/services/safety_service.dart';
 import '../../../data/services/toxicity_service.dart';
+import '../../../core/language/app_l10n.dart';
 
 import '../../create_post/screens/edit_post_screen.dart';
 
@@ -175,8 +176,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Bildirimin alındı. Teşekkürler! 🛡️"),
+          SnackBar(
+            content: Text(AppL10n.reportReceived),
             backgroundColor: AppColors.accentGreen,
             behavior: SnackBarBehavior.floating,
           ),
@@ -186,7 +187,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text("Hata: $e"),
+              content: Text('${AppL10n.error}: $e'),
               backgroundColor: AppColors.accentRedAccent),
         );
       }
@@ -250,11 +251,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         commentCount--;
       });
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Yorum silindi.')));
+          .showSnackBar(SnackBar(content: Text(AppL10n.commentDeleted)));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Silinemedi.')));
+            .showSnackBar(SnackBar(content: Text(AppL10n.commentNotDeleted)));
       }
     }
   }
@@ -264,21 +265,21 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bgCard,
-        title: const Text("Yorumu Sil", style: TextStyle(color: Colors.white)),
-        content: const Text("Bu yorumu silmek istediğine emin misin?",
-            style: TextStyle(color: Colors.white70)),
+        title: Text(AppL10n.deleteComment, style: const TextStyle(color: Colors.white)),
+        content: Text(AppL10n.deleteCommentConfirm,
+            style: const TextStyle(color: Colors.white70)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("İptal", style: TextStyle(color: Colors.grey)),
+            child: Text(AppL10n.cancel, style: const TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               _deleteComment(commentId);
             },
-            child: const Text("Sil",
-                style: TextStyle(color: AppColors.accentRedAccent)),
+            child: Text(AppL10n.delete,
+                style: const TextStyle(color: AppColors.accentRedAccent)),
           ),
         ],
       ),
@@ -309,23 +310,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title:
-            const Text("Gönderiyi Sil", style: TextStyle(color: Colors.white)),
-        content: const Text(
-          "Bu gönderiyi silmek istediğine emin misin? Bu işlem geri alınamaz.",
-          style: TextStyle(color: Colors.white70),
+            Text(AppL10n.deletePost, style: const TextStyle(color: Colors.white)),
+        content: Text(
+          AppL10n.deletePostConfirm,
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("İptal", style: TextStyle(color: Colors.grey)),
+            child: Text(AppL10n.cancel, style: const TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
               await _deletePost();
             },
-            child: const Text("Sil",
-                style: TextStyle(color: AppColors.accentRedAccent)),
+            child: Text(AppL10n.delete,
+                style: const TextStyle(color: AppColors.accentRedAccent)),
           ),
         ],
       ),
@@ -337,8 +338,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       await FeedService().deletePost(widget.post['id']);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gönderi silindi! 🗑️'),
+          SnackBar(
+            content: Text(AppL10n.postDeleted),
             backgroundColor: AppColors.accentRedAccent,
           ),
         );
@@ -348,7 +349,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Hata: $e'),
+              content: Text('${AppL10n.error}: $e'),
               backgroundColor: AppColors.accentRedAccent),
         );
       }
@@ -378,7 +379,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             children: [
               Center(
                 child: Text(
-                  "Yorumu Düzenle",
+                  AppL10n.editComment,
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontSize: 16,
@@ -392,7 +393,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText: "Yorumun...",
+                  hintText: AppL10n.commentHint,
                   hintStyle: GoogleFonts.poppins(color: Colors.white24),
                   filled: true,
                   fillColor: Colors.black26,
@@ -416,7 +417,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         ),
                       ),
                       child: Text(
-                        "Vazgeç",
+                        AppL10n.discard,
                         style: GoogleFonts.poppins(
                             color: Colors.white38, fontSize: 13),
                       ),
@@ -441,7 +442,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         elevation: 0,
                       ),
                       child: Text(
-                        "Kaydet",
+                        AppL10n.save,
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -467,8 +468,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       _fetchComments();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Yorum güncellendi! ✏️'),
+          SnackBar(
+            content: Text(AppL10n.commentUpdated),
             backgroundColor: AppColors.primary,
           ),
         );
@@ -477,7 +478,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Hata: $e'),
+              content: Text('${AppL10n.error}: $e'),
               backgroundColor: AppColors.accentRedAccent),
         );
       }
@@ -491,8 +492,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       _fetchEmojiReactions();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tepki silindi! 🗑️'),
+          SnackBar(
+            content: Text(AppL10n.reactionDeleted),
             backgroundColor: AppColors.primary,
           ),
         );
@@ -511,7 +512,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Tepkiyi Sil", style: TextStyle(color: Colors.white)),
+        title: Text(AppL10n.deleteReaction, style: const TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -527,22 +528,22 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text("Bu tepkiyi silmek istediğine emin misin?",
-                style: TextStyle(color: Colors.white70)),
+            Text(AppL10n.deleteReactionConfirm,
+                style: const TextStyle(color: Colors.white70)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("İptal", style: TextStyle(color: Colors.grey)),
+            child: Text(AppL10n.cancel, style: const TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               _deleteReaction(reaction['id']);
             },
-            child: const Text("Sil",
-                style: TextStyle(color: AppColors.accentRedAccent)),
+            child: Text(AppL10n.delete,
+                style: const TextStyle(color: AppColors.accentRedAccent)),
           ),
         ],
       ),
@@ -609,7 +610,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    '⛔ Bu yorum uygunsuz içerik barındırıyor!',
+                    AppL10n.toxicComment,
                     style: GoogleFonts.poppins(color: Colors.white),
                   ),
                 ),
@@ -642,7 +643,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           commentCount--;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Yorum gönderilemedi ❌")));
+            SnackBar(content: Text(AppL10n.commentFailed)));
       }
     }
   }
@@ -702,8 +703,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tepki gönderildi! 📸'),
+          SnackBar(
+            content: Text(AppL10n.reactionSent),
             backgroundColor: AppColors.primary,
           ),
         );
@@ -713,7 +714,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Hata: $e'),
+            content: Text('${AppL10n.error}: $e'),
             backgroundColor: AppColors.accentRedAccent,
           ),
         );
@@ -819,7 +820,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           elevation: 0,
           centerTitle: true,
           title: Text(
-            widget.isExploreMode ? "Ateşin Başı 🔥" : "Gönderi",
+            widget.isExploreMode ? AppL10n.explorePostTitle : AppL10n.postTitle,
             style: GoogleFonts.poppins(
                 color: Colors.white, fontWeight: FontWeight.bold),
           ),

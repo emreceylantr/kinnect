@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
+import '../../../../core/language/app_l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Arama header - avatar seçici ve animasyonlu arama çubuğu
@@ -51,7 +52,7 @@ class SearchHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Keşfet',
+                AppL10n.explore,
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontSize: 28,
@@ -133,7 +134,7 @@ class SearchHeader extends StatelessWidget {
               onChanged: onSearchChanged,
               style: GoogleFonts.poppins(color: Colors.white, fontSize: 15),
               decoration: InputDecoration(
-                hintText: 'Kullanıcı ara...',
+                hintText: AppL10n.searchUsers,
                 hintStyle:
                     GoogleFonts.poppins(color: Colors.white38, fontSize: 15),
                 border: InputBorder.none,

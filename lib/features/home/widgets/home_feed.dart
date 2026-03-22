@@ -3,7 +3,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../co../../../core/theme/app_colors.dart';
+import '../../../core/language/app_l10n.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Ana akış - post listesi
 class HomeFeed extends StatelessWidget {
@@ -36,12 +37,12 @@ class HomeFeed extends StatelessWidget {
             Icon(Icons.people_outline, color: Colors.white24, size: 60),
             const SizedBox(height: 16),
             Text(
-              'Henüz paylaşım yok',
+              AppL10n.noPostsInFeed,
               style: GoogleFonts.poppins(color: Colors.white38, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
-              'Arkadaşlarını takip et!',
+              AppL10n.followFriendsPrompt,
               style: GoogleFonts.poppins(color: Colors.white24, fontSize: 14),
             ),
           ],

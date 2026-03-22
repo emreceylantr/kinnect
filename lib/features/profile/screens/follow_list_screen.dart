@@ -4,6 +4,7 @@ import 'dart:ui'; // Buzlu cam efekti için gerekli
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/language/app_l10n.dart';
 import 'profile_screen.dart';
 
 class FollowListScreen extends StatefulWidget {
@@ -110,7 +111,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Kişi çıkarıldı.')));
+            .showSnackBar(SnackBar(content: Text(AppL10n.followerRemoved)));
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -131,7 +132,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Takipten çıkıldı.')));
+            .showSnackBar(SnackBar(content: Text(AppL10n.unfollowed)));
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -174,7 +175,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "Emin misin?",
+                    AppL10n.areYouSure,
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 20,
@@ -183,7 +184,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "@${user['username']} adlı kişiyi takipçilerinden çıkarmak üzeresin.",
+                    AppL10n.removingFollowerMsg(user['username'] ?? ''),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
                         color: Colors.white70, fontSize: 14),
@@ -211,7 +212,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                               ),
                             ),
                             child: Text(
-                              "Vazgeç",
+                              AppL10n.discard,
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13, // Fontu da bir tık küçülttük
@@ -240,7 +241,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                               ),
                             ),
                             child: Text(
-                              "Sil",
+                              AppL10n.delete,
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
@@ -307,7 +308,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                   textAlignVertical: TextAlignVertical.center,
                   decoration: InputDecoration(
                     isDense: true,
-                    hintText: 'Ara...',
+                    hintText: AppL10n.searchHint,
                     hintStyle: GoogleFonts.poppins(
                         color: Colors.grey[500], fontSize: 14),
                     prefixIcon:
@@ -356,7 +357,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            _searchController.text.isNotEmpty ? 'Sonuç yok' : 'Liste boş',
+            _searchController.text.isNotEmpty ? AppL10n.noResults : AppL10n.listEmpty,
             style: GoogleFonts.poppins(color: Colors.white38, fontSize: 14),
           ),
         ],
@@ -441,7 +442,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
                   child: Text(
-                    widget.type == 'followers' ? 'Sil' : 'Takipten Çık',
+                    widget.type == 'followers' ? AppL10n.delete : 'Takipten Çık',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,

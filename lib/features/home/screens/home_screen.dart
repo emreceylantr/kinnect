@@ -8,7 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Servis ve Ekranlar
-// Servis ve Ekranlar
+import '../../../core/language/app_l10n.dart';
 import '../../../data/services/feed_service.dart';
 import '../../../data/services/chat_service.dart';
 import '../../../data/services/friend_service.dart'; // 🆕 FriendService eklendi
@@ -178,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               context,
               _createSlideRoute(CallScreen(
                 callId: callId,
-                otherUserName: callerProfile['full_name'] ?? 'Kullanıcı',
+                otherUserName: callerProfile['full_name'] ?? AppL10n.user,
                 isVideo: isVideo, // 🆕 Artık doğru değer!
                 otherUserAvatar: callerProfile['avatar_url']?.toString(),
               )),
@@ -200,19 +200,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     Color iconColor = Colors.white;
 
     if (type == 'follow') {
-      message = 'seni takip etmek istiyor.';
+      message = AppL10n.notifFollowRequest;
       icon = FontAwesomeIcons.userPlus;
       iconColor = AppColors.primary;
     } else if (type == 'like') {
-      message = 'gönderini beğendi.';
+      message = AppL10n.notifLikedPost;
       icon = FontAwesomeIcons.heart;
       iconColor = Colors.redAccent;
     } else if (type == 'comment') {
-      message = 'yorum yaptı.';
+      message = AppL10n.notifCommentedPost;
       icon = FontAwesomeIcons.comment;
       iconColor = Colors.blueAccent;
     } else if (type == 'message') {
-      message = 'sana bir mesaj gönderdi 💬';
+      message = AppL10n.notifSentMessage;
       icon = FontAwesomeIcons.envelope;
       iconColor = Colors.cyanAccent;
     }
@@ -313,7 +313,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(userProfile['username'] ?? 'Birisi',
+                              Text(userProfile['username'] ?? AppL10n.someone,
                                   style: GoogleFonts.poppins(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -344,13 +344,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String _getAppBarTitle() {
     switch (_currentIndex) {
       case 0:
-        return 'Ana Akış';
+        return AppL10n.homeFeed;
       case 1:
-        return 'Keşfet';
+        return AppL10n.explore;
       case 3:
-        return 'AI Asistan';
+        return AppL10n.aiAssistant;
       case 4:
-        return 'Profilim';
+        return AppL10n.myProfile;
       default:
         return 'Kinnect';
     }
@@ -438,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         if (posts.isEmpty) {
           return Center(
             child: Text(
-              'Akış boş.',
+              AppL10n.feedEmpty,
               style: GoogleFonts.poppins(color: Colors.white54),
             ),
           );
@@ -584,7 +584,7 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
 
   @override
   Widget build(BuildContext context) {
-    final callerName = widget.callerProfile['full_name'] ?? 'Biri';
+    final callerName = widget.callerProfile['full_name'] ?? AppL10n.someone;
     final callerAvatar = widget.callerProfile['avatar_url'];
     final callerUsername = widget.callerProfile['username'] ?? '';
 
@@ -643,7 +643,7 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      widget.isVideo ? "Görüntülü Arama" : "Sesli Arama",
+                      widget.isVideo ? AppL10n.incomingVideoCall : AppL10n.incomingVoiceCall,
                       style: GoogleFonts.poppins(
                         color: const Color(0xFF69F0AE),
                         fontSize: 14,
@@ -759,7 +759,7 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    "Sohbet odasına katılmak istiyor",
+                    AppL10n.wantsToJoinRoom,
                     style: GoogleFonts.poppins(
                       color: Colors.white60,
                       fontSize: 13,
@@ -775,7 +775,7 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
                     // ❌ Reddet butonu
                     _buildActionButton(
                       icon: Icons.call_end_rounded,
-                      label: "Reddet",
+                      label: AppL10n.decline,
                       gradientColors: [
                         const Color(0xFFFF5252),
                         const Color(0xFFD32F2F),
@@ -787,7 +787,7 @@ class _IncomingCallPopupState extends State<_IncomingCallPopup>
                     // ✅ Kabul et butonu
                     _buildActionButton(
                       icon: Icons.phone_rounded,
-                      label: "Katıl",
+                      label: AppL10n.join,
                       gradientColors: [
                         const Color(0xFF69F0AE),
                         const Color(0xFF00C853),

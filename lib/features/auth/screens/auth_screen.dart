@@ -13,6 +13,7 @@ import 'create_profile_screen.dart';
 import '../../home/screens/home_screen.dart';
 
 import '../../../data/services/auth_service.dart';
+import '../../../core/language/app_l10n.dart';
 
 // 🎨 PREMIUM TEMA
 const Color kBgDark = Color(0xFF06060A);
@@ -87,7 +88,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Giriş Hatası: $e"),
+          content: Text("${AppL10n.error}: $e"),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -264,7 +265,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                   size: 12, color: kAccentPurple),
               const SizedBox(width: 8),
               Text(
-                "YAPAY ZEKA DESTEKLİ",
+                AppL10n.aiPowered,
                 style: GoogleFonts.spaceGrotesk(
                   color: kAccentPurple,
                   fontSize: 10,
@@ -280,7 +281,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
         // Title
         Text(
-          "Kabileye\nKatıl",
+          AppL10n.joinTribe,
           textAlign: TextAlign.center,
           style: GoogleFonts.spaceGrotesk(
             fontSize: 46,
@@ -295,7 +296,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
         // Subtitle
         Text(
-          "Gerçek bağlar kurmak için\nşimdi aramıza katıl.",
+          AppL10n.joinSubtitle,
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             color: Colors.white.withValues(alpha: 0.55),
@@ -340,7 +341,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  "Google ile Devam Et",
+                  AppL10n.continueWithGoogle,
                   style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 15,
@@ -382,7 +383,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                 const Icon(Icons.email_outlined, color: Colors.white, size: 20),
                 const SizedBox(width: 12),
                 Text(
-                  "E-posta ile Kayıt Ol",
+                  AppL10n.signUpWithEmail,
                   style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 15,
@@ -402,7 +403,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          "Zaten hesabın var mı? ",
+          AppL10n.alreadyHaveAccount,
           style: GoogleFonts.inter(
             color: Colors.white.withValues(alpha: 0.4),
             fontSize: 14,
@@ -415,7 +416,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             );
           },
           child: Text(
-            "Giriş Yap",
+            AppL10n.signIn,
             style: GoogleFonts.inter(
               color: kAccentPurple,
               fontWeight: FontWeight.bold,
@@ -459,7 +460,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  "Giriş yapılıyor...",
+                  AppL10n.signingIn,
                   style: GoogleFonts.inter(color: Colors.white70, fontSize: 15),
                 ),
               ],

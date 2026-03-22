@@ -3,7 +3,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../co../../../core/theme/app_colors.dart';
+import '../../../core/language/app_l10n.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Keşfet akışı - trend slider ve post grid
 class ExploreFeed extends StatelessWidget {
@@ -37,7 +38,7 @@ class ExploreFeed extends StatelessWidget {
             Icon(Icons.explore_off, color: Colors.white24, size: 60),
             const SizedBox(height: 16),
             Text(
-              'Henüz keşfedilecek içerik yok',
+              AppL10n.noExploreContent,
               style: GoogleFonts.poppins(color: Colors.white38, fontSize: 16),
             ),
           ],

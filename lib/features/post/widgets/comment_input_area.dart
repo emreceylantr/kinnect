@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../co../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/language/app_l10n.dart';
 
 // Callback typedefs
 typedef OnSendTextComment = void Function();
@@ -78,7 +79,7 @@ class CommentInputArea extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      "@${replyingToComment!['profiles']?['username'] ?? 'kullanıcı'} yanıtlıyorsun",
+                      AppL10n.replyingToUser(replyingToComment!['profiles']?['username'] ?? AppL10n.user),
                       style: GoogleFonts.poppins(
                         color: AppColors.primary,
                         fontSize: 12,
@@ -134,8 +135,8 @@ class CommentInputArea extends StatelessWidget {
                     keyboardType: TextInputType.multiline,
                     decoration: InputDecoration(
                       hintText: isRecording
-                          ? "Kaydediliyor... ($recordDuration)"
-                          : "Yorum yaz...",
+                          ? AppL10n.recordingHint(recordDuration)
+                          : AppL10n.commentHint,
                       hintStyle:
                           const TextStyle(color: Colors.white38, fontSize: 14),
                       border: InputBorder.none,

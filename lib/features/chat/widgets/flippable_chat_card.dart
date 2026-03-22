@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/language/app_l10n.dart';
 import '../../../shared/widgets/kinnect_image.dart';
 import '../../profile/screens/profile_screen.dart';
 
@@ -83,18 +84,18 @@ class _FlippableChatCardState extends State<FlippableChatCard>
           backgroundColor: const Color(0xFF1E1E1E),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("Sohbeti Sil",
+          title: Text(AppL10n.deleteChat,
               style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          content: const Text(
-            "Bu sohbetin tüm mesajları silinecek. Emin misin?",
-            style: TextStyle(color: Colors.white70),
+                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          content: Text(
+            AppL10n.deleteChatConfirm,
+            style: const TextStyle(color: Colors.white70),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child:
-                  const Text("İptal", style: TextStyle(color: Colors.white54)),
+                  Text(AppL10n.cancel, style: const TextStyle(color: Colors.white54)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -106,7 +107,7 @@ class _FlippableChatCardState extends State<FlippableChatCard>
                 Navigator.pop(context);
                 widget.onDeleteConfirm();
               },
-              child: const Text("Evet, Sil"),
+              child: Text(AppL10n.yesDeleteAction),
             ),
           ],
         );
@@ -145,17 +146,25 @@ class _FlippableChatCardState extends State<FlippableChatCard>
   }
 
   Widget _buildFrontSide() {
-    final String heroTag = "list_avatar_${widget.otherUser['id']}";
+    final isGroup = widget.otherUser['is_group'] == true;
+    final String heroTag = "list_avatar_${widget.otherUser['id'] ?? widget.chat['id']}";
     final bool hasUnread = widget.unreadCount > 0;
+    final int memberCount = widget.otherUser['participants_count'] as int? ?? 0;
 
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: isGroup
+              ? const Color(0xFF6C63FF).withValues(alpha: 0.06)
+              : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          border: Border.all(
+            color: isGroup
+                ? const Color(0xFF6C63FF).withValues(alpha: 0.15)
+                : Colors.white.withValues(alpha: 0.05),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
@@ -165,26 +174,73 @@ class _FlippableChatCardState extends State<FlippableChatCard>
                 tag: heroTag,
                 child: GestureDetector(
                   onTap: () {
-                    // Chat'i açmasını engelle, profile git
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) =>
-                                ProfileScreen(userId: widget.otherUser['id'])));
+                    if (!isGroup && widget.otherUser['id'] != null) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) =>
+                                  ProfileScreen(userId: widget.otherUser['id'])));
+                    }
                   },
-                  child: CircleAvatar(
-                    radius: 26,
-                    backgroundColor: Colors.grey[800],
-                    child: widget.otherUser['avatar_url'] == null
-                        ? const Icon(Icons.person,
-                            color: Colors.white54, size: 26)
-                        : KinnectImage(
-                            imageUrl: widget.otherUser['avatar_url'],
-                            width: 52,
-                            height: 52,
-                            isCircle: true,
-                            fit: BoxFit.cover,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 26,
+                        backgroundColor: isGroup
+                            ? const Color(0xFF6C63FF).withValues(alpha: 0.2)
+                            : Colors.grey[800],
+                        child: isGroup
+                            ? (widget.otherUser['avatar_url'] != null
+                                ? ClipOval(
+                                    child: Image.network(
+                                      widget.otherUser['avatar_url'],
+                                      width: 52,
+                                      height: 52,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                          Icons.group_rounded,
+                                          color: Color(0xFF6C63FF),
+                                          size: 28),
+                                    ),
+                                  )
+                                : const Icon(Icons.group_rounded,
+                                    color: Color(0xFF6C63FF), size: 28))
+                            : (widget.otherUser['avatar_url'] == null
+                                ? const Icon(Icons.person,
+                                    color: Colors.white54, size: 26)
+                                : KinnectImage(
+                                    imageUrl: widget.otherUser['avatar_url'],
+                                    width: 52,
+                                    height: 52,
+                                    isCircle: true,
+                                    fit: BoxFit.cover,
+                                  )),
+                      ),
+                      if (isGroup)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            width: 18,
+                            height: 18,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6C63FF),
+                              shape: BoxShape.circle,
+                              border:
+                                  Border.all(color: Colors.black, width: 1.5),
+                            ),
+                            child: Center(
+                              child: Text(
+                                '$memberCount',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -193,76 +249,113 @@ class _FlippableChatCardState extends State<FlippableChatCard>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.otherUser['full_name'] ?? 'Kullanıcı',
-                      style: const TextStyle(
-                          color: kTextWhite,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16),
-                    ),
-                    const SizedBox(height: 2),
-                    // 👁️ Son görülme bilgisi
-                    Builder(builder: (context) {
-                      final lastSeenRaw = widget.otherUser['last_seen'];
-                      final showLastSeen =
-                          widget.otherUser['show_last_seen'] ?? true;
-
-                      if (!showLastSeen || lastSeenRaw == null) {
-                        return Text(
-                          'Mesajları görüntülemek için dokun...',
-                          style: TextStyle(
-                            color: hasUnread ? Colors.white : kTextGrey,
-                            fontWeight:
-                                hasUnread ? FontWeight.bold : FontWeight.normal,
-                            fontSize: 13,
+                    // İsim satırı
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.otherUser['full_name'] ?? AppL10n.user,
+                            style: const TextStyle(
+                              color: kTextWhite,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        );
-                      }
-
-                      final lastSeen = DateTime.parse(lastSeenRaw);
-                      final now = DateTime.now();
-                      final diff = now.difference(lastSeen);
-
-                      String text;
-                      bool isOnline = false;
-                      if (diff.inMinutes < 5) {
-                        text = 'Çevrimiçi';
-                        isOnline = true;
-                      } else if (diff.inMinutes < 60) {
-                        text = '${diff.inMinutes} dk önce';
-                      } else if (diff.inHours < 24) {
-                        text = '${diff.inHours} saat önce';
-                      } else {
-                        text = '${diff.inDays} gün önce';
-                      }
-
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (isOnline)
-                            Container(
-                              width: 8,
-                              height: 8,
-                              margin: const EdgeInsets.only(right: 4),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF00D26A),
-                                shape: BoxShape.circle,
+                        ),
+                        if (isGroup)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6C63FF).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              AppL10n.group,
+                              style: const TextStyle(
+                                color: Color(0xFF6C63FF),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          Text(
-                            text,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    // Grup: üye sayısı | 1-1: son görülme
+                    if (isGroup)
+                      Text(
+                        AppL10n.members(memberCount),
+                        style: const TextStyle(
+                          color: kTextGrey,
+                          fontSize: 13,
+                        ),
+                      )
+                    else
+                      Builder(builder: (context) {
+                        final lastSeenRaw = widget.otherUser['last_seen'];
+                        final showLastSeen =
+                            widget.otherUser['show_last_seen'] ?? true;
+
+                        if (!showLastSeen || lastSeenRaw == null) {
+                          return Text(
+                            AppL10n.tapToView,
                             style: TextStyle(
-                              color: isOnline
-                                  ? const Color(0xFF00D26A)
-                                  : kTextGrey,
+                              color: hasUnread ? Colors.white : kTextGrey,
+                              fontWeight: hasUnread
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                               fontSize: 13,
                             ),
-                          ),
-                        ],
-                      );
-                    }),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        }
+
+                        final lastSeen = DateTime.parse(lastSeenRaw);
+                        final now = DateTime.now();
+                        final diff = now.difference(lastSeen);
+
+                        String text;
+                        bool isOnline = false;
+                        if (diff.inMinutes < 5) {
+                          text = AppL10n.online;
+                          isOnline = true;
+                        } else if (diff.inMinutes < 60) {
+                          text = AppL10n.minsAgo(diff.inMinutes);
+                        } else if (diff.inHours < 24) {
+                          text = AppL10n.hoursAgo(diff.inHours);
+                        } else {
+                          text = AppL10n.daysAgo(diff.inDays);
+                        }
+
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isOnline)
+                              Container(
+                                width: 8,
+                                height: 8,
+                                margin: const EdgeInsets.only(right: 4),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF00D26A),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            Text(
+                              text,
+                              style: TextStyle(
+                                color: isOnline
+                                    ? const Color(0xFF00D26A)
+                                    : kTextGrey,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
                   ],
                 ),
               ),
@@ -351,15 +444,15 @@ class _FlippableChatCardState extends State<FlippableChatCard>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.otherUser['full_name'] ?? 'Kullanıcı',
+                        widget.otherUser['full_name'] ?? AppL10n.user,
                         style: const TextStyle(
                             color: Colors.white70,
                             fontWeight: FontWeight.w600,
                             fontSize: 15),
                       ),
-                      const Text(
-                        "Silmek için çöp kutusuna bas",
-                        style: TextStyle(color: Colors.white30, fontSize: 11),
+                      Text(
+                        AppL10n.tapTrashToDelete,
+                        style: const TextStyle(color: Colors.white30, fontSize: 11),
                       ),
                     ],
                   ),

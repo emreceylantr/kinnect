@@ -13,10 +13,13 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 
 // Servisler ve Ekranlar
+import '../../../core/language/app_l10n.dart';
 import '../../../data/services/chat_service.dart';
 import 'call_screen.dart';
+import 'group_management_screen.dart';
 import '../widgets/chat_widgets.dart'; // Yardımcı widget'lar
 import '../../profile/screens/profile_screen.dart'; // 👤 Profil Ekranı Eklendi
+import '../../post/screens/post_detail_screen.dart';
 
 // ==========================================
 // 🎨 RENK PALETİ
@@ -58,6 +61,8 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isUploading = false;
   bool _isTextFieldEmpty = true;
   bool _isEphemeralMode = false; // 🔥 Kül Olan Mod
+  Map<String, dynamic>? _replyToMsg; // 💬 Yanıtlanan mesaj
+  String _currentUserId = '';
 
   // 🎙️ Ses Kaydı Timer
   int _recordingDuration = 0;
@@ -70,14 +75,31 @@ class _ChatScreenState extends State<ChatScreen> {
   // 🔒 Karşı tarafın okundu bilgisi ayarı
   bool _otherUserShowReadReceipts = true;
 
+  // 👥 Grup chat desteği
+  bool _isGroup = false;
+  DateTime? _joinedAt; // Gruba katılma zamanı (önceki mesajları gizlemek için)
+  final Map<String, Map<String, dynamic>> _senderProfiles = {};
+
+  // 💬 Yazıyor... göstergesi + canlı online durumu
+  RealtimeChannel? _presenceChannel;
+  bool _otherUserTyping = false;
+  Timer? _typingTimer;
+
   @override
   void initState() {
     super.initState();
+    _currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
     _myShowReadReceipts = widget.showReadReceipts;
-    _textController.addListener(_updateInputState);
-    _loadLastSeen();
+    _isGroup = widget.otherUser['is_group'] == true;
+    _textController.addListener(_onTextChanged);
+    if (!_isGroup) {
+      _loadLastSeen();
+      _loadOtherUserPrivacy();
+      _subscribePresence();
+    } else {
+      _loadJoinedAt();
+    }
     _loadMyPrivacySettings();
-    _loadOtherUserPrivacy();
     _markMessagesAsRead();
   }
 
@@ -93,13 +115,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
       String text;
       if (diff.inMinutes < 1) {
-        text = 'Çevrimiçi';
+        text = AppL10n.online;
       } else if (diff.inMinutes < 60) {
-        text = '${diff.inMinutes} dk önce';
+        text = AppL10n.minsAgo(diff.inMinutes);
       } else if (diff.inHours < 24) {
-        text = '${diff.inHours} saat önce';
+        text = AppL10n.hoursAgo(diff.inHours);
       } else {
-        text = '${diff.inDays} gün önce';
+        text = AppL10n.daysAgo(diff.inDays);
       }
 
       setState(() => _lastSeenText = text);
@@ -128,9 +150,31 @@ class _ChatScreenState extends State<ChatScreen> {
 
   // 🔒 Karşı tarafın ayarını çek
   Future<void> _loadOtherUserPrivacy() async {
-    final show =
-        await _chatService.getReadReceiptSetting(widget.otherUser['id']);
+    final otherId = widget.otherUser['id']?.toString();
+    if (otherId == null || otherId.isEmpty) return;
+    final show = await _chatService.getReadReceiptSetting(otherId);
     if (mounted) setState(() => _otherUserShowReadReceipts = show);
+  }
+
+  // 👥 Gruba katılma zamanını yükle
+  Future<void> _loadJoinedAt() async {
+    final t = await _chatService.getJoinedAt(widget.roomId);
+    if (mounted && t != null) setState(() => _joinedAt = t);
+  }
+
+  // 👤 Gönderici profilini yükle (grup mesajları için)
+  Future<void> _loadSenderProfile(String senderId) async {
+    if (_senderProfiles.containsKey(senderId)) return;
+    try {
+      final profile = await Supabase.instance.client
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .eq('id', senderId)
+          .maybeSingle();
+      if (profile != null && mounted) {
+        setState(() => _senderProfiles[senderId] = profile);
+      }
+    } catch (_) {}
   }
 
   // ✅ Sohbete girince tüm mesajları okundu işaretle
@@ -140,11 +184,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
-    _textController.removeListener(_updateInputState);
+    _textController.removeListener(_onTextChanged);
     _textController.dispose();
     _scrollController.dispose();
-    _audioRecorder.dispose();
     _recordingTimer?.cancel();
+    _typingTimer?.cancel();
+    if (_isRecording) {
+      _audioRecorder.stop().ignore();
+    }
+    _audioRecorder.dispose();
+    _presenceChannel?.unsubscribe();
     super.dispose();
   }
 
@@ -155,6 +204,62 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _onTextChanged() {
+    _updateInputState();
+    _typingTimer?.cancel();
+    _presenceChannel?.track({'user_id': _currentUserId, 'typing': true}).ignore();
+    _typingTimer = Timer(const Duration(milliseconds: 1500), () {
+      _presenceChannel?.track({'user_id': _currentUserId, 'typing': false}).ignore();
+    });
+  }
+
+  void _subscribePresence() {
+    _presenceChannel = Supabase.instance.client
+        .channel('chat_presence:${widget.roomId}');
+
+    _presenceChannel!
+        .onPresenceSync((_) => _updatePresenceState())
+        .onPresenceJoin((_) => _updatePresenceState())
+        .onPresenceLeave((_) {
+          _updatePresenceState();
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted && _lastSeenText == AppL10n.online) _loadLastSeen();
+          });
+        })
+        .subscribe((status, error) async {
+          if (status == RealtimeSubscribeStatus.subscribed) {
+            await _presenceChannel!.track({
+              'user_id': _currentUserId,
+              'typing': false,
+            });
+          }
+        });
+  }
+
+  void _updatePresenceState() {
+    if (!mounted) return;
+    final otherId = widget.otherUser['id']?.toString();
+    if (otherId == null) return;
+
+    final state = _presenceChannel?.presenceState() ?? [];
+    bool isOtherOnline = false;
+    bool isOtherTyping = false;
+
+    for (final singleState in state) {
+      for (final presence in singleState.presences) {
+        if (presence.payload['user_id'] == otherId) {
+          isOtherOnline = true;
+          if (presence.payload['typing'] == true) isOtherTyping = true;
+        }
+      }
+    }
+
+    setState(() {
+      _otherUserTyping = isOtherTyping;
+      if (isOtherOnline) _lastSeenText = AppL10n.online;
+    });
+  }
+
   // 👤 PROFİLE GİTME FONKSİYONU
   void _goToProfile(String userId) {
     Navigator.push(
@@ -163,18 +268,52 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  // 📸 PAYLAŞILAN GÖNDERIYI AÇ
+  Future<void> _openSharedPost(Map<String, dynamic> sharedPostData) async {
+    final postId = sharedPostData['post_id']?.toString();
+    if (postId == null) return;
+    try {
+      final post = await Supabase.instance.client
+          .from('posts')
+          .select('*, profiles(*), likes(*), comments(*)')
+          .eq('id', postId)
+          .single();
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => PostDetailScreen(post: post)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppL10n.postNotFound)),
+      );
+    }
+  }
+
   void _sendMessage([String? fileUrl]) async {
     String content = fileUrl ?? _textController.text.trim();
     if (content.isEmpty) return;
     if (fileUrl == null) _textController.clear();
+
+    // Reply bilgilerini al ve state'i temizle
+    final replyId = _replyToMsg?['id']?.toString();
+    final replyContent = _replyToMsg?['content']?.toString();
+    final isMyReplyMsg = _replyToMsg?['sender_id'] == _currentUserId;
+    final replySenderName = isMyReplyMsg ? AppL10n.you : (widget.otherUser['full_name'] ?? AppL10n.user);
+    if (_replyToMsg != null) setState(() => _replyToMsg = null);
+
     try {
-      final receiverId = widget.otherUser['id'].toString();
+      final receiverId = widget.otherUser['id']?.toString();
       await _chatService.sendMessage(
         widget.roomId,
         content,
         receiverId,
         isEphemeral: _isEphemeralMode,
         ephemeralDuration: 5,
+        replyToId: replyId,
+        replyToContent: replyContent,
+        replyToSenderName: replyId != null ? replySenderName : null,
       );
 
       // Ephemeral mod'u resetle
@@ -186,9 +325,145 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Hata: $e')));
+            .showSnackBar(SnackBar(content: Text('${AppL10n.error}: $e')));
       }
     }
+  }
+
+  // 💬 MESAJ SEÇENEKLERİ (long press)
+  void _showMessageOptions(Map<String, dynamic> msg, bool isMe) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF2D2638),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Emoji reaksiyon satırı
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: ['❤️', '😂', '😮', '😢', '😡', '👍'].map((emoji) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _chatService.toggleReaction(msg['id'].toString(), emoji);
+                    },
+                    child: Text(emoji, style: const TextStyle(fontSize: 32)),
+                  );
+                }).toList(),
+              ),
+            ),
+            const Divider(color: Colors.white12, height: 8),
+            // Yanıtla
+            ListTile(
+              leading: const Icon(Icons.reply, color: Colors.white70),
+              title: Text(AppL10n.reply, style: const TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => _replyToMsg = msg);
+              },
+            ),
+            // Sil (sadece benim mesajım)
+            if (isMe)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                title: Text(AppL10n.delete, style: const TextStyle(color: Colors.redAccent)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteMessageDialog(msg['id'].toString());
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 💬 YANIT ÖNZL BAR
+  Widget _buildReplyBar() {
+    if (_replyToMsg == null) return const SizedBox.shrink();
+    final content = _replyToMsg!['content'] as String? ?? '';
+    final isMyMsg = _replyToMsg!['sender_id'] == _currentUserId;
+    final senderName = isMyMsg ? AppL10n.you : (widget.otherUser['full_name'] ?? AppL10n.user);
+
+    final bool isImage = content.startsWith('http') &&
+        (content.contains('.jpg') ||
+            content.contains('.png') ||
+            content.contains('image_picker') ||
+            content.contains('chat_images'));
+    final bool isAudio = content.startsWith('http') &&
+        (content.contains('.m4a') || content.contains('audio_'));
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2D2638),
+        borderRadius: BorderRadius.circular(12),
+        border: const Border(left: BorderSide(color: Color(0xFF6C63FF), width: 3)),
+      ),
+      child: Row(
+        children: [
+          // Resim önizlemesi
+          if (isImage)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.network(
+                content,
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.broken_image_outlined,
+                  color: Colors.white38,
+                  size: 40,
+                ),
+              ),
+            ),
+          if (isImage) const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(senderName,
+                    style: const TextStyle(
+                        color: Color(0xFF9D89D9),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 2),
+                if (isImage)
+                  Text(AppL10n.photo,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12))
+                else if (isAudio)
+                  Text(AppL10n.voiceMessage,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12))
+                else
+                  Text(content,
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 12),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white54, size: 18),
+            onPressed: () => setState(() => _replyToMsg = null),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
   }
 
   // 🔥 TEK MESAJ SİLME DIALOG
@@ -198,23 +473,23 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.delete_outline, color: Colors.redAccent),
-            SizedBox(width: 8),
-            Text("Mesajı Sil",
-                style: TextStyle(
+            const Icon(Icons.delete_outline, color: Colors.redAccent),
+            const SizedBox(width: 8),
+            Text(AppL10n.deleteMessage,
+                style: const TextStyle(
                     color: Colors.white, fontWeight: FontWeight.bold)),
           ],
         ),
-        content: const Text(
-          "Bu mesaj kalıcı olarak silinecek. Devam etmek istiyor musun?",
-          style: TextStyle(color: Colors.white70),
+        content: Text(
+          AppL10n.deleteMessageConfirm,
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("İptal", style: TextStyle(color: Colors.white54)),
+            child: Text(AppL10n.cancel, style: const TextStyle(color: Colors.white54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -227,15 +502,15 @@ class _ChatScreenState extends State<ChatScreen> {
               await _chatService.deleteSingleMessage(messageId);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Mesaj silindi"),
+                  SnackBar(
+                    content: Text(AppL10n.messageDeleted),
                     backgroundColor: Colors.redAccent,
-                    duration: Duration(seconds: 2),
+                    duration: const Duration(seconds: 2),
                   ),
                 );
               }
             },
-            child: const Text("Sil"),
+            child: Text(AppL10n.delete),
           ),
         ],
       ),
@@ -337,8 +612,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Wrap(children: [
                 ListTile(
                     leading: const Icon(Icons.camera_alt, color: Colors.white),
-                    title: const Text("Kamera",
-                        style: TextStyle(color: Colors.white)),
+                    title: Text(AppL10n.camera,
+                        style: const TextStyle(color: Colors.white)),
                     onTap: () {
                       Navigator.pop(context);
                       _pickImage(ImageSource.camera);
@@ -346,8 +621,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 ListTile(
                     leading:
                         const Icon(Icons.photo_library, color: Colors.white),
-                    title: const Text("Galeri",
-                        style: TextStyle(color: Colors.white)),
+                    title: Text(AppL10n.gallery,
+                        style: const TextStyle(color: Colors.white)),
                     onTap: () {
                       Navigator.pop(context);
                       _pickImage(ImageSource.gallery);
@@ -361,7 +636,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _startDirectCall(bool isVideo) async {
     final myId = Supabase.instance.client.auth.currentUser?.id ?? '';
     final otherId = widget.otherUser['id'].toString();
-    final otherName = widget.otherUser['full_name']?.toString() ?? 'Kullanıcı';
+    final otherName = widget.otherUser['full_name']?.toString() ?? AppL10n.user;
     List<String> ids = [myId, otherId];
     ids.sort();
     final callId = ids.join("_");
@@ -407,9 +682,53 @@ class _ChatScreenState extends State<ChatScreen> {
                 otherUserAvatar: widget.otherUser['avatar_url']?.toString())));
   }
 
+  // 📞 GRUP ARAMASI
+  void _startGroupCall(bool isVideo) async {
+    final myId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    final groupName = widget.otherUser['group_name']?.toString() ?? 'Grup';
+    // Grup aramaları için roomId'yi call ID olarak kullan
+    final callId = 'group_${widget.roomId}';
+
+    // Tüm katılımcılara bildirim gönder
+    try {
+      final participants = List<String>.from(widget.otherUser['participants'] ?? []);
+      final myProfile = await Supabase.instance.client
+          .from('profiles')
+          .select('username, full_name')
+          .eq('id', myId)
+          .single();
+      final callerName = myProfile['full_name'] ?? myProfile['username'] ?? 'Birisi';
+
+      for (final participantId in participants) {
+        if (participantId == myId) continue;
+        try {
+          await Supabase.instance.client.functions
+              .invoke('send-push-notification', body: {
+            'target_user_id': participantId,
+            'title': isVideo ? '📹 Grup Görüntülü Arama' : '📞 Grup Sesli Arama',
+            'body': '$callerName $groupName grubunu arıyor',
+            'type': 'call',
+            'target_id': callId,
+          });
+        } catch (_) {}
+      }
+    } catch (e) {
+      debugPrint('Grup arama bildirimi hatası: $e');
+    }
+
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => CallScreen(
+                callId: callId,
+                otherUserName: groupName,
+                isVideo: isVideo,
+                otherUserAvatar: widget.otherUser['group_avatar_url'] ?? widget.otherUser['avatar_url'])));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final targetName = widget.otherUser['full_name']?.toString() ?? 'Kullanıcı';
+    final targetName = widget.otherUser['full_name']?.toString() ?? AppL10n.user;
     return Scaffold(
       backgroundColor: kChatBackgroundColor,
       body: Column(children: [
@@ -437,86 +756,146 @@ class _ChatScreenState extends State<ChatScreen> {
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context)),
 
-        // 👤 PROFİL FOTOĞRAFI (Tıklanabilir)
-        GestureDetector(
-          onTap: () {
-            final userId = widget.otherUser['id']?.toString();
-            if (userId != null) _goToProfile(userId);
-          },
-          child: Hero(
+        if (_isGroup) ...[
+          // 👥 GRUP AVATARI (tıklayınca full screen)
+          GestureDetector(
+            onTap: () {
+              final avatarUrl = widget.otherUser['group_avatar_url'] ?? widget.otherUser['avatar_url'];
+              if (avatarUrl != null) {
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => FullScreenImage(imageUrl: avatarUrl, heroTag: widget.heroTag),
+                ));
+              }
+            },
+            child: Hero(
               tag: widget.heroTag,
               child: CircleAvatar(
-                  radius: 22,
-                  backgroundImage: widget.otherUser['avatar_url'] != null
-                      ? NetworkImage(widget.otherUser['avatar_url'])
-                      : null,
-                  backgroundColor: Colors.grey[800],
-                  child: widget.otherUser['avatar_url'] == null
-                      ? const Icon(Icons.person, color: Colors.white70)
-                      : null)),
-        ),
+                radius: 22,
+                backgroundImage: (widget.otherUser['group_avatar_url'] ?? widget.otherUser['avatar_url']) != null
+                    ? NetworkImage(widget.otherUser['group_avatar_url'] ?? widget.otherUser['avatar_url'])
+                    : null,
+                backgroundColor: const Color(0xFF6C63FF).withValues(alpha: 0.3),
+                child: (widget.otherUser['group_avatar_url'] ?? widget.otherUser['avatar_url']) == null
+                    ? const Icon(Icons.group, color: Color(0xFF6C63FF), size: 22)
+                    : null,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.otherUser['group_name'] ?? targetName,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (widget.otherUser['participants_count'] != null)
+                  Text(
+                    AppL10n.members(widget.otherUser['participants_count'] as int),
+                    style: const TextStyle(fontSize: 12, color: Colors.white54),
+                  ),
+              ],
+            ),
+          ),
+          _buildHeaderButton(Icons.videocam_outlined, () => _startGroupCall(true), iconSize: 20),
+          const SizedBox(width: 6),
+          _buildHeaderButton(Icons.phone_outlined, () => _startGroupCall(false), iconSize: 18),
+          const SizedBox(width: 6),
+          _buildHeaderButton(Icons.settings_outlined, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => GroupManagementScreen(roomId: widget.roomId),
+              ),
+            );
+          }, iconSize: 18),
+        ] else ...[
+          // 👤 PROFİL FOTOĞRAFI (Tıklanabilir)
+          GestureDetector(
+            onTap: () {
+              final userId = widget.otherUser['id']?.toString();
+              if (userId != null) _goToProfile(userId);
+            },
+            child: Hero(
+                tag: widget.heroTag,
+                child: CircleAvatar(
+                    radius: 22,
+                    backgroundImage: widget.otherUser['avatar_url'] != null
+                        ? NetworkImage(widget.otherUser['avatar_url'])
+                        : null,
+                    backgroundColor: Colors.grey[800],
+                    child: widget.otherUser['avatar_url'] == null
+                        ? const Icon(Icons.person, color: Colors.white70)
+                        : null)),
+          ),
 
-        const SizedBox(width: 12),
+          const SizedBox(width: 12),
 
-        // 👤 İSİM (Tıklanabilir)
-        Expanded(
-            child: GestureDetector(
-                onTap: () {
-                  final userId = widget.otherUser['id']?.toString();
-                  if (userId != null) _goToProfile(userId);
-                },
-                child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(targetName,
-                            style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                            overflow: TextOverflow.ellipsis),
-                        if (_lastSeenText.isNotEmpty)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (_lastSeenText == 'Çevrimiçi')
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.only(right: 4),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF00D26A),
-                                    shape: BoxShape.circle,
+          // 👤 İSİM (Tıklanabilir)
+          Expanded(
+              child: GestureDetector(
+                  onTap: () {
+                    final userId = widget.otherUser['id']?.toString();
+                    if (userId != null) _goToProfile(userId);
+                  },
+                  child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(targetName,
+                              style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                              overflow: TextOverflow.ellipsis),
+                          if (_otherUserTyping)
+                            _TypingIndicator()
+                          else if (_lastSeenText.isNotEmpty)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (_lastSeenText == AppL10n.online)
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    margin: const EdgeInsets.only(right: 4),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF00D26A),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                Text(
+                                  _lastSeenText,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: _lastSeenText == AppL10n.online
+                                        ? const Color(0xFF00D26A)
+                                        : Colors.white54,
                                   ),
                                 ),
-                              Text(
-                                _lastSeenText,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: _lastSeenText == 'Çevrimiçi'
-                                      ? const Color(0xFF00D26A)
-                                      : Colors.white54,
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    )))),
-        _buildHeaderButton(
-            Icons.videocam_outlined, () => _startDirectCall(true),
-            iconSize: 20),
-        const SizedBox(width: 10),
-        _buildHeaderButton(Icons.phone_outlined, () => _startDirectCall(false),
-            iconSize: 18),
+                              ],
+                            ),
+                        ],
+                      )))),
+          _buildHeaderButton(
+              Icons.videocam_outlined, () => _startDirectCall(true),
+              iconSize: 20),
+          const SizedBox(width: 10),
+          _buildHeaderButton(Icons.phone_outlined, () => _startDirectCall(false),
+              iconSize: 18),
+        ],
       ]),
     );
   }
 
   Widget _buildMessageList() {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: _chatService.getMessagesStream(widget.roomId),
+      stream: _chatService.getMessagesStream(widget.roomId, joinedAt: _joinedAt),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Center(
@@ -536,10 +915,39 @@ class _ChatScreenState extends State<ChatScreen> {
         });
 
         if (messages.isEmpty) {
+          final otherName = widget.otherUser['full_name']?.toString() ?? AppL10n.user;
           return Center(
-              child: Text("Henüz mesaj yok.",
-                  style:
-                      TextStyle(color: Colors.white.withValues(alpha: 0.3))));
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: kAccentColor.withValues(alpha: 0.1),
+                    border: Border.all(color: kAccentColor.withValues(alpha: 0.2)),
+                  ),
+                  child: const Icon(Icons.waving_hand_outlined,
+                      color: kAccentColor, size: 32),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '$otherName ${AppL10n.chatStarted}',
+                  style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  AppL10n.sendFirstMessage,
+                  style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.3), fontSize: 13),
+                ),
+              ],
+            ),
+          );
         }
 
         // 🔥 Duplicate mesajları filtrele
@@ -559,6 +967,11 @@ class _ChatScreenState extends State<ChatScreen> {
               final msg = uniqueMessages[index];
               final isMe = msg['sender_id'] ==
                   (Supabase.instance.client.auth.currentUser?.id ?? '');
+
+              // Grup chatinde gönderici profilini yükle
+              if (_isGroup && !isMe) {
+                _loadSenderProfile(msg['sender_id'].toString());
+              }
 
               // Avatar için önceki mesaja bak
               bool showAvatar = true;
@@ -585,6 +998,16 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildInputArea() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildReplyBar(),
+        _buildInputRow(),
+      ],
+    );
+  }
+
+  Widget _buildInputRow() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 30),
       child: Container(
@@ -631,8 +1054,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                       hintText: _isEphemeralMode
-                          ? '🔥 Kül olan mesaj...'
-                          : 'Mesaj yaz...',
+                          ? AppL10n.typeEphemeralMessage
+                          : AppL10n.typeMessage,
                       hintStyle: TextStyle(
                         color: _isEphemeralMode
                             ? Colors.orange.withValues(alpha: 0.6)
@@ -709,11 +1132,59 @@ class _ChatScreenState extends State<ChatScreen> {
     final content = msg['content'] as String;
     final messageId = msg['id'].toString();
     final senderId = msg['sender_id'].toString();
+
+    // Grup chatinde gönderici bilgileri
+    final senderProfile = _isGroup && !isMe ? _senderProfiles[senderId] : null;
+    final senderAvatar = senderProfile?['avatar_url'] ?? widget.otherUser['avatar_url'];
+    final senderDisplayName = senderProfile?['full_name'] ?? senderProfile?['username'] ?? AppL10n.user;
     final createdAtRaw = msg['created_at'] as String;
     final ephemeralDuration = msg['ephemeral_duration'] as int? ?? 5;
 
     final time =
         DateFormat('HH:mm').format(DateTime.parse(createdAtRaw).toLocal());
+
+    // Reaksiyon ve reply verileri
+    final reactionsRaw = msg['reactions'] as Map<String, dynamic>? ?? {};
+    final reactions = reactionsRaw.map((k, v) => MapEntry(k, List<String>.from(v)));
+    final replyToContent = msg['reply_to_content'] as String?;
+    final replyToSenderName = msg['reply_to_sender_name'] as String?;
+
+    // 📸 Paylaşılan gönderi mi?
+    final sharedPostData = msg['shared_post_data'] as Map<String, dynamic>?;
+    if (sharedPostData != null) {
+      final sharedBubble = SwipeToReplyWrapper(
+        onReply: () => setState(() => _replyToMsg = msg),
+        child: GestureDetector(
+          onLongPress: () => _showMessageOptions(msg, isMe),
+          child: SharedPostBubble(
+            sharedPostData: sharedPostData,
+            isMe: isMe,
+            time: time,
+            otherUserAvatar: senderAvatar,
+            showAvatar: showAvatar,
+            isViewed: isViewed,
+            showReadReceipts: _myShowReadReceipts,
+            otherUserShowReadReceipts: _otherUserShowReadReceipts,
+            onAvatarTap: () => _goToProfile(senderId),
+            onTap: () => _openSharedPost(sharedPostData),
+          ),
+        ),
+      );
+      if (_isGroup && !isMe && showAvatar) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 52, bottom: 2),
+              child: Text(senderDisplayName, style: const TextStyle(color: Color(0xFF9D89D9), fontSize: 11, fontWeight: FontWeight.w600)),
+            ),
+            sharedBubble,
+          ],
+        );
+      }
+      return sharedBubble;
+    }
+
     bool isImage = content.startsWith('http') &&
         (content.contains('.jpg') ||
             content.contains('.png') ||
@@ -742,43 +1213,132 @@ class _ChatScreenState extends State<ChatScreen> {
       contentWidget = AudioMessagePlayer(url: content, isMe: isMe);
     }
 
-    // 🔥 Ephemeral mesaj ise özel widget kullan
-    if (isEphemeral) {
-      return EphemeralMessageBubble(
-        messageId: messageId,
-        content: content,
-        isMe: isMe,
-        time: time,
-        durationSeconds: ephemeralDuration,
-        isViewed: isViewed,
-        otherUserAvatar: widget.otherUser['avatar_url'],
-        showAvatar: showAvatar,
-        contentWidget: contentWidget,
-        isImage: isImg,
-        chatService: _chatService,
-        onBurned: () {},
-        // 👤 MESAJDAKİ PROFİLE TIKLAMA (Eğer widget destekliyorsa)
-        onAvatarTap: () => _goToProfile(senderId),
-      );
+    void triggerReply() {
+      setState(() => _replyToMsg = msg);
     }
 
-    // Normal mesaj - long press ile silme
-    return GestureDetector(
-      onLongPress: isMe ? () => _showDeleteMessageDialog(messageId) : null,
-      child: ModernMessageBubble(
-        content: content,
-        isMe: isMe,
-        time: time,
-        contentWidget: contentWidget,
-        isImage: isImg,
-        otherUserAvatar: widget.otherUser['avatar_url'],
-        showAvatar: showAvatar,
-        isViewed: isViewed,
-        showReadReceipts: _myShowReadReceipts,
-        otherUserShowReadReceipts: _otherUserShowReadReceipts,
-        // 👤 MESAJDAKİ PROFİLE TIKLAMA (Eğer widget destekliyorsa)
-        onAvatarTap: () => _goToProfile(senderId),
+    // 🔥 Ephemeral mesaj ise özel widget kullan
+    if (isEphemeral) {
+      final bubble = SwipeToReplyWrapper(
+        onReply: triggerReply,
+        child: GestureDetector(
+          onLongPress: () => _showMessageOptions(msg, isMe),
+          child: EphemeralMessageBubble(
+            messageId: messageId,
+            content: content,
+            isMe: isMe,
+            time: time,
+            durationSeconds: ephemeralDuration,
+            isViewed: isViewed,
+            otherUserAvatar: senderAvatar,
+            showAvatar: showAvatar,
+            contentWidget: contentWidget,
+            isImage: isImg,
+            chatService: _chatService,
+            onBurned: () {},
+            onAvatarTap: () => _goToProfile(senderId),
+          ),
+        ),
+      );
+      if (_isGroup && !isMe && showAvatar) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 52, bottom: 2),
+              child: Text(senderDisplayName, style: const TextStyle(color: Color(0xFF9D89D9), fontSize: 11, fontWeight: FontWeight.w600)),
+            ),
+            bubble,
+          ],
+        );
+      }
+      return bubble;
+    }
+
+    // Normal mesaj - swipe + long press
+    final normalBubble = SwipeToReplyWrapper(
+      onReply: triggerReply,
+      child: GestureDetector(
+        onLongPress: () => _showMessageOptions(msg, isMe),
+        child: ModernMessageBubble(
+          content: content,
+          isMe: isMe,
+          time: time,
+          contentWidget: contentWidget,
+          isImage: isImg,
+          otherUserAvatar: senderAvatar,
+          showAvatar: showAvatar,
+          isViewed: isViewed,
+          showReadReceipts: _myShowReadReceipts,
+          otherUserShowReadReceipts: _otherUserShowReadReceipts,
+          onAvatarTap: () => _goToProfile(senderId),
+          reactions: reactions,
+          myUserId: _currentUserId,
+          replyToContent: replyToContent,
+          replyToSenderName: replyToSenderName,
+          onReact: (emoji) => _chatService.toggleReaction(messageId, emoji),
+        ),
       ),
+    );
+
+    if (_isGroup && !isMe && showAvatar) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 52, bottom: 2),
+            child: Text(senderDisplayName, style: const TextStyle(color: Color(0xFF9D89D9), fontSize: 11, fontWeight: FontWeight.w600)),
+          ),
+          normalBubble,
+        ],
+      );
+    }
+    return normalBubble;
+  }
+}
+
+// ==========================================
+// 💬 YAZILIYOR ANİMASYONU
+// ==========================================
+class _TypingIndicator extends StatefulWidget {
+  @override
+  State<_TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<_TypingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final dots = '.' * ((_controller.value * 3).floor() + 1);
+        return Text(
+          'Yazıyor$dots',
+          style: const TextStyle(
+            fontSize: 12,
+            color: kAccentColor,
+            fontStyle: FontStyle.italic,
+          ),
+        );
+      },
     );
   }
 }

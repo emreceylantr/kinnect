@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import 'package:kinnect/shared/widgets/kinnect_image.dart';
 
+import '../../../core/language/app_l10n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/border_colors.dart';
 import 'profile_badges.dart';
@@ -28,6 +29,7 @@ class ProfileHeader extends StatelessWidget {
   // Actions
   final VoidCallback? onUpdateCoverPhoto;
   final VoidCallback? onLogout;
+  final VoidCallback? onSettings;
   final VoidCallback? onBack;
   final Function(String) onMenuAction; // 'report', 'block'
   final Function(bool) onLiveVideoStateChange; // true = play, false = pause
@@ -51,6 +53,7 @@ class ProfileHeader extends StatelessWidget {
     this.videoController,
     this.onUpdateCoverPhoto,
     this.onLogout,
+    this.onSettings,
     this.onBack,
     required this.onMenuAction,
     required this.onLiveVideoStateChange,
@@ -140,14 +143,14 @@ class ProfileHeader extends StatelessWidget {
                   top: 50,
                   right: 16,
                   child: GestureDetector(
-                      onTap: onLogout,
+                      onTap: onSettings,
                       child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                               color: Colors.black54,
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white24)),
-                          child: const Icon(Icons.logout,
+                          child: const Icon(Icons.settings_outlined,
                               color: Colors.white, size: 18)))),
             ] else ...[
               if (showBackButton)
@@ -189,7 +192,7 @@ class ProfileHeader extends StatelessWidget {
                                 const Icon(Icons.flag_outlined,
                                     color: Colors.white70, size: 18),
                                 const SizedBox(width: 10),
-                                Text("Şikayet Et",
+                                Text(AppL10n.report,
                                     style: GoogleFonts.poppins(
                                         color: Colors.white, fontSize: 13))
                               ])),
@@ -199,7 +202,7 @@ class ProfileHeader extends StatelessWidget {
                                 const Icon(Icons.block,
                                     color: Colors.redAccent, size: 18),
                                 const SizedBox(width: 10),
-                                Text("Engelle",
+                                Text(AppL10n.block,
                                     style: GoogleFonts.poppins(
                                         color: Colors.redAccent, fontSize: 13))
                               ])),
@@ -290,7 +293,7 @@ class ProfileHeader extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(profileData?['full_name'] ?? 'İsimsiz',
+                      Text(profileData?['full_name'] ?? AppL10n.unnamed,
                           style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontSize: 20,
@@ -343,16 +346,16 @@ class ProfileHeader extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildStat('Gönderi', postCount.toString(), null),
+                      _buildStat(AppL10n.posts, postCount.toString(), null),
                       Container(width: 1, height: 20, color: Colors.white12),
-                      _buildStat('Takipçi', followersCount.toString(),
-                          () => onOpenFollowList('followers', 'Takipçiler')),
+                      _buildStat(AppL10n.followers, followersCount.toString(),
+                          () => onOpenFollowList('followers', AppL10n.followersList)),
                       Container(width: 1, height: 20, color: Colors.white12),
                       _buildStat(
-                          'Takip',
+                          AppL10n.followingCount,
                           followingCount.toString(),
                           () =>
-                              onOpenFollowList('following', 'Takip Edilenler')),
+                              onOpenFollowList('following', AppL10n.followingList)),
                     ],
                   ),
                 ],
@@ -402,35 +405,18 @@ class ProfileHeader extends StatelessWidget {
   }
 
   Widget _buildMyProfileButtons(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 45,
-      child: ElevatedButton(
-        onPressed: onEditProfile,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.bgCardLight,
-          foregroundColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 0,
-          side: const BorderSide(color: Colors.white12),
-        ),
-        child: Text("Profili Düzenle",
-            style:
-                GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildOtherProfileButtons() {
-    String label = "Takip Et";
+    String label = AppL10n.follow;
     Color bgColor = AppColors.primary;
     Color txtColor = Colors.white;
     if (friendshipStatus == 'accepted') {
-      label = "Takip Ediliyor";
+      label = AppL10n.following;
       bgColor = AppColors.bgCardLight;
     } else if (friendshipStatus == 'pending') {
-      label = "İstek Gönderildi";
+      label = AppL10n.requested;
       bgColor = Colors.grey.shade900;
       txtColor = Colors.grey;
     }
@@ -463,7 +449,7 @@ class ProfileHeader extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                         side: const BorderSide(color: Colors.white12)),
-                    child: Text("Mesaj",
+                    child: Text(AppL10n.sendMessage,
                         style: GoogleFonts.poppins(
                             fontSize: 13, fontWeight: FontWeight.w600))))),
       ],

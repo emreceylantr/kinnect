@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/language/app_l10n.dart';
 import '../../../shared/widgets/kinnect_image.dart';
 
 /// Tek bir yorumu gösteren widget
@@ -88,7 +89,7 @@ class CommentItem extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      profile['username'] ?? 'Anonim',
+                      profile['username'] ?? AppL10n.anonymous,
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -150,7 +151,7 @@ class CommentItem extends StatelessWidget {
                   GestureDetector(
                     onTap: onReply,
                     child: Text(
-                      'Yanıtla',
+                      AppL10n.replyLabel,
                       style: GoogleFonts.poppins(
                         color: AppColors.primary,
                         fontSize: 12,
@@ -185,7 +186,7 @@ class CommentItem extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              isPlaying ? 'Çalıyor...' : 'Sesli Yorum',
+              isPlaying ? AppL10n.playing : AppL10n.voiceComment,
               style: GoogleFonts.poppins(color: Colors.white),
             ),
           ],

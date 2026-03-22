@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/language/app_l10n.dart';
 import '../../../core/theme/app_colors.dart';
 
 class PostReportDialog extends StatelessWidget {
@@ -18,12 +19,12 @@ class PostReportDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reasons = [
-      "Spam veya Yanıltıcı",
-      "Çıplaklık veya Cinsellik",
-      "Nefret Söylemi",
-      "Şiddet veya Tehlikeli",
-      "Zorbalık veya Taciz",
-      "Diğer"
+      AppL10n.reportReasonSpam,
+      AppL10n.reportReasonNudity,
+      AppL10n.reportReasonHateSpeech,
+      AppL10n.reportReasonViolence,
+      AppL10n.reportReasonBullying,
+      AppL10n.reportReasonOther,
     ];
 
     return Dialog(
@@ -45,13 +46,13 @@ class PostReportDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Şikayet Et",
+            Text(AppL10n.reportPostTitle,
                 style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontSize: 15,
                     fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
-            Text("Bu gönderiyi neden bildiriyorsun?",
+            Text(AppL10n.reportPostQuestion,
                 style:
                     GoogleFonts.poppins(color: Colors.white54, fontSize: 11)),
             const SizedBox(height: 20),
@@ -99,7 +100,7 @@ class PostReportDialog extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
-                child: Text("Vazgeç",
+                child: Text(AppL10n.cancel,
                     style: GoogleFonts.poppins(
                         color: Colors.white38, fontSize: 13)),
               ),
@@ -136,17 +137,17 @@ class PostReportDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
-                  child: Text("Ek Açıklama",
+                  child: Text(AppL10n.additionalNote,
                       style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600))),
               const SizedBox(height: 15),
-              Text("Seçilen: $reason",
+              Text(AppL10n.selectedReason(reason),
                   style: GoogleFonts.poppins(
                       color: AppColors.accentOrange, fontSize: 12)),
               const SizedBox(height: 5),
-              Text("Detay eklemek istersen aşağıya yazabilirsin.",
+              Text(AppL10n.addDetailOptional,
                   style:
                       GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
               const SizedBox(height: 15),
@@ -155,7 +156,7 @@ class PostReportDialog extends StatelessWidget {
                 style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText: "Buraya yaz...",
+                  hintText: AppL10n.typeHere,
                   hintStyle:
                       GoogleFonts.poppins(color: Colors.white24, fontSize: 14),
                   filled: true,
@@ -176,7 +177,7 @@ class PostReportDialog extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: Text("Vazgeç",
+                      child: Text(AppL10n.cancel,
                           style: GoogleFonts.poppins(
                               color: Colors.white38, fontSize: 13)),
                     ),
@@ -194,7 +195,7 @@ class PostReportDialog extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           elevation: 0),
-                      child: Text("Gönder",
+                      child: Text(AppL10n.send,
                           style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,

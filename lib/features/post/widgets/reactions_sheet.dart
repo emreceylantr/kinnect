@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/language/app_l10n.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../../data/models/photo_emoji.dart';
 
@@ -146,7 +147,7 @@ class ReactionsSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        profile['username'] ?? 'Kullanıcı',
+                        profile['username'] ?? AppL10n.user,
                         style: GoogleFonts.poppins(
                           color: Colors.white70,
                           fontSize: 10,

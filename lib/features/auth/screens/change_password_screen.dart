@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../home/screens/home_screen.dart';
+import '../../../core/language/app_l10n.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -44,8 +45,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Şifren başarıyla güncellendi! 🎉"),
+        SnackBar(
+          content: Text(AppL10n.passwordUpdated),
           backgroundColor: Colors.green,
         ),
       );
@@ -67,7 +68,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text("Bir hata oluştu: $e"),
+              content: Text("${AppL10n.error}: $e"),
               backgroundColor: Colors.redAccent),
         );
       }
@@ -92,7 +93,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          "Yeni Şifre Belirle",
+          AppL10n.setNewPassword,
           style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold, color: Colors.white),
         ),
@@ -123,7 +124,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 const SizedBox(height: 20),
 
                 Text(
-                  "Lütfen hesabın için yeni ve güçlü bir şifre oluştur.",
+                  AppL10n.setNewPasswordSubtitle,
                   textAlign: TextAlign.center,
                   style:
                       GoogleFonts.poppins(color: Colors.white54, fontSize: 14),
@@ -133,13 +134,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 // 1. YENİ ŞİFRE ALANI
                 _buildPasswordField(
                   controller: _passwordController,
-                  label: "Yeni Şifre",
+                  label: AppL10n.newPassword,
                   isObscure: _obscurePassword,
                   onToggleVisibility: () =>
                       setState(() => _obscurePassword = !_obscurePassword),
                   validator: (val) {
-                    if (val == null || val.isEmpty) return "Şifre gerekli";
-                    if (val.length < 6) return "Şifre en az 6 karakter olmalı";
+                    if (val == null || val.isEmpty) return AppL10n.passwordRequired;
+                    if (val.length < 6) return AppL10n.passwordMinLength;
                     return null;
                   },
                 ),
@@ -149,15 +150,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 // 2. ŞİFREYİ ONAYLA ALANI
                 _buildPasswordField(
                   controller: _confirmController,
-                  label: "Şifreyi Onayla",
+                  label: AppL10n.confirmPasswordReenter,
                   isObscure: _obscureConfirm,
                   onToggleVisibility: () =>
                       setState(() => _obscureConfirm = !_obscureConfirm),
                   validator: (val) {
                     if (val == null || val.isEmpty)
-                      return "Lütfen şifreyi tekrar gir";
+                      return AppL10n.reenterPassword;
                     if (val != _passwordController.text)
-                      return "Şifreler uyuşmuyor!";
+                      return AppL10n.passwordsMismatch;
                     return null;
                   },
                 ),
@@ -192,7 +193,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : Text(
-                            "Şifreyi Güncelle",
+                            AppL10n.updatePassword,
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,

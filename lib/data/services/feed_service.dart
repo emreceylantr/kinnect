@@ -62,7 +62,8 @@ class FeedService {
           .select('*, profiles(*), likes(user_id), comments(id)')
           .inFilter('user_id', targetIds)
           .neq('visibility', 'public') // Public olanları ana akıştan gizle
-          .order('created_at', ascending: false);
+          .order('created_at', ascending: false)
+          .limit(20);
 
       return List<Map<String, dynamic>>.from(posts as List);
     } catch (e) {
@@ -72,7 +73,7 @@ class FeedService {
   }
 
   // --- 2. KEŞFET (HERKES - SADECE PUBLIC OLANLAR + ÇİFT TARAFLI ENGEL FİLTRESİ) ---
-  Future<List<Map<String, dynamic>>> getExploreFeed() async {
+  Future<List<Map<String, dynamic>>> getExploreFeed({int offset = 0, int limit = 20}) async {
     try {
       // A. Engelleme Listelerini Al (Çift Yönlü)
       final myBlocks = await _safetyService.getIdsIBlocked();
@@ -84,7 +85,7 @@ class FeedService {
           .select('*, profiles(*), likes(user_id), comments(id)')
           .eq('visibility', 'public') // Sadece herkese açık olanlar
           .order('created_at', ascending: false)
-          .limit(50);
+          .range(offset, offset + limit - 1);
 
       final List<Map<String, dynamic>> allPosts =
           List<Map<String, dynamic>>.from(response as List);
@@ -555,11 +556,17 @@ class FeedService {
   }
 
   // --- VIDEO FRAME EXTRACT & UPLOAD ---
-  Future<List<String>> extractAndUploadVideoFrames(String videoPath) async {
+  Future<List<String>> extractAndUploadVideoFrames(
+    String videoPath, {
+    double? thumbnailSeconds, // Kullanıcının seçtiği kapak anı
+  }) async {
     final List<String> frameUrls = [];
     final info = await VideoCompress.getMediaInfo(videoPath);
     final duration = info.duration?.toInt() ?? 7000; // ms
-    final timestamps = [0, (duration * 0.5).toInt(), duration - 100];
+    // Kullanıcı kapak seçtiyse önce onu koy, yoksa varsayılan 3 kare
+    final List<int> timestamps = thumbnailSeconds != null
+        ? [(thumbnailSeconds * 1000).toInt(), (duration * 0.5).toInt(), duration - 100]
+        : [0, (duration * 0.5).toInt(), duration - 100];
 
     for (int i = 0; i < timestamps.length; i++) {
       try {
@@ -590,7 +597,8 @@ class FeedService {
     Map<String, dynamic>? selectedMusic,
     String? location,
     List<Map<String, dynamic>> photoTags = const [],
-    File? videoFile, // NEW
+    File? videoFile,
+    double? videoThumbnailSeconds,
   }) async {
     List<String> imageUrls = [];
 
@@ -615,16 +623,13 @@ class FeedService {
     String? videoUrl;
     List<String> videoFrameUrls = [];
     if (videoFile != null) {
-      // Compress video
-      final MediaInfo? compressed = await VideoCompress.compressVideo(
-        videoFile.path,
-        quality: VideoQuality.HighestQuality,
-        deleteOrigin: false,
-        includeAudio: true,
-      );
-      final fileToUpload = compressed?.file ?? videoFile;
+      // Video zaten VideoEditScreen'de trim+compress edildi, direkt yükle
+      final fileToUpload = videoFile;
       videoUrl = await uploadVideo(fileToUpload);
-      videoFrameUrls = await extractAndUploadVideoFrames(videoFile.path);
+      videoFrameUrls = await extractAndUploadVideoFrames(
+        videoFile.path,
+        thumbnailSeconds: videoThumbnailSeconds,
+      );
       VideoCompress.cancelCompression();
     }
 

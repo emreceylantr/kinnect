@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:kinnect/core/theme/app_colors.dart';
+import 'package:kinnect/core/language/app_l10n.dart';
 import 'package:kinnect/shared/widgets/photo_emoji_picker.dart';
 
 /// Yorum yazma alanı widget'ı
@@ -94,10 +95,10 @@ class CommentInput extends StatelessWidget {
                     onChanged: onTextChanged,
                     decoration: InputDecoration(
                       hintText: replyingTo != null
-                          ? '@${replyingTo!['profiles']?['username'] ?? 'kullanıcı'} yanıtla...'
+                          ? AppL10n.replyToUserHint(replyingTo!['profiles']?['username'] ?? AppL10n.user)
                           : (isExploreMode
-                              ? 'Ateşe odun at...'
-                              : 'Yorum yaz...'),
+                              ? AppL10n.exploreCommentHint
+                              : AppL10n.commentHint),
                       hintStyle: GoogleFonts.poppins(color: Colors.white38),
                       border: InputBorder.none,
                       isDense: true,
@@ -120,7 +121,7 @@ class CommentInput extends StatelessWidget {
   }
 
   Widget _buildReplyPreview() {
-    final username = replyingTo?['profiles']?['username'] ?? 'kullanıcı';
+    final username = replyingTo?['profiles']?['username'] ?? AppL10n.user;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -135,7 +136,7 @@ class CommentInput extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '@$username\'a yanıtlıyorsun',
+              AppL10n.replyingToUser(username),
               style: GoogleFonts.poppins(
                 color: AppColors.primary,
                 fontSize: 12,
@@ -173,7 +174,7 @@ class CommentInput extends StatelessWidget {
             Icon(Icons.add_reaction_outlined, color: Colors.white54, size: 18),
             const SizedBox(width: 8),
             Text(
-              'Emoji Tepki Gönder',
+              AppL10n.emojiReaction,
               style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12),
             ),
           ],

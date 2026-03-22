@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/language/app_l10n.dart';
 import '../../../data/services/matching_service.dart';
+import '../../../data/services/chat_service.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../create_post/screens/create_post_screen.dart';
+import '../../chat/screens/chat_screen.dart';
 import 'quiz_screen.dart';
 import 'match_evidence_screen.dart';
 
@@ -20,6 +24,7 @@ class AiMatchingScreen extends StatefulWidget {
 class _AiMatchingScreenState extends State<AiMatchingScreen>
     with TickerProviderStateMixin {
   final MatchingService _matchingService = MatchingService();
+  final ChatService _chatService = ChatService();
   late AnimationController _shimmerController;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -33,6 +38,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
   bool _isRefreshing = false;
   bool _fetchFailed = false;
   int _myPostCount = -1; // -1 = henüz yüklenmedi
+  Set<String> _hiddenUserIds = {};
 
   @override
   void initState() {
@@ -50,7 +56,8 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    _checkMyPostCount();
+    _loadHiddenUsers();
+    _checkMyPostCountThenQuiz();
 
     // Cache geçerliyse API çağırma
     final cacheValid = _cachedMatches != null &&
@@ -60,11 +67,9 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
     if (!cacheValid) {
       _fetchMatches();
     }
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkQuizStatus());
   }
 
-  Future<void> _checkMyPostCount() async {
+  Future<void> _checkMyPostCountThenQuiz() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return;
     try {
@@ -72,9 +77,16 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
           .from('posts')
           .select('id')
           .eq('user_id', userId);
-      if (mounted) setState(() => _myPostCount = (result as List).length);
+      final count = (result as List).length;
+      if (mounted) setState(() => _myPostCount = count);
+
+      // Quiz sadece yeterli post varsa gösterilir
+      if (count >= _minPostsRequired) {
+        await _checkQuizStatus();
+      }
     } catch (e) {
       debugPrint('Post count check error: $e');
+      if (mounted) setState(() => _myPostCount = 0);
     }
   }
 
@@ -130,8 +142,18 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Post sayısı henüz yüklenmedi — flash önlemek için loading göster
+    if (_myPostCount == -1) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0A0A0F),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+        ),
+      );
+    }
+
     // Yeterli post yoksa özel ekran göster
-    if (_myPostCount >= 0 && _myPostCount < _minPostsRequired) {
+    if (_myPostCount < _minPostsRequired) {
       return _buildInsufficientPostsState();
     }
 
@@ -141,7 +163,10 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
       return _buildLoadingState();
     }
 
-    final matches = _cachedMatches!;
+    final matches = _cachedMatches!.where((m) {
+      final uid = (m['profile'] as Map<String, dynamic>)['id'] as String?;
+      return uid != null && !_hiddenUserIds.contains(uid);
+    }).toList();
 
     if (matches.isEmpty) {
       return _buildEmptyState();
@@ -166,7 +191,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    'Sana En Yakın Kişiler',
+                    AppL10n.closestToYou,
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 18,
@@ -183,9 +208,33 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
+                      final match = matches[index];
+                      final matchProfile = match['profile'] as Map<String, dynamic>;
+                      final profileId = matchProfile['id'] as String;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: _buildMatchCard(matches[index], index),
+                        child: Dismissible(
+                          key: Key(profileId),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 20),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.visibility_off_rounded, color: Colors.redAccent, size: 22),
+                                const SizedBox(height: 4),
+                                Text(AppL10n.hide, style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 11)),
+                              ],
+                            ),
+                          ),
+                          onDismissed: (_) => _hideUser(profileId),
+                          child: _buildMatchCard(match, index),
+                        ),
                       );
                     },
                     childCount: matches.length,
@@ -229,7 +278,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Ruh İkizlerin',
+                  AppL10n.soulTwins,
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontSize: 20,
@@ -240,7 +289,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                 Row(
                   children: [
                     Text(
-                      'Yapay zeka $count kişiyle ortak yönler buldu',
+                      AppL10n.aiFoundCommon(count),
                       style: GoogleFonts.poppins(
                         color: Colors.white54,
                         fontSize: 12,
@@ -262,6 +311,39 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
               ],
             ),
           ),
+          if (_hiddenUserIds.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: _showHiddenUsersSheet,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.visibility_off_rounded, color: Colors.white54, size: 20),
+                    Positioned(
+                      top: -4, right: -4,
+                      child: Container(
+                        width: 14, height: 14,
+                        decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                        child: Center(
+                          child: Text(
+                            '${_hiddenUserIds.length}',
+                            style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -369,10 +451,14 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
         ?.map((s) => s as Map<String, dynamic>)
         .toList() ?? [];
     final profileSummary = (match['profile_summary'] as String?) ?? '';
-    final bestSummary = interests.isNotEmpty ? interests.take(3).join(' · ') : profileSummary;
+    final bestSummary = interests.isNotEmpty
+        ? interests.take(3).map(AppL10n.translateInterest).join(' · ')
+        : profileSummary;
     final avatarUrl = profile['avatar_url']?.toString();
-    final fullName = profile['full_name'] ?? profile['username'] ?? 'Kullanıcı';
+    final fullName = profile['full_name'] ?? profile['username'] ?? AppL10n.user;
     final username = profile['username'] ?? '';
+    final recentPosts = (match['recent_posts'] as List?)
+        ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
 
     // Renk geçişi: yüksek skor = yeşil, düşük = turuncu
     final Color scoreColor = similarity > 0.75
@@ -399,179 +485,187 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Avatar
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ProfileScreen(
-                      userId: profile['id'],
-                      showBackButton: true,
+            Row(
+              children: [
+                // Avatar
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProfileScreen(
+                          userId: profile['id'],
+                          showBackButton: true,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [scoreColor, scoreColor.withValues(alpha: 0.4)],
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 26,
+                      backgroundColor: AppColors.bgDark,
+                      backgroundImage:
+                          avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                      child: avatarUrl == null
+                          ? const Icon(Icons.person,
+                              color: Colors.white38, size: 24)
+                          : null,
                     ),
                   ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [scoreColor, scoreColor.withValues(alpha: 0.4)],
-                  ),
                 ),
-                child: CircleAvatar(
-                  radius: 26,
-                  backgroundColor: AppColors.bgDark,
-                  backgroundImage:
-                      avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                  child: avatarUrl == null
-                      ? const Icon(Icons.person,
-                          color: Colors.white38, size: 24)
-                      : null,
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
+                const SizedBox(width: 14),
 
-            // İsim ve açıklama
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                // İsim ve açıklama
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          fullName,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                      Text(
+                        fullName,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '@$username',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white38,
+                          fontSize: 12,
                         ),
                       ),
-                      // Skor badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: scoreColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: scoreColor.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Text(
-                          '%$percent',
-                          style: GoogleFonts.poppins(
-                            color: scoreColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '@$username',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white38,
-                      fontSize: 12,
-                    ),
-                  ),
-                  if (matchReasons.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: List.generate(
-                        matchReasons.take(2).length,
-                        (i) {
-                          final reason = matchReasons[i];
-                          final source = i < matchReasonSources.length ? matchReasonSources[i] : null;
-                          final myPosts = (source?['my_posts'] as List?)
-                              ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
-                          final otherPosts = (source?['other_posts'] as List?)
-                              ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
-                          final hasPosts = myPosts.isNotEmpty || otherPosts.isNotEmpty;
-                          return GestureDetector(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => MatchEvidenceScreen(
-                                  reason: reason,
-                                  otherUserName: fullName,
-                                  otherUserAvatarUrl: avatarUrl,
-                                  myPosts: myPosts,
-                                  otherPosts: otherPosts,
-                                ),
-                              ),
-                            ),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    reason,
-                                    style: GoogleFonts.poppins(
-                                      color: AppColors.primary.withOpacity(0.9),
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w500,
+                      if (matchReasons.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: List.generate(
+                            matchReasons.take(2).length,
+                            (i) {
+                              final reason = matchReasons[i];
+                              final source = i < matchReasonSources.length ? matchReasonSources[i] : null;
+                              final myPosts = (source?['my_posts'] as List?)
+                                  ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
+                              final otherPosts = (source?['other_posts'] as List?)
+                                  ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
+                              final hasPosts = myPosts.isNotEmpty || otherPosts.isNotEmpty;
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: GestureDetector(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => MatchEvidenceScreen(
+                                      reason: reason,
+                                      otherUserId: profile['id'] as String,
+                                      otherUserName: fullName,
+                                      otherUserAvatarUrl: avatarUrl,
+                                      myPosts: myPosts,
+                                      otherPosts: otherPosts,
                                     ),
                                   ),
-                                  if (hasPosts) ...[
-                                    const SizedBox(width: 4),
-                                    Icon(Icons.chevron_right_rounded,
-                                        size: 13,
-                                        color: AppColors.primary.withOpacity(0.6)),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ] else if (bestSummary.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(FontAwesomeIcons.wandMagicSparkles,
-                            size: 10,
-                            color: AppColors.primary.withOpacity(0.7)),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            bestSummary,
-                            style: GoogleFonts.poppins(
-                              color: Colors.white54,
-                              fontSize: 11,
-                              fontStyle: FontStyle.italic,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                                ),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          reason,
+                                          style: GoogleFonts.poppins(
+                                            color: AppColors.primary.withOpacity(0.9),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      if (hasPosts) ...[
+                                        const SizedBox(width: 4),
+                                        Icon(Icons.chevron_right_rounded,
+                                            size: 14,
+                                            color: AppColors.primary.withOpacity(0.6)),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ));
+                            },
                           ),
                         ),
+                      ] else if (bestSummary.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(FontAwesomeIcons.wandMagicSparkles,
+                                size: 10,
+                                color: AppColors.primary.withOpacity(0.7)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                bestSummary,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white54,
+                                  fontSize: 11,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+                // Score ring + message button column
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildScoreRing(percent, scoreColor),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () => _openChat(context, profile),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                        ),
+                        child: const Icon(Icons.chat_bubble_rounded, color: AppColors.primary, size: 16),
+                      ),
                     ),
                   ],
-                ],
-              ),
+                ),
+              ],
             ),
-
-            const SizedBox(width: 8),
-            Icon(Icons.chevron_right_rounded, color: Colors.white24, size: 22),
+            // Mini post grid
+            if (recentPosts.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildMiniPostRow(recentPosts),
+            ],
           ],
         ),
       ),
@@ -585,7 +679,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
     final similarity = (match['similarity'] as double);
     final percent = (similarity * 100).toInt();
     final avatarUrl = profile['avatar_url']?.toString();
-    final fullName = profile['full_name'] ?? profile['username'] ?? 'Kullanıcı';
+    final fullName = profile['full_name'] ?? profile['username'] ?? AppL10n.user;
     final username = profile['username'] ?? '';
 
     final otherProfile   = (match['profile_summary'] as String?) ?? '';
@@ -593,6 +687,29 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
     final matchReasons   = List<String>.from(match['match_reasons'] ?? []);
     final matchReasonSources = (match['match_reason_sources'] as List?)
         ?.map((s) => s as Map<String, dynamic>).toList() ?? [];
+
+    final commonSpotify = match['common_spotify'] as Map<String, dynamic>?;
+
+    final commonInterests = List<String>.from(match['common_interests'] ?? []);
+    final commonInterestsLower = commonInterests.map((s) => s.toLowerCase().trim()).toSet();
+
+    // Social style detection from reasons
+    String? socialStyleReason;
+    for (final r in matchReasons) {
+      final lower = r.toLowerCase();
+      if (lower.contains('bağımsız') || lower.contains('yakın çevre') ||
+          lower.contains('kalabalık ortam') || lower.contains('sessiz anlara') ||
+          lower.contains('sosyal hem')) {
+        socialStyleReason = r;
+        break;
+      }
+    }
+
+    final Color scoreColor = similarity > 0.75
+        ? const Color(0xFF69F0AE)
+        : similarity > 0.60
+            ? AppColors.primary
+            : const Color(0xFFFFAB40);
 
     final Future<String> explanationFuture = _matchingService.getAiExplanation(
       otherUserId:      userId,
@@ -602,15 +719,16 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
       matchReasons:     matchReasons,
     );
 
+    final outerContext = context;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
+      builder: (sheetCtx) => DraggableScrollableSheet(
         initialChildSize: 0.75,
         maxChildSize: 0.95,
         minChildSize: 0.6,
-        builder: (context, scrollController) => ClipRRect(
+        builder: (sheetCtx, scrollController) => ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
@@ -642,24 +760,36 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                   Center(
                     child: Column(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [AppColors.primary, Color(0xFF9D89D9)],
-                            ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 45,
-                            backgroundColor: AppColors.bgDark,
-                            backgroundImage: avatarUrl != null
-                                ? NetworkImage(avatarUrl)
-                                : null,
-                            child: avatarUrl == null
-                                ? const Icon(Icons.person,
-                                    color: Colors.white38, size: 40)
-                                : null,
+                        SizedBox(
+                          width: 110,
+                          height: 110,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                value: similarity,
+                                strokeWidth: 4,
+                                backgroundColor: scoreColor.withValues(alpha: 0.15),
+                                valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
+                                strokeCap: StrokeCap.round,
+                              ),
+                              Container(
+                                width: 96,
+                                height: 96,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: AppColors.bgDark, width: 3),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 45,
+                                  backgroundColor: AppColors.bgDark,
+                                  backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                                  child: avatarUrl == null
+                                      ? const Icon(Icons.person, color: Colors.white38, size: 40)
+                                      : null,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -678,35 +808,24 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                             fontSize: 14,
                           ),
                         ),
-                        const SizedBox(height: 12),
-
-                        // Büyük skor göstergesi
+                        const SizedBox(height: 10),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.primary.withValues(alpha: 0.6),
-                                const Color(0xFF9D89D9).withOpacity(0.2),
-                              ],
-                            ),
+                            color: scoreColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                                color:
-                                    AppColors.primary.withValues(alpha: 0.3)),
+                            border: Border.all(color: scoreColor.withValues(alpha: 0.35)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(FontAwesomeIcons.wandMagicSparkles,
-                                  color: AppColors.primary, size: 16),
-                              const SizedBox(width: 8),
+                              Icon(FontAwesomeIcons.wandMagicSparkles, color: scoreColor, size: 12),
+                              const SizedBox(width: 7),
                               Text(
-                                '%$percent Benzerlik',
+                                AppL10n.compatibilityPercent(percent),
                                 style: GoogleFonts.poppins(
-                                  color: AppColors.primary,
-                                  fontSize: 16,
+                                  color: scoreColor,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -719,7 +838,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                   if (matchReasons.isNotEmpty) ...[
                     const SizedBox(height: 20),
                     Text(
-                      'Ortak Noktalarınız',
+                      AppL10n.commonPoints,
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 15,
@@ -727,9 +846,8 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: List.generate(matchReasons.length, (i) {
                         final reason = matchReasons[i];
                         final source = i < matchReasonSources.length ? matchReasonSources[i] : null;
@@ -738,50 +856,160 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                         final otherPosts = (source?['other_posts'] as List?)
                             ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
                         final hasPosts = myPosts.isNotEmpty || otherPosts.isNotEmpty;
-                        return GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => MatchEvidenceScreen(
-                                reason: reason,
-                                otherUserName: fullName,
-                                otherUserAvatarUrl: avatarUrl,
-                                myPosts: myPosts,
-                                otherPosts: otherPosts,
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: GestureDetector(
+                            onTap: () => Navigator.push(
+                              outerContext,
+                              MaterialPageRoute(
+                                builder: (_) => MatchEvidenceScreen(
+                                  reason: reason,
+                                  otherUserId: userId,
+                                  otherUserName: fullName,
+                                  otherUserAvatarUrl: avatarUrl,
+                                  myPosts: myPosts,
+                                  otherPosts: otherPosts,
+                                ),
                               ),
                             ),
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  reason,
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      reason,
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                if (hasPosts) ...[
-                                  const SizedBox(width: 6),
-                                  Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 16,
-                                    color: AppColors.primary.withOpacity(0.7),
-                                  ),
+                                  if (hasPosts) ...[
+                                    const SizedBox(width: 6),
+                                    Icon(
+                                      Icons.chevron_right_rounded,
+                                      size: 16,
+                                      color: AppColors.primary.withOpacity(0.7),
+                                    ),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           ),
                         );
                       }),
+                    ),
+                  ],
+
+                  if (socialStyleReason != null) ...[
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF9D89D9).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF9D89D9).withValues(alpha: 0.25)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF9D89D9).withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.psychology_rounded, color: Color(0xFF9D89D9), size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  AppL10n.personalityMatch,
+                                  style: GoogleFonts.poppins(
+                                    color: const Color(0xFF9D89D9),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  socialStyleReason,
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white.withValues(alpha: 0.85),
+                                    fontSize: 13,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  if (commonSpotify != null) ...[
+                    const SizedBox(height: 20),
+                    Text(
+                      AppL10n.commonMusic,
+                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1DB954).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF1DB954).withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: commonSpotify['album_image'] != null
+                                ? Image.network(commonSpotify['album_image'] as String, width: 52, height: 52, fit: BoxFit.cover)
+                                : Container(width: 52, height: 52, color: const Color(0xFF1DB954).withValues(alpha: 0.2),
+                                    child: const Icon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954), size: 22)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  commonSpotify['artist'] as String,
+                                  style: GoogleFonts.poppins(color: const Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w700),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (commonSpotify['track_name'] != null)
+                                  Text(
+                                    commonSpotify['track_name'] as String,
+                                    style: GoogleFonts.poppins(color: Colors.white54, fontSize: 11),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  AppL10n.bothListening,
+                                  style: GoogleFonts.poppins(color: Colors.white38, fontSize: 10),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954), size: 20),
+                        ],
+                      ),
                     ),
                   ],
 
@@ -794,7 +1022,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                           color: Colors.blueAccent, size: 18),
                       const SizedBox(width: 10),
                       Text(
-                        'Yapay Zeka Analizi',
+                        AppL10n.aiAnalysis,
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 16,
@@ -817,26 +1045,30 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                             border: Border.all(
                                 color: Colors.white.withOpacity(0.05)),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(FontAwesomeIcons.robot, color: AppColors.primary, size: 14),
+                              ),
+                              const SizedBox(width: 12),
                               Text(
-                                'Paylaşımlar analiz ediliyor...',
-                                style: GoogleFonts.poppins(
-                                    color: Colors.white54, fontSize: 13),
+                                AppL10n.analyzing,
+                                style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13),
                               ),
-                              const SizedBox(height: 10),
-                              const LinearProgressIndicator(
-                                backgroundColor: Colors.transparent,
-                                color: AppColors.primary,
-                              ),
+                              const SizedBox(width: 8),
+                              const _TypingDots(),
                             ],
                           ),
                         );
                       }
 
                       final explanation =
-                          snapshot.data ?? "Harika bir eşleşme!";
+                          snapshot.data ?? AppL10n.greatMatch;
 
                       return Container(
                         padding: const EdgeInsets.all(20),
@@ -864,7 +1096,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                   // İlgi alanları
                   if (otherInterests.isNotEmpty) ...[
                     Text(
-                      '🎯 İlgi Alanları',
+                      AppL10n.interests,
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 16,
@@ -875,97 +1107,116 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: otherInterests.map((interest) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.25)),
-                        ),
-                        child: Text(
-                          interest,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white.withOpacity(0.85),
-                            fontSize: 13,
+                      children: otherInterests.map((interest) {
+                        final isCommon = commonInterestsLower.contains(interest.toLowerCase().trim());
+                        final displayInterest = AppL10n.translateInterest(interest);
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: isCommon
+                                ? AppColors.primary.withValues(alpha: 0.25)
+                                : Colors.white.withValues(alpha: 0.06),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isCommon
+                                  ? AppColors.primary.withValues(alpha: 0.5)
+                                  : Colors.white.withValues(alpha: 0.1),
+                              width: isCommon ? 1.5 : 1,
+                            ),
                           ),
-                        ),
-                      )).toList(),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isCommon) ...[
+                                const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 12),
+                                const SizedBox(width: 5),
+                              ],
+                              Text(
+                                displayInterest,
+                                style: GoogleFonts.poppins(
+                                  color: isCommon ? Colors.white : Colors.white.withValues(alpha: 0.6),
+                                  fontSize: 13,
+                                  fontWeight: isCommon ? FontWeight.w600 : FontWeight.normal,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                     ),
                     const SizedBox(height: 24),
                   ],
 
-                  // Profil özeti
-                  if (otherProfile.isNotEmpty) ...[
-                    Text(
-                      '👤 Profil',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white.withOpacity(0.06)),
-                      ),
-                      child: Text(
-                        otherProfile,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          height: 1.6,
-                        ),
-                      ),
-                    ),
-                  ],
-
                   const SizedBox(height: 32),
 
-                  // Profili Gör butonu
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ProfileScreen(
-                            userId: userId,
-                            showBackButton: true,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primary, Color(0xFF9D89D9)],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.3),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Profiline Git',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                  // Mesaj At + Profile Git butonları
+                  Row(
+                    children: [
+                      // Mesaj At — solid gradient
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.pop(sheetCtx);
+                            _openChat(outerContext, profile);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [AppColors.primary, Color(0xFF9D89D9)],
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(alpha: 0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 16),
+                                const SizedBox(width: 8),
+                                Text(AppL10n.sendMessageAction, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      // Profiline Git — outlined
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.pop(sheetCtx);
+                            Navigator.push(
+                              outerContext,
+                              MaterialPageRoute(
+                                builder: (_) => ProfileScreen(userId: userId, showBackButton: true),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.person_rounded, color: Colors.white70, size: 16),
+                                const SizedBox(width: 8),
+                                Text(AppL10n.goToProfile, style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -973,6 +1224,305 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ============ SCORE RING ============
+  Widget _buildScoreRing(int percent, Color color) {
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircularProgressIndicator(
+            value: percent / 100,
+            strokeWidth: 3,
+            backgroundColor: color.withValues(alpha: 0.15),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            strokeCap: StrokeCap.round,
+          ),
+          Text(
+            '$percent',
+            style: GoogleFonts.poppins(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============ MINI POST ROW ============
+  Widget _buildMiniPostRow(List<Map<String, dynamic>> posts) {
+    return Row(
+      children: List.generate(posts.length, (i) {
+        final post = posts[i];
+        final imageUrls = (post['image_urls'] as List?)?.cast<String>() ?? [];
+        final videoFrameUrls = (post['video_frame_urls'] as List?)?.cast<String>() ?? [];
+        final videoUrl = post['video_url'] as String?;
+        final albumImage = post['spotify_album_image'] as String?;
+        final content = post['content'] as String? ?? '';
+        // Thumbnail önceliği: post foto > video frame > albüm kapağı
+        final thumbnail = imageUrls.isNotEmpty ? imageUrls.first
+            : videoFrameUrls.isNotEmpty ? videoFrameUrls.first
+            : albumImage;
+        final isVideo = videoUrl != null;
+        final isSpotifyOnly = thumbnail == albumImage && imageUrls.isEmpty && videoFrameUrls.isEmpty && albumImage != null;
+        final isTextOnly = thumbnail == null && content.isNotEmpty;
+
+        return Expanded(
+          child: Container(
+            height: 72,
+            margin: EdgeInsets.only(right: i < posts.length - 1 ? 6 : 0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.white.withValues(alpha: 0.04),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (isTextOnly)
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.primary.withValues(alpha: 0.2),
+                            const Color(0xFF9D89D9).withValues(alpha: 0.1),
+                          ],
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(6),
+                      child: Text(
+                        content,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 9,
+                          height: 1.3,
+                        ),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                  else if (thumbnail != null)
+                    Image.network(thumbnail, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(color: Colors.white.withValues(alpha: 0.04)))
+                  else
+                    Container(color: Colors.white.withValues(alpha: 0.04)),
+
+                  // Video rozeti
+                  if (isVideo)
+                    Positioned(
+                      top: 4, right: 4,
+                      child: Container(
+                        width: 18, height: 18,
+                        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), shape: BoxShape.circle),
+                        child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 12),
+                      ),
+                    ),
+                  // Spotify rozeti
+                  if (isSpotifyOnly)
+                    Positioned(
+                      bottom: 4, right: 4,
+                      child: Container(
+                        width: 16, height: 16,
+                        decoration: const BoxDecoration(color: Color(0xFF1DB954), shape: BoxShape.circle),
+                        child: const Icon(FontAwesomeIcons.spotify, color: Colors.white, size: 9),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  // ============ OPEN CHAT ============
+  Future<void> _openChat(BuildContext context, Map<String, dynamic> profile) async {
+    final otherId = profile['id'] as String;
+    try {
+      final roomId = await _chatService.createOrGetChatRoom(otherId);
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              roomId: roomId,
+              otherUser: profile,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Chat open error: $e');
+    }
+  }
+
+  // ============ HIDDEN USERS ============
+  Future<void> _loadHiddenUsers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = prefs.getStringList('hidden_match_ids') ?? [];
+    if (mounted) setState(() => _hiddenUserIds = ids.toSet());
+  }
+
+  Future<void> _hideUser(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    _hiddenUserIds.add(userId);
+    await prefs.setStringList('hidden_match_ids', _hiddenUserIds.toList());
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _unhideUser(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    _hiddenUserIds.remove(userId);
+    await prefs.setStringList('hidden_match_ids', _hiddenUserIds.toList());
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _unhideAll() async {
+    final prefs = await SharedPreferences.getInstance();
+    _hiddenUserIds.clear();
+    await prefs.remove('hidden_match_ids');
+    if (mounted) setState(() {});
+  }
+
+  void _showHiddenUsersSheet() {
+    final hiddenMatches = (_cachedMatches ?? []).where((m) {
+      final uid = (m['profile'] as Map<String, dynamic>)['id'] as String?;
+      return uid != null && _hiddenUserIds.contains(uid);
+    }).toList();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Container(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A2E),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    const Icon(Icons.visibility_off_rounded, color: Colors.white54, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      AppL10n.hiddenMatches,
+                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const Spacer(),
+                    if (hiddenMatches.isNotEmpty)
+                      GestureDetector(
+                        onTap: () async {
+                          await _unhideAll();
+                          if (ctx.mounted) Navigator.pop(ctx);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                          ),
+                          child: Text(
+                            AppL10n.showAll,
+                            style: GoogleFonts.poppins(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (hiddenMatches.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Text(
+                      AppL10n.noHiddenMatches,
+                      style: GoogleFonts.poppins(color: Colors.white38, fontSize: 14),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: hiddenMatches.length,
+                      itemBuilder: (_, i) {
+                        final match = hiddenMatches[i];
+                        final profile = match['profile'] as Map<String, dynamic>;
+                        final uid = profile['id'] as String;
+                        final name = profile['full_name'] ?? profile['username'] ?? AppL10n.user;
+                        final username = profile['username'] ?? '';
+                        final avatarUrl = profile['avatar_url'] as String?;
+                        final percent = ((match['similarity'] as double) * 100).toInt();
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 22,
+                                backgroundColor: AppColors.bgCard,
+                                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                                child: avatarUrl == null ? const Icon(Icons.person, color: Colors.white38, size: 20) : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(name, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                                    Text('@$username  ·  %$percent', style: GoogleFonts.poppins(color: Colors.white38, fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () async {
+                                  await _unhideUser(uid);
+                                  setSheetState(() => hiddenMatches.removeAt(i));
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Text(
+                                    AppL10n.show,
+                                    style: GoogleFonts.poppins(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -993,7 +1543,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
           ),
           const SizedBox(height: 20),
           Text(
-            'Yapay zeka ruh ikizlerini arıyor...',
+            AppL10n.aiSearching,
             style: GoogleFonts.poppins(
               color: Colors.white54,
               fontSize: 14,
@@ -1045,7 +1595,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
 
             // Başlık
             Text(
-              'Ruh İkizini Bulmak İçin...',
+              AppL10n.toFindSoulTwin,
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white,
@@ -1058,7 +1608,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
 
             // Açıklama
             Text(
-              'Yapay zekanın seni analiz edebilmesi ve en uyumlu kişileri bulabilmesi için en az $_minPostsRequired gönderi paylaşman gerekiyor.',
+              AppL10n.aiNeedsPostsDescription(_minPostsRequired),
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white54,
@@ -1082,7 +1632,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '$_myPostCount / $_minPostsRequired gönderi',
+                        AppL10n.postsProgress(_myPostCount, _minPostsRequired),
                         style: GoogleFonts.poppins(
                           color: Colors.white70,
                           fontSize: 13,
@@ -1090,7 +1640,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                         ),
                       ),
                       Text(
-                        '$remaining tane daha',
+                        AppL10n.moreNeeded(remaining),
                         style: GoogleFonts.poppins(
                           color: AppColors.primary,
                           fontSize: 13,
@@ -1119,7 +1669,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CreatePostScreen()),
-              ).then((_) => _checkMyPostCount()),
+              ).then((_) => _checkMyPostCountThenQuiz()),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1142,7 +1692,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                     const Icon(FontAwesomeIcons.plus, color: Colors.white, size: 16),
                     const SizedBox(width: 10),
                     Text(
-                      'Gönderi Paylaş',
+                      AppL10n.sharePost,
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 16,
@@ -1178,7 +1728,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
             ),
             const SizedBox(height: 24),
             Text(
-              'Henüz Eşleşme Yok',
+              AppL10n.noMatchesYet,
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontSize: 20,
@@ -1187,7 +1737,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
             ),
             const SizedBox(height: 10),
             Text(
-              'Post paylaştıkça yapay zeka sana benzer ilgi alanlarına sahip kişileri burada gösterecek! 🤖',
+              AppL10n.noMatchesSubtitle,
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white54,
@@ -1211,7 +1761,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
             const Icon(Icons.wifi_off_rounded, color: Colors.white24, size: 48),
             const SizedBox(height: 20),
             Text(
-              'Bağlantı hatası',
+              AppL10n.connectionError,
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontSize: 18,
@@ -1220,7 +1770,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Eşleşmeler yüklenemedi. Tekrar deneyin.',
+              AppL10n.matchesFailedToLoad,
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13),
             ),
@@ -1236,7 +1786,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
-                  'Tekrar Dene',
+                  AppL10n.tryAgain,
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -1246,6 +1796,52 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ============ TYPING DOTS ANIMATION ============
+class _TypingDots extends StatefulWidget {
+  const _TypingDots();
+  @override
+  State<_TypingDots> createState() => _TypingDotsState();
+}
+
+class _TypingDotsState extends State<_TypingDots> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  int _step = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600))
+      ..addStatusListener((s) {
+        if (s == AnimationStatus.completed) {
+          if (mounted) setState(() => _step = (_step + 1) % 4);
+          _ctrl.reset();
+          _ctrl.forward();
+        }
+      });
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dots = '.' * _step;
+    return Text(
+      dots.isEmpty ? '   ' : dots.padRight(3),
+      style: GoogleFonts.poppins(
+        color: AppColors.primary,
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 2,
       ),
     );
   }

@@ -9,6 +9,7 @@ import '../../home/screens/home_screen.dart';
 import 'create_profile_screen.dart';
 import 'forgot_password_screen.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../core/language/app_l10n.dart';
 
 // 🎨 TEMA
 const Color kBgDark = Color(0xFF06060A);
@@ -67,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen>
       final userId = user?.id;
 
       if (userId == null) {
-        throw 'Giriş yapıldı ama kullanıcı bilgisi alınamadı.';
+        throw AppL10n.userInfoError;
       }
 
       final profileData = await Supabase.instance.client
@@ -105,8 +106,8 @@ class _LoginScreenState extends State<LoginScreen>
           SnackBar(
             content: Text(
               e.message.contains("Email not confirmed")
-                  ? "Lütfen e-posta adresinizi onaylayın."
-                  : "Giriş Hatası: ${e.message}",
+                  ? AppL10n.emailNotConfirmed
+                  : "${AppL10n.error}: ${e.message}",
             ),
             backgroundColor: Colors.redAccent,
           ),
@@ -116,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text("Bir hata oluştu: $e"),
+              content: Text("${AppL10n.error}: $e"),
               backgroundColor: Colors.redAccent),
         );
       }
@@ -140,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen>
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24)),
               title: Text(
-                "Güvenlik Doğrulaması",
+                AppL10n.securityVerification,
                 style: GoogleFonts.spaceGrotesk(
                     color: Colors.white, fontWeight: FontWeight.bold),
               ),
@@ -148,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "Hesabınızda 2FA aktif. ($phone) numarasına gelen 6 haneli kodu giriniz.",
+                    AppL10n.twoFAPrompt(phone),
                     style:
                         GoogleFonts.inter(color: Colors.white70, fontSize: 13),
                   ),
@@ -183,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen>
               actions: [
                 TextButton(
                   onPressed: isVerifying ? null : () => Navigator.pop(context),
-                  child: Text("İptal",
+                  child: Text(AppL10n.cancel,
                       style: GoogleFonts.inter(color: Colors.white54)),
                 ),
                 GestureDetector(
@@ -215,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen>
                             setStateDialog(() => isVerifying = false);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                  content: Text("Hatalı kod: $e"),
+                                  content: Text("${AppL10n.error}: $e"),
                                   backgroundColor: Colors.red),
                             );
                           }
@@ -234,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen>
                             height: 20,
                             child: CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2))
-                        : Text("Doğrula",
+                        : Text(AppL10n.verifyLabel,
                             style: GoogleFonts.inter(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600)),
@@ -318,7 +319,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                           // Header
                           Text(
-                            "Tekrar\nHoş Geldin",
+                            AppL10n.welcomeBack,
                             style: GoogleFonts.spaceGrotesk(
                               fontSize: 38,
                               fontWeight: FontWeight.w700,
@@ -328,7 +329,7 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            "Kaldığın yerden devam et.",
+                            AppL10n.continueWhereLeftOff,
                             style: GoogleFonts.inter(
                                 fontSize: 15,
                                 color: Colors.white.withValues(alpha: (0.5))),
@@ -339,11 +340,11 @@ class _LoginScreenState extends State<LoginScreen>
                           // E-posta
                           _buildTextField(
                             controller: _emailController,
-                            label: "E-posta Adresi",
+                            label: AppL10n.emailAddress,
                             icon: FontAwesomeIcons.envelope,
                             validator: (value) =>
                                 (value == null || value.isEmpty)
-                                    ? 'E-posta gerekli'
+                                    ? AppL10n.emailRequired
                                     : null,
                           ),
                           const SizedBox(height: 18),
@@ -351,12 +352,12 @@ class _LoginScreenState extends State<LoginScreen>
                           // Şifre
                           _buildTextField(
                             controller: _passwordController,
-                            label: "Şifre",
+                            label: AppL10n.password,
                             icon: FontAwesomeIcons.lock,
                             isPassword: true,
                             validator: (value) =>
                                 (value == null || value.isEmpty)
-                                    ? 'Şifre gerekli'
+                                    ? AppL10n.passwordRequired
                                     : null,
                           ),
 
@@ -372,7 +373,7 @@ class _LoginScreenState extends State<LoginScreen>
                                             const ForgotPasswordScreen()));
                               },
                               child: Text(
-                                "Şifreni mi unuttun?",
+                                AppL10n.forgotPassword,
                                 style: GoogleFonts.inter(
                                     color: kAccentPurple,
                                     fontWeight: FontWeight.w500),
@@ -405,7 +406,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     ? const CircularProgressIndicator(
                                         color: Colors.white, strokeWidth: 2.5)
                                     : Text(
-                                        "Giriş Yap",
+                                        AppL10n.signIn,
                                         style: GoogleFonts.inter(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,

@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:kinnect/features/chat/widgets/share_post_modal.dart';
 
 import 'package:kinnect/core/theme/app_colors.dart';
 import 'package:kinnect/shared/widgets/fuel_button.dart';
@@ -13,6 +16,7 @@ import 'package:kinnect/shared/widgets/image_carousel.dart';
 import 'package:kinnect/shared/widgets/double_tap_overlay.dart';
 import 'package:kinnect/features/profile/screens/profile_screen.dart';
 import 'package:kinnect/shared/widgets/kinnect_image.dart';
+import 'package:kinnect/core/language/app_l10n.dart';
 
 // 🎥 Post detail video player
 class _PostVideoPlayerDetail extends StatefulWidget {
@@ -29,8 +33,12 @@ class _PostVideoPlayerDetailState extends State<_PostVideoPlayerDetail> {
   VideoPlayerController? _controller;
   bool _isInitializing = false;
   bool _isPlaying = false;
+  bool _hasError = false;
 
   Future<void> _initAndPlay() async {
+    if (_hasError) {
+      setState(() => _hasError = false);
+    }
     if (_controller != null) {
       if (_controller!.value.isPlaying) {
         await _controller!.pause();
@@ -57,7 +65,7 @@ class _PostVideoPlayerDetailState extends State<_PostVideoPlayerDetail> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _isInitializing = false);
+      if (mounted) setState(() { _isInitializing = false; _hasError = true; });
     }
   }
 
@@ -100,7 +108,25 @@ class _PostVideoPlayerDetailState extends State<_PostVideoPlayerDetail> {
                 )
               else
                 Container(color: Colors.grey.shade900),
-              if (!_isPlaying)
+              if (_hasError)
+                Container(
+                  color: Colors.black87,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.white54, size: 32),
+                      const SizedBox(height: 8),
+                      Text(AppL10n.videoLoadFailed,
+                          style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                      TextButton(
+                        onPressed: _initAndPlay,
+                        child: Text(AppL10n.retryLabel,
+                            style: const TextStyle(color: Colors.white70)),
+                      ),
+                    ],
+                  ),
+                )
+              else if (!_isPlaying)
                 Container(
                   width: 56,
                   height: 56,
@@ -217,11 +243,96 @@ class _PostDetailCardState extends State<PostDetailCard> {
     super.dispose();
   }
 
+  Widget _buildYouTubePreview(String videoId) {
+    final thumbUrl = 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+    return GestureDetector(
+      onTap: () => _openYouTube(videoId),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white12),
+          color: Colors.white.withOpacity(0.05),
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.network(
+                    thumbUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey.shade900,
+                      child: const Icon(Icons.videocam, color: Colors.white38, size: 40),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF0000),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.play_arrow, color: Colors.white, size: 32),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+              child: Row(
+                children: [
+                  const FaIcon(FontAwesomeIcons.youtube, color: Color(0xFFFF0000), size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    AppL10n.watchOnYoutube,
+                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String? _extractYouTubeId(String text) {
+    final patterns = [
+      RegExp(r'youtu\.be/([A-Za-z0-9_\-]{11})'),
+      RegExp(r'youtube\.com/watch\?v=([A-Za-z0-9_\-]{11})'),
+      RegExp(r'youtube\.com/shorts/([A-Za-z0-9_\-]{11})'),
+    ];
+    for (final re in patterns) {
+      final m = re.firstMatch(text);
+      if (m != null) return m.group(1);
+    }
+    return null;
+  }
+
+  Future<void> _openYouTube(String videoId) async {
+    final uri = Uri.parse('https://www.youtube.com/watch?v=$videoId');
+    if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  void _sharePost(BuildContext ctx) {
+    showModalBottomSheet(
+      context: ctx,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => SharePostModal(post: widget.post),
+    );
+  }
+
   void _showExpiredMessage() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          "Bu gönderinin alev süresi doldu! 🔥",
+          AppL10n.fuelExpired,
           style: GoogleFonts.poppins(color: Colors.white),
         ),
         backgroundColor: Colors.grey.shade800,
@@ -256,7 +367,9 @@ class _PostDetailCardState extends State<PostDetailCard> {
     final text = widget.post["content"] ?? "";
     final image = widget.post["image_url"];
     final date = DateTime.tryParse(widget.post["created_at"] ?? "");
-    final dateStr = date != null ? "${date.day}/${date.month}" : "";
+    final dateStr = date != null
+        ? DateFormat(date.year == DateTime.now().year ? 'd MMM' : 'd MMM y', 'tr').format(date.toLocal())
+        : "";
     final location = widget.post['location'];
 
     final isMyPost = widget.post["user_id"] == widget.myId;
@@ -331,7 +444,7 @@ class _PostDetailCardState extends State<PostDetailCard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(profile["full_name"] ?? "İsimsiz",
+                            Text(profile["full_name"] ?? AppL10n.unnamed,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.poppins(
                                     color: Colors.white,
@@ -373,47 +486,36 @@ class _PostDetailCardState extends State<PostDetailCard> {
                       ),
 
                       // SAĞ KISIM
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Row(
-                            children: [
-                              // GÖRÜNÜRLÜK İKONU (Dünya veya Grup)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 6),
-                                child: Icon(
-                                  isPublicPost
-                                      ? FontAwesomeIcons.earthAmericas
-                                      : FontAwesomeIcons.userGroup,
-                                  color: Colors.white24,
-                                  size: 12,
-                                ),
-                              ),
-                              if (widget.isEdited)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 4),
-                                  child: Text(
-                                    "(düzenlendi)",
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white38,
-                                      fontSize: 10,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ),
-                              Text(dateStr,
-                                  style: GoogleFonts.poppins(
-                                      color: Colors.grey.shade400,
-                                      fontSize: 12)),
-                            ],
+                          Icon(
+                            isPublicPost
+                                ? FontAwesomeIcons.earthAmericas
+                                : FontAwesomeIcons.userGroup,
+                            color: Colors.white24,
+                            size: 12,
                           ),
-                          Container(
-                            width: 28,
-                            height: 28,
-                            margin: const EdgeInsets.only(top: 4),
-                            alignment: Alignment.centerRight,
-                            child: PopupMenuButton<String>(
+                          const SizedBox(width: 6),
+                          if (widget.isEdited) ...[
+                            Text(
+                              AppL10n.edited,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white38,
+                                fontSize: 10,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                          ],
+                          Text(dateStr,
+                              style: GoogleFonts.poppins(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 12)),
+                          PopupMenuButton<String>(
                               padding: EdgeInsets.zero,
+                              iconSize: 20,
                               icon: const Icon(Icons.more_horiz,
                                   color: Colors.white70, size: 20),
                               color: const Color(0xFF2C2C2C),
@@ -435,7 +537,7 @@ class _PostDetailCardState extends State<PostDetailCard> {
                                               color: AppColors.primary,
                                               size: 18),
                                           const SizedBox(width: 10),
-                                          Text("Düzenle",
+                                          Text(AppL10n.edit,
                                               style: GoogleFonts.poppins(
                                                   color: Colors.white,
                                                   fontSize: 13)),
@@ -450,7 +552,7 @@ class _PostDetailCardState extends State<PostDetailCard> {
                                               color: AppColors.accentRedAccent,
                                               size: 18),
                                           const SizedBox(width: 10),
-                                          Text("Sil",
+                                          Text(AppL10n.delete,
                                               style: GoogleFonts.poppins(
                                                   color:
                                                   AppColors.accentRedAccent,
@@ -468,7 +570,7 @@ class _PostDetailCardState extends State<PostDetailCard> {
                                           const Icon(Icons.flag_outlined,
                                               color: Colors.white70, size: 18),
                                           const SizedBox(width: 10),
-                                          Text("Şikayet Et",
+                                          Text(AppL10n.report,
                                               style: GoogleFonts.poppins(
                                                   color: Colors.white,
                                                   fontSize: 13)),
@@ -479,7 +581,6 @@ class _PostDetailCardState extends State<PostDetailCard> {
                                 }
                               },
                             ),
-                          ),
                         ],
                       ),
                     ],
@@ -491,10 +592,22 @@ class _PostDetailCardState extends State<PostDetailCard> {
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(text,
+                    child: Text(
+                        _extractYouTubeId(text) != null
+                            ? text.replaceAll(RegExp(r'https?://\S+'), '').trim()
+                            : text,
                         style: GoogleFonts.poppins(
                             color: Colors.white.withOpacity(0.95),
                             fontSize: 15)),
+                  ),
+                ],
+
+                // 🎬 YouTube önizleme
+                if (_extractYouTubeId(text) != null) ...[
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: _buildYouTubePreview(_extractYouTubeId(text)!),
                   ),
                 ],
 
@@ -716,6 +829,24 @@ class _PostDetailCardState extends State<PostDetailCard> {
                           ),
                         ),
                       ),
+                      // 4. Paylaş Butonu
+                      Padding(
+                        padding: EdgeInsets.only(
+                            left: 8, top: widget.isAlive ? 32.0 : 38.0),
+                        child: GestureDetector(
+                          onTap: () => _sharePost(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(FontAwesomeIcons.paperPlane,
+                                size: 16, color: Colors.white38),
+                          ),
+                        ),
+                      ),
                     ],
                   )
                       : Row(
@@ -902,6 +1033,20 @@ class _PostDetailCardState extends State<PostDetailCard> {
                               ),
                             ],
                           ),
+                        ),
+                      ),
+                      // 5. Paylaş Butonu
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => _sharePost(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(FontAwesomeIcons.paperPlane,
+                              size: 16, color: Colors.white38),
                         ),
                       ),
                     ],

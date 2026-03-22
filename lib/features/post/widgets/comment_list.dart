@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:kinnect/shared/widgets/shimmer/comment_shimmer.dart';
 import 'comment_item.dart';
+import '../../../core/language/app_l10n.dart';
 
 /// Yorum listesini gösteren widget
 /// Shimmer loading, boş durum ve yorum listesini yönetir
@@ -58,7 +59,7 @@ class CommentList extends StatelessWidget {
         padding: const EdgeInsets.all(40),
         child: Center(
           child: Text(
-            isExploreMode ? 'İlk odunu sen at 🔥' : 'İlk yorumu sen yap!',
+            isExploreMode ? AppL10n.firstFuel : AppL10n.firstComment,
             style: GoogleFonts.poppins(color: Colors.white54),
           ),
         ),

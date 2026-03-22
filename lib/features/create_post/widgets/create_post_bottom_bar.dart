@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/language/app_l10n.dart';
 import '../../../core/theme/app_colors.dart';
 
 class CreatePostBottomBar extends StatefulWidget {
@@ -128,7 +129,7 @@ class _CreatePostBottomBarState extends State<CreatePostBottomBar> {
                                   height: 20,
                                   child: CircularProgressIndicator(
                                       color: Colors.white, strokeWidth: 2))
-                              : Text('Paylaş',
+                              : Text(AppL10n.share,
                                   style: GoogleFonts.poppins(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,

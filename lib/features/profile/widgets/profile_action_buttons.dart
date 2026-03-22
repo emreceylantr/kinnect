@@ -35,25 +35,7 @@ class ProfileActionButtons extends StatelessWidget {
   }
 
   Widget _buildEditButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 45,
-      child: ElevatedButton(
-        onPressed: onEditProfile,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.bgCardLight,
-          foregroundColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 0,
-          side: const BorderSide(color: Colors.white12),
-        ),
-        child: Text(
-          'Profili Düzenle',
-          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildOtherProfileButtons() {

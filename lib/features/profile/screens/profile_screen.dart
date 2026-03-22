@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart'; // 🎥 LIVE VIDEO OYNATICI
 
 // --- SERVİSLER ---
+import '../../../core/language/app_l10n.dart';
 import '../../../data/services/feed_service.dart';
 import '../../../data/services/chat_service.dart';
 import '../../../data/services/safety_service.dart';
@@ -18,6 +19,7 @@ import '../../../shared/widgets/music_player_card.dart';
 import '../../../shared/widgets/shimmer/profile_header_shimmer.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/profile_header.dart';
+import '../../settings/screens/settings_screen.dart';
 import '../../home/widgets/post_card.dart';
 import '../../../data/services/spotify_service.dart';
 import '../../../data/services/apple_music_service.dart';
@@ -188,8 +190,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _spotifySyncing = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(success
-            ? 'Spotify müzik geçmişin eşleşmelere eklendi!'
-            : 'Spotify sync başarısız, tekrar dene.'),
+            ? AppL10n.spotifySyncSuccess
+            : AppL10n.spotifySyncFail),
         backgroundColor: success ? const Color(0xFF1DB954) : Colors.red,
       ));
     }
@@ -206,8 +208,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(success
-            ? 'Apple Music geçmişin eşleşmelere eklendi!'
-            : 'Apple Music izni gerekli veya kütüphane boş.'),
+            ? AppL10n.appleMusicSyncSuccess
+            : AppL10n.appleMusicSyncFail),
         backgroundColor: success ? const Color(0xFFFC3C44) : Colors.orange,
       ));
     }
@@ -238,23 +240,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E2E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Çıkış Yap',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          AppL10n.logout,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        content: const Text(
-          'Çıkış yapmak istediğinizden emin misiniz?',
-          style: TextStyle(color: Colors.white70),
+        content: Text(
+          AppL10n.logoutConfirm,
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('İptal', style: TextStyle(color: Colors.grey)),
+            child: Text(AppL10n.cancel, style: const TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Çıkış Yap',
-                style: TextStyle(color: Colors.redAccent)),
+            child: Text(AppL10n.logout,
+                style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -273,7 +275,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Hata: $e')));
+            .showSnackBar(SnackBar(content: Text('${AppL10n.error}: $e')));
       }
     }
   }
@@ -363,7 +365,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Kapak yükleniyor...')));
+          .showSnackBar(SnackBar(content: Text(AppL10n.coverUploading)));
       final fileExt = image.path.split('.').last;
       final fileName =
           'cover_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
@@ -385,11 +387,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _profileData?['cover_url'] = imageUrl;
       });
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Güncellendi!')));
+          .showSnackBar(SnackBar(content: Text(AppL10n.coverUpdated)));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Hata: $e')));
+            .showSnackBar(SnackBar(content: Text('${AppL10n.error}: $e')));
       }
     }
   }
@@ -406,8 +408,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: title,
                   type: type))).then((_) => _fetchStats());
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Listeyi görmek için takip etmelisin.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppL10n.followListPrivate)));
     }
   }
 
@@ -457,7 +459,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _startMessage() async {
     if (_profileData == null) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Veriler yükleniyor...')));
+          .showSnackBar(SnackBar(content: Text(AppL10n.dataLoading)));
       return;
     }
     try {
@@ -470,7 +472,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ChatScreen(roomId: roomId, otherUser: _profileData!)));
     } catch (e) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Hata: $e')));
+          .showSnackBar(SnackBar(content: Text('${AppL10n.error}: $e')));
     }
   }
 
@@ -481,18 +483,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) {
         final reasons = [
-          "Spam veya Yanıltıcı",
-          "Taklit veya Sahte Hesap",
-          "Nefret Söylemi",
-          "Şiddet veya Tehlikeli",
-          "Zorbalık veya Taciz",
-          "Diğer"
+          AppL10n.reportReasonSpam,
+          AppL10n.reportReasonImpersonation,
+          AppL10n.reportReasonHateSpeech,
+          AppL10n.reportReasonViolence,
+          AppL10n.reportReasonBullying,
+          AppL10n.reportReasonOther,
         ];
         return AlertDialog(
           backgroundColor: AppColors.bgCard,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text("Kullanıcıyı Şikayet Et",
+          title: Text(AppL10n.reportUser,
               style: GoogleFonts.poppins(
                   color: Colors.white, fontWeight: FontWeight.bold)),
           content: SizedBox(
@@ -514,7 +516,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text("İptal",
+                child: Text(AppL10n.cancel,
                     style: GoogleFonts.poppins(color: Colors.grey)))
           ],
         );
@@ -528,8 +530,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _safetyService.reportContent(
           targetId: targetId, type: type, reason: reason);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text("Şikayet edildi."), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(AppL10n.reported), backgroundColor: Colors.green));
       }
     } catch (_) {}
   }
@@ -540,18 +542,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bgCard,
-        title: Text(isBlocking ? "Engelle" : "Engeli Kaldır",
+        title: Text(isBlocking ? AppL10n.blockUser : AppL10n.unblock,
             style: GoogleFonts.poppins(
                 color: Colors.white, fontWeight: FontWeight.bold)),
         content: Text(
             isBlocking
-                ? "Bu kullanıcıyı engellemek istediğine emin misin?"
-                : "Engeli kaldırmak istiyor musun?",
+                ? AppL10n.blockConfirm
+                : AppL10n.unblockConfirm,
             style: GoogleFonts.poppins(color: Colors.white70)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text("İptal",
+              child: Text(AppL10n.cancel,
                   style: GoogleFonts.poppins(color: Colors.grey))),
           TextButton(
             onPressed: () async {
@@ -577,7 +579,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
               }
             },
-            child: Text(isBlocking ? "Engelle" : "Kaldır",
+            child: Text(isBlocking ? AppL10n.block : AppL10n.unblock,
                 style: GoogleFonts.poppins(
                     color: isBlocking ? Colors.redAccent : Colors.greenAccent,
                     fontWeight: FontWeight.bold)),
@@ -606,7 +608,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           leading: widget.showBackButton
               ? const BackButton(color: Colors.white)
               : null,
-          title: Text("Kullanıcı Engellendi",
+          title: Text(AppL10n.userBlocked,
               style: GoogleFonts.poppins(color: Colors.white, fontSize: 16)),
           centerTitle: true,
           actions: [
@@ -619,7 +621,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               itemBuilder: (ctx) => [
                 PopupMenuItem(
                     value: 'unblock',
-                    child: Text("Engeli Kaldır",
+                    child: Text(AppL10n.unblock,
                         style: GoogleFonts.poppins(color: Colors.white)))
               ],
             )
@@ -631,7 +633,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               const Icon(Icons.block, size: 80, color: Colors.white24),
               const SizedBox(height: 20),
-              Text("Bu kullanıcıyı engelledin.",
+              Text(AppL10n.youBlockedThisUser,
                   style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 18,
@@ -643,7 +645,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     backgroundColor: AppColors.bgCardLight,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20))),
-                child: Text("Engeli Kaldır",
+                child: Text(AppL10n.unblock,
                     style: GoogleFonts.poppins(color: Colors.white)),
               )
             ],
@@ -690,6 +692,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       videoController: _videoController,
                       onUpdateCoverPhoto: _updateCoverPhoto,
                       onLogout: _logout,
+                      onSettings: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SettingsScreen(
+                            profileData: _profileData,
+                          ),
+                        ),
+                      ),
                       onBack: () => Navigator.pop(context),
                       onMenuAction: (val) {
                         if (val == 'report') _showReportDialog();
@@ -738,20 +748,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const Icon(Icons.lock_outline,
                                   size: 40, color: Colors.white24),
                               const SizedBox(height: 10),
-                              Text("Bu hesap gizli.",
+                              Text(AppL10n.thisAccountIsPrivate,
                                   style: GoogleFonts.poppins(
                                       color: Colors.white24))
                             ]))
                         : (visiblePosts.isEmpty
                             ? Padding(
-                                padding: const EdgeInsets.only(top: 40),
+                                padding: const EdgeInsets.only(top: 48),
                                 child: Column(children: [
-                                  const Icon(Icons.feed_outlined,
-                                      size: 40, color: Colors.white24),
-                                  const SizedBox(height: 10),
-                                  Text("Henüz gönderi yok.",
-                                      style: GoogleFonts.poppins(
-                                          color: Colors.white24))
+                                  Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white.withOpacity(0.04),
+                                      border: Border.all(
+                                          color: Colors.white12, width: 1),
+                                    ),
+                                    child: const Icon(Icons.photo_camera_outlined,
+                                        size: 36, color: Colors.white24),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    isMe
+                                        ? AppL10n.noSharesYet
+                                        : AppL10n.noPostsYet,
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.white54,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    isMe
+                                        ? AppL10n.shareFirstPost
+                                        : AppL10n.userHasNoPostsYet,
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.white24, fontSize: 13),
+                                  ),
                                 ]))
                             : ListView.separated(
                                 shrinkWrap: true,
@@ -802,7 +836,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Expanded(
               child: _appleMusicSyncing
                   ? Text(
-                      'Apple Music senkronize ediliyor...',
+                      AppL10n.appleMusicSyncing,
                       style: GoogleFonts.poppins(
                           color: appleRed, fontSize: 13, fontWeight: FontWeight.w500),
                     )
@@ -811,8 +845,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Text(
                           _appleMusicConnected
-                              ? 'Apple Music — Eşleşmeleri güncelle'
-                              : 'Apple Music\'i Bağla',
+                              ? AppL10n.appleMusicConnectedLabel
+                              : AppL10n.appleMusicConnect,
                           style: GoogleFonts.poppins(
                             color: _appleMusicConnected
                                 ? appleRed
@@ -823,7 +857,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         if (!_appleMusicConnected)
                           Text(
-                            'Dinleme alışkanlıklarına göre eşleşmeler bul',
+                            AppL10n.appleMusicSubtitle,
                             style: GoogleFonts.poppins(
                                 color: Colors.white38, fontSize: 11),
                           ),
@@ -868,8 +902,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Expanded(
                 child: Text(
                   _spotifySyncing
-                      ? 'Müzik geçmişi senkronize ediliyor...'
-                      : 'Spotify bağlı — Eşleşmeleri güncelle',
+                      ? AppL10n.spotifySyncing
+                      : AppL10n.spotifyConnected,
                   style: GoogleFonts.poppins(
                     color: const Color(0xFF1DB954),
                     fontSize: 13,
@@ -913,7 +947,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Spotify\'ı Bağla',
+                    AppL10n.spotifyConnect,
                     style: GoogleFonts.poppins(
                       color: Colors.white70,
                       fontSize: 13,
@@ -921,7 +955,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   Text(
-                    'Müzik zevkine göre daha iyi eşleşmeler bul',
+                    AppL10n.spotifySubtitle,
                     style: GoogleFonts.poppins(
                       color: Colors.white38,
                       fontSize: 11,

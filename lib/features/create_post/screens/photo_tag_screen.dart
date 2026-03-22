@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/language/app_l10n.dart';
 
 class PhotoTagScreen extends StatefulWidget {
   final File? imageFile;
@@ -81,7 +82,7 @@ class _PhotoTagScreenState extends State<PhotoTagScreen> {
     // Aynı kullanıcı zaten etiketli mi kontrol et
     if (tags.any((t) => t['user']['id'] == user['id'])) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${user['username']} zaten etiketli!')),
+        SnackBar(content: Text(AppL10n.alreadyTagged(user['username'] ?? ''))),
       );
       return;
     }
@@ -143,7 +144,7 @@ class _PhotoTagScreenState extends State<PhotoTagScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Kişi Etiketle',
+                        AppL10n.tagPerson,
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 18,
@@ -167,7 +168,7 @@ class _PhotoTagScreenState extends State<PhotoTagScreen> {
                     autofocus: true,
                     style: GoogleFonts.poppins(color: Colors.white),
                     decoration: InputDecoration(
-                      hintText: 'Kullanıcı ara...',
+                      hintText: AppL10n.searchUsers,
                       hintStyle: GoogleFonts.poppins(color: Colors.white38),
                       prefixIcon:
                           const Icon(Icons.search, color: Colors.white38),
@@ -196,8 +197,8 @@ class _PhotoTagScreenState extends State<PhotoTagScreen> {
                             ? Center(
                                 child: Text(
                                   _searchController.text.isEmpty
-                                      ? 'Aramaya başla'
-                                      : 'Sonuç bulunamadı',
+                                      ? AppL10n.startSearching
+                                      : AppL10n.noResults,
                                   style: GoogleFonts.poppins(
                                       color: Colors.white38),
                                 ),
@@ -261,7 +262,7 @@ class _PhotoTagScreenState extends State<PhotoTagScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Kişileri Etiketle',
+          AppL10n.tagPeople,
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -274,7 +275,7 @@ class _PhotoTagScreenState extends State<PhotoTagScreen> {
               Navigator.pop(context, tags);
             },
             child: Text(
-              tags.isEmpty ? 'Atla' : 'Devam (${tags.length})',
+              AppL10n.skipOrContinue(tags.length),
               style: GoogleFonts.poppins(
                 color: const Color(0xFF6C63FF),
                 fontWeight: FontWeight.bold,
@@ -289,7 +290,7 @@ class _PhotoTagScreenState extends State<PhotoTagScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              'Fotoğrafa dokunarak kişileri etiketle',
+              AppL10n.tapPhotoToTag,
               style: GoogleFonts.poppins(color: Colors.white54),
             ),
           ),
@@ -415,7 +416,7 @@ class _PhotoTagScreenState extends State<PhotoTagScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Etiketlenen (silmek için dokun):',
+                    AppL10n.taggedTapToRemove,
                     style: GoogleFonts.poppins(
                       color: Colors.white54,
                       fontSize: 12,

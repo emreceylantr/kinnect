@@ -10,9 +10,12 @@ const corsHeaders = {
 interface PostSummary {
   id: string
   image_urls: string[] | null
+  video_url: string | null
+  video_frame_urls: string[] | null
   content: string | null
   spotify_track_name: string | null
   spotify_artist_name: string | null
+  spotify_album_image: string | null
   location: string | null
 }
 
@@ -27,9 +30,12 @@ function toPostSummary(p: any): PostSummary {
   return {
     id: p.id,
     image_urls: p.image_urls ?? null,
+    video_url: p.video_url ?? null,
+    video_frame_urls: p.video_frame_urls ?? null,
     content: p.content ? (p.content as string).slice(0, 120) : null,
     spotify_track_name: p.spotify_track_name ?? null,
     spotify_artist_name: p.spotify_artist_name ?? null,
+    spotify_album_image: p.spotify_album_image ?? null,
     location: p.location ?? null,
   }
 }
@@ -82,7 +88,9 @@ function findMatchReasons(
   myPosts: any[],
   otherInterests: string[],
   otherPosts: any[],
+  lang: string = 'tr',
 ): ReasonWithSource[] {
+  const isEn = lang === 'en'
   const reasons: ReasonWithSource[] = []
 
   // 1. Ortak Spotify sanatçı (post bazlı)
@@ -93,7 +101,7 @@ function findMatchReasons(
     if (post.spotify_artist_name && myArtistSet.has(post.spotify_artist_name.toLowerCase())) {
       const artistLower = post.spotify_artist_name.toLowerCase()
       reasons.push({
-        reason: `Her ikiniz de ${post.spotify_artist_name} dinliyorsunuz 🎵`,
+        reason: isEn ? `You both listen to ${post.spotify_artist_name} 🎵` : `Her ikiniz de ${post.spotify_artist_name} dinliyorsunuz 🎵`,
         my_posts: myPosts.filter(p => p.spotify_artist_name?.toLowerCase() === artistLower).slice(0, 4).map(toPostSummary),
         other_posts: otherPosts.filter(p => p.spotify_artist_name?.toLowerCase() === artistLower).slice(0, 4).map(toPostSummary),
       })
@@ -109,7 +117,7 @@ function findMatchReasons(
     if (post.location && myLocSet.has(post.location.toLowerCase().trim())) {
       const locLower = post.location.toLowerCase().trim()
       reasons.push({
-        reason: `İkiniz de ${post.location}'dan paylaşım yaptınız 📍`,
+        reason: isEn ? `You both posted from ${post.location} 📍` : `İkiniz de ${post.location}'dan paylaşım yaptınız 📍`,
         my_posts: myPosts.filter(p => p.location?.toLowerCase().trim() === locLower).slice(0, 4).map(toPostSummary),
         other_posts: otherPosts.filter(p => p.location?.toLowerCase().trim() === locLower).slice(0, 4).map(toPostSummary),
       })
@@ -126,7 +134,7 @@ function findMatchReasons(
       if (post.spotify_track_name && myTrackSet.has(post.spotify_track_name.toLowerCase())) {
         const trackLower = post.spotify_track_name.toLowerCase()
         reasons.push({
-          reason: `"${post.spotify_track_name}" şarkısını ikiniz de paylaştınız 🎶`,
+          reason: isEn ? `You both shared "${post.spotify_track_name}" 🎶` : `"${post.spotify_track_name}" şarkısını ikiniz de paylaştınız 🎶`,
           my_posts: myPosts.filter(p => p.spotify_track_name?.toLowerCase() === trackLower).slice(0, 4).map(toPostSummary),
           other_posts: otherPosts.filter(p => p.spotify_track_name?.toLowerCase() === trackLower).slice(0, 4).map(toPostSummary),
         })
@@ -138,14 +146,14 @@ function findMatchReasons(
   // 4. Post içeriğindeki konu eşleşmeleri
   if (reasons.length < 3) {
     const topicGroups = [
-      { keywords: ['valorant', 'cs2', 'pubg', 'lol', 'fortnite', 'gaming', 'maplestory', 'dota'], label: 'Oyun tutkunusunuz 🎮' },
-      { keywords: ['istanbul', 'kadıköy', 'beşiktaş', 'taksim', 'bağcılar'], label: 'İstanbul\'u seviyorsunuz 🏙️' },
-      { keywords: ['ankara', 'izmir', 'bursa', 'antalya', 'trabzon'], label: 'Aynı şehri paylaşıyorsunuz 📌' },
-      { keywords: ['kafe', 'kahve', 'coffee', 'cafe', 'espresso', 'latte'], label: 'Kafe kültürünü seviyorsunuz ☕' },
-      { keywords: ['seyahat', 'tatil', 'yolculuk', 'gezi', 'keşif'], label: 'İkiniz de seyahat tutkunusunuz ✈️' },
-      { keywords: ['konser', 'festival', 'canlı müzik'], label: 'Müzik etkinliklerine gidiyorsunuz 🎤' },
-      { keywords: ['doğa', 'kamp', 'dağ', 'orman', 'yürüyüş', 'hiking'], label: 'Doğa seversiniz 🌿' },
-      { keywords: ['spor', 'futbol', 'basketbol', 'voleybol', 'yüzme'], label: 'Spora ilgi duyuyorsunuz ⚽' },
+      { keywords: ['valorant', 'cs2', 'pubg', 'lol', 'fortnite', 'gaming', 'maplestory', 'dota'], label: isEn ? 'You are both gaming enthusiasts 🎮' : 'Oyun tutkunusunuz 🎮' },
+      { keywords: ['istanbul', 'kadıköy', 'beşiktaş', 'taksim', 'bağcılar'], label: isEn ? 'You both love Istanbul 🏙️' : 'İstanbul\'u seviyorsunuz 🏙️' },
+      { keywords: ['ankara', 'izmir', 'bursa', 'antalya', 'trabzon'], label: isEn ? 'You share the same city 📌' : 'Aynı şehri paylaşıyorsunuz 📌' },
+      { keywords: ['kafe', 'kahve', 'coffee', 'cafe', 'espresso', 'latte'], label: isEn ? 'You both love café culture ☕' : 'Kafe kültürünü seviyorsunuz ☕' },
+      { keywords: ['seyahat', 'tatil', 'yolculuk', 'gezi', 'keşif'], label: isEn ? 'You are both travel enthusiasts ✈️' : 'İkiniz de seyahat tutkunusunuz ✈️' },
+      { keywords: ['konser', 'festival', 'canlı müzik'], label: isEn ? 'You both go to music events 🎤' : 'Müzik etkinliklerine gidiyorsunuz 🎤' },
+      { keywords: ['doğa', 'kamp', 'dağ', 'orman', 'yürüyüş', 'hiking'], label: isEn ? 'You both love nature 🌿' : 'Doğa seversiniz 🌿' },
+      { keywords: ['spor', 'futbol', 'basketbol', 'voleybol', 'yüzme'], label: isEn ? 'You are both into sports ⚽' : 'Spora ilgi duyuyorsunuz ⚽' },
     ]
 
     for (const group of topicGroups) {
@@ -163,17 +171,23 @@ function findMatchReasons(
   }
 
   // 5. Ortak ilgi alanları (fallback)
+  const musicKeywords = ['müzik', 'music', 'şarkı', 'konser', 'festival', 'playlist', 'albüm', 'müzisyen']
   const commonInterests = findCommonInterests(myInterests, otherInterests)
   for (const interest of commonInterests) {
     if (reasons.length >= 3) break
-    // İlgi alanı bazlı - içerikte geçen postları ara
     const interestLower = interest.toLowerCase()
-    const myMatchPosts = myPosts.filter(p => (p.content || '').toLowerCase().includes(interestLower)).slice(0, 4).map(toPostSummary)
-    const otherMatchPosts = otherPosts.filter(p => (p.content || '').toLowerCase().includes(interestLower)).slice(0, 4).map(toPostSummary)
+    const isMusicInterest = musicKeywords.some(k => interestLower.includes(k))
+    let myMatchPosts = myPosts.filter(p => (p.content || '').toLowerCase().includes(interestLower)).slice(0, 4)
+    let otherMatchPosts = otherPosts.filter(p => (p.content || '').toLowerCase().includes(interestLower)).slice(0, 4)
+    // Müzik ilgisi için Spotify postlarına da bak
+    if (isMusicInterest) {
+      if (myMatchPosts.length === 0) myMatchPosts = myPosts.filter(p => p.spotify_track_name || p.spotify_artist_name).slice(0, 4)
+      if (otherMatchPosts.length === 0) otherMatchPosts = otherPosts.filter(p => p.spotify_track_name || p.spotify_artist_name).slice(0, 4)
+    }
     reasons.push({
-      reason: `${interest} ilginiz örtüşüyor ✨`,
-      my_posts: myMatchPosts,
-      other_posts: otherMatchPosts,
+      reason: isEn ? `You share an interest in ${interest} ✨` : `${interest} ilginiz örtüşüyor ✨`,
+      my_posts: myMatchPosts.map(toPostSummary),
+      other_posts: otherMatchPosts.map(toPostSummary),
     })
   }
 
@@ -185,8 +199,9 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { user_id } = await req.json()
+    const { user_id, language } = await req.json()
     if (!user_id) throw new Error('user_id gerekli')
+    const isEn = language === 'en'
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -216,7 +231,7 @@ serve(async (req) => {
     // 2. Kendi postlarım (id dahil — engagement sorguları için)
     const { data: myPosts } = await supabase
       .from('posts')
-      .select('id, content, spotify_track_name, spotify_artist_name, location, image_urls, photo_scene_tags, mentioned_usernames')
+      .select('id, content, spotify_track_name, spotify_artist_name, spotify_album_image, location, image_urls, video_url, video_frame_urls, photo_scene_tags, mentioned_usernames')
       .eq('user_id', user_id)
       .order('created_at', { ascending: false })
       .limit(30)
@@ -237,7 +252,7 @@ serve(async (req) => {
     const otherUserIds = otherProfiles.map(p => p.user_id)
     const { data: allOtherPosts } = await supabase
       .from('posts')
-      .select('id, user_id, content, spotify_track_name, spotify_artist_name, location, image_urls, photo_scene_tags, mentioned_usernames')
+      .select('id, user_id, content, spotify_track_name, spotify_artist_name, spotify_album_image, location, image_urls, video_url, video_frame_urls, photo_scene_tags, mentioned_usernames')
       .in('user_id', otherUserIds)
       .order('created_at', { ascending: false })
 
@@ -347,6 +362,9 @@ serve(async (req) => {
       const otherPosts = postsByUser[otherProfile.user_id] || []
       const profileInfo = profileInfoMap[otherProfile.user_id]
       if (!profileInfo) continue
+
+      // En az 5 gönderi olmayan kullanıcıları eşleşmeden çıkar
+      if (otherPosts.length < 5) continue
 
       const otherId = otherProfile.user_id
 
@@ -470,7 +488,7 @@ serve(async (req) => {
         const myCommentedIds = (myCommentedPostIdsByUser[otherId] || []).slice(0, 4)
         const commentedMyIds = (commentedMyPostIdsByUser[otherId] || []).slice(0, 4)
         reasonsWithSources.push({
-          reason: 'Birbirinizin paylaşımlarına yorum yapıyorsunuz 💬',
+          reason: isEn ? 'You comment on each other\'s posts 💬' : 'Birbirinizin paylaşımlarına yorum yapıyorsunuz 💬',
           my_posts: commentedMyIds.map(id => myPostDataMap[id]).filter(Boolean).map(toPostSummary),
           other_posts: myCommentedIds.map(id => postDataMap[id]).filter(Boolean).map(toPostSummary),
         })
@@ -478,14 +496,14 @@ serve(async (req) => {
         const myLikedIds = (myLikedPostIdsByUser[otherId] || []).slice(0, 4)
         const likedMyIds = (likedMyPostIdsByUser[otherId] || []).slice(0, 4)
         reasonsWithSources.push({
-          reason: 'Birbirinizin paylaşımlarını harlıyorsunuz 🔥',
+          reason: isEn ? 'You fuel each other\'s posts 🔥' : 'Birbirinizin paylaşımlarını harlıyorsunuz 🔥',
           my_posts: likedMyIds.map(id => myPostDataMap[id]).filter(Boolean).map(toPostSummary),
           other_posts: myLikedIds.map(id => postDataMap[id]).filter(Boolean).map(toPostSummary),
         })
       } else if (highLikeRate) {
         const myLikedIds = (myLikedPostIdsByUser[otherId] || []).slice(0, 4)
         reasonsWithSources.push({
-          reason: 'Paylaşımları genellikle ilgini çekiyor 🔥',
+          reason: isEn ? 'Their posts often catch your attention 🔥' : 'Paylaşımları genellikle ilgini çekiyor 🔥',
           my_posts: [],
           other_posts: myLikedIds.map(id => postDataMap[id]).filter(Boolean).map(toPostSummary),
         })
@@ -500,7 +518,7 @@ serve(async (req) => {
           ((p.photo_scene_tags as string[]) || []).some(t => commonSceneTags.includes(t.toLowerCase()))
         ).slice(0, 4).map(toPostSummary)
         reasonsWithSources.push({
-          reason: 'Benzer ortamları paylaşıyorsunuz 📸',
+          reason: isEn ? 'You share similar environments 📸' : 'Benzer ortamları paylaşıyorsunuz 📸',
           my_posts: mySceneTagPosts,
           other_posts: otherSceneTagPosts,
         })
@@ -516,15 +534,29 @@ serve(async (req) => {
           return mentions.includes(myUsername) || (myFirstName.length >= 4 && (p.content || '').toLowerCase().includes(myFirstName))
         }).slice(0, 4).map(toPostSummary)
         reasonsWithSources.push({
-          reason: 'Birbirinizin paylaşımlarında görünüyorsunuz 👥',
+          reason: isEn ? 'You appear in each other\'s posts 👥' : 'Birbirinizin paylaşımlarında görünüyorsunuz 👥',
           my_posts: myMentionPosts,
           other_posts: otherMentionPosts,
         })
-      } else if (myMentionsOther || otherMentionsMe) {
+      } else if (myMentionsOther) {
+        const myMentionPosts = (myPosts || []).filter(p => {
+          const mentions = ((p.mentioned_usernames as string[]) || []).map(m => m.toLowerCase())
+          return mentions.includes(otherUsername) || (otherFirstName.length >= 4 && (p.content || '').toLowerCase().includes(otherFirstName))
+        }).slice(0, 4).map(toPostSummary)
         reasonsWithSources.push({
-          reason: 'Birbirinizi etiketlediniz 🔗',
-          my_posts: [],
+          reason: isEn ? 'You tagged them in a post 🔗' : 'Paylaşımında etiketlemişsin 🔗',
+          my_posts: myMentionPosts,
           other_posts: [],
+        })
+      } else if (otherMentionsMe) {
+        const otherMentionPosts = otherPosts.filter(p => {
+          const mentions = ((p.mentioned_usernames as string[]) || []).map(m => m.toLowerCase())
+          return mentions.includes(myUsername) || (myFirstName.length >= 4 && (p.content || '').toLowerCase().includes(myFirstName))
+        }).slice(0, 4).map(toPostSummary)
+        reasonsWithSources.push({
+          reason: isEn ? 'They tagged you in a post 🔗' : 'Seni paylaşımında etiketledi 🔗',
+          my_posts: [],
+          other_posts: otherMentionPosts,
         })
       }
 
@@ -537,13 +569,13 @@ serve(async (req) => {
         const myArtistPosts = (myPosts || []).filter(p => p.spotify_artist_name?.toLowerCase() === artistLower).slice(0, 4).map(toPostSummary)
         const otherArtistPosts = otherPosts.filter(p => p.spotify_artist_name?.toLowerCase() === artistLower).slice(0, 4).map(toPostSummary)
         reasonsWithSources.push({
-          reason: `Her ikiniz de ${artistDisplay} dinliyorsunuz 🎵`,
+          reason: isEn ? `You both listen to ${artistDisplay} 🎵` : `Her ikiniz de ${artistDisplay} dinliyorsunuz 🎵`,
           my_posts: myArtistPosts,
           other_posts: otherArtistPosts,
         })
         if (commonTopArtists.length >= 3) {
           reasonsWithSources.push({
-            reason: `${commonTopArtists.length} ortak favori sanatçınız var 🎶`,
+            reason: isEn ? `You share ${commonTopArtists.length} favorite artists 🎶` : `${commonTopArtists.length} ortak favori sanatçınız var 🎶`,
             my_posts: [],
             other_posts: [],
           })
@@ -551,7 +583,12 @@ serve(async (req) => {
       }
 
       // Social style sebepleri
-      const socialStyleLabels: Record<string, string> = {
+      const socialStyleLabels: Record<string, string> = isEn ? {
+        "yalnız": "You are both independent souls — you enjoy your own company 🌙",
+        "ikili": "You are both happiest with your close circle 🤝",
+        "sosyal": "You both love social gatherings 🎉",
+        "karma": "You both value both social and quiet moments equally ⚖️",
+      } : {
         "yalnız": "İkiniz de bağımsız ruhlar — tek başına vakit geçirmeyi seviyorsunuz 🌙",
         "ikili": "İkiniz de yakın çevrenizle birlikteyken en mutlusunuz 🤝",
         "sosyal": "İkiniz de kalabalık ortamları seviyorsunuz 🎉",
@@ -571,7 +608,8 @@ serve(async (req) => {
         myPosts || [],
         otherProfile.interests || [],
         otherPosts,
-      ).filter(r => !r.reason.includes('dinliyorsunuz'))
+        language,
+      ).filter(r => !r.reason.includes('dinliyorsunuz') && !r.reason.includes('listen to'))
 
       for (const r of extraReasons) {
         reasonsWithSources.push(r)
@@ -592,6 +630,25 @@ serve(async (req) => {
         common_interests: commonInterests,
         match_reasons: matchReasons,
         match_reason_sources: matchReasonSources,
+        recent_posts: otherPosts.slice(0, 3).map(toPostSummary),
+        common_spotify: (() => {
+          // Find first common artist with album image
+          for (const post of otherPosts) {
+            if (post.spotify_artist_name && post.spotify_album_image) {
+              const artistLower = post.spotify_artist_name.toLowerCase()
+              const myPost = (myPosts || []).find(p => p.spotify_artist_name?.toLowerCase() === artistLower && p.spotify_album_image)
+              if (myPost) {
+                return { artist: post.spotify_artist_name, album_image: post.spotify_album_image, track_name: post.spotify_track_name ?? null }
+              }
+            }
+          }
+          // fallback: just common artist without image
+          for (const a of commonTopArtists) {
+            const otherPost = otherPosts.find(p => p.spotify_artist_name?.toLowerCase() === a && p.spotify_album_image)
+            if (otherPost) return { artist: otherPost.spotify_artist_name, album_image: otherPost.spotify_album_image, track_name: null }
+          }
+          return null
+        })(),
         profile: profileInfo,
       })
     }

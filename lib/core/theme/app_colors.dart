@@ -16,18 +16,18 @@ class AppColors {
   // ==================== BACKGROUNDS ====================
   static Color get bgDark => isDark
       ? const Color(0xFF0A0A0F)
-      : const Color(0xFFF9FAFB); // Koyu Gri <-> Kırık Beyaz
+      : const Color(0xFFF9FAFB);
   static Color get bgBlack =>
-      isDark ? Colors.black : Colors.white; // Siyah <-> Beyaz
+      isDark ? Colors.black : Colors.white;
   static Color get bgCard => isDark
       ? const Color(0xFF1E1E1E)
-      : Colors.white; // Koyu Kart <-> Beyaz Kart
+      : Colors.white;
   static Color get bgCardDark => isDark
       ? const Color(0xFF121212)
-      : const Color(0xFFF3F4F6); // Daha koyu <-> Açık gri
+      : const Color(0xFFF3F4F6);
   static Color get bgCardLight => isDark
       ? const Color(0xFF2C2C2C)
-      : const Color(0xFFEEEEEE); // Açık koyu <-> Gri
+      : const Color(0xFFEEEEEE);
   static Color get bgCardExplore =>
       isDark ? const Color(0xFF16161F) : const Color(0xFFFFFFFF);
   static const Color bgTransparent = Colors.transparent;

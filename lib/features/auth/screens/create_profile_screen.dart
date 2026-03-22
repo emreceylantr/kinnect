@@ -9,6 +9,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 
+import '../../../core/language/app_l10n.dart';
 import '../../../data/services/profile_service.dart';
 import '../../../data/repositories/profile_repository.dart';
 import '../../home/screens/home_screen.dart';
@@ -99,7 +100,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Profil kaydedilirken hata: $e"),
+            content: Text("${AppL10n.error}: $e"),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -236,7 +237,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                           end: Alignment.bottomRight,
                         ).createShader(bounds),
                         child: Text(
-                          "PROFİL OLUŞTUR",
+                          AppL10n.createProfileBadge,
                           style: GoogleFonts.syne(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -349,23 +350,23 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                         // TEXT FIELDS
                         _buildOvalTextField(
                           controller: _usernameController,
-                          label: "Kullanıcı Adı",
+                          label: AppL10n.username,
                           icon: FontAwesomeIcons.at,
                           validator: (value) => (value == null || value.isEmpty)
-                              ? 'Gerekli alan'
+                              ? AppL10n.requiredField
                               : null,
                         ),
                         _buildOvalTextField(
                           controller: _fullNameController,
-                          label: "Görünen İsim",
+                          label: AppL10n.displayName,
                           icon: FontAwesomeIcons.user,
                           validator: (value) => (value == null || value.isEmpty)
-                              ? 'Gerekli alan'
+                              ? AppL10n.requiredField
                               : null,
                         ),
                         _buildOvalTextField(
                           controller: _bioController,
-                          label: "Biyografi",
+                          label: AppL10n.bio,
                           icon: FontAwesomeIcons.alignLeft,
                           maxLines: 2,
                         ),
@@ -409,7 +410,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                                       ),
                                     )
                                   : Text(
-                                      "BAŞLAYALIM",
+                                      AppL10n.getStarted,
                                       style: GoogleFonts.poppins(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
