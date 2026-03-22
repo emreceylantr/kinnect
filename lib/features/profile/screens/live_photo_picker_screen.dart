@@ -230,7 +230,9 @@ class _LiveFramePickerScreenState extends State<_LiveFramePickerScreen> {
   VideoPlayerController? _controller;
   bool _initialized = false;
   double _sliderValue = 0;
-  Duration _totalDuration = Duration.zero;
+Duration _totalDuration = Duration.zero;
+  bool _isDragging = false;
+  bool _isPlaying = true;
 
   static const _bg = Color(0xFF0A0A12);
   static const _accent = Color(0xFF7C6EFA);
@@ -254,8 +256,9 @@ class _LiveFramePickerScreenState extends State<_LiveFramePickerScreen> {
         _totalDuration = ctrl.value.duration;
       });
 
+      // Only update slider from video when user is NOT dragging
       ctrl.addListener(() {
-        if (!mounted) return;
+        if (!mounted || _isDragging) return;
         final pos = ctrl.value.position.inMilliseconds.toDouble();
         final total = ctrl.value.duration.inMilliseconds.toDouble();
         if (total > 0) setState(() => _sliderValue = pos.clamp(0, total));
@@ -269,12 +272,37 @@ class _LiveFramePickerScreenState extends State<_LiveFramePickerScreen> {
     super.dispose();
   }
 
-  Future<void> _seekTo(double ms) async {
-    await _controller?.seekTo(Duration(milliseconds: ms.round()));
+  void _onDragStart(double ms) {
+    _isDragging = true;
+    _controller?.pause();
+    setState(() { _sliderValue = ms; _isPlaying = false; });
+  }
+
+  void _onDragUpdate(double ms) {
     setState(() => _sliderValue = ms);
+    // Seek without awaiting for smooth scrubbing feedback
+    _controller?.seekTo(Duration(milliseconds: ms.round()));
+  }
+
+  void _onDragEnd(double ms) {
+    _controller?.seekTo(Duration(milliseconds: ms.round()));
+    setState(() { _sliderValue = ms; _isDragging = false; });
+  }
+
+  void _togglePlay() {
+    final ctrl = _controller;
+    if (ctrl == null) return;
+    if (ctrl.value.isPlaying) {
+      ctrl.pause();
+      setState(() => _isPlaying = false);
+    } else {
+      ctrl.play();
+      setState(() => _isPlaying = true);
+    }
   }
 
   void _confirm() {
+    // Use _sliderValue as the keyframe (last position user stopped at)
     Navigator.pop(context, {
       'video_file': widget.videoFile,
       'start_ms': _sliderValue.round(),
@@ -315,42 +343,67 @@ class _LiveFramePickerScreenState extends State<_LiveFramePickerScreen> {
       body: _initialized
           ? Column(
               children: [
+                // Video preview — tap to play/pause
                 Expanded(
-                  child: Center(
-                    child: AspectRatio(
-                      aspectRatio: _controller!.value.aspectRatio,
-                      child: VideoPlayer(_controller!),
+                  child: GestureDetector(
+                    onTap: _togglePlay,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Center(
+                          child: AspectRatio(
+                            aspectRatio: _controller!.value.aspectRatio,
+                            child: VideoPlayer(_controller!),
+                          ),
+                        ),
+                        // Play icon overlay when paused
+                        if (!_isPlaying)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.black45,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.play_arrow_rounded,
+                                color: Colors.white, size: 40),
+                          ),
+                      ],
                     ),
                   ),
                 ),
+                // Scrubber section
                 Container(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
                   child: Column(
                     children: [
+                      // Time row + play/pause button
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          // Play/pause
+                          GestureDetector(
+                            onTap: _togglePlay,
+                            child: Icon(
+                              _isPlaying
+                                  ? Icons.pause_rounded
+                                  : Icons.play_arrow_rounded,
+                              color: Colors.white70,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
                           Text(
                             _formatMs(_sliderValue.round()),
                             style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12),
                           ),
-                          Column(
-                            children: [
-                              const Icon(Icons.fiber_manual_record, color: _accent, size: 10),
-                              const SizedBox(height: 2),
-                              Text(
-                                AppL10n.keyFrame,
-                                style: GoogleFonts.poppins(color: _accent, fontSize: 11, fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
+                          const Spacer(),
                           Text(
                             _formatMs(totalMs.round()),
                             style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
+                      // Slider
                       SliderTheme(
                         data: SliderTheme.of(context).copyWith(
                           activeTrackColor: _accent,
@@ -358,20 +411,29 @@ class _LiveFramePickerScreenState extends State<_LiveFramePickerScreen> {
                           thumbColor: Colors.white,
                           overlayColor: _accent.withValues(alpha: 0.2),
                           trackHeight: 3,
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
                         ),
                         child: Slider(
                           min: 0,
                           max: totalMs > 0 ? totalMs : 1,
                           value: _sliderValue.clamp(0, totalMs > 0 ? totalMs : 1),
-                          onChanged: _seekTo,
+                          onChangeStart: _onDragStart,
+                          onChanged: _onDragUpdate,
+                          onChangeEnd: _onDragEnd,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        AppL10n.keyFrameHint,
-                        style: GoogleFonts.poppins(color: Colors.white38, fontSize: 12),
-                        textAlign: TextAlign.center,
+                      const SizedBox(height: 8),
+                      // Keyframe indicator
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.fiber_manual_record, color: _accent, size: 8),
+                          const SizedBox(width: 6),
+                          Text(
+                            AppL10n.keyFrameHint,
+                            style: GoogleFonts.poppins(color: Colors.white38, fontSize: 11),
+                          ),
+                        ],
                       ),
                     ],
                   ),
