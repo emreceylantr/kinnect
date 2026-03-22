@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../create_post/screens/photo_editor_screen.dart';
 import '../../../core/constants/border_colors.dart';
 import '../../../core/language/app_l10n.dart';
+import 'live_photo_picker_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> currentProfile;
@@ -30,6 +31,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   bool _isLoading = false;
   File? _imageFile;
   File? _videoFile;
+  int _liveStartMs = 0;
 
   // 🔥 RENK PALETİ
   final Color _colorPurple = const Color(0xFF6C63FF);
@@ -106,34 +108,39 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     }
   }
 
-  Future<void> _pickVideo() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? video = await picker.pickVideo(
-        source: ImageSource.gallery, maxDuration: const Duration(seconds: 10));
+  Future<void> _pickLivePhoto() async {
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(builder: (_) => const LivePhotoPickerScreen()),
+    );
 
-    if (video != null) {
-      final tempDir = await getTemporaryDirectory();
-      final String? thumbnailPath = await VideoThumbnail.thumbnailFile(
-        video: video.path,
-        thumbnailPath: tempDir.path,
-        imageFormat: ImageFormat.JPEG,
-        maxHeight: 512,
-        quality: 75,
-      );
+    if (result == null || !mounted) return;
 
-      setState(() {
-        _videoFile = File(video.path);
-        if (thumbnailPath != null) {
-          _imageFile = File(thumbnailPath);
-        }
-      });
+    final videoFile = result['video_file'] as File;
+    final startMs = result['start_ms'] as int;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(AppL10n.liveVideoSet,
-                style: GoogleFonts.poppins()),
-            backgroundColor: _colorGreen));
+    final tempDir = await getTemporaryDirectory();
+    final String? thumbnailPath = await VideoThumbnail.thumbnailFile(
+      video: videoFile.path,
+      thumbnailPath: tempDir.path,
+      imageFormat: ImageFormat.JPEG,
+      timeMs: startMs,
+      maxHeight: 512,
+      quality: 80,
+    );
+
+    setState(() {
+      _videoFile = videoFile;
+      _liveStartMs = startMs;
+      if (thumbnailPath != null) {
+        _imageFile = File(thumbnailPath);
       }
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppL10n.livePhotoAdded, style: GoogleFonts.poppins()),
+          backgroundColor: _colorGreen));
     }
   }
 
@@ -271,7 +278,10 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       };
 
       if (avatarUrl != null) updateData['avatar_url'] = avatarUrl;
-      if (videoUrl != null) updateData['avatar_video_url'] = videoUrl;
+      if (videoUrl != null) {
+        updateData['avatar_video_url'] = videoUrl;
+        updateData['live_avatar_start_ms'] = _liveStartMs;
+      }
 
       debugPrint('📤 Supabase güncelleniyor: $updateData');
 
@@ -441,17 +451,17 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // 1. LIVE VIDEO BUTONU (Solda)
+                          // 1. LIVE PHOTO BUTONU (Solda)
                           _buildActionButton(
                             icon: _videoFile != null
                                 ? Icons.check_circle
-                                : Icons.slow_motion_video,
+                                : Icons.motion_photos_on_outlined,
                             label: _videoFile != null
-                                ? AppL10n.liveVideoAdded
-                                : AppL10n.addLiveVideo,
+                                ? AppL10n.livePhotoAdded
+                                : AppL10n.addLivePhoto,
                             color:
                                 _videoFile != null ? _colorGreen : Colors.white,
-                            onTap: _pickVideo,
+                            onTap: _pickLivePhoto,
                             isActive: _videoFile != null,
                           ),
 

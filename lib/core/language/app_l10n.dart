@@ -228,6 +228,15 @@ class AppL10n {
   static String get bio => _en ? 'Bio' : 'Biyografi';
   static String get liveVideoAdded => _en ? 'Live Selected' : 'Live Seçildi';
   static String get addLiveVideo => _en ? 'Add Live Video' : 'Live Video Ekle';
+  static String get addLivePhoto => _en ? 'Add Live Photo' : 'Live Fotoğraf Ekle';
+  static String get livePhotoAdded => _en ? 'Live Photo Set ✓' : 'Live Fotoğraf Seçildi ✓';
+  static String get pickLivePhoto => _en ? 'Live Photos' : 'Live Fotoğraflar';
+  static String get noLivePhotos => _en ? 'No Live Photos in your gallery' : 'Galerinizde Live fotoğraf yok';
+  static String get photoPermissionDenied => _en ? 'Photo library access is required.\nPlease allow it in Settings.' : 'Fotoğraf erişimi gerekli.\nLütfen Ayarlar\'dan izin verin.';
+  static String get pickKeyFrame => _en ? 'Choose Key Frame' : 'Anahtar Kare Seç';
+  static String get keyFrame => _en ? 'Key Frame' : 'Anahtar Kare';
+  static String get keyFrameHint => _en ? 'Drag to pick the moment shown on your profile' : 'Profilinde görünecek anı seçmek için sürükle';
+  static String get use => _en ? 'Use' : 'Kullan';
   static String get ringColor => _en ? 'Ring Color' : 'Halka Rengi';
   static String get profileRingColor => _en ? 'Profile Ring Color' : 'Profil Halka Rengi';
   static String get liveVideoSet =>
