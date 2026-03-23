@@ -143,11 +143,11 @@ async function synthesizeProfile(
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 1000,
+        max_tokens: 1200,
         system: "You must respond with valid JSON only. No other text, no explanation.",
         messages: [{
           role: "user",
-          content: `Analyze these social media posts and return a JSON object with exactly three fields:\n- "profile_summary": a 3-4 sentence personality and lifestyle description in Turkish\n- "interests": an array of 5-10 interest keywords in Turkish (e.g. ["müzik", "seyahat", "spor"])\n- "social_style": one of these values only: "yalnız" (usually alone in photos), "ikili" (usually with one person), "sosyal" (often in groups), "karma" (mixed)\n\nBase "social_style" on the people count and social context patterns across all posts.${quizSection}\n\nPosts:\n${postsText}\n\nRespond with only the JSON object, nothing else.`,
+          content: `Analyze these social media posts and return a JSON object with exactly four fields:\n- "profile_summary_tr": a 3-4 sentence personality and lifestyle description in Turkish\n- "profile_summary_en": a 3-4 sentence personality and lifestyle description in English\n- "interests": an array of 5-10 interest keywords in Turkish (e.g. ["müzik", "seyahat", "spor"])\n- "social_style": one of these values only: "yalnız" (usually alone in photos), "ikili" (usually with one person), "sosyal" (often in groups), "karma" (mixed)\n\nBase "social_style" on the people count and social context patterns across all posts.${quizSection}\n\nPosts:\n${postsText}\n\nRespond with only the JSON object, nothing else.`,
         }],
       }),
     })
@@ -171,7 +171,10 @@ async function synthesizeProfile(
     }
 
     const parsed = JSON.parse(jsonMatch[0])
-    const summary = parsed.profile_summary || ""
+    const summaryTr: string = parsed.profile_summary_tr || parsed.profile_summary || ""
+    const summaryEn: string = parsed.profile_summary_en || summaryTr
+    // Store bilingual summary as JSON so Flutter can pick the right language
+    const summary = JSON.stringify({ tr: summaryTr, en: summaryEn })
     const interests: string[] = Array.isArray(parsed.interests) ? parsed.interests : []
     const social_style: string = parsed.social_style || ""
 

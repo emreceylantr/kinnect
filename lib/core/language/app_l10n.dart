@@ -550,6 +550,11 @@ class AppL10n {
       'bisiklet': 'cycling',
       'sörf': 'surfing',
       'dalış': 'diving',
+      'kayak': 'skiing',
+      'snowboard': 'snowboarding',
+      'dağ bisikleti': 'mountain biking',
+      'paraşüt': 'skydiving',
+      'rafting': 'rafting',
       // Spor / Sports
       'spor': 'sports',
       'futbol': 'football',

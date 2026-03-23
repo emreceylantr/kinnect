@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +10,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/language/app_l10n.dart';
 import '../../../data/services/matching_service.dart';
 import '../../../data/services/chat_service.dart';
+import '../../../data/services/spotify_service.dart';
+import '../../../data/services/apple_music_service.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../create_post/screens/create_post_screen.dart';
 import '../../chat/screens/chat_screen.dart';
@@ -25,6 +29,8 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
     with TickerProviderStateMixin {
   final MatchingService _matchingService = MatchingService();
   final ChatService _chatService = ChatService();
+  final SpotifyService _spotifyService = SpotifyService();
+  final AppleMusicService _appleMusicService = AppleMusicService();
   late AnimationController _shimmerController;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -32,6 +38,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
   // Cache — widget yeniden oluşturulsa bile korunur
   static List<Map<String, dynamic>>? _cachedMatches;
   static DateTime? _lastFetchTime;
+  static String? _cacheLanguage; // dil değişince cache geçersiz olsun
   static const _cacheDuration = Duration(minutes: 5);
   static const int _minPostsRequired = 5;
 
@@ -39,6 +46,16 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
   bool _fetchFailed = false;
   int _myPostCount = -1; // -1 = henüz yüklenmedi
   Set<String> _hiddenUserIds = {};
+
+  // My AI Profile state
+  Map<String, dynamic>? _myProfile;
+  bool _myProfileLoading = true;
+  String _myFullName = '';
+  String? _myAvatarUrl;
+  bool _spotifyConnected = false;
+  bool _appleMusicConnected = false;
+  bool _spotifySyncing = false;
+  bool _appleMusicSyncing = false;
 
   @override
   void initState() {
@@ -57,7 +74,16 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
     );
 
     _loadHiddenUsers();
+    _loadMyProfile();
     _checkMyPostCountThenQuiz();
+
+    // Dil değişmişse cache'i temizle
+    final currentLang = AppL10n.currentLanguageCode;
+    if (_cacheLanguage != null && _cacheLanguage != currentLang) {
+      _cachedMatches = null;
+      _lastFetchTime = null;
+    }
+    _cacheLanguage = currentLang;
 
     // Cache geçerliyse API çağırma
     final cacheValid = _cachedMatches != null &&
@@ -125,6 +151,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
         setState(() {
           _cachedMatches = results;
           _lastFetchTime = DateTime.now();
+          _cacheLanguage = AppL10n.currentLanguageCode;
           _isRefreshing = false;
         });
       }
@@ -180,6 +207,9 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
             slivers: [
               // Üst Başlık Alanı
               SliverToBoxAdapter(child: _buildHeader(matches.length)),
+
+              // My AI Profile Card
+              SliverToBoxAdapter(child: _buildMyProfileSection()),
 
               // Yatay Avatar Kaydırma
               SliverToBoxAdapter(child: _buildTopAvatarRow(matches)),
@@ -734,100 +764,97 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A2E).withOpacity(0.95),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(28)),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF1A1035), Color(0xFF0F0C1A)],
+                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
               child: ListView(
                 controller: scrollController,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
                 children: [
                   // Handle bar
                   Center(
                     child: Container(
-                      width: 40,
-                      height: 4,
+                      width: 36, height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.white24,
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
 
-                  // Profil header
+                  // ── Profile header ──
                   Center(
                     child: Column(
                       children: [
-                        SizedBox(
-                          width: 110,
-                          height: 110,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              CircularProgressIndicator(
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 130, height: 130,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [BoxShadow(color: scoreColor.withValues(alpha: 0.22), blurRadius: 36, spreadRadius: 4)],
+                              ),
+                            ),
+                            SizedBox(
+                              width: 118, height: 118,
+                              child: CircularProgressIndicator(
                                 value: similarity,
-                                strokeWidth: 4,
-                                backgroundColor: scoreColor.withValues(alpha: 0.15),
+                                strokeWidth: 3.5,
+                                backgroundColor: scoreColor.withValues(alpha: 0.12),
                                 valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
                                 strokeCap: StrokeCap.round,
                               ),
-                              Container(
-                                width: 96,
-                                height: 96,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.bgDark, width: 3),
-                                ),
-                                child: CircleAvatar(
-                                  radius: 45,
-                                  backgroundColor: AppColors.bgDark,
-                                  backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                                  child: avatarUrl == null
-                                      ? const Icon(Icons.person, color: Colors.white38, size: 40)
-                                      : null,
-                                ),
+                            ),
+                            Container(
+                              width: 102, height: 102,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: const Color(0xFF0F0C1A), width: 3),
                               ),
-                            ],
-                          ),
+                              child: CircleAvatar(
+                                radius: 48,
+                                backgroundColor: const Color(0xFF1A1035),
+                                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                                child: avatarUrl == null ? const Icon(Icons.person, color: Colors.white38, size: 44) : null,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          fullName,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '@$username',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white38,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 18),
+                        Text(fullName, style: GoogleFonts.poppins(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                        Text('@$username', style: GoogleFonts.poppins(color: Colors.white38, fontSize: 13)),
+                        const SizedBox(height: 14),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                           decoration: BoxDecoration(
                             color: scoreColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: scoreColor.withValues(alpha: 0.35)),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: scoreColor.withValues(alpha: 0.4), width: 1.2),
+                            boxShadow: [BoxShadow(color: scoreColor.withValues(alpha: 0.15), blurRadius: 12)],
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(FontAwesomeIcons.wandMagicSparkles, color: scoreColor, size: 12),
-                              const SizedBox(width: 7),
+                              Icon(FontAwesomeIcons.wandMagicSparkles, color: scoreColor, size: 13),
+                              const SizedBox(width: 8),
+                              Text(AppL10n.compatibilityPercent(percent), style: GoogleFonts.poppins(color: scoreColor, fontSize: 16, fontWeight: FontWeight.w800)),
+                              const SizedBox(width: 8),
+                              Container(width: 1, height: 14, color: scoreColor.withValues(alpha: 0.3)),
+                              const SizedBox(width: 8),
                               Text(
-                                AppL10n.compatibilityPercent(percent),
-                                style: GoogleFonts.poppins(
-                                  color: scoreColor,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                similarity >= 0.75
+                                    ? (AppL10n.currentLanguageCode == 'tr' ? 'Harika Uyum' : 'Great Match')
+                                    : similarity >= 0.60
+                                        ? (AppL10n.currentLanguageCode == 'tr' ? 'İyi Uyum' : 'Good Match')
+                                        : (AppL10n.currentLanguageCode == 'tr' ? 'Uyumlu' : 'Compatible'),
+                                style: GoogleFonts.poppins(color: scoreColor.withValues(alpha: 0.75), fontSize: 12, fontWeight: FontWeight.w500),
                               ),
                             ],
                           ),
@@ -835,15 +862,19 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                       ],
                     ),
                   ),
+                  // ── Common Points ──
                   if (matchReasons.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    Text(
-                      AppL10n.commonPoints,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    const SizedBox(height: 28),
+                    Row(
+                      children: [
+                        Text(AppL10n.commonPoints, style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
+                          child: Text('${matchReasons.length}', style: GoogleFonts.poppins(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w700)),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 10),
                     Column(
@@ -851,11 +882,23 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                       children: List.generate(matchReasons.length, (i) {
                         final reason = matchReasons[i];
                         final source = i < matchReasonSources.length ? matchReasonSources[i] : null;
-                        final myPosts = (source?['my_posts'] as List?)
-                            ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
-                        final otherPosts = (source?['other_posts'] as List?)
-                            ?.map((p) => p as Map<String, dynamic>).toList() ?? [];
+                        final myPosts = (source?['my_posts'] as List?)?.map((p) => p as Map<String, dynamic>).toList() ?? [];
+                        final otherPosts = (source?['other_posts'] as List?)?.map((p) => p as Map<String, dynamic>).toList() ?? [];
                         final hasPosts = myPosts.isNotEmpty || otherPosts.isNotEmpty;
+                        final lower = reason.toLowerCase();
+                        final emoji = lower.contains('müzik') || lower.contains('music') || lower.contains('dinl') || lower.contains('listen')
+                            ? '🎵'
+                            : lower.contains('mekan') || lower.contains('environ') || lower.contains('doğa') || lower.contains('nature')
+                                ? '📍'
+                                : lower.contains('seyahat') || lower.contains('travel')
+                                    ? '✈️'
+                                    : lower.contains('sosyal') || lower.contains('social') || lower.contains('değer') || lower.contains('value')
+                                        ? '🤝'
+                                        : lower.contains('spor') || lower.contains('sport')
+                                            ? '⚡'
+                                            : lower.contains('yemek') || lower.contains('food')
+                                                ? '🍽️'
+                                                : '✨';
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: GestureDetector(
@@ -873,32 +916,22 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                               ),
                             ),
                             child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                                color: Colors.white.withValues(alpha: 0.04),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
                               ),
                               child: Row(
                                 children: [
+                                  Text(emoji, style: const TextStyle(fontSize: 16)),
+                                  const SizedBox(width: 10),
                                   Expanded(
-                                    child: Text(
-                                      reason,
-                                      style: GoogleFonts.poppins(
-                                        color: Colors.white.withOpacity(0.9),
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
+                                    child: Text(reason, style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.88), fontSize: 13, fontWeight: FontWeight.w500)),
                                   ),
                                   if (hasPosts) ...[
                                     const SizedBox(width: 6),
-                                    Icon(
-                                      Icons.chevron_right_rounded,
-                                      size: 16,
-                                      color: AppColors.primary.withOpacity(0.7),
-                                    ),
+                                    Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withValues(alpha: 0.25)),
                                   ],
                                 ],
                               ),
@@ -910,23 +943,20 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                   ],
 
                   if (socialStyleReason != null) ...[
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF9D89D9).withValues(alpha: 0.1),
+                        color: const Color(0xFF9D89D9).withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF9D89D9).withValues(alpha: 0.25)),
+                        border: Border.all(color: const Color(0xFF9D89D9).withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF9D89D9).withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.psychology_rounded, color: Color(0xFF9D89D9), size: 20),
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(color: const Color(0xFF9D89D9).withValues(alpha: 0.15), shape: BoxShape.circle),
+                            child: const Icon(Icons.psychology_rounded, color: Color(0xFF9D89D9), size: 18),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -958,108 +988,106 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                     ),
                   ],
 
+                  // ── Common Music ──
                   if (commonSpotify != null) ...[
-                    const SizedBox(height: 20),
-                    Text(
-                      AppL10n.commonMusic,
-                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-                    ),
+                    const SizedBox(height: 24),
+                    Text(AppL10n.commonMusic, style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 10),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1DB954).withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF1DB954).withValues(alpha: 0.2)),
+                        color: const Color(0xFF1DB954).withValues(alpha: 0.07),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFF1DB954).withValues(alpha: 0.22)),
                       ),
                       child: Row(
                         children: [
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(10),
                             child: commonSpotify['album_image'] != null
-                                ? Image.network(commonSpotify['album_image'] as String, width: 52, height: 52, fit: BoxFit.cover)
-                                : Container(width: 52, height: 52, color: const Color(0xFF1DB954).withValues(alpha: 0.2),
-                                    child: const Icon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954), size: 22)),
+                                ? Image.network(commonSpotify['album_image'] as String, width: 62, height: 62, fit: BoxFit.cover)
+                                : Container(
+                                    width: 62, height: 62,
+                                    decoration: BoxDecoration(color: const Color(0xFF1DB954).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+                                    child: const Icon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954), size: 24),
+                                  ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  commonSpotify['artist'] as String,
-                                  style: GoogleFonts.poppins(color: const Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w700),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
                                 if (commonSpotify['track_name'] != null)
                                   Text(
                                     commonSpotify['track_name'] as String,
-                                    style: GoogleFonts.poppins(color: Colors.white54, fontSize: 11),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                                    maxLines: 1, overflow: TextOverflow.ellipsis,
                                   ),
-                                const SizedBox(height: 2),
                                 Text(
-                                  AppL10n.bothListening,
-                                  style: GoogleFonts.poppins(color: Colors.white38, fontSize: 10),
+                                  commonSpotify['artist'] as String,
+                                  style: GoogleFonts.poppins(color: const Color(0xFF1DB954), fontSize: 12, fontWeight: FontWeight.w500),
+                                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.headphones_rounded, color: Colors.white30, size: 12),
+                                    const SizedBox(width: 4),
+                                    Text(AppL10n.bothListening, style: GoogleFonts.poppins(color: Colors.white30, fontSize: 10)),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
-                          const Icon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954), size: 20),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: const Color(0xFF1DB954).withValues(alpha: 0.12), shape: BoxShape.circle),
+                            child: const Icon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954), size: 16),
+                          ),
                         ],
                       ),
                     ),
                   ],
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
 
-                  // AI Açıklaması
+                  // ── AI Analysis ──
                   Row(
                     children: [
-                      const Icon(FontAwesomeIcons.robot,
-                          color: Colors.blueAccent, size: 18),
-                      const SizedBox(width: 10),
-                      Text(
-                        AppL10n.aiAnalysis,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF9D89D9)]),
+                          borderRadius: BorderRadius.circular(10),
                         ),
+                        child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: Colors.white, size: 12),
                       ),
+                      const SizedBox(width: 10),
+                      Text(AppL10n.aiAnalysis, style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
 
                   FutureBuilder<String>(
                     future: explanationFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: Colors.white.withOpacity(0.05)),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                           ),
                           child: Row(
                             children: [
                               Container(
                                 padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(FontAwesomeIcons.robot, color: AppColors.primary, size: 14),
+                                decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.15), shape: BoxShape.circle),
+                                child: const Icon(FontAwesomeIcons.robot, color: AppColors.primary, size: 13),
                               ),
                               const SizedBox(width: 12),
-                              Text(
-                                AppL10n.analyzing,
-                                style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13),
-                              ),
+                              Text(AppL10n.analyzing, style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13)),
                               const SizedBox(width: 8),
                               const _TypingDots(),
                             ],
@@ -1067,23 +1095,25 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
                         );
                       }
 
-                      final explanation =
-                          snapshot.data ?? AppL10n.greatMatch;
+                      final explanation = snapshot.data ?? AppL10n.greatMatch;
 
                       return Container(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: AppColors.primary.withOpacity(0.2)),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [AppColors.primary.withValues(alpha: 0.10), const Color(0xFF9D89D9).withValues(alpha: 0.05)],
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
                         ),
                         child: Text(
                           explanation,
                           style: GoogleFonts.poppins(
-                            color: Colors.white.withOpacity(0.95),
-                            fontSize: 15,
-                            height: 1.6,
+                            color: Colors.white.withValues(alpha: 0.92),
+                            fontSize: 14,
+                            height: 1.65,
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -1523,6 +1553,750 @@ class _AiMatchingScreenState extends State<AiMatchingScreen>
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// profile_summary sütununda eski (düz metin) veya yeni ({"tr":...,"en":...}) format
+  /// olabilir. Dile göre doğru versiyonu döner.
+  String _localizedSummary(String? raw) {
+    if (raw == null || raw.isEmpty) return '';
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      final lang = AppL10n.currentLanguageCode;
+      return (map[lang] ?? map['tr'] ?? raw) as String;
+    } catch (_) {
+      return raw; // eski format, direkt kullan
+    }
+  }
+
+  // ============ MY PROFILE LOAD ============
+  Future<void> _loadMyProfile() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      if (mounted) setState(() => _myProfileLoading = false);
+      return;
+    }
+    try {
+      final profileFuture = Supabase.instance.client
+          .from('user_profiles')
+          .select('profile_summary, interests, social_style, analyzed_post_count')
+          .eq('user_id', userId)
+          .maybeSingle();
+      final infoFuture = Supabase.instance.client
+          .from('profiles')
+          .select('full_name, username, avatar_url')
+          .eq('id', userId)
+          .maybeSingle();
+      final spotifyFuture = _spotifyService.isConnected(userId);
+      final appleFuture = Platform.isIOS
+          ? _appleMusicService.isConnected()
+          : Future.value(false);
+
+      final results = await Future.wait<dynamic>([
+        profileFuture,
+        infoFuture,
+        spotifyFuture,
+        appleFuture,
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _myProfile = results[0] as Map<String, dynamic>?;
+          final info = results[1] as Map<String, dynamic>?;
+          _myFullName = (info?['full_name'] ?? info?['username'] ?? '') as String;
+          _myAvatarUrl = info?['avatar_url'] as String?;
+          _spotifyConnected = results[2] as bool;
+          _appleMusicConnected = results[3] as bool;
+          _myProfileLoading = false;
+        });
+
+        // Eski format (plain text, JSON değil) → re-analiz tetikle
+        final rawSummary = (_myProfile?['profile_summary'] as String?) ?? '';
+        if (rawSummary.isNotEmpty && !rawSummary.trimLeft().startsWith('{')) {
+          Supabase.instance.client.functions
+              .invoke('analyze-user-profile', body: {'user_id': userId})
+              .then((_) => _loadMyProfile())
+              .ignore();
+        }
+      }
+    } catch (e) {
+      debugPrint('loadMyProfile error: $e');
+      if (mounted) setState(() => _myProfileLoading = false);
+    }
+  }
+
+  Future<void> _connectSpotify() async {
+    if (_spotifySyncing) return;
+    setState(() => _spotifySyncing = true);
+    await _spotifyService.authenticate();
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId != null && mounted) {
+      final connected = await _spotifyService.isConnected(userId);
+      setState(() {
+        _spotifyConnected = connected;
+        _spotifySyncing = false;
+      });
+    }
+  }
+
+  Future<void> _connectAppleMusic() async {
+    if (_appleMusicSyncing) return;
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    setState(() => _appleMusicSyncing = true);
+    final success = await _appleMusicService.syncTopMusic(userId);
+    if (mounted) {
+      setState(() {
+        if (success) _appleMusicConnected = true;
+        _appleMusicSyncing = false;
+      });
+    }
+  }
+
+  // ============ MY AI PROFILE SECTION ============
+  Widget _buildMyProfileSection() {
+    if (_myProfileLoading) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Container(
+          height: 100,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          ),
+          child: Center(
+            child: SizedBox(
+              width: 18, height: 18,
+              child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.primary.withValues(alpha: 0.5)),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_myProfile == null) return const SizedBox.shrink();
+
+    final summary = _localizedSummary(_myProfile!['profile_summary'] as String?);
+    final interests = List<String>.from(_myProfile!['interests'] ?? []);
+    final socialStyle = (_myProfile!['social_style'] as String?) ?? '';
+    final postCount = (_myProfile!['analyzed_post_count'] as int?) ?? 0;
+    final isTr = AppL10n.currentLanguageCode == 'tr';
+
+    final styleLabel = {
+      'yalnız': isTr ? 'Bağımsız' : 'Solo',
+      'ikili': isTr ? 'İkili' : 'Paired',
+      'sosyal': isTr ? 'Sosyal' : 'Social',
+      'karma': isTr ? 'Karma' : 'Mixed',
+    }[socialStyle];
+    final styleIcon = {
+      'yalnız': Icons.person_outline_rounded,
+      'ikili': Icons.people_outline_rounded,
+      'sosyal': Icons.groups_outlined,
+      'karma': Icons.shuffle_rounded,
+    }[socialStyle] ?? Icons.person_outline_rounded;
+    final styleColor = {
+      'yalnız': const Color(0xFF9D89D9),
+      'ikili': const Color(0xFF64B5F6),
+      'sosyal': const Color(0xFF69F0AE),
+      'karma': AppColors.primary,
+    }[socialStyle] ?? AppColors.primary;
+
+    int strength = 0;
+    if (postCount >= 5) strength++;
+    if (postCount >= 15) strength++;
+    if (_spotifyConnected) strength++;
+    if (_appleMusicConnected) strength++;
+    final strengthColor = strength <= 1
+        ? const Color(0xFFFF5252)
+        : strength <= 2 ? const Color(0xFFFFAB40) : const Color(0xFF69F0AE);
+    final strengthLabel = strength <= 1
+        ? (isTr ? 'Zayıf' : 'Weak')
+        : strength <= 2 ? (isTr ? 'Orta' : 'Fair') : (isTr ? 'Güçlü' : 'Strong');
+
+    // Personality traits from interests
+    final traitMap = <String, (String, String)>{
+      'müzik': ('🎵', isTr ? 'Müzisyen' : 'Musician'),
+      'music': ('🎵', isTr ? 'Müzisyen' : 'Musician'),
+      'seyahat': ('🌍', isTr ? 'Gezgin' : 'Explorer'),
+      'travel': ('🌍', isTr ? 'Gezgin' : 'Explorer'),
+      'spor': ('⚡', isTr ? 'Sporcu' : 'Athlete'),
+      'sports': ('⚡', isTr ? 'Sporcu' : 'Athlete'),
+      'yemek': ('🍽️', isTr ? 'Gurme' : 'Foodie'),
+      'food': ('🍽️', isTr ? 'Gurme' : 'Foodie'),
+      'sanat': ('🎨', isTr ? 'Yaratıcı' : 'Creative'),
+      'art': ('🎨', isTr ? 'Yaratıcı' : 'Creative'),
+      'oyun': ('🎮', 'Gamer'),
+      'gaming': ('🎮', 'Gamer'),
+      'kitap': ('📚', isTr ? 'Okur' : 'Reader'),
+      'books': ('📚', isTr ? 'Okur' : 'Reader'),
+      'yoga': ('🧘', isTr ? 'Dingin' : 'Mindful'),
+      'doğa': ('🌿', isTr ? 'Doğasever' : 'Nature'),
+      'nature': ('🌿', isTr ? 'Doğasever' : 'Nature'),
+      'fotoğraf': ('📷', isTr ? 'Fotoğrafçı' : 'Photographer'),
+    };
+    final traits = interests
+        .map((i) => traitMap[i.toLowerCase()])
+        .whereType<(String, String)>()
+        .take(2)
+        .toList();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: GestureDetector(
+        onTap: () => _showMyProfileSheet(
+          summary: summary,
+          interests: interests,
+          socialStyle: socialStyle,
+          postCount: postCount,
+          styleLabel: styleLabel ?? '',
+          styleIcon: styleIcon,
+          styleColor: styleColor,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1A1035), Color(0xFF0F0C1A)],
+            ),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.22)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                blurRadius: 28,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF9D89D9)]),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: Colors.white, size: 13),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isTr ? 'Senin AI Profili' : 'Your AI Profile',
+                          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          '$postCount ${isTr ? 'gönderi analiz edildi' : 'posts analyzed'}',
+                          style: GoogleFonts.poppins(color: Colors.white38, fontSize: 10.5),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    // Strength badge with dot
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: strengthColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: strengthColor.withValues(alpha: 0.28)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6, height: 6,
+                            decoration: BoxDecoration(color: strengthColor, shape: BoxShape.circle),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            strengthLabel,
+                            style: GoogleFonts.poppins(color: strengthColor, fontSize: 11, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // ── Avatar + Name + Style + Traits ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(colors: [AppColors.primary, Color(0xFF9D89D9)]),
+                      ),
+                      child: CircleAvatar(
+                        radius: 22,
+                        backgroundColor: const Color(0xFF0F0C1A),
+                        backgroundImage: _myAvatarUrl != null ? NetworkImage(_myAvatarUrl!) : null,
+                        child: _myAvatarUrl == null ? const Icon(Icons.person, color: Colors.white38, size: 20) : null,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_myFullName.isNotEmpty)
+                            Text(
+                              _myFullName,
+                              style: GoogleFonts.poppins(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w600),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          if (styleLabel != null)
+                            Row(
+                              children: [
+                                Icon(styleIcon, color: styleColor, size: 11),
+                                const SizedBox(width: 4),
+                                Text(styleLabel, style: GoogleFonts.poppins(color: styleColor, fontSize: 11, fontWeight: FontWeight.w500)),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                    // Trait emoji pills
+                    if (traits.isNotEmpty)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: traits.map((t) => Container(
+                          margin: const EdgeInsets.only(left: 5),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(t.$1, style: const TextStyle(fontSize: 11)),
+                              const SizedBox(width: 3),
+                              Text(t.$2, style: GoogleFonts.poppins(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                        )).toList(),
+                      ),
+                  ],
+                ),
+              ),
+
+              // ── Summary ──
+              if (summary.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    '"$summary"',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white.withValues(alpha: 0.50),
+                      fontSize: 12,
+                      height: 1.55,
+                      fontStyle: FontStyle.italic,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+
+              // ── Interests horizontal scroll ──
+              if (interests.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 28,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: interests.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 6),
+                    itemBuilder: (_, i) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(
+                        AppL10n.translateInterest(interests[i]),
+                        style: GoogleFonts.poppins(
+                          color: AppColors.primary.withValues(alpha: 0.85),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 14),
+
+              // ── Music Cards ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildMusicCards(),
+              ),
+
+              const SizedBox(height: 14),
+
+              // ── Tap hint ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white.withValues(alpha: 0.2), size: 16),
+                    Text(
+                      isTr ? 'detaylar' : 'details',
+                      style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.2), fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── My Profile Detail Sheet ───────────────────────────────────────────────
+  void _showMyProfileSheet({
+    required String summary, // already localized via _localizedSummary
+    required List<String> interests,
+    required String socialStyle,
+    required int postCount,
+    required String styleLabel,
+    required IconData styleIcon,
+    required Color styleColor,
+  }) {
+    final isTr = AppL10n.currentLanguageCode == 'tr';
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        builder: (_, scrollCtrl) => ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A2E).withValues(alpha: 0.96),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              ),
+              child: ListView(
+                controller: scrollCtrl,
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+                children: [
+                  // Handle
+                  Center(
+                    child: Container(
+                      width: 40, height: 4,
+                      decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(2)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                              colors: [AppColors.primary, Color(0xFF9D89D9)]),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(FontAwesomeIcons.wandMagicSparkles,
+                            color: Colors.white, size: 18),
+                      ),
+                      const SizedBox(width: 14),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isTr ? 'Senin AI Profili' : 'Your AI Profile',
+                            style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            '$postCount ${isTr ? 'gönderi analiz edildi' : 'posts analyzed'}',
+                            style: GoogleFonts.poppins(
+                                color: Colors.white38, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Social style card
+                  if (styleLabel.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: styleColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: styleColor.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: styleColor.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child:
+                                Icon(styleIcon, color: styleColor, size: 20),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isTr ? 'Sosyal Stil' : 'Social Style',
+                                  style: GoogleFonts.poppins(
+                                      color: styleColor.withValues(alpha: 0.7),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                Text(
+                                  styleLabel,
+                                  style: GoogleFonts.poppins(
+                                      color: styleColor,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Summary (TR only since stored in Turkish)
+                  if (summary.isNotEmpty) ...[
+                    Text(
+                      isTr ? 'AI Analizi' : 'AI Analysis',
+                      style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(
+                        summary,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 14,
+                          height: 1.6,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Interests
+                  if (interests.isNotEmpty) ...[
+                    Text(
+                      isTr ? 'İlgi Alanları' : 'Interests',
+                      style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: interests.map((interest) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.25)),
+                          ),
+                          child: Text(
+                            AppL10n.translateInterest(interest),
+                            style: GoogleFonts.poppins(
+                                color: AppColors.primary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Music section
+                  Text(
+                    isTr ? 'Müzik Bağlantısı' : 'Music Connection',
+                    style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildMusicCards(),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Music Cards ──────────────────────────────────────────────────────────
+  Widget _buildMusicCards() {
+    final isTr = AppL10n.currentLanguageCode == 'tr';
+    return Row(
+      children: [
+        Expanded(
+          child: _buildSingleMusicCard(
+            icon: FontAwesomeIcons.spotify,
+            label: 'Spotify',
+            connected: _spotifyConnected,
+            syncing: _spotifySyncing,
+            color: const Color(0xFF1DB954),
+            isTr: isTr,
+            onTap: _spotifyConnected ? null : (_spotifySyncing ? null : _connectSpotify),
+          ),
+        ),
+        if (Platform.isIOS) ...[
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildSingleMusicCard(
+              icon: FontAwesomeIcons.apple,
+              label: 'Apple Music',
+              connected: _appleMusicConnected,
+              syncing: _appleMusicSyncing,
+              color: const Color(0xFFFC3C44),
+              isTr: isTr,
+              onTap: _appleMusicConnected ? null : (_appleMusicSyncing ? null : _connectAppleMusic),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSingleMusicCard({
+    required IconData icon,
+    required String label,
+    required bool connected,
+    required bool syncing,
+    required Color color,
+    required bool isTr,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: connected ? color.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: connected ? color.withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.08),
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: connected ? color.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: syncing
+                  ? SizedBox(
+                      width: 15, height: 15,
+                      child: CircularProgressIndicator(strokeWidth: 1.5, color: color),
+                    )
+                  : Icon(icon, color: connected ? color : Colors.white38, size: 15),
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.poppins(
+                      color: connected ? color : Colors.white60,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    syncing
+                        ? (isTr ? 'Bağlanıyor...' : 'Connecting...')
+                        : connected
+                            ? (isTr ? 'Bağlı ✓' : 'Connected ✓')
+                            : (isTr ? 'Bağla' : 'Connect'),
+                    style: GoogleFonts.poppins(
+                      color: connected ? color.withValues(alpha: 0.65) : Colors.white30,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!connected && !syncing)
+              Icon(Icons.arrow_forward_ios_rounded, color: Colors.white.withValues(alpha: 0.18), size: 10),
+          ],
+        ),
       ),
     );
   }

@@ -151,6 +151,9 @@ class BLEAdvertiserPlugin: NSObject {
         // 🔥 BLE Advertiser Plugin kaydet (Spark Mode için)
         BLEAdvertiserPlugin.shared.register(with: controller.binaryMessenger)
 
+        // 🎬 Video Trimmer Plugin kaydet
+        VideoTrimmerPlugin.shared.register(with: controller.binaryMessenger)
+
         GeneratedPluginRegistrant.register(with: self)
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
