@@ -106,6 +106,8 @@ flutter:
     - assets/animations/iki.json
     - assets/animations/ppl.json
     - assets/animations/prof.json
+    - assets/animations/alevv.json
+    - assets/animations/dragon.json
 
 
 

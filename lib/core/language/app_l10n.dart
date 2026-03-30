@@ -43,7 +43,7 @@ class AppL10n {
   // ── ANA SAYFA ──
   static String get homeFeed => _en ? 'Home Feed' : 'Ana Akış';
   static String get explore => _en ? 'Explore' : 'Keşfet';
-  static String get aiAssistant => _en ? 'AI Assistant' : 'AI Asistan';
+  static String get aiAssistant => '';
   static String get myProfile => _en ? 'My Profile' : 'Profilim';
   static String get messages => _en ? 'Messages' : 'Mesajlar';
   static String get feedEmpty => _en ? 'Feed is empty.' : 'Akış boş.';
