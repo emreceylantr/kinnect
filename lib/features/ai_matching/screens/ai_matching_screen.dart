@@ -197,7 +197,12 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
       final matches = _cachedMatches!.where((m) {
         final uid = (m['profile'] as Map<String, dynamic>)['id'] as String?;
         return uid != null && !_hiddenUserIds.contains(uid);
-      }).toList();
+      }).toList()
+        ..sort((a, b) {
+          final aSimilarity = (a['similarity'] as num?)?.toDouble() ?? 0;
+          final bSimilarity = (b['similarity'] as num?)?.toDouble() ?? 0;
+          return bSimilarity.compareTo(aSimilarity);
+        });
 
       if (matches.isEmpty) {
         bodyContent = _buildEmptyState();
@@ -205,70 +210,109 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
         if (_selectedMatchIndex >= matches.length) {
           _selectedMatchIndex = math.max(0, matches.length - 1);
         }
-        bodyContent = RefreshIndicator(
-          color: AppColors.primary,
-          backgroundColor: AppColors.bgCard,
-          onRefresh: () => _fetchMatches(forceRefresh: true),
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(child: _buildHeader(matches.length)),
-              SliverToBoxAdapter(child: _buildTopAvatarRow(matches)),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        transitionBuilder: (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.05, 0.0),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: Dismissible(
-                          key: ValueKey(matches[_selectedMatchIndex]['profile']['id']),
-                          direction: DismissDirection.endToStart,
-                          background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.visibility_off_rounded, color: Colors.redAccent, size: 22),
-                                const SizedBox(height: 4),
-                                Text(AppL10n.hide, style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 11)),
-                              ],
+        bodyContent = LayoutBuilder(
+          builder: (context, constraints) {
+            final availableHeight = constraints.maxHeight;
+            final isCompactHeight = availableHeight < 760;
+            final isVeryCompactHeight = availableHeight < 700;
+            final horizontalPadding = isCompactHeight ? 12.0 : 16.0;
+            final topGap = isVeryCompactHeight ? 52.0 : (isCompactHeight ? 60.0 : 72.0);
+            final cardGap = isVeryCompactHeight ? 22.0 : (isCompactHeight ? 26.0 : 34.0);
+            final bottomGap = isVeryCompactHeight ? 6.0 : (isCompactHeight ? 10.0 : 14.0);
+
+            return RefreshIndicator(
+              color: AppColors.primary,
+              backgroundColor: AppColors.bgCard,
+              onRefresh: () => _fetchMatches(forceRefresh: true),
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        0,
+                        horizontalPadding,
+                        bottomGap,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildHeader(
+                            matches.length,
+                            compact: isCompactHeight,
+                          ),
+                          SizedBox(height: topGap),
+                          SizedBox(height: isVeryCompactHeight ? 13 : (isCompactHeight ? 18 : 24)),
+                          _buildTopAvatarRow(
+                            matches,
+                            compact: isCompactHeight,
+                          ),
+                          SizedBox(height: isVeryCompactHeight ? 0 : (isCompactHeight ? 2 : 6)),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            transitionBuilder: (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.05, 0.0),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Dismissible(
+                              key: ValueKey(matches[_selectedMatchIndex]['profile']['id']),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.visibility_off_rounded, color: Colors.redAccent, size: 22),
+                                    const SizedBox(height: 4),
+                                    Text(AppL10n.hide, style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 11)),
+                                  ],
+                                ),
+                              ),
+                              onDismissed: (_) {
+                                final dismissedId = matches[_selectedMatchIndex]['profile']['id'] as String;
+                                _hideUser(dismissedId);
+                              },
+                              child: _buildMatchCard(
+                                matches[_selectedMatchIndex],
+                                _selectedMatchIndex,
+                                compact: isCompactHeight,
+                              ),
                             ),
                           ),
-                          onDismissed: (_) {
-                            final dismissedId = matches[_selectedMatchIndex]['profile']['id'] as String;
-                            _hideUser(dismissedId);
-                          },
-                          child: _buildMatchCard(matches[_selectedMatchIndex], _selectedMatchIndex),
-                        ),
+                          SizedBox(height: cardGap),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: _buildDragonAction(
+                              matches[_selectedMatchIndex],
+                              compact: isCompactHeight,
+                            ),
+                          ),
+                          SizedBox(height: isVeryCompactHeight ? 5 : (isCompactHeight ? 9 : 13)),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      _buildDragonAction(matches[_selectedMatchIndex]),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 80)),
-            ],
-          ),
+            );
+          },
         );
       }
     }
@@ -289,14 +333,14 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
     );
   }
 
-  Widget _buildHeader(int count) {
+  Widget _buildHeader(int count, {bool compact = false}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: EdgeInsets.fromLTRB(16, compact ? 0 : 8, 16, compact ? 8 : 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(compact ? 8 : 10),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFFFF5252), Color(0xFFD32F2F)],
@@ -310,7 +354,11 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                 ),
               ],
             ),
-            child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: Colors.white, size: 18),
+            child: Icon(
+              FontAwesomeIcons.wandMagicSparkles,
+              color: Colors.white,
+              size: compact ? 16 : 18,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -321,7 +369,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                   AppL10n.soulTwins,
                   style: GoogleFonts.poppins(
                     color: Colors.white,
-                    fontSize: 20,
+                    fontSize: compact ? 18 : 20,
                     fontWeight: FontWeight.bold,
                     letterSpacing: -0.5,
                   ),
@@ -361,7 +409,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                     ],
                   ),
                   child: CircleAvatar(
-                    radius: 18,
+                    radius: compact ? 16 : 18,
                     backgroundColor: const Color(0xFF0F0C1A),
                     backgroundImage: _myAvatarUrl != null ? NetworkImage(_myAvatarUrl!) : null,
                     child: _myAvatarUrl == null
@@ -418,10 +466,11 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
     );
   }
 
-  Widget _buildTopAvatarRow(List<Map<String, dynamic>> matches) {
+  Widget _buildTopAvatarRow(List<Map<String, dynamic>> matches, {bool compact = false}) {
     if (matches.isEmpty) return const SizedBox.shrink();
     return _CampfireAvatarCarousel(
       matches: matches,
+      compact: compact,
       onTap: (match) => _showMatchDetail(match),
       onPageChanged: (index) {
         setState(() {
@@ -431,7 +480,11 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
     );
   }
 
-  Widget _buildMatchCard(Map<String, dynamic> match, int index) {
+  Widget _buildMatchCard(
+    Map<String, dynamic> match,
+    int index, {
+    bool compact = false,
+  }) {
     final profile = match['profile'] as Map<String, dynamic>;
     final similarity = (match['similarity'] as double);
     final percent = (similarity * 100).toInt();
@@ -482,7 +535,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
     );
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 12 : 16),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(20),
@@ -514,7 +567,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                         );
                       },
                       child: CircleAvatar(
-                        radius: 24,
+                        radius: compact ? 21 : 24,
                         backgroundColor: AppColors.bgDark,
                         backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
                         child: avatarUrl == null
@@ -531,7 +584,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                             fullName,
                             style: GoogleFonts.poppins(
                               color: Colors.white,
-                              fontSize: 14,
+                              fontSize: compact ? 13 : 14,
                               fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
@@ -541,7 +594,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                             '@$username',
                             style: GoogleFonts.poppins(
                               color: Colors.white38,
-                              fontSize: 11,
+                              fontSize: compact ? 10 : 11,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -553,11 +606,11 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                   ],
                 ),
                 if (recentPosts.isNotEmpty) ...[
-                  const SizedBox(height: 14),
+                  SizedBox(height: compact ? 10 : 14),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      _buildNewPostGrid(recentPosts),
+                      _buildNewPostGrid(recentPosts, compact: compact),
                       Expanded(
                         child: Center(
                           child: chatBubble,
@@ -566,7 +619,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                     ],
                   ),
                 ],
-                const SizedBox(height: 14),
+                SizedBox(height: compact ? 10 : 14),
               ],
             ),
           ),
@@ -575,13 +628,17 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
             chatBubble,
             const SizedBox(width: 16),
           ],
-          _LavaScoreBar(percent: percent, scoreColor: scoreColor),
+          _LavaScoreBar(
+            percent: percent,
+            scoreColor: scoreColor,
+            compact: compact,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDragonAction(Map<String, dynamic> match) {
+  Widget _buildDragonAction(Map<String, dynamic> match, {bool compact = false}) {
     return GestureDetector(
       onTap: () => _showMatchDetail(match),
       child: Stack(
@@ -589,14 +646,19 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
         alignment: Alignment.centerLeft,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 42),
+            padding: EdgeInsets.only(left: compact ? 34 : 42),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
+              padding: EdgeInsets.fromLTRB(
+                compact ? 14 : 16,
+                compact ? 7 : 8,
+                compact ? 10 : 12,
+                compact ? 7 : 8,
+              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFFFF5252).withOpacity(0.2),
-                    const Color(0xFFD32F2F).withOpacity(0.05),
+                    const Color(0xFFFF5252).withValues(alpha: 0.2),
+                    const Color(0xFFD32F2F).withValues(alpha: 0.05),
                   ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
@@ -607,10 +669,10 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                   bottomRight: Radius.circular(20),
                   bottomLeft: Radius.circular(4),
                 ),
-                border: Border.all(color: const Color(0xFFFF5252).withOpacity(0.4)),
+                border: Border.all(color: const Color(0xFFFF5252).withValues(alpha: 0.4)),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFF5252).withOpacity(0.1),
+                    color: const Color(0xFFFF5252).withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -621,29 +683,37 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Icon(FontAwesomeIcons.fire, color: Color(0xFFFF5252), size: 11),
-                  const SizedBox(width: 6),
+                  Icon(
+                    FontAwesomeIcons.fire,
+                    color: const Color(0xFFFF5252),
+                    size: compact ? 10 : 11,
+                  ),
+                  SizedBox(width: compact ? 5 : 6),
                   Text(
                     AppL10n.currentLanguageCode == 'tr' ? 'Ateş ne diyor?' : 'What does the fire say?',
                     style: GoogleFonts.poppins(
-                      color: Colors.white.withOpacity(0.95),
-                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.95),
+                      fontSize: compact ? 10 : 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white54, size: 10),
+                  SizedBox(width: compact ? 5 : 6),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: Colors.white54,
+                    size: compact ? 9 : 10,
+                  ),
                 ],
               ),
             ),
           ),
           Positioned(
             left: -10,
-            top: -24,
-            bottom: -20,
+            top: compact ? -18 : -24,
+            bottom: compact ? -14 : -20,
             child: SizedBox(
-              width: 70,
-              height: 70,
+              width: compact ? 56 : 70,
+              height: compact ? 56 : 70,
               child: Lottie.asset(
                 'assets/animations/dragon.json',
                 fit: BoxFit.contain,
@@ -655,12 +725,12 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
     );
   }
 
-  Widget _buildNewPostGrid(List<Map<String, dynamic>> posts) {
+  Widget _buildNewPostGrid(List<Map<String, dynamic>> posts, {bool compact = false}) {
     if (posts.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      width: 220,
-      height: 110,
+      width: compact ? 190 : 220,
+      height: compact ? 92 : 110,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
       ),
@@ -671,13 +741,13 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
             child: _buildGridPostItem(posts[0]),
           ),
           if (posts.length > 1) ...[
-            const SizedBox(width: 4),
+            SizedBox(width: compact ? 3 : 4),
             Expanded(
               flex: 1,
               child: Column(
                 children: [
                   Expanded(child: _buildGridPostItem(posts[1])),
-                  const SizedBox(height: 4),
+                  SizedBox(height: compact ? 3 : 4),
                   Expanded(
                     child: posts.length > 2
                         ? _buildGridPostItem(posts[2])
@@ -2223,12 +2293,14 @@ class _TypingDotsState extends State<_TypingDots> with SingleTickerProviderState
 
 class _CampfireAvatarCarousel extends StatefulWidget {
   final List<Map<String, dynamic>> matches;
+  final bool compact;
   final Function(Map<String, dynamic>) onTap;
   final Function(int) onPageChanged;
 
   const _CampfireAvatarCarousel({
     Key? key,
     required this.matches,
+    this.compact = false,
     required this.onTap,
     required this.onPageChanged,
   }) : super(key: key);
@@ -2240,6 +2312,7 @@ class _CampfireAvatarCarousel extends StatefulWidget {
 class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
   late PageController _pageController;
   final int _infiniteOffset = 10000;
+  late int _basePage;
 
   int _currentIndex = 0;
   bool _isFlipped = false;
@@ -2250,9 +2323,37 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: 0.35, initialPage: _infiniteOffset);
-    _currentIndex = _infiniteOffset % widget.matches.length;
+    _basePage = _normalizedBasePage(widget.matches.length);
+    _pageController = PageController(
+      viewportFraction: 0.35,
+      initialPage: _basePage,
+    );
+    _currentIndex = 0;
     _startFlipSequence();
+  }
+
+  @override
+  void didUpdateWidget(covariant _CampfireAvatarCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldFirstId = oldWidget.matches.isEmpty
+        ? null
+        : (oldWidget.matches.first['profile'] as Map<String, dynamic>)['id'];
+    final newFirstId = widget.matches.isEmpty
+        ? null
+        : (widget.matches.first['profile'] as Map<String, dynamic>)['id'];
+    if (oldWidget.matches.length != widget.matches.length || oldFirstId != newFirstId) {
+      _basePage = _normalizedBasePage(widget.matches.length);
+      _currentIndex = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_pageController.hasClients) return;
+        _pageController.jumpToPage(_basePage);
+      });
+    }
+  }
+
+  int _normalizedBasePage(int length) {
+    if (length <= 0) return _infiniteOffset;
+    return _infiniteOffset - (_infiniteOffset % length);
   }
 
   void _startFlipSequence() {
@@ -2290,6 +2391,15 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
     }
   }
 
+  void _focusMatch(int pageIndex, int realIndex) {
+    if (!_pageController.hasClients || _currentIndex == realIndex) return;
+    _pageController.animateToPage(
+      pageIndex,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   @override
   void dispose() {
     _flipToBackTimer?.cancel();
@@ -2301,15 +2411,19 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
   @override
   Widget build(BuildContext context) {
     if (widget.matches.isEmpty) return const SizedBox.shrink();
+    final carouselHeight = widget.compact ? 264.0 : 360.0;
+    final flameSize = widget.compact ? 204.0 : 266.0;
+    final arcWidth = widget.compact ? 132.0 : 164.0;
+    final arcDepth = widget.compact ? 56.0 : 80.0;
 
     return SizedBox(
-      height: 360,
+      height: carouselHeight,
       child: AnimatedBuilder(
         animation: _pageController,
         builder: (context, child) {
-          double page = _infiniteOffset.toDouble();
+          double page = _basePage.toDouble();
           if (_pageController.hasClients) {
-            page = _pageController.page ?? _infiniteOffset.toDouble();
+            page = _pageController.page ?? _basePage.toDouble();
           }
 
           List<Map<String, dynamic>> items = [];
@@ -2323,9 +2437,9 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
 
             double diff = i - page;
             double angle = diff * (math.pi / 3.5);
-            double translateX = math.sin(angle) * 150.0;
+            double translateX = math.sin(angle) * arcWidth;
             double translateZ = math.cos(angle);
-            double translateY = (1 - translateZ) * 80.0;
+            double translateY = (1 - translateZ) * arcDepth;
             double scale = math.max(0.4, 0.65 + (translateZ * 0.35));
             double opacity = math.max(0.0, 0.3 + (translateZ * 0.7));
 
@@ -2351,12 +2465,12 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
               ...backItems.map((item) => _buildPositionedItem(item)),
 
               Positioned(
-                top: 20,
+                top: widget.compact ? -16 : -8,
                 child: IgnorePointer(
                   child: Lottie.asset(
                     'assets/animations/alevv.json',
-                    width: 250,
-                    height: 250,
+                    width: flameSize,
+                    height: flameSize,
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -2392,7 +2506,7 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
                         if (_currentIndex == realIndex) {
                           _toggleFlip();
                         } else {
-                          widget.onTap(widget.matches[realIndex]);
+                          _focusMatch(infiniteIndex, realIndex);
                         }
                       },
                       child: Container(color: Colors.transparent),
@@ -2419,7 +2533,7 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
       key: ValueKey(absoluteIndex),
       alignment: Alignment.bottomCenter,
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
+        padding: EdgeInsets.only(bottom: widget.compact ? 10 : 10),
         child: Transform.translate(
           offset: Offset(translateX, -translateY),
           child: Transform.scale(
@@ -2470,12 +2584,12 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
             );
           },
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: widget.compact ? 12 : 16),
         Text(
           fullName,
           style: GoogleFonts.poppins(
             color: Colors.white70,
-            fontSize: 11,
+            fontSize: widget.compact ? 10 : 11,
             fontWeight: FontWeight.w500,
           ),
           maxLines: 1,
@@ -2486,6 +2600,7 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
   }
 
   Widget _buildFlipFront(String? avatarUrl) {
+    final avatarSize = widget.compact ? 58.0 : 68.0;
     return Container(
       padding: const EdgeInsets.all(1),
       decoration: const BoxDecoration(
@@ -2494,11 +2609,15 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
       ),
       child: ClipOval(
         child: Container(
-          width: 68,
-          height: 68,
+          width: avatarSize,
+          height: avatarSize,
           color: const Color(0xFF0F0C1A),
           child: avatarUrl == null
-              ? const Icon(Icons.person, color: Colors.white38, size: 30)
+              ? Icon(
+                  Icons.person,
+                  color: Colors.white38,
+                  size: widget.compact ? 24 : 30,
+                )
               : CachedNetworkImage(
             imageUrl: avatarUrl,
             fit: BoxFit.cover,
@@ -2513,9 +2632,10 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
   }
 
   Widget _buildFlipBack(int similarity) {
+    final badgeSize = widget.compact ? 60.0 : 70.0;
     return Container(
-      width: 70,
-      height: 70,
+      width: badgeSize,
+      height: badgeSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.orange.withValues(alpha: 0.25),
@@ -2526,7 +2646,7 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
         '%$similarity',
         style: GoogleFonts.poppins(
           color: Colors.white,
-          fontSize: 16,
+          fontSize: widget.compact ? 14 : 16,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -2610,8 +2730,13 @@ class _StarPainter extends CustomPainter {
 class _LavaScoreBar extends StatefulWidget {
   final int percent;
   final Color scoreColor;
+  final bool compact;
 
-  const _LavaScoreBar({required this.percent, required this.scoreColor});
+  const _LavaScoreBar({
+    required this.percent,
+    required this.scoreColor,
+    this.compact = false,
+  });
 
   @override
   State<_LavaScoreBar> createState() => _LavaScoreBarState();
@@ -2637,6 +2762,7 @@ class _LavaScoreBarState extends State<_LavaScoreBar> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) {
+    final barHeight = widget.compact ? 108.0 : 140.0;
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
@@ -2645,14 +2771,14 @@ class _LavaScoreBarState extends State<_LavaScoreBar> with SingleTickerProviderS
           borderRadius: BorderRadius.circular(16),
           child: Container(
             width: 24,
-            height: 140,
+            height: barHeight,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
+              color: Colors.white.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.15), width: 0.5),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 0.5),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.deepOrange.withOpacity(0.1),
+                  color: Colors.deepOrange.withValues(alpha: 0.1),
                   blurRadius: 10,
                   spreadRadius: 2,
                 ),
@@ -2672,7 +2798,7 @@ class _LavaScoreBarState extends State<_LavaScoreBar> with SingleTickerProviderS
                         alignment: Alignment.bottomCenter,
                         children: [
                           CustomPaint(
-                            size: const Size(24, 140),
+                            size: Size(24, barHeight),
                             painter: _LavaPainter(
                               fillPercent: fillValue,
                               animationValue: _waveController.value,
@@ -2692,7 +2818,7 @@ class _LavaScoreBarState extends State<_LavaScoreBar> with SingleTickerProviderS
           '%${widget.percent}',
           style: GoogleFonts.poppins(
             color: widget.scoreColor,
-            fontSize: 13,
+            fontSize: widget.compact ? 12 : 13,
             fontWeight: FontWeight.bold,
           ),
         ),

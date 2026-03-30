@@ -358,7 +358,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final bool hideAppBar = _currentIndex == 1 || _currentIndex == 4;
+    final bool hideAppBar =
+        _currentIndex == 1 || _currentIndex == 3 || _currentIndex == 4;
 
     return PopScope(
       canPop: false,
