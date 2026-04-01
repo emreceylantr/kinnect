@@ -216,10 +216,10 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
             final isCompactHeight = availableHeight < 760;
             final isVeryCompactHeight = availableHeight < 700;
             final horizontalPadding = isCompactHeight ? 12.0 : 16.0;
-            final topGap = isVeryCompactHeight ? 52.0 : (isCompactHeight ? 60.0 : 72.0);
 
+            // Added slightly more padding at the bottom to shift everything slightly upwards
+            final bottomPadding = isVeryCompactHeight ? 40.0 : 50.0;
             final cardGap = isVeryCompactHeight ? 11.0 : (isCompactHeight ? 13.0 : 17.0);
-            final bottomPadding = isVeryCompactHeight ? 20.0 : 28.0;
 
             return RefreshIndicator(
               color: AppColors.primary,
@@ -2417,7 +2417,10 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
     if (widget.matches.isEmpty) return const SizedBox.shrink();
     final carouselHeight = widget.compact ? 320.0 : 420.0;
     final flameSize = widget.compact ? 280.0 : 360.0;
-    final arcWidth = widget.compact ? 140.0 : 175.0;
+
+    // YAYILIM GENİŞLİĞİ BURADA AZALTILDI
+    final arcWidth = widget.compact ? 115.0 : 140.0;
+
     final arcDepth = widget.compact ? 60.0 : 85.0;
 
     return SizedBox(
