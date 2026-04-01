@@ -217,8 +217,9 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
             final isVeryCompactHeight = availableHeight < 700;
             final horizontalPadding = isCompactHeight ? 12.0 : 16.0;
             final topGap = isVeryCompactHeight ? 52.0 : (isCompactHeight ? 60.0 : 72.0);
-            final cardGap = isVeryCompactHeight ? 22.0 : (isCompactHeight ? 26.0 : 34.0);
-            final bottomGap = isVeryCompactHeight ? 6.0 : (isCompactHeight ? 10.0 : 14.0);
+
+            final cardGap = isVeryCompactHeight ? 11.0 : (isCompactHeight ? 13.0 : 17.0);
+            final bottomPadding = isVeryCompactHeight ? 20.0 : 28.0;
 
             return RefreshIndicator(
               color: AppColors.primary,
@@ -234,25 +235,28 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                         horizontalPadding,
                         0,
                         horizontalPadding,
-                        bottomGap,
+                        bottomPadding,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          _buildHeader(
-                            matches.length,
-                            compact: isCompactHeight,
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: _buildHeader(
+                              matches.length,
+                              compact: isCompactHeight,
+                            ),
                           ),
-                          SizedBox(height: topGap),
-                          SizedBox(height: isVeryCompactHeight ? 13 : (isCompactHeight ? 18 : 24)),
+                          const Expanded(child: SizedBox(height: 10)),
+
                           _buildTopAvatarRow(
                             matches,
                             compact: isCompactHeight,
                           ),
 
-                          const Spacer(),
+                          SizedBox(height: isVeryCompactHeight ? 12 : 20),
 
-                          SizedBox(height: isVeryCompactHeight ? 0 : (isCompactHeight ? 2 : 6)),
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 300),
                             transitionBuilder: (Widget child, Animation<double> animation) {
@@ -305,7 +309,6 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                               compact: isCompactHeight,
                             ),
                           ),
-                          SizedBox(height: isVeryCompactHeight ? 5 : (isCompactHeight ? 9 : 13)),
                         ],
                       ),
                     ),
@@ -2412,10 +2415,10 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
   @override
   Widget build(BuildContext context) {
     if (widget.matches.isEmpty) return const SizedBox.shrink();
-    final carouselHeight = widget.compact ? 264.0 : 360.0;
-    final flameSize = widget.compact ? 204.0 : 266.0;
-    final arcWidth = widget.compact ? 132.0 : 164.0;
-    final arcDepth = widget.compact ? 56.0 : 80.0;
+    final carouselHeight = widget.compact ? 320.0 : 420.0;
+    final flameSize = widget.compact ? 280.0 : 360.0;
+    final arcWidth = widget.compact ? 140.0 : 175.0;
+    final arcDepth = widget.compact ? 60.0 : 85.0;
 
     return SizedBox(
       height: carouselHeight,
@@ -2466,7 +2469,7 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
               ...backItems.map((item) => _buildPositionedItem(item)),
 
               Positioned(
-                top: widget.compact ? -16 : -8,
+                top: widget.compact ? -30 : -40,
                 child: IgnorePointer(
                   child: Lottie.asset(
                     'assets/animations/alevv.json',
@@ -2534,7 +2537,7 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
       key: ValueKey(absoluteIndex),
       alignment: Alignment.bottomCenter,
       child: Padding(
-        padding: EdgeInsets.only(bottom: widget.compact ? 10 : 10),
+        padding: EdgeInsets.only(bottom: widget.compact ? 0 : 0),
         child: Transform.translate(
           offset: Offset(translateX, -translateY),
           child: Transform.scale(
