@@ -225,9 +225,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
               backgroundColor: AppColors.bgCard,
               onRefresh: () => _fetchMatches(forceRefresh: true),
               child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
+                physics: const NeverScrollableScrollPhysics(),
                 slivers: [
                   SliverFillRemaining(
                     hasScrollBody: false,
@@ -251,6 +249,9 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                             matches,
                             compact: isCompactHeight,
                           ),
+
+                          const Spacer(),
+
                           SizedBox(height: isVeryCompactHeight ? 0 : (isCompactHeight ? 2 : 6)),
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 300),
@@ -481,10 +482,10 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
   }
 
   Widget _buildMatchCard(
-    Map<String, dynamic> match,
-    int index, {
-    bool compact = false,
-  }) {
+      Map<String, dynamic> match,
+      int index, {
+        bool compact = false,
+      }) {
     final profile = match['profile'] as Map<String, dynamic>;
     final similarity = (match['similarity'] as double);
     final percent = (similarity * 100).toInt();
@@ -2240,7 +2241,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
       ),
     );
   }
-} // End of _AiMatchingScreenState
+}
 
 // ==========================================
 // HELPER CLASSES & WIDGETS
@@ -2614,10 +2615,10 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
           color: const Color(0xFF0F0C1A),
           child: avatarUrl == null
               ? Icon(
-                  Icons.person,
-                  color: Colors.white38,
-                  size: widget.compact ? 24 : 30,
-                )
+            Icons.person,
+            color: Colors.white38,
+            size: widget.compact ? 24 : 30,
+          )
               : CachedNetworkImage(
             imageUrl: avatarUrl,
             fit: BoxFit.cover,
