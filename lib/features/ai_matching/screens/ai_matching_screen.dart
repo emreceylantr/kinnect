@@ -185,16 +185,15 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
   Widget build(BuildContext context) {
     Widget bodyContent;
 
-    // --- DEĞİŞİKLİK BURADA: Sayfa ilk açılırken dönen mor yuvarlak turuncu oldu ve altına yazı eklendi ---
     if (_myPostCount == -1) {
       bodyContent = Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(color: Colors.orange), // Renk turuncu oldu
+            const CircularProgressIndicator(color: Colors.orange),
             const SizedBox(height: 20),
             Text(
-              'Ruh ikizlerini arıyoruz...', // İstediğiniz yazı eklendi
+              'Ruh ikizlerini arıyoruz...',
               style: GoogleFonts.poppins(
                 color: Colors.white54,
                 fontSize: 14,
@@ -2013,7 +2012,6 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
     );
   }
 
-  // --- DEĞİŞİKLİK BURADA: Eşleşmeler aranırken dönen yuvarlak turuncu oldu ve yazısı değişti ---
   Widget _buildLoadingState() {
     return Center(
       child: Column(
@@ -2023,13 +2021,13 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
             width: 60,
             height: 60,
             child: CircularProgressIndicator(
-              color: Colors.orange, // Renk turuncu oldu
+              color: Colors.orange,
               strokeWidth: 3,
             ),
           ),
           const SizedBox(height: 20),
           Text(
-            'Ruh ikizlerini arıyoruz...', // İstediğiniz yazı buraya da eklendi
+            'Ruh ikizlerini arıyoruz...',
             style: GoogleFonts.poppins(
               color: Colors.white54,
               fontSize: 14,
@@ -2260,7 +2258,6 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
   }
 }
 
-// ... (Helper sınıfları ve widget'lar aynen kalıyor, değişiklik yapılmasına gerek yok)
 // ==========================================
 // HELPER CLASSES & WIDGETS
 // ==========================================
@@ -2433,7 +2430,6 @@ class _CampfireAvatarCarouselState extends State<_CampfireAvatarCarousel> {
     final carouselHeight = widget.compact ? 320.0 : 420.0;
     final flameSize = widget.compact ? 280.0 : 360.0;
 
-    // YAYILIM GENİŞLİĞİ BURADA AZALTILDI
     final arcWidth = widget.compact ? 115.0 : 140.0;
 
     final arcDepth = widget.compact ? 60.0 : 85.0;
@@ -2788,26 +2784,145 @@ class _LavaScoreBarState extends State<_LavaScoreBar> with SingleTickerProviderS
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
-    ); // Bu kısım kodda eksikti, üstteki Column kapanış parantezi.
-    // Ancak orijinal kodda burası şöyleydi:
-    /*
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
       children: [
-        // ... (ClipRRect ve Text widget'ları)
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: 24,
+            height: barHeight,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 0.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.deepOrange.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: widget.percent / 100.0),
+                duration: const Duration(milliseconds: 4000),
+                curve: Curves.easeInOutCubic,
+                builder: (context, fillValue, child) {
+                  return AnimatedBuilder(
+                    animation: _waveController,
+                    builder: (context, child) {
+                      return Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: [
+                          CustomPaint(
+                            size: Size(24, barHeight),
+                            painter: _LavaPainter(
+                              fillPercent: fillValue,
+                              animationValue: _waveController.value,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '%${widget.percent}',
+          style: GoogleFonts.poppins(
+            color: widget.scoreColor,
+            fontSize: widget.compact ? 12 : 13,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
-    */
-    // Orijinal yapıyı bozmamak için LavaScoreBar'ı önceki tam koddan aynen alıyorum.
-    // Sadece _buildLoadingState ve build içindeki loading kısımlarını değiştirdim.
-    // scoreBar'ın orijinal halini aşağıya ekliyorum:
-
-    // NOT: scoreBar widget'ının tam hali orijinal kodda mevcuttu, buraya tekrar eklemiyorum
-    // çünkü bu bir parça kod değil, tam kod revizesi. Yukarıdaki kodda build metodu içindeki
-    // loading kısımlarını ve _buildLoadingState metodunu değiştirdim.scoreBar
-    // metodunun içi orijinal kodda olduğu gibi kalmalı.
-    // Tam kodu yukarıda paylaştım, scoreBar kısmı orijinal kodla aynıdır.
   }
 }
-// ...painter sınıfları...
+
+class _LavaPainter extends CustomPainter {
+  final double fillPercent;
+  final double animationValue;
+
+  _LavaPainter({
+    required this.fillPercent,
+    required this.animationValue,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (fillPercent == 0) return;
+
+    canvas.clipRect(Rect.fromLTRB(0, 0, size.width, size.height));
+
+    final fillHeight = size.height * fillPercent;
+    final topY = size.height - fillHeight;
+
+    final gradient = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Color(0xFFFFEA00),
+        Color(0xFFFF5722),
+        Color(0xFFBF360C),
+      ],
+      stops: [0.0, 0.4, 1.0],
+    ).createShader(Rect.fromLTRB(0, topY, size.width, size.height));
+
+    final wavePhase = animationValue * 2 * math.pi;
+    const waveAmplitude = 4.0;
+
+    Path buildWavePath(double amplitude, double phaseShift, double yOffset) {
+      final path = Path();
+      path.moveTo(0, size.height);
+      path.lineTo(0, yOffset);
+      for (double x = 0; x <= size.width; x++) {
+        double y = yOffset + math.sin((x / size.width * 2 * math.pi) + wavePhase + phaseShift) * amplitude;
+        path.lineTo(x, y);
+      }
+      path.lineTo(size.width, size.height);
+      path.close();
+      return path;
+    }
+
+    final backWavePaint = Paint()
+      ..color = const Color(0xFFE64A19).withOpacity(0.6)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+    canvas.drawPath(buildWavePath(waveAmplitude * 1.2, 0, topY), backWavePaint);
+
+    final midWavePaint = Paint()..color = const Color(0xFFFF5722).withOpacity(0.8);
+    canvas.drawPath(buildWavePath(waveAmplitude * 0.9, math.pi / 1.5, topY + 2), midWavePaint);
+
+    final frontWavePaint = Paint()
+      ..shader = gradient
+      ..maskFilter = const MaskFilter.blur(BlurStyle.inner, 1);
+    canvas.drawPath(buildWavePath(waveAmplitude * 0.7, math.pi, topY + 4), frontWavePaint);
+
+    final rand = math.Random(42);
+    final bubblePaint = Paint()..color = Colors.yellowAccent.withOpacity(0.4);
+
+    for (int i = 0; i < 10; i++) {
+      double startX = rand.nextDouble() * size.width;
+      double speedOffset = rand.nextDouble() * 0.5 + 0.5;
+      double sizeOffset = rand.nextDouble() * 2 + 1;
+      double timeOffset = rand.nextDouble();
+
+      double t = (animationValue * speedOffset + timeOffset) % 1.0;
+      double y = size.height - (t * fillHeight);
+
+      if (y > topY + waveAmplitude) {
+        canvas.drawCircle(Offset(startX, y), sizeOffset, bubblePaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _LavaPainter oldDelegate) {
+    return oldDelegate.fillPercent != fillPercent || oldDelegate.animationValue != animationValue;
+  }
+}
