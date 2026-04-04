@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../../core/theme/app_colors.dart';
+// Kendi projenizdeki importları buraya ekleyin:
+// import '../../../core/theme/app_colors.dart';
 
 // ─────────────────────────────────────────────
 // Data Model
@@ -52,8 +53,8 @@ const List<_QuizQuestion> _kQuestions = [
     b: 'Sevdiklerimle kurduğum güçlü, derin bağlar.',
     c: 'Yeni deneyimler, maceralar ve bilinmeyeni keşfetmek.',
     d: 'Topluma veya insanlara faydalı bir şeyler bırakabilmek.',
-    aShort: 'Başarı 🏆', bShort: 'Derin Bağlar 💕',
-    cShort: 'Macera 🌍', dShort: 'Fayda 🤝',
+    aShort: 'Başarı Hissi 🏆', bShort: 'Derin Bağlar 💕',
+    cShort: 'Macera & Yeni Deneyimler 🌍', dShort: 'Topluma & İnsanlara Fayda 🤝',
   ),
   _QuizQuestion(
     section: 1, sectionTitle: 'Bireysel Vibe', sectionEmoji: '🔥',
@@ -63,7 +64,7 @@ const List<_QuizQuestion> _kQuestions = [
     c: 'Genelde karşıdan beklerim, ilk adım atmak zor gelir.',
     d: 'Söze gerek duymam — beden dilimle enerjimi belli ederim.',
     aShort: 'İlk ben ✋', bShort: 'Duruma göre 🤔',
-    cShort: 'Karşıdan beklerim 🌸', dShort: 'Beden dilim 🕺',
+    cShort: 'Karşıdan beklerim 🌸', dShort: 'Beden dilimle enerjimi belli ederim 🕺',
   ),
   _QuizQuestion(
     section: 1, sectionTitle: 'Bireysel Vibe', sectionEmoji: '🔥',
@@ -73,7 +74,7 @@ const List<_QuizQuestion> _kQuestions = [
     c: 'Kulaklığı takıp favori müziklerimle kaybolmak veya spor.',
     d: 'Güvendiğim bir dostla saatlerce her şeyi filtresiz konuşmak.',
     aShort: 'Doğa & Sessizlik 🌿', bShort: 'Oyun & Aktivite 🎮',
-    cShort: 'Müzik & Spor 🎵', dShort: 'Dost sohbet 🗣️',
+    cShort: 'Müzik & Spor 🎵', dShort: 'Arkadaşlarım ile Sohbet🗣️',
   ),
   // ── Bölüm 2: Kıvılcım ───────────────────────────────────────────────────────
   _QuizQuestion(
@@ -83,8 +84,8 @@ const List<_QuizQuestion> _kQuestions = [
     b: 'Zekası, espri yeteneği ve sohbetin hiç takılmadan akması.',
     c: 'Kendine olan özgüveni ve yaydığı güçlü enerji.',
     d: 'Karşıdakini gerçekten dinleyen empati yeteneği.',
-    aShort: 'Fizik & Gülüş 😍', bShort: 'Zeka & Espri 😄',
-    cShort: 'Özgüven 💪', dShort: 'Empati ❤️',
+    aShort: 'Fizik & Gülüş 😍', bShort: 'Zeka & Mizah Anlayışı 😄',
+    cShort: 'Özgüven & Aura 💪', dShort: 'Samimiyet ❤️',
   ),
   _QuizQuestion(
     section: 2, sectionTitle: 'Kıvılcım', sectionEmoji: '⚡',
@@ -94,7 +95,7 @@ const List<_QuizQuestion> _kQuestions = [
     c: 'Doğada, sakin bir yerde yürüyüş eşliğinde kahve.',
     d: 'Spontane gelişen, sokak lezzetleri veya rahat bir barda samimi akşam.',
     aShort: 'Kafe sohbet ☕', bShort: 'Konser & Aktivite 🎶',
-    cShort: 'Doğa yürüyüşü 🌿', dShort: 'Spontane sokak 🌆',
+    cShort: 'Doğa yürüyüşü 🌿', dShort: 'Spontane gelişen 🌆',
   ),
   _QuizQuestion(
     section: 2, sectionTitle: 'Kıvılcım', sectionEmoji: '⚡',
@@ -113,8 +114,8 @@ const List<_QuizQuestion> _kQuestions = [
     b: 'En filtresiz halimle bile yanında rahat davrandığımda.',
     c: 'Gelecek planlarıma onu doğal bir şekilde dahil ettiğimde.',
     d: 'Zor bir anımda aklıma gelen ilk kişi o olduğunda.',
-    aShort: 'Sessiz uyum 🤫', bShort: 'Filtresiz ben 😊',
-    cShort: 'Gelecek planları 🔮', dShort: 'İlk aklıma gelen 💭',
+    aShort: 'Sessizlik bile keyifliyse 🤫', bShort: 'Rahat hissettiriyorsa 😊',
+    cShort: 'Gelecek planlarıma dahil olmaya başlamışsa 🔮', dShort: 'Zor bir anımda ilk aklıma gelen kişiyse 💭',
   ),
   _QuizQuestion(
     section: 2, sectionTitle: 'Kıvılcım', sectionEmoji: '⚡',
@@ -123,18 +124,18 @@ const List<_QuizQuestion> _kQuestions = [
     b: 'Yaşam vizyonu — geleceğe dair hedeflerimiz aynı yöne bakmalı.',
     c: 'Sevgi dili — temas, kaliteli zaman ve onay sözleri.',
     d: 'Çatışma yönetimi — kavga ederken bile birbirimize saygılı kalmak.',
-    aShort: 'Mizah 😂', bShort: 'Vizyon 🎯',
-    cShort: 'Sevgi dili 💝', dShort: 'Çatışma yönetimi 🕊️',
+    aShort: 'Mizah 😂', bShort: 'Vizyon & Hedefler 🎯',
+    cShort: 'Sevgi dili & Temas 💝', dShort: 'Saygı & Davranış 🕊️',
   ),
   _QuizQuestion(
     section: 2, sectionTitle: 'Kıvılcım', sectionEmoji: '⚡',
     question: '\'Aşk\' veya \'Derin Bağ\' bir ateşe benzeseydi seninki?',
     a: 'Aniden parlayan, tutkulu, baş döndürücü ve fırtınalı kamp ateşi.',
     b: 'Yavaş yavaş yanan, güven veren, uzun ömürlü şömine.',
-    c: 'Sürekli yeni odunlar atılarak büyüyen, macera dolu festival ateşi.',
+    c: 'Duygu dolu, macera dolu festival ateşi.',
     d: 'Kontrollü — mantık ve duygunun mükemmel dengelendiği kalıcı ısı.',
     aShort: 'Tutkulu & Fırtınalı 🔥', bShort: 'Güvenli & Kalıcı 🕯️',
-    cShort: 'Macera ateşi 🏕️', dShort: 'Dengeli mantık ⚖️',
+    cShort: 'Heyecanlı & Duygusal ❤️️', dShort: 'Dengeli & Kontrollü ⚖️',
   ),
   // ── Bölüm 3: Sosyal Dinamikler ──────────────────────────────────────────────
   _QuizQuestion(
@@ -144,8 +145,8 @@ const List<_QuizQuestion> _kQuestions = [
     b: 'Terapist — herkesin derdini anlattığı, tavsiye veren sırdaş.',
     c: 'Eğlendirici — ortamın enerjisini yüksek tutan, espri makinesi.',
     d: 'Gözlemci — kenarda, az ama öz konuşan kişi.',
-    aShort: 'Organizatör 📅', bShort: 'Terapist 👂',
-    cShort: 'Eğlendirici 🎭', dShort: 'Gözlemci 👁️',
+    aShort: 'Organizatör & Lider 📅', bShort: 'Terapist & Dinleyici 👂',
+    cShort: 'Eğlendirici & Konuşkan 🎭', dShort: 'Gözlemci & Sessiz 👁️',
   ),
   _QuizQuestion(
     section: 3, sectionTitle: 'Sosyal Dinamikler', sectionEmoji: '🌐',
@@ -154,8 +155,8 @@ const List<_QuizQuestion> _kQuestions = [
     b: 'Önce uzaklaşıp sakinleşmeyi tercih ederim.',
     c: 'Kırılırım veya içime atarım, tartışmayı büyütmem.',
     d: 'Duyguları bir kenara bırakıp mantıklı argümanlarla orta yolu ararım.',
-    aShort: 'Hemen yüzleşirim 💬', bShort: 'Sakinleşip dönerim 😌',
-    cShort: 'İçime atarım 😶', dShort: 'Mantıkla çözerim 🧠',
+    aShort: 'Hemen moduma göre tepki verir, yüzleşirim 💬', bShort: 'Uzaklaşırım, sakinleşip dönerim 😌',
+    cShort: 'İçime atarım 😶', dShort: 'Objektif şekilde, mantıkla çözerim 🧠',
   ),
   _QuizQuestion(
     section: 3, sectionTitle: 'Sosyal Dinamikler', sectionEmoji: '🌐',
@@ -164,42 +165,19 @@ const List<_QuizQuestion> _kQuestions = [
     b: 'Hayatın karmaşasında beni sakinleştirmesi ve dengelemesi.',
     c: 'Hedeflerime ulaşmamda motive edip vizyonumu genişletmesi.',
     d: 'Olduğum gibi kabul edip, yargılamadan dinleyen bir liman olması.',
-    aShort: 'Maceraya sürükle 🌍', bShort: 'Beni dengele ⚖️',
-    cShort: 'Motive et 🚀', dShort: 'Kabul et & Dinle 🏡',
+    aShort: 'Maceraya sürüklesin 🌍', bShort: 'Beni dengelesin & Rahatlatsın ⚖️',
+    cShort: 'Motive etsin 🚀', dShort: 'Olduğum gibi kabul etsin & Şefkatle yaklaşsın 🏡',
   ),
 ];
 
 // ─────────────────────────────────────────────
-// Flame Trail Painter
+// Opening Dummy Card Data
 // ─────────────────────────────────────────────
 
-class _FlamePainter extends CustomPainter {
-  final List<Offset> points;
-  _FlamePainter(this.points);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (points.length < 2) return;
-    for (int i = 0; i < points.length; i++) {
-      final t = i / points.length;
-      final radius = 3.0 + t * 10.0;
-      final opacity = t * 0.5;
-      // Outer glow — purple
-      final paint = Paint()
-        ..color = const Color(0xFF7C3AED).withValues(alpha: opacity)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-      canvas.drawCircle(points[i], radius, paint);
-
-      // Inner core — lighter violet
-      final corePaint = Paint()
-        ..color = const Color(0xFFBB86FC).withValues(alpha: opacity * 0.9)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-      canvas.drawCircle(points[i], radius * 0.45, corePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_FlamePainter old) => old.points != points;
+class _DummyCard {
+  final Offset startOffset;
+  final double startAngle;
+  _DummyCard(this.startOffset, this.startAngle);
 }
 
 // ─────────────────────────────────────────────
@@ -215,201 +193,219 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
+  // Theme
+  static const Color _accentColor = Color(0xFFFFFBF1);
+  static const Color _bgDark = Color(0xFF12121A);
+  static const Color _cardBgColor = Color(0xFF1E1E2A);
+
+  // Core State
   final Map<int, String> _answers = {};
   int _currentIndex = 0;
   bool _isSubmitting = false;
 
-  // Drag state
-  Offset _cardOffset = Offset.zero;
-  double _cardRotation = 0;
-  final List<Offset> _trailPoints = [];
-  String? _activeCorner; // 'A', 'B', 'C', 'D'
-  bool _isAnimating = false;
+  // Drag & Interaction State
+  Offset _dragOffset = Offset.zero;
+  int? _activeRegion; // 0: TL, 1: TR, 2: BL, 3: BR
+  bool _isDragging = false;
 
-  // Animation controllers
+  // Animation Flags
+  bool _isOpeningStarted = false;
+  bool _isOpeningFinished = false;
+  bool _answersVisible = false;
+
+  // Controllers
   late AnimationController _throwController;
-  late AnimationController _entryController;
-  Animation<double>? _entrySlide; // 0 = off-screen-bottom, 1 = in place
-  Animation<double>? _entryScale;
+  Animation<Offset>? _throwAnimation;
+
+  // Data for Intro Animation
+  List<_DummyCard> _dummyCards = [];
+  bool _dummyCardsGenerated = false;
 
   @override
   void initState() {
     super.initState();
+
     _throwController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 320),
+      duration: const Duration(milliseconds: 420),
     );
-    _entryController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 380),
-    );
-    _entryController.value = 1.0; // First card already in place
-    _entryController.addListener(() => setState(() {}));
+
+    _throwController.addListener(() {
+      if (_throwAnimation != null && mounted) {
+        setState(() {
+          _dragOffset = _throwAnimation!.value;
+        });
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() => _isOpeningStarted = true);
+
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (!mounted) return;
+
+        setState(() {
+          _isOpeningFinished = true;
+          _answersVisible = true;
+        });
+      });
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_dummyCardsGenerated) {
+      _generateDummyCards();
+      _dummyCardsGenerated = true;
+    }
   }
 
   @override
   void dispose() {
     _throwController.dispose();
-    _entryController.dispose();
     super.dispose();
   }
 
-  // ── Drag handlers ─────────────────────────────
+  void _generateDummyCards() {
+    final size = MediaQuery.of(context).size;
+    final random = math.Random();
 
-  void _onPanStart(DragStartDetails d) {
-    if (_isAnimating) return;
-    _trailPoints.clear();
+    // Create random start positions completely outside the screen
+    final positions = [
+      Offset(-size.width, -size.height), // Top Left
+      Offset(size.width * 2, -size.height), // Top Right
+      Offset(-size.width, size.height * 2), // Bottom Left
+      Offset(size.width * 2, size.height * 2), // Bottom Right
+      Offset(-size.width, size.height / 2), // Left Mid
+      Offset(size.width * 2, size.height / 2), // Right Mid
+      Offset(size.width / 2, -size.height), // Top Mid
+      Offset(size.width / 2, size.height * 2), // Bottom Mid
+    ];
+
+    _dummyCards = positions.map((offset) {
+      double angle = (random.nextDouble() - 0.5) * 4; // Random spin
+      return _DummyCard(offset, angle);
+    }).toList();
   }
 
-  void _onPanUpdate(DragUpdateDetails d) {
-    if (_isAnimating) return;
+  // ── Drag & Throw Mechanics ──────────────────────────
+
+  void _onPanStart(DragStartDetails details) {
+    if (_throwController.isAnimating) return;
+    setState(() => _isDragging = true);
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    if (_throwController.isAnimating) return;
     setState(() {
-      _cardOffset += d.delta;
-      _cardRotation = (_cardOffset.dx / 260) * 0.28;
-      _trailPoints.add(d.globalPosition);
-      if (_trailPoints.length > 35) _trailPoints.removeAt(0);
-      _updateActiveCorner();
+      _dragOffset += details.delta;
+      _updateActiveRegion();
     });
   }
 
-  void _onPanEnd(DragEndDetails d) {
-    if (_isAnimating) return;
-    final velocity = d.velocity.pixelsPerSecond;
-    final speed = velocity.distance;
-    final hasEnoughMotion = speed > 280 || _cardOffset.distance > 60;
+  void _onPanEnd(DragEndDetails details) {
+    if (_throwController.isAnimating) return;
+    setState(() => _isDragging = false);
 
-    if (hasEnoughMotion) {
-      final dx = speed > 280 ? velocity.dx : _cardOffset.dx;
-      final dy = speed > 450 ? velocity.dy : _cardOffset.dy;
-      final corner = _cornerFromDirection(dx, dy);
-      _throwCard(corner);
+    final velocity = details.velocity.pixelsPerSecond;
+    final speed = velocity.distance;
+    final hasEnoughMotion = speed > 300 || _dragOffset.distance > 80;
+
+    if (hasEnoughMotion && _activeRegion != null) {
+      _throwCard();
     } else {
       _snapBack();
     }
   }
 
-  void _updateActiveCorner() {
-    if (_cardOffset.distance < 28) {
-      _activeCorner = null;
-    } else {
-      _activeCorner = _cornerFromDirection(_cardOffset.dx, _cardOffset.dy);
+  void _updateActiveRegion() {
+    if (_dragOffset.distance < 40) {
+      _activeRegion = null;
+      return;
     }
+    // Cross center lines (divided into 4 regions)
+    if (_dragOffset.dx <= 0 && _dragOffset.dy <= 0) _activeRegion = 0; // Top-Left
+    else if (_dragOffset.dx > 0 && _dragOffset.dy <= 0) _activeRegion = 1; // Top-Right
+    else if (_dragOffset.dx <= 0 && _dragOffset.dy > 0) _activeRegion = 2; // Bottom-Left
+    else if (_dragOffset.dx > 0 && _dragOffset.dy > 0) _activeRegion = 3; // Bottom-Right
   }
 
-  String _cornerFromDirection(double dx, double dy) {
-    if (dx <= 0 && dy <= 0) return 'A';
-    if (dx > 0 && dy <= 0) return 'B';
-    if (dx <= 0 && dy > 0) return 'C';
-    return 'D';
-  }
-
-  // ── Throw animation ───────────────────────────
-
-  void _throwCard(String corner) {
-    _isAnimating = true;
+  void _throwCard() {
     final size = MediaQuery.of(context).size;
-    late Offset target;
-    switch (corner) {
-      case 'A': target = Offset(-size.width * 1.2, -size.height * 0.9);
-      case 'B': target = Offset(size.width * 1.2, -size.height * 0.9);
-      case 'C': target = Offset(-size.width * 1.2, size.height * 0.9);
-      default:  target = Offset(size.width * 1.2, size.height * 0.9);
+    late Offset targetOffset;
+
+    switch (_activeRegion) {
+      case 0:
+        targetOffset = Offset(-size.width * 1.5, -size.height * 1.5);
+        break;
+      case 1:
+        targetOffset = Offset(size.width * 1.5, -size.height * 1.5);
+        break;
+      case 2:
+        targetOffset = Offset(-size.width * 1.5, size.height * 1.5);
+        break;
+      case 3:
+        targetOffset = Offset(size.width * 1.5, size.height * 1.5);
+        break;
+      default:
+        targetOffset = Offset(size.width, size.height);
     }
 
-    final startOffset = _cardOffset;
-    final offsetAnim = Tween<Offset>(begin: startOffset, end: target)
-        .animate(CurvedAnimation(parent: _throwController, curve: Curves.easeIn));
-    final rotAnim = Tween<double>(begin: _cardRotation, end: _cardRotation * 2.5)
-        .animate(_throwController);
+    _throwAnimation = Tween<Offset>(
+      begin: _dragOffset,
+      end: targetOffset,
+    ).animate(
+      CurvedAnimation(
+        parent: _throwController,
+        curve: Curves.easeOutQuart,
+      ),
+    );
 
-    void listener() {
-      if (mounted) {
-        setState(() {
-          _cardOffset = offsetAnim.value;
-          _cardRotation = rotAnim.value;
-        });
-      }
-    }
-
-    _throwController.addListener(listener);
     _throwController.forward(from: 0).then((_) {
-      _throwController.removeListener(listener);
-      _recordAnswer(corner);
+      _recordAnswerAndNext();
     });
   }
 
-  void _recordAnswer(String corner) {
-    _answers[_currentIndex] = corner;
+  void _snapBack() {
+    final startOffset = _dragOffset;
+    _throwAnimation = Tween<Offset>(begin: startOffset, end: Offset.zero)
+        .animate(CurvedAnimation(parent: _throwController, curve: Curves.elasticOut));
+
+    _throwController.forward(from: 0).then((_) {
+      if (mounted) {
+        setState(() {
+          _activeRegion = null;
+        });
+        _throwAnimation = null;
+      }
+    });
+  }
+
+  void _recordAnswerAndNext() {
+    String mappedAnswer = 'A';
+    if (_activeRegion == 1) mappedAnswer = 'B';
+    if (_activeRegion == 2) mappedAnswer = 'C';
+    if (_activeRegion == 3) mappedAnswer = 'D';
+
+    _answers[_currentIndex] = mappedAnswer;
+
     if (_currentIndex == _kQuestions.length - 1) {
       setState(() {
-        _cardOffset = Offset.zero;
-        _cardRotation = 0;
-        _trailPoints.clear();
-        _activeCorner = null;
-        _isAnimating = false;
         _isSubmitting = true;
       });
       _submitQuiz();
     } else {
+      _throwAnimation = null;
       _throwController.reset();
-      // Prepare entry for next card (starts below screen)
-      _entryController.value = 0;
-      _entrySlide = Tween<double>(begin: 1.0, end: 0.0)
-          .animate(CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic));
-      _entryScale = Tween<double>(begin: 0.82, end: 1.0)
-          .animate(CurvedAnimation(parent: _entryController, curve: Curves.elasticOut));
 
       setState(() {
         _currentIndex++;
-        _cardOffset = Offset.zero;
-        _cardRotation = 0;
-        _trailPoints.clear();
-        _activeCorner = null;
-      });
-
-      _entryController.forward().then((_) {
-        if (mounted) setState(() => _isAnimating = false);
+        _dragOffset = Offset.zero;
+        _activeRegion = null;
       });
     }
   }
-
-  // ── Snap back animation ───────────────────────
-
-  void _snapBack() {
-    _isAnimating = true;
-    final startOffset = _cardOffset;
-    final startRot = _cardRotation;
-    final controller = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 300));
-    final offsetAnim = Tween<Offset>(begin: startOffset, end: Offset.zero)
-        .animate(CurvedAnimation(parent: controller, curve: Curves.elasticOut));
-    final rotAnim = Tween<double>(begin: startRot, end: 0)
-        .animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
-
-    void listener() {
-      if (mounted) {
-        setState(() {
-          _cardOffset = offsetAnim.value;
-          _cardRotation = rotAnim.value;
-        });
-      }
-    }
-
-    controller.addListener(listener);
-    controller.forward().then((_) {
-      controller.removeListener(listener);
-      controller.dispose();
-      if (mounted) {
-        setState(() {
-          _trailPoints.clear();
-          _activeCorner = null;
-          _isAnimating = false;
-        });
-      }
-    });
-  }
-
-  // ── Submit ────────────────────────────────────
 
   Future<void> _submitQuiz() async {
     final answersMap = <String, dynamic>{};
@@ -420,15 +416,12 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
     try {
       final userId = Supabase.instance.client.auth.currentUser!.id;
-      // Cevapları DB'ye kaydet (hızlı)
       await Supabase.instance.client.from('user_profiles').upsert(
         {'user_id': userId, 'quiz_answers': answersMap},
         onConflict: 'user_id',
       );
-      // Analizi arka planda başlat — await etme, uzun sürer
       Supabase.instance.client.functions
-          .invoke('analyze-user-profile',
-              body: {'user_id': userId, 'quiz_answers': answersMap})
+          .invoke('analyze-user-profile', body: {'user_id': userId, 'quiz_answers': answersMap})
           .ignore();
     } catch (e) {
       debugPrint('Quiz submit error: $e');
@@ -441,172 +434,126 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   }
 
   // ─────────────────────────────────────────────
-  // Build
+  // UI Builder
   // ─────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     if (_isSubmitting) return _buildAnalyzingState();
 
-    final q = _kQuestions[_currentIndex];
     final size = MediaQuery.of(context).size;
+    final cardW = math.min(size.width - 60, 340.0);
+    final cardH = math.min(size.height * 0.5, 400.0);
+    final centerX = (size.width - cardW) / 2;
+    final centerY = (size.height - cardH) / 2;
+
+    final q = _kQuestions[_currentIndex];
 
     return Scaffold(
-      backgroundColor: AppColors.bgDark,
+      backgroundColor: _bgDark,
       body: Stack(
         children: [
-          // Radial gradient background
+          // Background Gradient
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: RadialGradient(
-                  center: Alignment.topCenter,
-                  radius: 1.4,
+                  center: Alignment.center,
+                  radius: 1.5,
                   colors: [
-                    AppColors.primary.withValues(alpha: 0.12),
-                    AppColors.bgDark,
+                    _accentColor.withOpacity(0.08),
+                    _bgDark,
                   ],
                 ),
               ),
             ),
           ),
 
-          // Flame trail (global coords — full screen painter)
-          if (_trailPoints.length > 2)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: CustomPaint(painter: _FlamePainter(_trailPoints)),
-              ),
-            ),
+          // Glowing Cross Lines
+          _buildGlowingCrossLines(),
 
-          // Main layout
-          SafeArea(
-            child: Column(
-              children: [
-                _buildTopBar(q),
-                Expanded(
-                  child: Stack(
-                    children: [
-                      // Corner labels anchored inside card area
-                      Positioned(top: 14, left: 12,
-                          child: _buildCornerLabel('A', q.aShort, 'A')),
-                      Positioned(top: 14, right: 12,
-                          child: _buildCornerLabel('B', q.bShort, 'B')),
-                      Positioned(bottom: 44, left: 12,
-                          child: _buildCornerLabel('C', q.cShort, 'C')),
-                      Positioned(bottom: 44, right: 12,
-                          child: _buildCornerLabel('D', q.dShort, 'D')),
+          // Corner Answers (Fades in after opening)
+          // Hapları karta yaklaştırmak için değerleri 60 -> 110 ve 24 -> 36 olarak güncelledik
+          _buildAnswerLabelWidget(0, q.aShort, top: 110, left: 36),
+          _buildAnswerLabelWidget(1, q.bShort, top: 110, right: 36),
+          _buildAnswerLabelWidget(2, q.cShort, bottom: 110, left: 36),
+          _buildAnswerLabelWidget(3, q.dShort, bottom: 110, right: 36),
 
-                      // Card centered in expanded area
-                      Center(child: _buildDraggableCard(q, size)),
-                    ],
+          // Center Card Deck & Top Card
+          if (_isOpeningFinished)
+            ..._buildCardDeck(cardW, cardH, centerX, centerY),
+
+          // Intro Opening Animation
+          if (!_isOpeningFinished)
+            ..._dummyCards.map((cardData) {
+              return AnimatedPositioned(
+                duration: const Duration(milliseconds: 1200),
+                curve: Curves.easeOutCubic,
+                top: _isOpeningStarted ? centerY : cardData.startOffset.dy,
+                left: _isOpeningStarted ? centerX : cardData.startOffset.dx,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(
+                      begin: cardData.startAngle,
+                      end: 0
                   ),
+                  duration: const Duration(milliseconds: 1200),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, angle, child) {
+                    return Transform.rotate(
+                      angle: angle,
+                      child: child,
+                    );
+                  },
+                  child: IgnorePointer(child: _buildStaticCard(null, cardW, cardH, isDummy: true)),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4, bottom: 14),
-                  child: Text(
-                    'Kartı köşeye fırlat ✨',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(color: Colors.white24, fontSize: 12),
-                  ),
-                ),
-              ],
+              );
+            }),
+
+          // Header (Progress)
+          if (_isOpeningFinished)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 10,
+              left: 20, right: 20,
+              child: _buildHeader(q),
             ),
-          ),
         ],
       ),
     );
   }
 
-  // ── Top bar ───────────────────────────────────
+  // ── Helpers ─────────────────────────────────────
 
-  Widget _buildTopBar(_QuizQuestion q) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Column(
+  Widget _buildGlowingCrossLines() {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 800),
+      opacity: _answersVisible ? 1.0 : 0.0,
+      child: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  '${q.sectionEmoji} ${q.sectionTitle}',
-                  style: GoogleFonts.poppins(
-                    color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600),
-                ),
+          // Vertical Line
+          Align(
+            alignment: Alignment.center,
+            child: Container(
+              width: 1,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: _accentColor.withOpacity(0.3),
+                boxShadow: [
+                  BoxShadow(color: _accentColor.withOpacity(0.4), blurRadius: 10, spreadRadius: 1)
+                ],
               ),
-              Text(
-                'Q${_currentIndex + 1} / ${_kQuestions.length}',
-                style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          LinearProgressIndicator(
-            value: (_currentIndex + 1) / _kQuestions.length,
-            backgroundColor: Colors.white.withValues(alpha: 0.08),
-            color: AppColors.primary,
-            minHeight: 3,
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Corner label ──────────────────────────────
-
-  Widget _buildCornerLabel(String letter, String shortLabel, String corner) {
-    final isActive = _activeCorner == corner;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 160),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: isActive
-            ? AppColors.primary.withValues(alpha: 0.22)
-            : Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isActive
-              ? AppColors.primary.withValues(alpha: 0.85)
-              : Colors.white.withValues(alpha: 0.1),
-          width: isActive ? 1.5 : 1,
-        ),
-        boxShadow: isActive
-            ? [BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.45),
-                blurRadius: 18, spreadRadius: 1)]
-            : null,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            letter,
-            style: GoogleFonts.poppins(
-              color: isActive ? AppColors.primary : Colors.white38,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
             ),
           ),
-          const SizedBox(height: 2),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 82),
-            child: Text(
-              shortLabel,
-              style: GoogleFonts.poppins(
-                color: isActive ? Colors.white : Colors.white38,
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-                height: 1.25,
+          // Horizontal Line
+          Align(
+            alignment: Alignment.center,
+            child: Container(
+              height: 1,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: _accentColor.withOpacity(0.3),
+                boxShadow: [
+                  BoxShadow(color: _accentColor.withOpacity(0.4), blurRadius: 10, spreadRadius: 1)
+                ],
               ),
             ),
           ),
@@ -615,142 +562,249 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── Draggable card ────────────────────────────
-
-  Widget _buildDraggableCard(_QuizQuestion q, Size size) {
-    // Entry animation values
-    final slideProgress = _entrySlide?.value ?? 0.0;
-    final scaleValue = _entryScale?.value ?? 1.0;
-
-    return Transform.translate(
-      offset: _cardOffset + Offset(0, slideProgress * size.height * 0.55),
-      child: Transform.rotate(
-        angle: _cardRotation,
-        child: Transform.scale(
-          scale: scaleValue,
-          child: GestureDetector(
-            onPanStart: _onPanStart,
-            onPanUpdate: _onPanUpdate,
-            onPanEnd: _onPanEnd,
-            child: _buildCard(q, size),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCard(_QuizQuestion q, Size size) {
-    final cardW = math.min(size.width - 80, 360.0);
-    final cardH = math.min(size.height * 0.42, 300.0);
-
-    return Container(
-      width: cardW,
-      constraints: BoxConstraints(minHeight: cardH),
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1E1A2E),
-            const Color(0xFF16122A),
+  Widget _buildHeader(_QuizQuestion q) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Text(
+                '${q.sectionEmoji} ${q.sectionTitle}',
+                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            ),
+            Text(
+              '${_currentIndex + 1} / ${_kQuestions.length}',
+              style: GoogleFonts.poppins(color: _accentColor, fontSize: 14, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.25), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 40, offset: const Offset(0, 16)),
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            blurRadius: 24, spreadRadius: 2),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag indicator dots
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _dot(), const SizedBox(width: 4), _dot(), const SizedBox(width: 4), _dot(),
+      ],
+    );
+  }
+
+  Widget _buildAnswerLabelWidget(int region, String text, {double? top, double? bottom, double? left, double? right}) {
+    final isActive = _activeRegion == region;
+
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutBack,
+      top: _answersVisible ? top : (top != null ? top - 50 : null),
+      bottom: _answersVisible ? bottom : (bottom != null ? bottom - 50 : null),
+      left: _answersVisible ? left : (left != null ? left - 50 : null),
+      right: _answersVisible ? right : (right != null ? right - 50 : null),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 600),
+        opacity: _answersVisible ? 1.0 : 0.0,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          constraints: const BoxConstraints(maxWidth: 130),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isActive ? _accentColor.withOpacity(0.15) : _bgDark.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isActive ? _accentColor : Colors.white10,
+              width: isActive ? 2 : 1,
+            ),
+            boxShadow: isActive ? [
+              BoxShadow(color: _accentColor.withOpacity(0.6), blurRadius: 20, spreadRadius: 2)
+            ] : [
+              BoxShadow(color: Colors.black45, blurRadius: 10, offset: const Offset(0, 4))
             ],
           ),
-          const SizedBox(height: 24),
-          Text(
-            q.question,
+          child: Text(
+            text,
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              height: 1.4,
+              color: isActive ? Colors.white : Colors.white54,
+              fontSize: 12,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+              height: 1.3,
             ),
           ),
-          const SizedBox(height: 20),
-          // Hint arrows
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildCardDeck(double width, double height, double centerX, double centerY) {
+    List<Widget> cards = [];
+
+    // Draw up to 3 background cards + 1 top card
+    int maxCards = math.min(4, _kQuestions.length - _currentIndex);
+
+    for (int i = maxCards - 1; i >= 0; i--) {
+      int absoluteIndex = _currentIndex + i;
+      bool isTopCard = i == 0;
+
+      // Tween Animation for smooth shifting when top card is thrown
+      cards.add(
+          Positioned(
+            key: ValueKey(absoluteIndex),
+            top: centerY,
+            left: centerX,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: i.toDouble(), end: i.toDouble()),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              builder: (context, val, child) {
+                // Scale down background cards slightly
+                double scale = 1.0 - (val * 0.04);
+                // Shift them down slightly to show a stacked deck effect
+                double yOffset = val * 12.0;
+
+                return Transform.translate(
+                  offset: isTopCard ? _dragOffset : Offset(0, yOffset),
+                  child: Transform.rotate(
+                    // Slight rotation based on drag for the top card
+                    angle: isTopCard ? _dragOffset.dx * 0.002 : 0,
+                    child: Transform.scale(
+                      scale: scale,
+                      alignment: Alignment.bottomCenter,
+                      child: child,
+                    ),
+                  ),
+                );
+              },
+              child: isTopCard
+                  ? GestureDetector(
+                onPanStart: _onPanStart,
+                onPanUpdate: _onPanUpdate,
+                onPanEnd: _onPanEnd,
+                child: _buildStaticCard(_kQuestions[absoluteIndex], width, height, isTop: true),
+              )
+                  : _buildStaticCard(_kQuestions[absoluteIndex], width, height),
+            ),
+          )
+      );
+    }
+    return cards;
+  }
+
+  Widget _buildStaticCard(_QuizQuestion? q, double width, double height, {bool isDummy = false, bool isTop = false}) {
+    return Container(
+      width: width,
+      height: height,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      decoration: BoxDecoration(
+        color: _cardBgColor,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: isTop ? _accentColor.withOpacity(0.5) : Colors.white10,
+          width: isTop ? 1.5 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.6),
+            blurRadius: 30,
+            offset: const Offset(0, 20),
+          ),
+          if (isTop)
+            BoxShadow(
+              color: _accentColor.withOpacity(0.1),
+              blurRadius: 40,
+              spreadRadius: 5,
+            )
+        ],
+      ),
+      child: isDummy || q == null
+          ? const SizedBox()
+          : Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Top Indicator lines
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.north_west_rounded, color: Colors.white.withValues(alpha: 0.15), size: 14),
-              const SizedBox(width: 4),
-              Icon(Icons.north_east_rounded, color: Colors.white.withValues(alpha: 0.15), size: 14),
+              _dot(), const SizedBox(width: 6), _dot(), const SizedBox(width: 6), _dot(),
             ],
           ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.south_west_rounded, color: Colors.white.withValues(alpha: 0.15), size: 14),
-              const SizedBox(width: 4),
-              Icon(Icons.south_east_rounded, color: Colors.white.withValues(alpha: 0.15), size: 14),
-            ],
+          const SizedBox(height: 32),
+          Expanded(
+            child: Center(
+              child: Text(
+                q.question,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  height: 1.4,
+                ),
+              ),
+            ),
           ),
+          const SizedBox(height: 16),
+          // Premium minimal hint
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.swipe, color: _accentColor.withOpacity(0.8), size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  'Köşeye Sürükle',
+                  style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12),
+                )
+              ],
+            ),
+          )
         ],
       ),
     );
   }
 
   Widget _dot() => Container(
-    width: 5, height: 5,
+    width: 6, height: 4,
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.2),
-      shape: BoxShape.circle,
+      color: Colors.white.withOpacity(0.15),
+      borderRadius: BorderRadius.circular(2),
     ),
   );
 
-  // ── Analyzing state ───────────────────────────
-
   Widget _buildAnalyzingState() {
     return Scaffold(
-      backgroundColor: AppColors.bgDark,
+      backgroundColor: _bgDark,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+                  color: _accentColor.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: _accentColor.withOpacity(0.2), blurRadius: 40, spreadRadius: 10)
+                  ]
               ),
-              child: Icon(FontAwesomeIcons.wandMagicSparkles,
-                  color: AppColors.primary, size: 40),
+              child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: _accentColor, size: 42),
             ),
+            const SizedBox(height: 40),
+            const CircularProgressIndicator(color: _accentColor, strokeWidth: 3),
             const SizedBox(height: 32),
-            const CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
-            const SizedBox(height: 24),
             Text(
               'Yapay zeka seni analiz ediyor...',
               style: GoogleFonts.poppins(
-                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               'Cevapların işleniyor, ruh ikizlerin aranıyor ✨',
-              style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13),
+              style: GoogleFonts.poppins(color: Colors.white54, fontSize: 14),
             ),
           ],
         ),

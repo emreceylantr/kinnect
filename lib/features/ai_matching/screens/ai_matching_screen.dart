@@ -1094,6 +1094,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
       backgroundColor: Colors.transparent,
       builder: (builderCtx) {
         bool isReasonsExpanded = false;
+        List<bool> visibleReasons = List.generate(matchReasons.length, (i) => false);
         bool isInterestsExpanded = false;
         List<bool> visibleInterests = List.generate(otherInterests.length, (i) => false);
 
@@ -1218,9 +1219,26 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                                 child: GestureDetector(
                                   onTap: () {
-                                    setSheetState(() {
-                                      isReasonsExpanded = !isReasonsExpanded;
-                                    });
+                                    if (!isReasonsExpanded) {
+                                      setSheetState(() => isReasonsExpanded = true);
+                                      for (int i = 0; i < matchReasons.length; i++) {
+                                        // GECİKME YAVAŞLATILDI: 100 + (i * 80) -> 300 + (i * 250)
+                                        Future.delayed(Duration(milliseconds: 300 + (i * 250)), () {
+                                          if (!isSheetDisposed) {
+                                            setSheetState(() {
+                                              visibleReasons[i] = true;
+                                            });
+                                          }
+                                        });
+                                      }
+                                    } else {
+                                      setSheetState(() {
+                                        isReasonsExpanded = false;
+                                        for (int i = 0; i < matchReasons.length; i++) {
+                                          visibleReasons[i] = false;
+                                        }
+                                      });
+                                    }
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -1286,43 +1304,54 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                                         ? '🍽️'
                                         : '✨';
 
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 8),
-                                      child: GestureDetector(
-                                        onTap: () => Navigator.push(
-                                          outerContext,
-                                          MaterialPageRoute(
-                                            builder: (_) => MatchEvidenceScreen(
-                                              reason: reason,
-                                              otherUserId: userId,
-                                              otherUserName: fullName,
-                                              otherUserAvatarUrl: avatarUrl,
-                                              myPosts: myPosts,
-                                              otherPosts: otherPosts,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.04),
-                                            borderRadius: BorderRadius.circular(16),
-                                            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Text(emoji, style: const TextStyle(fontSize: 16)),
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: Text(reason,
-                                                    style: GoogleFonts.poppins(
-                                                        color: Colors.white.withValues(alpha: 0.88), fontSize: 13, fontWeight: FontWeight.w500)),
+                                    return AnimatedScale(
+                                      scale: visibleReasons[i] ? 1.0 : 0.8,
+                                      // SÜRE YAVAŞLATILDI: 300 -> 800
+                                      duration: const Duration(milliseconds: 800),
+                                      curve: Curves.easeOutBack,
+                                      child: AnimatedOpacity(
+                                        opacity: visibleReasons[i] ? 1.0 : 0.0,
+                                        // SÜRE YAVAŞLATILDI: 300 -> 800
+                                        duration: const Duration(milliseconds: 800),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(bottom: 8),
+                                          child: GestureDetector(
+                                            onTap: () => Navigator.push(
+                                              outerContext,
+                                              MaterialPageRoute(
+                                                builder: (_) => MatchEvidenceScreen(
+                                                  reason: reason,
+                                                  otherUserId: userId,
+                                                  otherUserName: fullName,
+                                                  otherUserAvatarUrl: avatarUrl,
+                                                  myPosts: myPosts,
+                                                  otherPosts: otherPosts,
+                                                ),
                                               ),
-                                              if (hasPosts) ...[
-                                                const SizedBox(width: 6),
-                                                Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withValues(alpha: 0.25)),
-                                              ],
-                                            ],
+                                            ),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(alpha: 0.04),
+                                                borderRadius: BorderRadius.circular(16),
+                                                border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Text(emoji, style: const TextStyle(fontSize: 16)),
+                                                  const SizedBox(width: 10),
+                                                  Expanded(
+                                                    child: Text(reason,
+                                                        style: GoogleFonts.poppins(
+                                                            color: Colors.white.withValues(alpha: 0.88), fontSize: 13, fontWeight: FontWeight.w500)),
+                                                  ),
+                                                  if (hasPosts) ...[
+                                                    const SizedBox(width: 6),
+                                                    Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withValues(alpha: 0.25)),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -1547,10 +1576,10 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                                           decoration: BoxDecoration(
-                                            color: isCommon ? AppColors.primary.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.06),
+                                            color: isCommon ? const Color(0xFFF3BE7A).withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.06),
                                             borderRadius: BorderRadius.circular(20),
                                             border: Border.all(
-                                              color: isCommon ? AppColors.primary.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1),
+                                              color: isCommon ? const Color(0xFFF3BE7A).withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1),
                                               width: isCommon ? 1.5 : 1,
                                             ),
                                           ),
@@ -1558,7 +1587,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               if (isCommon) ...[
-                                                const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 12),
+                                                const Icon(Icons.check_circle_rounded, color: Color(0xFFF3BE7A), size: 12),
                                                 const SizedBox(width: 5),
                                               ],
                                               Text(

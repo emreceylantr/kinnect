@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -33,8 +34,12 @@ class MatchEvidenceScreen extends StatefulWidget {
 class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
   final _client = Supabase.instance.client;
 
+  // İstenen tema rengi
+  final Color _themeColor = const Color(0xFFF3BE7A);
+
   List<Map<String, dynamic>> _myPosts = [];
   List<Map<String, dynamic>> _otherPosts = [];
+  String? _myAvatarUrl; // Kendi profil fotoğrafımız
   bool _loading = true;
 
   static const _postSelect =
@@ -43,6 +48,7 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchMyProfile(); // Profil fotoğrafını çek
     if (widget.myPosts.isNotEmpty || widget.otherPosts.isNotEmpty) {
       _myPosts = widget.myPosts;
       _otherPosts = widget.otherPosts;
@@ -53,6 +59,20 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
   }
 
   String get _myUserId => _client.auth.currentUser?.id ?? '';
+
+  Future<void> _fetchMyProfile() async {
+    if (_myUserId.isEmpty) return;
+    try {
+      final res = await _client
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', _myUserId)
+          .maybeSingle();
+      if (res != null && mounted) {
+        setState(() => _myAvatarUrl = res['avatar_url'] as String?);
+      }
+    } catch (_) {}
+  }
 
   _ReasonType _detectReasonType() {
     final r = widget.reason.toLowerCase();
@@ -109,14 +129,14 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
         .select('post_id')
         .eq('user_id', widget.otherUserId);
     final likedMyIds =
-        (myCommentedRes as List).map((r) => r['post_id'] as String).toSet().toList();
+    (myCommentedRes as List).map((r) => r['post_id'] as String).toSet().toList();
 
     final otherCommentedRes = await _client
         .from('comments')
         .select('post_id')
         .eq('user_id', _myUserId);
     final myCommentedIds =
-        (otherCommentedRes as List).map((r) => r['post_id'] as String).toSet().toList();
+    (otherCommentedRes as List).map((r) => r['post_id'] as String).toSet().toList();
 
     await Future.wait([
       _loadMyPostsByIds(likedMyIds),
@@ -131,14 +151,14 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
         .select('post_id')
         .eq('user_id', widget.otherUserId);
     final likedMyPostIds =
-        (myLikesRes as List).map((r) => r['post_id'] as String).toSet().toList();
+    (myLikesRes as List).map((r) => r['post_id'] as String).toSet().toList();
 
     final otherLikesRes = await _client
         .from('likes')
         .select('post_id')
         .eq('user_id', _myUserId);
     final myLikedOtherIds =
-        (otherLikesRes as List).map((r) => r['post_id'] as String).toSet().toList();
+    (otherLikesRes as List).map((r) => r['post_id'] as String).toSet().toList();
 
     await Future.wait([
       _loadMyPostsByIds(likedMyPostIds),
@@ -244,12 +264,12 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
 
     _myPosts = myAll
         .where((p) => (p['photo_scene_tags'] as List? ?? [])
-            .any((t) => commonTags.contains((t as String).toLowerCase())))
+        .any((t) => commonTags.contains((t as String).toLowerCase())))
         .take(4)
         .toList();
     _otherPosts = otherAll
         .where((p) => (p['photo_scene_tags'] as List? ?? [])
-            .any((t) => commonTags.contains((t as String).toLowerCase())))
+        .any((t) => commonTags.contains((t as String).toLowerCase())))
         .take(4)
         .toList();
   }
@@ -346,7 +366,6 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
   // ─── Keyword arama yardımcısı ─────────────────────────────────────────────
   Future<List<Map<String, dynamic>>> _fetchPostsByKeywords(
       String userId, List<String> keywords) async {
-    // Her keyword için OR filtresi — content ILIKE ya da photo_scene_tags içeriyor
     if (keywords.isEmpty) {
       final res = await _client
           .from('posts')
@@ -357,7 +376,6 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
       return (res as List).cast<Map<String, dynamic>>();
     }
 
-    // Supabase .or() ile content içindeki keyword arama
     final orFilter = keywords
         .map((k) => 'content.ilike.%$k%')
         .join(',');
@@ -391,14 +409,11 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
       'dans': ['dans', 'dance', 'koreografi'],
     };
 
-    // Direkt eşleşme
     for (final entry in map.entries) {
       if (interest.contains(entry.key) || entry.key.contains(interest)) {
         return entry.value;
       }
     }
-
-    // Eşleşme yoksa interest kelimesini direkt kullan
     return [interest];
   }
 
@@ -445,8 +460,8 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
+      builder: (_) => Center(
+        child: CircularProgressIndicator(color: _themeColor),
       ),
     );
 
@@ -483,100 +498,109 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
         centerTitle: true,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(child: CircularProgressIndicator(color: _themeColor))
           : SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Sebep kartı ────────────────────────────────────────────
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primary.withValues(alpha: 0.18),
-                          const Color(0xFF9D89D9).withValues(alpha: 0.10),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            FontAwesomeIcons.wandMagicSparkles,
-                            color: AppColors.primary,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            widget.reason,
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                    child: Text(
-                      AppL10n.analysisSourceDescription,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white54,
-                        fontSize: 12,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-
-                  if (_myPosts.isEmpty && _otherPosts.isEmpty) ...[
-                    const SizedBox(height: 40),
-                    _buildNoPosts(),
-                  ] else ...[
-                    if (_myPosts.isNotEmpty) ...[
-                      const SizedBox(height: 20),
-                      _buildSectionHeader(
-                        icon: Icons.person_rounded,
-                        label: AppL10n.myPosts,
-                        color: AppColors.primary,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildPostGrid(_myPosts),
-                    ],
-                    if (_otherPosts.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      _buildSectionHeader(
-                        avatarUrl: widget.otherUserAvatarUrl,
-                        label: AppL10n.otherUserPosts(widget.otherUserName),
-                        color: const Color(0xFF9D89D9),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildPostGrid(_otherPosts),
-                    ],
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Sebep kartı ────────────────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    _themeColor.withValues(alpha: 0.18),
+                    const Color(0xFF9D89D9).withValues(alpha: 0.10),
                   ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _themeColor.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _themeColor.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      FontAwesomeIcons.wandMagicSparkles,
+                      color: _themeColor,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      widget.reason,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
+
+            const SizedBox(height: 8),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: Text(
+                AppL10n.analysisSourceDescription,
+                style: GoogleFonts.poppins(
+                  color: Colors.white54,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+            ),
+
+            if (_myPosts.isEmpty && _otherPosts.isEmpty) ...[
+              const SizedBox(height: 40),
+              _buildNoPosts(),
+            ] else ...[
+              if (_myPosts.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                _buildSectionHeader(
+                  avatarUrl: _myAvatarUrl, // Profil fotoğrafı eklendi
+                  icon: Icons.person_rounded, // Fallback olarak ikon
+                  label: AppL10n.myPosts,
+                  color: _themeColor,
+                ),
+                const SizedBox(height: 12),
+                _PostCarousel(
+                  posts: _myPosts,
+                  onTap: _openPost,
+                  themeColor: _themeColor,
+                ),
+              ],
+              if (_otherPosts.isNotEmpty) ...[
+                const SizedBox(height: 36),
+                _buildSectionHeader(
+                  avatarUrl: widget.otherUserAvatarUrl,
+                  label: AppL10n.otherUserPosts(widget.otherUserName),
+                  color: const Color(0xFF9D89D9),
+                ),
+                const SizedBox(height: 12),
+                _PostCarousel(
+                  posts: _otherPosts,
+                  onTap: _openPost,
+                  themeColor: const Color(0xFF9D89D9),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -619,253 +643,6 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
     );
   }
 
-  Widget _buildPostGrid(List<Map<String, dynamic>> posts) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: posts.length,
-      itemBuilder: (context, index) => _buildPostCard(posts[index]),
-    );
-  }
-
-  Widget _buildPostCard(Map<String, dynamic> post) {
-    final imageUrls = (post['image_urls'] as List?)?.cast<String>() ?? [];
-    final videoUrl = post['video_url'] as String?;
-    final videoFrameUrls = (post['video_frame_urls'] as List?)?.cast<String>() ?? [];
-    final albumImage = post['spotify_album_image'] as String?;
-    final firstImage = imageUrls.isNotEmpty ? imageUrls.first : null;
-    // Video thumbnail: frame > image
-    final thumbnail = videoFrameUrls.isNotEmpty ? videoFrameUrls.first : firstImage;
-    // Görsel için Spotify albüm kapağını fallback olarak kullan
-    final displayImage = firstImage ?? albumImage;
-    final content = post['content'] as String? ?? '';
-    final artist = post['spotify_artist_name'] as String?;
-    final trackName = post['spotify_track_name'] as String?;
-    final location = post['location'] as String?;
-    final isTextOnly = videoUrl == null && displayImage == null && content.isNotEmpty;
-
-    return GestureDetector(
-      onTap: () => _openPost(post),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // ── Görsel / Video / Yazı ──────────────────────────────
-                    if (videoUrl != null)
-                      _EvidenceVideoBackground(
-                        videoUrl: videoUrl,
-                        thumbnailUrl: thumbnail,
-                      )
-                    else if (isTextOnly)
-                      // Yazı-only post: gradient arka plan + metin
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.primary.withValues(alpha: 0.18),
-                              const Color(0xFF9D89D9).withValues(alpha: 0.10),
-                            ],
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.format_quote_rounded,
-                                color: AppColors.primary.withValues(alpha: 0.4), size: 20),
-                            const SizedBox(height: 6),
-                            Text(
-                              content,
-                              style: GoogleFonts.poppins(
-                                color: Colors.white.withValues(alpha: 0.85),
-                                fontSize: 11,
-                                height: 1.4,
-                              ),
-                              maxLines: 5,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      )
-                    else if (displayImage != null)
-                      Image.network(
-                        displayImage,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
-                      )
-                    else
-                      _buildImagePlaceholder(),
-
-                    // ── Video rozeti ───────────────────────────────────────
-                    if (videoUrl != null)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.55),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.play_arrow_rounded, color: Colors.white, size: 12),
-                              SizedBox(width: 2),
-                              Text('VIDEO',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                    // ── Spotify albüm rozeti (fotoğraf yoksa albüm image kullanıldı) ──
-                    if (!isTextOnly && videoUrl == null && firstImage == null && albumImage != null)
-                      Positioned(
-                        top: 8, right: 8,
-                        child: Container(
-                          width: 18, height: 18,
-                          decoration: const BoxDecoration(color: Color(0xFF1DB954), shape: BoxShape.circle),
-                          child: const Icon(FontAwesomeIcons.spotify, color: Colors.white, size: 10),
-                        ),
-                      ),
-
-                    // ── Alt gradient (görsel varsa) ────────────────────────
-                    if (!isTextOnly)
-                      Positioned(
-                        bottom: 0, left: 0, right: 0,
-                        child: Container(
-                          height: 40,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: [
-                                Colors.black.withValues(alpha: 0.6),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              // ── Alt bilgi ─────────────────────────────────────────────────
-              if (!isTextOnly)
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (artist != null) ...[
-                      Row(
-                        children: [
-                          const Icon(FontAwesomeIcons.spotify,
-                              size: 11, color: Color(0xFF1DB954)),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              artist,
-                              style: GoogleFonts.poppins(
-                                color: const Color(0xFF1DB954),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (trackName != null)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16),
-                          child: Text(
-                            trackName,
-                            style: GoogleFonts.poppins(
-                              color: Colors.white38,
-                              fontSize: 9,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                    ] else if (location != null) ...[
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on_rounded,
-                              size: 11, color: AppColors.primary),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              location,
-                              style: GoogleFonts.poppins(
-                                color: AppColors.primary,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ] else if (content.isNotEmpty) ...[
-                      Text(
-                        content,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white60,
-                          fontSize: 10,
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImagePlaceholder() {
-    return Container(
-      color: Colors.white.withValues(alpha: 0.04),
-      child: const Center(
-        child: Icon(Icons.image_rounded, color: Colors.white12, size: 32),
-      ),
-    );
-  }
-
   Widget _buildNoPosts() {
     return Center(
       child: Padding(
@@ -875,12 +652,12 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: _themeColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 FontAwesomeIcons.wandMagicSparkles,
-                color: AppColors.primary,
+                color: _themeColor,
                 size: 32,
               ),
             ),
@@ -906,6 +683,402 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Yeni: 3D Animasyonlu Kart Carousel (Circular Testimonials Benzeri) ───
+class _PostCarousel extends StatefulWidget {
+  final List<Map<String, dynamic>> posts;
+  final Function(Map<String, dynamic>) onTap;
+  final Color themeColor;
+
+  const _PostCarousel({
+    required this.posts,
+    required this.onTap,
+    required this.themeColor,
+  });
+
+  @override
+  State<_PostCarousel> createState() => _PostCarouselState();
+}
+
+class _PostCarouselState extends State<_PostCarousel> {
+  late PageController _pageController;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ortadaki kartın ekranda ne kadar yer kaplayacağını belirtir (0.65 iyi bir orandır)
+    _pageController = PageController(viewportFraction: 0.65);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.posts.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 380, // Kartların toplam kapsayıcı yüksekliği
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() => _currentIndex = index);
+            },
+            itemCount: widget.posts.length,
+            itemBuilder: (context, index) {
+              return AnimatedBuilder(
+                animation: _pageController,
+                builder: (context, child) {
+                  double value = 0.0;
+                  if (_pageController.position.haveDimensions) {
+                    value = _pageController.page! - index;
+                  } else {
+                    value = _currentIndex.toDouble() - index;
+                  }
+
+                  // Circular Testimonial Animasyon Mantığı
+                  final clampedValue = value.clamp(-1.0, 1.0);
+
+                  // Aktif olan kart tam boyutta (1.0), yandakiler (0.85)
+                  double scale = 1.0 - (clampedValue.abs() * 0.15);
+
+                  // Yan kartların y ekseninde yukarı kayması (maxStickUp benzeri)
+                  double translateY = clampedValue.abs() * -30.0;
+
+                  // İçeriye doğru açısal dönüş (~15 derece = ~0.26 radyan)
+                  double rotateY = clampedValue * -0.26;
+
+                  // Odak dışı kartların görünürlüğü yavaşça azalır
+                  double opacity = (1 - (value.abs() - 1).clamp(0.0, 1.0));
+
+                  return Transform(
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.001) // Derinlik algısı (Perspective)
+                      ..translate(0.0, translateY, 0.0)
+                      ..scale(scale)
+                      ..rotateY(rotateY),
+                    alignment: Alignment.center,
+                    child: Opacity(
+                      opacity: opacity,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 30.0, bottom: 10.0), // Yukarı/Aşağı taşma payları
+                  child: GestureDetector(
+                    onTap: () => widget.onTap(widget.posts[index]),
+                    child: _buildCardContent(widget.posts[index], _currentIndex == index),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        // Birden fazla post varsa yönlendirme butonları / indikatörler ekle
+        if (widget.posts.length > 1) ...[
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70, size: 16),
+                onPressed: () {
+                  _pageController.previousPage(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOutCubic,
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+              ...List.generate(widget.posts.length, (i) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentIndex == i ? 18 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _currentIndex == i ? widget.themeColor : Colors.white24,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                );
+              }),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 16),
+                onPressed: () {
+                  _pageController.nextPage(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOutCubic,
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCardContent(Map<String, dynamic> post, bool isActive) {
+    final imageUrls = (post['image_urls'] as List?)?.cast<String>() ?? [];
+    final videoUrl = post['video_url'] as String?;
+    final videoFrameUrls = (post['video_frame_urls'] as List?)?.cast<String>() ?? [];
+    final albumImage = post['spotify_album_image'] as String?;
+    final firstImage = imageUrls.isNotEmpty ? imageUrls.first : null;
+    final thumbnail = videoFrameUrls.isNotEmpty ? videoFrameUrls.first : firstImage;
+    final displayImage = firstImage ?? albumImage;
+    final content = post['content'] as String? ?? '';
+    final artist = post['spotify_artist_name'] as String?;
+    final trackName = post['spotify_track_name'] as String?;
+    final location = post['location'] as String?;
+    final isTextOnly = videoUrl == null && displayImage == null && content.isNotEmpty;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(24), // Circular testimonial tarzı kavisli kenarlar
+        border: Border.all(
+          color: isActive ? widget.themeColor.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.08),
+          width: isActive ? 2.0 : 1.0,
+        ),
+        boxShadow: isActive
+            ? [
+          BoxShadow(
+            color: widget.themeColor.withValues(alpha: 0.2),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 10),
+          )
+        ]
+            : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          )
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // ── Görsel / Video / Yazı ──────────────────────────────
+                  if (videoUrl != null)
+                    _EvidenceVideoBackground(
+                      videoUrl: videoUrl,
+                      thumbnailUrl: thumbnail,
+                    )
+                  else if (isTextOnly)
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            widget.themeColor.withValues(alpha: 0.18),
+                            const Color(0xFF9D89D9).withValues(alpha: 0.10),
+                          ],
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.format_quote_rounded,
+                              color: widget.themeColor.withValues(alpha: 0.4), size: 28),
+                          const SizedBox(height: 10),
+                          Text(
+                            content,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 13,
+                              height: 1.5,
+                            ),
+                            maxLines: 7,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (displayImage != null)
+                      Image.network(
+                        displayImage,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+                      )
+                    else
+                      _buildImagePlaceholder(),
+
+                  // ── Video rozeti ───────────────────────────────────────
+                  if (videoUrl != null)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.play_arrow_rounded, color: Colors.white, size: 14),
+                            SizedBox(width: 4),
+                            Text('VIDEO',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // ── Spotify albüm rozeti ───────────────────────────────
+                  if (!isTextOnly && videoUrl == null && firstImage == null && albumImage != null)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: const BoxDecoration(color: Color(0xFF1DB954), shape: BoxShape.circle),
+                        child: const Icon(FontAwesomeIcons.spotify, color: Colors.white, size: 14),
+                      ),
+                    ),
+
+                  // ── Alt gradient (görsel varsa yazılar rahat okunsun diye) ──
+                  if (!isTextOnly)
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        height: 70,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.8),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // ── Alt bilgi bölümü ──────────────────────────────────────────
+            if (!isTextOnly)
+              Container(
+                color: Colors.black.withValues(alpha: 0.2), // Alt tabanda hafif bir koyuluk
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (artist != null) ...[
+                      Row(
+                        children: [
+                          const Icon(FontAwesomeIcons.spotify,
+                              size: 14, color: Color(0xFF1DB954)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              artist,
+                              style: GoogleFonts.poppins(
+                                color: const Color(0xFF1DB954),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (trackName != null) ...[
+                        const SizedBox(height: 2),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 20),
+                          child: Text(
+                            trackName,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white70,
+                              fontSize: 11,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ] else if (location != null) ...[
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_rounded,
+                              size: 14, color: widget.themeColor),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              location,
+                              style: GoogleFonts.poppins(
+                                color: widget.themeColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else if (content.isNotEmpty) ...[
+                      Text(
+                        content,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Container(
+      color: Colors.white.withValues(alpha: 0.04),
+      child: const Center(
+        child: Icon(Icons.image_rounded, color: Colors.white12, size: 40),
       ),
     );
   }
@@ -951,7 +1124,6 @@ class _EvidenceVideoBackgroundState extends State<_EvidenceVideoBackground> {
   @override
   Widget build(BuildContext context) {
     if (_controller == null || !_controller!.value.isInitialized) {
-      // Yüklenirken thumbnail veya siyah arka plan
       if (widget.thumbnailUrl != null) {
         return Image.network(widget.thumbnailUrl!, fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(color: Colors.black));
