@@ -407,37 +407,34 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              GestureDetector(
-                onTap: _handleOpenMyProfile,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [Colors.orange, Colors.deepOrange],
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [Colors.orange, Colors.deepOrange],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.orange.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.orange.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: CircleAvatar(
-                    radius: compact ? 16 : 18,
-                    backgroundColor: const Color(0xFF0F0C1A),
-                    backgroundImage: _myAvatarUrl != null ? NetworkImage(_myAvatarUrl!) : null,
-                    child: _myAvatarUrl == null
-                        ? (_myProfileLoading
-                        ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.orange),
-                    )
-                        : const Icon(Icons.person_rounded, color: Colors.white54, size: 18))
-                        : null,
-                  ),
+                  ],
+                ),
+                child: CircleAvatar(
+                  radius: compact ? 16 : 18,
+                  backgroundColor: const Color(0xFF0F0C1A),
+                  backgroundImage: _myAvatarUrl != null ? NetworkImage(_myAvatarUrl!) : null,
+                  child: _myAvatarUrl == null
+                      ? (_myProfileLoading
+                      ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.orange),
+                  )
+                      : const Icon(Icons.person_rounded, color: Colors.white54, size: 18))
+                      : null,
                 ),
               ),
               if (_hiddenUserIds.isNotEmpty) ...[
@@ -1065,6 +1062,8 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
     final fullName = profile['full_name'] ?? profile['username'] ?? AppL10n.user;
     final username = profile['username'] ?? '';
 
+    final firstName = fullName.split(' ').first;
+
     final otherProfile = (match['profile_summary'] as String?) ?? '';
     final otherInterests = List<String>.from(match['interests'] ?? []);
     final matchReasons = List<String>.from(match['match_reasons'] ?? []);
@@ -1076,24 +1075,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
     final commonInterests = List<String>.from(match['common_interests'] ?? []);
     final commonInterestsLower = commonInterests.map((s) => s.toLowerCase().trim()).toSet();
 
-    String? socialStyleReason;
-    for (final r in matchReasons) {
-      final lower = r.toLowerCase();
-      if (lower.contains('bağımsız') ||
-          lower.contains('yakın çevre') ||
-          lower.contains('kalabalık ortam') ||
-          lower.contains('sessiz anlara') ||
-          lower.contains('sosyal hem')) {
-        socialStyleReason = r;
-        break;
-      }
-    }
-
-    final Color scoreColor = similarity > 0.75
-        ? const Color(0xFF69F0AE)
-        : similarity > 0.60
-        ? AppColors.primary
-        : const Color(0xFFFFAB40);
+    final Color scoreColor = const Color(0xFFF3BE7A);
 
     final Future<String> explanationFuture = _matchingService.getAiExplanation(
       otherUserId: userId,
@@ -1104,504 +1086,580 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
     );
 
     final outerContext = context;
+    bool isSheetDisposed = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => DraggableScrollableSheet(
-        initialChildSize: 0.75,
-        maxChildSize: 0.95,
-        minChildSize: 0.6,
-        builder: (sheetCtx, scrollController) => ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF1A1035), Color(0xFF0F0C1A)],
-                ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-              ),
-              child: ListView(
-                controller: scrollController,
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
-                children: [
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  Center(
-                    child: Column(
-                      children: [
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              width: 130,
-                              height: 130,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [BoxShadow(color: scoreColor.withValues(alpha: 0.22), blurRadius: 36, spreadRadius: 4)],
-                              ),
-                            ),
-                            SizedBox(
-                              width: 118,
-                              height: 118,
-                              child: CircularProgressIndicator(
-                                value: similarity,
-                                strokeWidth: 3.5,
-                                backgroundColor: scoreColor.withValues(alpha: 0.12),
-                                valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
-                                strokeCap: StrokeCap.round,
-                              ),
-                            ),
-                            Container(
-                              width: 102,
-                              height: 102,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFF0F0C1A), width: 3),
-                              ),
-                              child: CircleAvatar(
-                                radius: 48,
-                                backgroundColor: const Color(0xFF1A1035),
-                                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                                child: avatarUrl == null ? const Icon(Icons.person, color: Colors.white38, size: 44) : null,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        Text(fullName, style: GoogleFonts.poppins(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                        Text('@$username', style: GoogleFonts.poppins(color: Colors.white38, fontSize: 13)),
-                        const SizedBox(height: 14),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: scoreColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: scoreColor.withValues(alpha: 0.4), width: 1.2),
-                            boxShadow: [BoxShadow(color: scoreColor.withValues(alpha: 0.15), blurRadius: 12)],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(FontAwesomeIcons.wandMagicSparkles, color: scoreColor, size: 13),
-                              const SizedBox(width: 8),
-                              Text(AppL10n.compatibilityPercent(percent),
-                                  style: GoogleFonts.poppins(color: scoreColor, fontSize: 16, fontWeight: FontWeight.w800)),
-                              const SizedBox(width: 8),
-                              Container(width: 1, height: 14, color: scoreColor.withValues(alpha: 0.3)),
-                              const SizedBox(width: 8),
-                              Text(
-                                similarity >= 0.75
-                                    ? (AppL10n.currentLanguageCode == 'tr' ? 'Harika Uyum' : 'Great Match')
-                                    : similarity >= 0.60
-                                    ? (AppL10n.currentLanguageCode == 'tr' ? 'İyi Uyum' : 'Good Match')
-                                    : (AppL10n.currentLanguageCode == 'tr' ? 'Uyumlu' : 'Compatible'),
-                                style: GoogleFonts.poppins(
-                                    color: scoreColor.withValues(alpha: 0.75), fontSize: 12, fontWeight: FontWeight.w500),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (matchReasons.isNotEmpty) ...[
-                    const SizedBox(height: 28),
-                    Row(
-                      children: [
-                        Text(AppL10n.commonPoints, style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                          child: Text('${matchReasons.length}', style: GoogleFonts.poppins(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w700)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: List.generate(matchReasons.length, (i) {
-                        final reason = matchReasons[i];
-                        final source = i < matchReasonSources.length ? matchReasonSources[i] : null;
-                        final myPosts = (source?['my_posts'] as List?)?.map((p) => p as Map<String, dynamic>).toList() ?? [];
-                        final otherPosts = (source?['other_posts'] as List?)?.map((p) => p as Map<String, dynamic>).toList() ?? [];
-                        final hasPosts = myPosts.isNotEmpty || otherPosts.isNotEmpty;
-                        final lower = reason.toLowerCase();
-                        final emoji = lower.contains('müzik') || lower.contains('music') || lower.contains('dinl') || lower.contains('listen')
-                            ? '🎵'
-                            : lower.contains('mekan') || lower.contains('environ') || lower.contains('doğa') || lower.contains('nature')
-                            ? '📍'
-                            : lower.contains('seyahat') || lower.contains('travel')
-                            ? '✈️'
-                            : lower.contains('sosyal') || lower.contains('social') || lower.contains('değer') || lower.contains('value')
-                            ? '🤝'
-                            : lower.contains('spor') || lower.contains('sport')
-                            ? '⚡'
-                            : lower.contains('yemek') || lower.contains('food')
-                            ? '🍽️'
-                            : '✨';
+      builder: (builderCtx) {
+        bool isReasonsExpanded = false;
+        bool isInterestsExpanded = false;
+        List<bool> visibleInterests = List.generate(otherInterests.length, (i) => false);
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: GestureDetector(
-                            onTap: () => Navigator.push(
-                              outerContext,
-                              MaterialPageRoute(
-                                builder: (_) => MatchEvidenceScreen(
-                                  reason: reason,
-                                  otherUserId: userId,
-                                  otherUserName: fullName,
-                                  otherUserAvatarUrl: avatarUrl,
-                                  myPosts: myPosts,
-                                  otherPosts: otherPosts,
+        return StatefulBuilder(
+          builder: (sheetCtx, setSheetState) => DraggableScrollableSheet(
+            initialChildSize: 0.75,
+            maxChildSize: 0.95,
+            minChildSize: 0.6,
+            builder: (sheetCtx, scrollController) => ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  clipBehavior: Clip.hardEdge,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  ),
+                  child: Stack(
+                    children: [
+                      const Positioned.fill(
+                        child: _EtherealBackground(),
+                      ),
+                      ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 36,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          Center(
+                            child: Column(
+                              children: [
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Container(
+                                      width: 130,
+                                      height: 130,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        boxShadow: [BoxShadow(color: scoreColor.withValues(alpha: 0.22), blurRadius: 36, spreadRadius: 4)],
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 118,
+                                      height: 118,
+                                      child: CircularProgressIndicator(
+                                        value: similarity,
+                                        strokeWidth: 3.5,
+                                        backgroundColor: scoreColor.withValues(alpha: 0.12),
+                                        valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
+                                        strokeCap: StrokeCap.round,
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 102,
+                                      height: 102,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: const Color(0xFF0F0C1A), width: 3),
+                                      ),
+                                      child: CircleAvatar(
+                                        radius: 48,
+                                        backgroundColor: const Color(0xFF1A1035),
+                                        backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                                        child: avatarUrl == null ? const Icon(Icons.person, color: Colors.white38, size: 44) : null,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 18),
+                                Text(fullName, style: GoogleFonts.poppins(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                                Text('@$username', style: GoogleFonts.poppins(color: Colors.white38, fontSize: 13)),
+                                const SizedBox(height: 14),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: scoreColor.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(color: scoreColor.withValues(alpha: 0.4), width: 1.2),
+                                    boxShadow: [BoxShadow(color: scoreColor.withValues(alpha: 0.15), blurRadius: 12)],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(FontAwesomeIcons.wandMagicSparkles, color: scoreColor, size: 13),
+                                      const SizedBox(width: 8),
+                                      Text(AppL10n.compatibilityPercent(percent),
+                                          style: GoogleFonts.poppins(color: scoreColor, fontSize: 16, fontWeight: FontWeight.w800)),
+                                      const SizedBox(width: 8),
+                                      Container(width: 1, height: 14, color: scoreColor.withValues(alpha: 0.3)),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        similarity >= 0.75
+                                            ? (AppL10n.currentLanguageCode == 'tr' ? 'Harika Uyum' : 'Great Match')
+                                            : similarity >= 0.60
+                                            ? (AppL10n.currentLanguageCode == 'tr' ? 'İyi Uyum' : 'Good Match')
+                                            : (AppL10n.currentLanguageCode == 'tr' ? 'Uyumlu' : 'Compatible'),
+                                        style: GoogleFonts.poppins(
+                                            color: scoreColor.withValues(alpha: 0.75), fontSize: 12, fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (matchReasons.isNotEmpty) ...[
+                            const SizedBox(height: 28),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setSheetState(() {
+                                      isReasonsExpanded = !isReasonsExpanded;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.2),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.psychology_rounded, color: Color(0xFFF3BE7A), size: 20),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            AppL10n.currentLanguageCode == 'tr' ? 'Neden eşleştiniz?' : 'Why did you match?',
+                                            style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(color: const Color(0xFFF3BE7A).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
+                                          child: Text('${matchReasons.length}', style: GoogleFonts.poppins(color: const Color(0xFFF3BE7A), fontSize: 11, fontWeight: FontWeight.w700)),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          isReasonsExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                          color: Colors.white70,
+                                          size: 20,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                              alignment: Alignment.topCenter,
+                              child: isReasonsExpanded
+                                  ? Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: List.generate(matchReasons.length, (i) {
+                                    final reason = matchReasons[i];
+                                    final source = i < matchReasonSources.length ? matchReasonSources[i] : null;
+                                    final myPosts = (source?['my_posts'] as List?)?.map((p) => p as Map<String, dynamic>).toList() ?? [];
+                                    final otherPosts = (source?['other_posts'] as List?)?.map((p) => p as Map<String, dynamic>).toList() ?? [];
+                                    final hasPosts = myPosts.isNotEmpty || otherPosts.isNotEmpty;
+                                    final lower = reason.toLowerCase();
+                                    final emoji = lower.contains('müzik') || lower.contains('music') || lower.contains('dinl') || lower.contains('listen')
+                                        ? '🎵'
+                                        : lower.contains('mekan') || lower.contains('environ') || lower.contains('doğa') || lower.contains('nature')
+                                        ? '📍'
+                                        : lower.contains('seyahat') || lower.contains('travel')
+                                        ? '✈️'
+                                        : lower.contains('sosyal') || lower.contains('social') || lower.contains('değer') || lower.contains('value')
+                                        ? '🤝'
+                                        : lower.contains('spor') || lower.contains('sport')
+                                        ? '⚡'
+                                        : lower.contains('yemek') || lower.contains('food')
+                                        ? '🍽️'
+                                        : '✨';
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: GestureDetector(
+                                        onTap: () => Navigator.push(
+                                          outerContext,
+                                          MaterialPageRoute(
+                                            builder: (_) => MatchEvidenceScreen(
+                                              reason: reason,
+                                              otherUserId: userId,
+                                              otherUserName: fullName,
+                                              otherUserAvatarUrl: avatarUrl,
+                                              myPosts: myPosts,
+                                              otherPosts: otherPosts,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha: 0.04),
+                                            borderRadius: BorderRadius.circular(16),
+                                            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Text(emoji, style: const TextStyle(fontSize: 16)),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Text(reason,
+                                                    style: GoogleFonts.poppins(
+                                                        color: Colors.white.withValues(alpha: 0.88), fontSize: 13, fontWeight: FontWeight.w500)),
+                                              ),
+                                              if (hasPosts) ...[
+                                                const SizedBox(width: 6),
+                                                Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withValues(alpha: 0.25)),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ],
+                          if (commonSpotify != null) ...[
+                            const SizedBox(height: 24),
+                            Text(AppL10n.commonMusic, style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.04),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+                                color: const Color(0xFF1DB954).withValues(alpha: 0.07),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: const Color(0xFF1DB954).withValues(alpha: 0.22)),
                               ),
                               child: Row(
                                 children: [
-                                  Text(emoji, style: const TextStyle(fontSize: 16)),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(reason,
-                                        style: GoogleFonts.poppins(
-                                            color: Colors.white.withValues(alpha: 0.88), fontSize: 13, fontWeight: FontWeight.w500)),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: commonSpotify['album_image'] != null
+                                        ? Image.network(commonSpotify['album_image'] as String, width: 62, height: 62, fit: BoxFit.cover)
+                                        : Container(
+                                      width: 62,
+                                      height: 62,
+                                      decoration: BoxDecoration(
+                                          color: const Color(0xFF1DB954).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+                                      child: const Icon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954), size: 24),
+                                    ),
                                   ),
-                                  if (hasPosts) ...[
-                                    const SizedBox(width: 6),
-                                    Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withValues(alpha: 0.25)),
-                                  ],
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        if (commonSpotify['track_name'] != null)
+                                          Text(
+                                            commonSpotify['track_name'] as String,
+                                            style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        Text(
+                                          commonSpotify['artist'] as String,
+                                          style: GoogleFonts.poppins(color: const Color(0xFF1DB954), fontSize: 12, fontWeight: FontWeight.w500),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.headphones_rounded, color: Colors.white30, size: 12),
+                                            const SizedBox(width: 4),
+                                            Text(AppL10n.bothListening, style: GoogleFonts.poppins(color: Colors.white30, fontSize: 10)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(color: const Color(0xFF1DB954).withValues(alpha: 0.12), shape: BoxShape.circle),
+                                    child: const Icon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954), size: 16),
+                                  ),
                                 ],
                               ),
                             ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
-                  if (socialStyleReason != null) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF9D89D9).withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF9D89D9).withValues(alpha: 0.2)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(9),
-                            decoration: BoxDecoration(color: const Color(0xFF9D89D9).withValues(alpha: 0.15), shape: BoxShape.circle),
-                            child: const Icon(Icons.psychology_rounded, color: Color(0xFF9D89D9), size: 18),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  AppL10n.personalityMatch,
-                                  style: GoogleFonts.poppins(
-                                    color: const Color(0xFF9D89D9),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  socialStyleReason,
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white.withValues(alpha: 0.85),
-                                    fontSize: 13,
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  if (commonSpotify != null) ...[
-                    const SizedBox(height: 24),
-                    Text(AppL10n.commonMusic, style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1DB954).withValues(alpha: 0.07),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFF1DB954).withValues(alpha: 0.22)),
-                      ),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: commonSpotify['album_image'] != null
-                                ? Image.network(commonSpotify['album_image'] as String, width: 62, height: 62, fit: BoxFit.cover)
-                                : Container(
-                              width: 62,
-                              height: 62,
-                              decoration: BoxDecoration(
-                                  color: const Color(0xFF1DB954).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                              child: const Icon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954), size: 24),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (commonSpotify['track_name'] != null)
-                                  Text(
-                                    commonSpotify['track_name'] as String,
-                                    style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                Text(
-                                  commonSpotify['artist'] as String,
-                                  style: GoogleFonts.poppins(color: const Color(0xFF1DB954), fontSize: 12, fontWeight: FontWeight.w500),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.headphones_rounded, color: Colors.white30, size: 12),
-                                    const SizedBox(width: 4),
-                                    Text(AppL10n.bothListening, style: GoogleFonts.poppins(color: Colors.white30, fontSize: 10)),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(color: const Color(0xFF1DB954).withValues(alpha: 0.12), shape: BoxShape.circle),
-                            child: const Icon(FontAwesomeIcons.spotify, color: Color(0xFF1DB954), size: 16),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF9D89D9)]),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: Colors.white, size: 12),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(AppL10n.aiAnalysis, style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  FutureBuilder<String>(
-                    future: explanationFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-                          ),
-                          child: Row(
+                          ],
+                          const SizedBox(height: 24),
+                          Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.15), shape: BoxShape.circle),
-                                child: const Icon(FontAwesomeIcons.robot, color: AppColors.primary, size: 13),
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF3BE7A),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: Colors.white, size: 12),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(AppL10n.aiAnalysis, style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          FutureBuilder<String>(
+                            future: explanationFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return Container(
+                                  padding: const EdgeInsets.all(18),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.04),
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(color: const Color(0xFFF3BE7A).withValues(alpha: 0.15), shape: BoxShape.circle),
+                                        child: const Icon(FontAwesomeIcons.robot, color: Color(0xFFF3BE7A), size: 13),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(AppL10n.analyzing, style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13)),
+                                      const SizedBox(width: 8),
+                                      const _TypingDots(),
+                                    ],
+                                  ),
+                                );
+                              }
+
+                              final explanation = snapshot.data ?? AppL10n.greatMatch;
+
+                              return Container(
+                                padding: const EdgeInsets.all(18),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                ),
+                                child: Text(
+                                  explanation,
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white.withValues(alpha: 0.92),
+                                    fontSize: 14,
+                                    height: 1.65,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 28),
+                          if (otherInterests.isNotEmpty) ...[
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    if (!isInterestsExpanded) {
+                                      setSheetState(() => isInterestsExpanded = true);
+                                      for (int i = 0; i < otherInterests.length; i++) {
+                                        Future.delayed(Duration(milliseconds: 100 + (i * 80)), () {
+                                          if (!isSheetDisposed) {
+                                            setSheetState(() {
+                                              visibleInterests[i] = true;
+                                            });
+                                          }
+                                        });
+                                      }
+                                    } else {
+                                      setSheetState(() {
+                                        isInterestsExpanded = false;
+                                        for (int i = 0; i < otherInterests.length; i++) {
+                                          visibleInterests[i] = false;
+                                        }
+                                      });
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.2),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.star_rounded, color: Color(0xFFF3BE7A), size: 20),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            AppL10n.currentLanguageCode == 'tr'
+                                                ? '$firstName nelerle ilgilenir?'
+                                                : 'What is $firstName interested in?',
+                                            style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(color: const Color(0xFFF3BE7A).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
+                                          child: Text('${otherInterests.length}', style: GoogleFonts.poppins(color: const Color(0xFFF3BE7A), fontSize: 11, fontWeight: FontWeight.w700)),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          isInterestsExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                          color: Colors.white70,
+                                          size: 20,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 300),
+                              alignment: Alignment.topCenter,
+                              child: isInterestsExpanded
+                                  ? Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: List.generate(otherInterests.length, (index) {
+                                    final interest = otherInterests[index];
+                                    final isCommon = commonInterestsLower.contains(interest.toLowerCase().trim());
+                                    final displayInterest = AppL10n.translateInterest(interest);
+                                    return AnimatedScale(
+                                      scale: visibleInterests[index] ? 1.0 : 0.8,
+                                      duration: const Duration(milliseconds: 300),
+                                      curve: Curves.easeOutBack,
+                                      child: AnimatedOpacity(
+                                        opacity: visibleInterests[index] ? 1.0 : 0.0,
+                                        duration: const Duration(milliseconds: 300),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                          decoration: BoxDecoration(
+                                            color: isCommon ? AppColors.primary.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.06),
+                                            borderRadius: BorderRadius.circular(20),
+                                            border: Border.all(
+                                              color: isCommon ? AppColors.primary.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1),
+                                              width: isCommon ? 1.5 : 1,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (isCommon) ...[
+                                                const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 12),
+                                                const SizedBox(width: 5),
+                                              ],
+                                              Text(
+                                                displayInterest,
+                                                style: GoogleFonts.poppins(
+                                                  color: isCommon ? Colors.white : Colors.white.withValues(alpha: 0.6),
+                                                  fontSize: 13,
+                                                  fontWeight: isCommon ? FontWeight.w600 : FontWeight.normal,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              )
+                                  : const SizedBox.shrink(),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                          const SizedBox(height: 32),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(sheetCtx);
+                                    _openChat(outerContext, profile);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 15),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF3BE7A),
+                                      borderRadius: BorderRadius.circular(18),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFFF3BE7A).withValues(alpha: 0.3),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 16),
+                                        const SizedBox(width: 8),
+                                        Text(AppL10n.sendMessageAction,
+                                            style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 12),
-                              Text(AppL10n.analyzing, style: GoogleFonts.poppins(color: Colors.white54, fontSize: 13)),
-                              const SizedBox(width: 8),
-                              const _TypingDots(),
-                            ],
-                          ),
-                        );
-                      }
-
-                      final explanation = snapshot.data ?? AppL10n.greatMatch;
-
-                      return Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [AppColors.primary.withValues(alpha: 0.10), const Color(0xFF9D89D9).withValues(alpha: 0.05)],
-                          ),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
-                        ),
-                        child: Text(
-                          explanation,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white.withValues(alpha: 0.92),
-                            fontSize: 14,
-                            height: 1.65,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 28),
-                  if (otherInterests.isNotEmpty) ...[
-                    Text(
-                      AppL10n.interests,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: otherInterests.map((interest) {
-                        final isCommon = commonInterestsLower.contains(interest.toLowerCase().trim());
-                        final displayInterest = AppL10n.translateInterest(interest);
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                          decoration: BoxDecoration(
-                            color: isCommon ? AppColors.primary.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isCommon ? AppColors.primary.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1),
-                              width: isCommon ? 1.5 : 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (isCommon) ...[
-                                const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 12),
-                                const SizedBox(width: 5),
-                              ],
-                              Text(
-                                displayInterest,
-                                style: GoogleFonts.poppins(
-                                  color: isCommon ? Colors.white : Colors.white.withValues(alpha: 0.6),
-                                  fontSize: 13,
-                                  fontWeight: isCommon ? FontWeight.w600 : FontWeight.normal,
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(sheetCtx);
+                                    Navigator.push(
+                                      outerContext,
+                                      MaterialPageRoute(
+                                        builder: (_) => ProfileScreen(userId: userId, showBackButton: true),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 15),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.06),
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.person_rounded, color: Colors.white70, size: 16),
+                                        const SizedBox(width: 8),
+                                        Text(AppL10n.goToProfile,
+                                            style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600)),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  const SizedBox(height: 32),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.pop(sheetCtx);
-                            _openChat(outerContext, profile);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [AppColors.primary, Color(0xFF9D89D9)],
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.3),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 16),
-                                const SizedBox(width: 8),
-                                Text(AppL10n.sendMessageAction,
-                                    style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.pop(sheetCtx);
-                            Navigator.push(
-                              outerContext,
-                              MaterialPageRoute(
-                                builder: (_) => ProfileScreen(userId: userId, showBackButton: true),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.06),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.person_rounded, color: Colors.white70, size: 16),
-                                const SizedBox(width: 8),
-                                Text(AppL10n.goToProfile,
-                                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600)),
-                              ],
-                            ),
-                          ),
-                        ),
+                          const SizedBox(height: 24),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
-    );
+        );
+      },
+    ).then((_) => isSheetDisposed = true);
   }
 
   String _localizedSummary(String? raw) {
@@ -1763,143 +1821,150 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
+              clipBehavior: Clip.hardEdge,
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A2E).withValues(alpha: 0.96),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
-              child: ListView(
-                controller: scrollCtrl,
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+              child: Stack(
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
-                    ),
+                  const Positioned.fill(
+                    child: _EtherealBackground(),
                   ),
-                  const SizedBox(height: 24),
-                  Row(
+                  ListView(
+                    controller: scrollCtrl,
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF9D89D9)]),
-                          borderRadius: BorderRadius.circular(14),
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
                         ),
-                        child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: Colors.white, size: 18),
                       ),
-                      const SizedBox(width: 14),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isTr ? 'Senin AI Profili' : 'Your AI Profile',
-                            style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            '$postCount ${isTr ? 'gönderi analiz edildi' : 'posts analyzed'}',
-                            style: GoogleFonts.poppins(color: Colors.white38, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  if (styleLabel.isNotEmpty) ...[
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: styleColor.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: styleColor.withValues(alpha: 0.2)),
-                      ),
-                      child: Row(
+                      const SizedBox(height: 24),
+                      Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(color: styleColor.withValues(alpha: 0.15), shape: BoxShape.circle),
-                            child: Icon(styleIcon, color: styleColor, size: 20),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF9D89D9)]),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: Colors.white, size: 18),
                           ),
                           const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  isTr ? 'Sosyal Stil' : 'Social Style',
-                                  style: GoogleFonts.poppins(color: styleColor.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w500),
-                                ),
-                                Text(
-                                  styleLabel,
-                                  style: GoogleFonts.poppins(color: styleColor, fontSize: 16, fontWeight: FontWeight.w700),
-                                ),
-                              ],
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isTr ? 'Senin AI Profili' : 'Your AI Profile',
+                                style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                '$postCount ${isTr ? 'gönderi analiz edildi' : 'posts analyzed'}',
+                                style: GoogleFonts.poppins(color: Colors.white38, fontSize: 12),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                  if (summary.isNotEmpty) ...[
-                    Text(
-                      isTr ? 'AI Analizi' : 'AI Analysis',
-                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-                      ),
-                      child: Text(
-                        summary,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 14,
-                          height: 1.6,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                  if (interests.isNotEmpty) ...[
-                    Text(
-                      isTr ? 'İlgi Alanları' : 'Interests',
-                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: interests.map((interest) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      const SizedBox(height: 24),
+                      if (styleLabel.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+                            color: styleColor.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: styleColor.withValues(alpha: 0.2)),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(color: styleColor.withValues(alpha: 0.15), shape: BoxShape.circle),
+                                child: Icon(styleIcon, color: styleColor, size: 20),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isTr ? 'Sosyal Stil' : 'Social Style',
+                                      style: GoogleFonts.poppins(color: styleColor.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w500),
+                                    ),
+                                    Text(
+                                      styleLabel,
+                                      style: GoogleFonts.poppins(color: styleColor, fontSize: 16, fontWeight: FontWeight.w700),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                      if (summary.isNotEmpty) ...[
+                        Text(
+                          isTr ? 'AI Analizi' : 'AI Analysis',
+                          style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                           ),
                           child: Text(
-                            AppL10n.translateInterest(interest),
-                            style: GoogleFonts.poppins(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w500),
+                            summary,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 14,
+                              height: 1.6,
+                              fontStyle: FontStyle.italic,
+                            ),
                           ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  Text(
-                    isTr ? 'Müzik Bağlantısı' : 'Music Connection',
-                    style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                      if (interests.isNotEmpty) ...[
+                        Text(
+                          isTr ? 'İlgi Alanları' : 'Interests',
+                          style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: interests.map((interest) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+                              ),
+                              child: Text(
+                                AppL10n.translateInterest(interest),
+                                style: GoogleFonts.poppins(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w500),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                      Text(
+                        isTr ? 'Müzik Bağlantısı' : 'Music Connection',
+                        style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildMusicCards(),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  _buildMusicCards(),
                 ],
               ),
             ),
@@ -2298,7 +2363,7 @@ class _TypingDotsState extends State<_TypingDots> with SingleTickerProviderState
     return Text(
       dots.isEmpty ? '   ' : dots.padRight(3),
       style: GoogleFonts.poppins(
-        color: AppColors.primary,
+        color: Colors.white,
         fontSize: 16,
         fontWeight: FontWeight.bold,
         letterSpacing: 2,
@@ -2925,4 +2990,75 @@ class _LavaPainter extends CustomPainter {
   bool shouldRepaint(covariant _LavaPainter oldDelegate) {
     return oldDelegate.fillPercent != fillPercent || oldDelegate.animationValue != animationValue;
   }
+}
+
+// ==========================================
+// ETHEREAL BACKGROUND WIDGETS
+// ==========================================
+
+class _EtherealBackground extends StatefulWidget {
+  const _EtherealBackground();
+
+  @override
+  State<_EtherealBackground> createState() => _EtherealBackgroundState();
+}
+
+class _EtherealBackgroundState extends State<_EtherealBackground> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return CustomPaint(
+          painter: _EtherealPainter(_controller.value),
+          size: Size.infinite,
+        );
+      },
+    );
+  }
+}
+
+class _EtherealPainter extends CustomPainter {
+  final double progress;
+
+  _EtherealPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    canvas.drawRect(rect, Paint()..color = const Color(0xFF0C0814));
+
+    void drawBlob(Color color, double xOffset, double yOffset, double radius) {
+      final paint = Paint()
+        ..color = color
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 80);
+      canvas.drawCircle(Offset(size.width * xOffset, size.height * yOffset), radius, paint);
+    }
+
+    final t = progress * 2 * math.pi;
+
+    drawBlob(const Color(0xFF6E1A37).withOpacity(0.35), 0.5 + 0.3 * math.sin(t), 0.3 + 0.2 * math.cos(t * 0.8), size.width * 0.6);
+    drawBlob(const Color(0xFFF3BE7A).withOpacity(0.25), 0.2 + 0.4 * math.cos(t * 1.2), 0.7 + 0.2 * math.sin(t * 1.1), size.width * 0.5);
+    drawBlob(const Color(0xFFFEFDDF).withOpacity(0.15), 0.8 + 0.2 * math.sin(t * 0.9), 0.8 + 0.2 * math.cos(t * 1.3), size.width * 0.4);
+  }
+
+  @override
+  bool shouldRepaint(covariant _EtherealPainter oldDelegate) => oldDelegate.progress != progress;
 }
