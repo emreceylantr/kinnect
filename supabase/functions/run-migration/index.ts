@@ -1,11 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-serve(async () => {
+serve(async (req) => {
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  const authHeader = req.headers.get('Authorization') ?? ''
+
+  // Require Service Role authorization to prevent unauthorized schema changes
+  if (!serviceRoleKey || authHeader !== `Bearer ${serviceRoleKey}`) {
+    return new Response(JSON.stringify({ error: 'Unauthorized: Service role required' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   const url = Deno.env.get('SUPABASE_DB_URL') ?? ''
   if (!url) return new Response('no db url', { status: 500 })
-
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
   const { Client } = await import("https://deno.land/x/postgres@v0.17.0/mod.ts")
   const client = new Client(url)
