@@ -11,10 +11,12 @@ import '../repositories/profile_repository.dart';
 class AuthResult {
   final String userId;
   final bool hasProfile;
+  final Map<String, dynamic>? profile;
 
   AuthResult({
     required this.userId,
     required this.hasProfile,
+    this.profile,
   });
 }
 
@@ -59,6 +61,7 @@ class AuthService {
     return AuthResult(
       userId: userId,
       hasProfile: profile != null,
+      profile: profile,
     );
   }
 
@@ -96,6 +99,7 @@ class AuthService {
     return AuthResult(
       userId: userId,
       hasProfile: profile != null,
+      profile: profile,
     );
   }
 

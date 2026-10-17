@@ -30,6 +30,7 @@ class AppL10n {
   static String get someone => _en ? 'Someone' : 'Birisi';
   static String get user => _en ? 'User' : 'Kullanıcı';
   static String get noResults => _en ? 'No results found' : 'Sonuç bulunamadı';
+  static String get failedToLoad => _en ? 'Could not load' : 'Yüklenemedi';
   static String get add => _en ? 'Add' : 'Ekle';
   static String get leave => _en ? 'Leave' : 'Ayrıl';
   static String get kick => _en ? 'Remove' : 'At';
@@ -43,7 +44,7 @@ class AppL10n {
   // ── ANA SAYFA ──
   static String get homeFeed => _en ? 'Home Feed' : 'Ana Akış';
   static String get explore => _en ? 'Explore' : 'Keşfet';
-  static String get aiAssistant => '';
+  static String get aiAssistant => _en ? 'AI Assistant' : 'Yapay Zeka Asistanı';
   static String get myProfile => _en ? 'My Profile' : 'Profilim';
   static String get messages => _en ? 'Messages' : 'Mesajlar';
   static String get feedEmpty => _en ? 'Feed is empty.' : 'Akış boş.';
@@ -84,7 +85,7 @@ class AppL10n {
   static String wantsToFollow(String username) =>
       _en ? '$username wants to follow you' : '$username seni takip etmek istiyor';
   static String get newNotification => _en ? 'New notification' : 'Yeni bildirim';
-  static String andNOthers(int n) => _en ? '$n and $n others' : '$n ve $n kişi daha';
+  static String andNOthers(int n) => _en ? 'and $n others' : 've $n kişi daha';
 
   // Bildirim aksiyonları
   static String notifLiked(int count) => count == 1
@@ -201,6 +202,8 @@ class AppL10n {
       _en ? 'Spotify music history added to matches!' : 'Spotify müzik geçmişin eşleşmelere eklendi!';
   static String get spotifySyncFail =>
       _en ? 'Spotify sync failed, try again.' : 'Spotify sync başarısız, tekrar dene.';
+  static String get spotifyConnectedToast =>
+      _en ? 'Spotify connected successfully!' : 'Spotify başarıyla bağlandı!';
   static String get appleMusicSyncing =>
       _en ? 'Syncing Apple Music...' : 'Apple Music senkronize ediliyor...';
   static String get appleMusicConnectedLabel =>
@@ -379,6 +382,17 @@ class AppL10n {
       _en ? 'As you share posts, AI will show people with similar interests here! 🤖'
           : 'Post paylaştıkça yapay zeka sana benzer ilgi alanlarına sahip kişileri burada gösterecek! 🤖';
   static String get aiSearching => _en ? 'AI is searching for your soul twins...' : 'Yapay zeka ruh ikizlerini arıyor...';
+  static String get dragToCorner => _en ? 'Drag to a corner' : 'Köşeye sürükle';
+  static String get aiAnalyzingYou => _en ? 'AI is analyzing you...' : 'Yapay zeka seni analiz ediyor...';
+  static String get aiAnalyzingSubtitle =>
+      _en ? 'Your answers are being processed while your soul twins are being matched ✨' : 'Cevapların işleniyor, ruh ikizlerin aranıyor ✨';
+  static String get videoBadge => _en ? 'VIDEO' : 'VIDEO';
+  static String get profileBasedAnalysisTitle =>
+      _en ? 'This insight is based on profile data' : 'Bu analiz profil verilerine dayanıyor';
+  static String get profileBasedAnalysisSubtitle =>
+      _en
+          ? 'This is a shared signal inferred from profile details like interests, social style, or music taste rather than from one specific post.'
+          : 'Belirli bir post değil; ilgi alanları, sosyal tarz veya müzik zevki gibi profil bilgilerinden çıkarılan bir ortak nokta.';
   static String get connectionError => _en ? 'Connection error' : 'Bağlantı hatası';
   static String get matchesFailedToLoad =>
       _en ? 'Matches could not be loaded. Try again.' : 'Eşleşmeler yüklenemedi. Tekrar deneyin.';
@@ -738,10 +752,17 @@ class AppL10n {
   static String get editsSaved => _en ? 'Changes saved! ✅' : 'Düzenlemeler kaydedildi! ✅';
   static String get writeHint => _en ? 'Write something...' : 'Bir şeyler yaz...';
   static String get music => _en ? 'Music' : 'Müzik';
+  static String get addMusicTitle => _en ? 'Add Music' : 'Müzik Ekle';
+  static String get searchSongOrArtist =>
+      _en ? 'Search for a song or artist...' : 'Şarkı veya sanatçı ara...';
+  static String get searchMusic => _en ? 'Search Music' : 'Müzik Ara';
+  static String get appleMusicSearchSubtitle =>
+      _en ? 'Search is powered by Apple Music' : 'Apple Music ile arama yapılır';
   static String get addMusicOptional => _en ? 'Add Music (Optional)' : 'Müzik Ekle (Opsiyonel)';
   static String get tapToSelect => _en ? 'Tap to select...' : 'Dokunarak seç...';
   static String imagesCount(int n) => _en ? 'Images ($n)' : 'Görseller ($n)';
   static String taggedCount(int n) => _en ? 'Tagged People ($n)' : 'Etiketli Kişiler ($n)';
+  static String likersTitle(int n) => _en ? '❤️ Likes ($n)' : '❤️ Beğenenler ($n)';
   static List<String> get postHints => _en ? [
     'What are you thinking?',
     'How are you today?',

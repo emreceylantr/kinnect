@@ -54,7 +54,7 @@ class LikersSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            '❤️ Beğenenler ($likeCount)',
+            AppL10n.likersTitle(likeCount),
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontSize: 18,
@@ -77,7 +77,7 @@ class LikersSheet extends StatelessWidget {
                 } else if (snapshot.hasError) {
                   return Center(
                     child: Text(
-                      'Yüklenemedi',
+                      AppL10n.failedToLoad,
                       style: GoogleFonts.poppins(color: Colors.white54),
                     ),
                   );

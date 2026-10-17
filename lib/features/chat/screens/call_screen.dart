@@ -6,6 +6,7 @@ import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import 'package:zego_uikit/zego_uikit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../core/config/zego_config.dart';
 import '../../../core/language/app_l10n.dart';
 
 // 🎨 MODERN VE SOFT RENK PALETİ
@@ -276,9 +277,8 @@ class _CallScreenState extends State<CallScreen> {
     }
 
     return ZegoUIKitPrebuiltCall(
-      appID: 2111311400,
-      appSign:
-          "REDACTED_ZEGO_APP_SIGN",
+      appID: ZegoConfig.appId,
+      appSign: ZegoConfig.appSign,
       userID: userId,
       userName: localUserName, // Users tablosundan çekilen isim
       callID: widget.callId,

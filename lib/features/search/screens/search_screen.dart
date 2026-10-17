@@ -18,7 +18,6 @@ import '../../../shared/widgets/image_carousel.dart';
 import '../../../shared/widgets/double_tap_overlay.dart';
 import '../../../shared/widgets/kinnect_image.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../home/widgets/post_card.dart';
 import '../../chat/widgets/share_post_modal.dart';
 import '../../../core/language/app_l10n.dart';
 

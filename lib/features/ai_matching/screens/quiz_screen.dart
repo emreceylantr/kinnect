@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../core/language/app_l10n.dart';
 // Kendi projenizdeki importları buraya ekleyin:
 // import '../../../core/theme/app_colors.dart';
 
@@ -34,7 +35,7 @@ class _QuizQuestion {
   });
 }
 
-const List<_QuizQuestion> _kQuestions = [
+const List<_QuizQuestion> _kQuestionsTr = [
   // ── Bölüm 1: Bireysel Vibe ──────────────────────────────────────────────────
   _QuizQuestion(
     section: 1, sectionTitle: 'Bireysel Vibe', sectionEmoji: '🔥',
@@ -170,6 +171,139 @@ const List<_QuizQuestion> _kQuestions = [
   ),
 ];
 
+const List<_QuizQuestion> _kQuestionsEn = [
+  _QuizQuestion(
+    section: 1, sectionTitle: 'Personal Vibe', sectionEmoji: '🔥',
+    question: 'Which one reflects your weekend energy the most?',
+    a: 'Structured and full-on, out and about, at events, or socializing.',
+    b: 'At home, chilling with coffee or tea, a film, a series, or a game.',
+    c: 'Completely spontaneous, going wherever the day takes me.',
+    d: 'Focusing on my own projects, learning and building new things.',
+    aShort: 'Planned & Social 🎉', bShort: 'Home & Calm 🏠',
+    cShort: 'Spontaneous ⚡', dShort: 'Productive 🎯',
+  ),
+  _QuizQuestion(
+    section: 1, sectionTitle: 'Personal Vibe', sectionEmoji: '🔥',
+    question: 'What fuels you the most in life?',
+    a: 'A sense of achievement and pushing myself to the next level.',
+    b: 'Strong and meaningful bonds with the people I love.',
+    c: 'New experiences, adventures, and discovering the unknown.',
+    d: 'Leaving something valuable behind for people or society.',
+    aShort: 'Achievement 🏆', bShort: 'Deep Bonds 💕',
+    cShort: 'Adventure 🌍', dShort: 'Impact 🤝',
+  ),
+  _QuizQuestion(
+    section: 1, sectionTitle: 'Personal Vibe', sectionEmoji: '🔥',
+    question: 'In a new setting, who usually breaks the ice first?',
+    a: 'Definitely me. I cannot stand awkward silence, so I start the conversation.',
+    b: 'Depends on the vibe. I open up if the environment feels safe.',
+    c: 'I usually wait for the other person to make the first move.',
+    d: 'I do not always need words. My body language says enough.',
+    aShort: 'I do ✋', bShort: 'Depends 🤔',
+    cShort: 'I wait 🌸', dShort: 'Body language 🕺',
+  ),
+  _QuizQuestion(
+    section: 1, sectionTitle: 'Personal Vibe', sectionEmoji: '🔥',
+    question: 'After a stressful day, what resets your mind best?',
+    a: 'A solo walk in nature or a quiet environment.',
+    b: 'A strategic game or an immersive activity.',
+    c: 'Putting on headphones and getting lost in music or sports.',
+    d: 'Talking for hours with a close friend without filters.',
+    aShort: 'Nature & Quiet 🌿', bShort: 'Games & Action 🎮',
+    cShort: 'Music & Sports 🎵', dShort: 'Long Talks 🗣️',
+  ),
+  _QuizQuestion(
+    section: 2, sectionTitle: 'Spark', sectionEmoji: '⚡',
+    question: 'What creates the first spark for you in someone new?',
+    a: 'Their eye contact, posture, and natural warmth in their smile.',
+    b: 'Their intelligence, humor, and how easily the conversation flows.',
+    c: 'Their confidence and the strong energy they give off.',
+    d: 'Their empathy and how genuinely they listen.',
+    aShort: 'Looks & Smile 😍', bShort: 'Brains & Humor 😄',
+    cShort: 'Confidence & Aura 💪', dShort: 'Warmth ❤️',
+  ),
+  _QuizQuestion(
+    section: 2, sectionTitle: 'Spark', sectionEmoji: '⚡',
+    question: 'What would your ideal first date look like?',
+    a: 'A stylish but cozy cafe or restaurant with a deep conversation.',
+    b: 'Doing something together: concert, exhibition, arcade, or amusement park.',
+    c: 'Coffee during a peaceful walk in nature.',
+    d: 'Something spontaneous with street food or a relaxed bar night.',
+    aShort: 'Cafe Talk ☕', bShort: 'Concert & Activity 🎶',
+    cShort: 'Nature Walk 🌿', dShort: 'Spontaneous 🌆',
+  ),
+  _QuizQuestion(
+    section: 2, sectionTitle: 'Spark', sectionEmoji: '⚡',
+    question: 'What is your biggest turn-off in relationships?',
+    a: 'Being unclear, playing games, and creating uncertainty.',
+    b: 'A lack of passion, vision, or constant negativity.',
+    c: 'Disrespecting my personal space, hobbies, or friends.',
+    d: 'A lack of empathy and always needing to be right.',
+    aShort: 'Uncertainty 🚫', bShort: 'No Passion 😑',
+    cShort: 'Disrespect 🙅', dShort: 'No Empathy 💔',
+  ),
+  _QuizQuestion(
+    section: 2, sectionTitle: 'Spark', sectionEmoji: '⚡',
+    question: 'How do you know the connection between you is getting stronger?',
+    a: 'When we can even share silence comfortably.',
+    b: 'When I can be my most unfiltered self around them.',
+    c: 'When I naturally start including them in my future plans.',
+    d: 'When they are the first person I think of in a hard moment.',
+    aShort: 'Silence Feels Good 🤫', bShort: 'I Feel Safe 😊',
+    cShort: 'In My Future 🔮', dShort: 'First On My Mind 💭',
+  ),
+  _QuizQuestion(
+    section: 2, sectionTitle: 'Spark', sectionEmoji: '⚡',
+    question: 'Where should the strongest compatibility in a relationship be?',
+    a: 'Sense of humor. We should laugh at the same ridiculous things.',
+    b: 'Life vision. Our future goals should point in the same direction.',
+    c: 'Love language. Touch, quality time, and words of affirmation.',
+    d: 'Conflict management. Even in arguments, respect should stay.',
+    aShort: 'Humor 😂', bShort: 'Vision 🎯',
+    cShort: 'Love Language 💝', dShort: 'Respect 🕊️',
+  ),
+  _QuizQuestion(
+    section: 2, sectionTitle: 'Spark', sectionEmoji: '⚡',
+    question: 'If love or a deep bond were a fire, what would yours be like?',
+    a: 'A sudden, passionate, dizzying, stormy campfire.',
+    b: 'A slow-burning fireplace that feels safe and long-lasting.',
+    c: 'An emotional, exciting festival fire full of adventure.',
+    d: 'A controlled flame where logic and emotion stay balanced.',
+    aShort: 'Passionate 🔥', bShort: 'Steady 🕯️',
+    cShort: 'Emotional ❤️', dShort: 'Balanced ⚖️',
+  ),
+  _QuizQuestion(
+    section: 3, sectionTitle: 'Social Dynamics', sectionEmoji: '🌐',
+    question: 'What is your natural role in your friend group?',
+    a: 'The organizer who makes plans and gathers everyone.',
+    b: 'The therapist everyone opens up to for advice.',
+    c: 'The entertainer who keeps the energy high.',
+    d: 'The observer who talks little but says a lot.',
+    aShort: 'Organizer 📅', bShort: 'Listener 👂',
+    cShort: 'Entertainer 🎭', dShort: 'Observer 👁️',
+  ),
+  _QuizQuestion(
+    section: 3, sectionTitle: 'Social Dynamics', sectionEmoji: '🌐',
+    question: 'How do you usually react during a disagreement?',
+    a: 'Let us solve it right away. I do not avoid confrontation.',
+    b: 'I prefer to step back first and calm down.',
+    c: 'I get hurt and keep it inside instead of escalating things.',
+    d: 'I try to find a middle ground with logic and clear arguments.',
+    aShort: 'Face It 💬', bShort: 'Take Space 😌',
+    cShort: 'Keep It In 😶', dShort: 'Stay Rational 🧠',
+  ),
+  _QuizQuestion(
+    section: 3, sectionTitle: 'Social Dynamics', sectionEmoji: '🌐',
+    question: 'If AI matched you with someone, what should they bring into your life?',
+    a: 'They should pull me out of my comfort zone and into new adventures.',
+    b: 'They should calm and balance me in the chaos of life.',
+    c: 'They should motivate me and expand my vision.',
+    d: 'They should accept me as I am and be a safe harbor.',
+    aShort: 'Adventure 🌍', bShort: 'Balance ⚖️',
+    cShort: 'Motivation 🚀', dShort: 'Acceptance 🏡',
+  ),
+];
+
 // ─────────────────────────────────────────────
 // Opening Dummy Card Data
 // ─────────────────────────────────────────────
@@ -220,6 +354,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   // Data for Intro Animation
   List<_DummyCard> _dummyCards = [];
   bool _dummyCardsGenerated = false;
+
+  List<_QuizQuestion> get _questions =>
+      AppL10n.currentLanguageCode == 'en' ? _kQuestionsEn : _kQuestionsTr;
 
   @override
   void initState() {
@@ -325,10 +462,15 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       return;
     }
     // Cross center lines (divided into 4 regions)
-    if (_dragOffset.dx <= 0 && _dragOffset.dy <= 0) _activeRegion = 0; // Top-Left
-    else if (_dragOffset.dx > 0 && _dragOffset.dy <= 0) _activeRegion = 1; // Top-Right
-    else if (_dragOffset.dx <= 0 && _dragOffset.dy > 0) _activeRegion = 2; // Bottom-Left
-    else if (_dragOffset.dx > 0 && _dragOffset.dy > 0) _activeRegion = 3; // Bottom-Right
+    if (_dragOffset.dx <= 0 && _dragOffset.dy <= 0) {
+      _activeRegion = 0; // Top-Left
+    } else if (_dragOffset.dx > 0 && _dragOffset.dy <= 0) {
+      _activeRegion = 1; // Top-Right
+    } else if (_dragOffset.dx <= 0 && _dragOffset.dy > 0) {
+      _activeRegion = 2; // Bottom-Left
+    } else if (_dragOffset.dx > 0 && _dragOffset.dy > 0) {
+      _activeRegion = 3; // Bottom-Right
+    }
   }
 
   void _throwCard() {
@@ -390,7 +532,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
     _answers[_currentIndex] = mappedAnswer;
 
-    if (_currentIndex == _kQuestions.length - 1) {
+    if (_currentIndex == _questions.length - 1) {
       setState(() {
         _isSubmitting = true;
       });
@@ -409,7 +551,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
   Future<void> _submitQuiz() async {
     final answersMap = <String, dynamic>{};
-    for (int i = 0; i < _kQuestions.length; i++) {
+    for (int i = 0; i < _questions.length; i++) {
       answersMap['q${i + 1}'] = _answers[i] ?? '';
     }
     answersMap['completed_at'] = DateTime.now().toIso8601String();
@@ -447,7 +589,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     final centerX = (size.width - cardW) / 2;
     final centerY = (size.height - cardH) / 2;
 
-    final q = _kQuestions[_currentIndex];
+    final q = _questions[_currentIndex];
 
     return Scaffold(
       backgroundColor: _bgDark,
@@ -581,7 +723,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
               ),
             ),
             Text(
-              '${_currentIndex + 1} / ${_kQuestions.length}',
+              '${_currentIndex + 1} / ${_questions.length}',
               style: GoogleFonts.poppins(color: _accentColor, fontSize: 14, fontWeight: FontWeight.bold),
             ),
           ],
@@ -639,7 +781,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     List<Widget> cards = [];
 
     // Draw up to 3 background cards + 1 top card
-    int maxCards = math.min(4, _kQuestions.length - _currentIndex);
+    int maxCards = math.min(4, _questions.length - _currentIndex);
 
     for (int i = maxCards - 1; i >= 0; i--) {
       int absoluteIndex = _currentIndex + i;
@@ -679,9 +821,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                 onPanStart: _onPanStart,
                 onPanUpdate: _onPanUpdate,
                 onPanEnd: _onPanEnd,
-                child: _buildStaticCard(_kQuestions[absoluteIndex], width, height, isTop: true),
+                child: _buildStaticCard(_questions[absoluteIndex], width, height, isTop: true),
               )
-                  : _buildStaticCard(_kQuestions[absoluteIndex], width, height),
+                  : _buildStaticCard(_questions[absoluteIndex], width, height),
             ),
           )
       );
@@ -756,7 +898,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                 Icon(Icons.swipe, color: _accentColor.withOpacity(0.8), size: 16),
                 const SizedBox(width: 8),
                 Text(
-                  'Köşeye Sürükle',
+                  AppL10n.dragToCorner,
                   style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12),
                 )
               ],
@@ -797,13 +939,13 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
             const CircularProgressIndicator(color: _accentColor, strokeWidth: 3),
             const SizedBox(height: 32),
             Text(
-              'Yapay zeka seni analiz ediyor...',
+              AppL10n.aiAnalyzingYou,
               style: GoogleFonts.poppins(
                   color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Text(
-              'Cevapların işleniyor, ruh ikizlerin aranıyor ✨',
+              AppL10n.aiAnalyzingSubtitle,
               style: GoogleFonts.poppins(color: Colors.white54, fontSize: 14),
             ),
           ],

@@ -1,349 +1,223 @@
+<div align="center">
+
+<img src="assets/icon/icon.png" alt="Kinnect Logo" width="96" height="96" style="border-radius: 24px;" />
+
 # Kinnect
 
-Kinnect, yapay zeka destekli bir sosyal medya ve eşleşme uygulamasıdır. Uygulama; kullanıcıların paylaşımlarını, fotoğraf/video içeriklerini, müzik tercihlerini, konumlarını ve sosyal etkileşimlerini analiz ederek daha anlamlı sosyal bağlantılar kurmayı hedefler.
+**AI-Powered Social Discovery & Explainable Matching Platform**
 
-Klasik sosyal medya uygulamalarından farklı olarak Kinnect yalnızca kullanıcıların manuel olarak seçtiği ilgi alanlarına bakmaz. Kullanıcının gerçek paylaşımlarından ve davranışlarından bir profil çıkarır, bu profili yapay zeka ile yorumlar ve diğer kullanıcılarla açıklanabilir eşleşmeler üretir.
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white)](https://dart.dev)
+[![Supabase](https://img.shields.io/badge/Supabase-Auth%20%7C%20Postgres%20%7C%20Edge%20Functions-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![Claude AI](https://img.shields.io/badge/Anthropic-Claude%20Vision%20%26%20Sonnet-D97757?logo=anthropic&logoColor=white)](https://anthropic.com)
+[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-7C3AED)](#)
 
-## Projenin Amacı
+*Connecting people through authentic behavioral signals, visual context, music taste, and explainable AI.*
 
-Kinnect'in temel amacı, kullanıcıların sosyal medya üzerindeki içeriklerinden yola çıkarak daha doğal ve anlamlı bağlantılar kurmasını sağlamaktır.
+</div>
 
-Uygulama şu soruya cevap arar:
+---
 
-> "Bu iki kullanıcı gerçekten hangi yönlerden benziyor ve neden tanışmaları mantıklı?"
+## Overview
 
-Bu yüzden sistem sadece ortak ilgi alanlarına değil; fotoğraf ortamlarına, müzik zevklerine, konumlara, post etkileşimlerine, sosyal stile ve kullanıcı davranışlarına da bakar.
+Traditional social and matching platforms rely on static, self-reported interest tags that quickly become outdated. **Kinnect** reimagines social discovery by analyzing what users actually share and experience—their photos, videos, music preferences, locations, and real-time social interactions—to build living behavioral profiles and generate **explainable, evidence-backed matches**.
 
-## Temel Özellikler
+Rather than showing an opaque compatibility percentage, Kinnect answers a fundamental question:
 
-- E-posta ve Google ile kullanıcı girişi
-- Profil oluşturma ve profil düzenleme
-- Fotoğraf, video, metin, müzik ve konum içeren post paylaşımı
-- Fotoğraf düzenleme ve fotoğraf üzerinde kullanıcı etiketleme
-- Beğeni, yorum, bildirim ve arkadaşlık sistemi
-- Birebir ve grup mesajlaşma
-- Sesli ve görüntülü arama
-- Spotify ve Apple Music entegrasyonu
-- Yapay zeka destekli kullanıcı profili analizi
-- Yapay zeka destekli eşleşme sistemi
-- Eşleşme sebeplerini gerçek postlarla açıklama
-- Yakındaki kullanıcıları keşfetmeye yönelik Spark modu
-- Türkçe ve İngilizce dil desteği
-- Karanlık ve açık tema desteği
+> *"Why do these two people genuinely align, and which exact moments in their feeds prove it?"*
 
-## Kullanılan Teknolojiler
+---
 
-### Mobil Uygulama
+## Key Features
 
-- Flutter
-- Dart
-- Material Design
-- Shared Preferences
-- Google Fonts
-- Lottie animasyonları
+### 1. Multimodal AI Profile Synthesis
+- **Visual Scene Understanding:** Uses **Claude Vision** to inspect uploaded photos and extracted video frames, identifying environmental context, activities, and social settings (`scene_tags`).
+- **Behavioral Signal Extraction:** Synthesizes post captions, locations, `@mentions`, tagged friends, and connected music libraries into a structured AI behavioral profile (`user_ai_profiles`).
+- **Dynamic Social Archetypes:** Classifies social styles (e.g., *Solo*, *Paired*, *Social*, *Mixed*) and updates profiles asynchronously as users interact with the platform.
 
-### Backend ve Veri Katmanı
+### 2. Hybrid & Explainable Matching Engine
+- **Multi-Signal Weighted Scoring:** Evaluates candidate pairs across five distinct behavioral dimensions:
+  | Dimension | Signal Source | Weight |
+  | :--- | :--- | :---: |
+  | **Interest Alignment** | Semantic & Jaccard similarity of AI-extracted interests | **30%** |
+  | **Music Affinity** | Shared Spotify / Apple Music top artists, tracks, and post soundtracks | **25%** |
+  | **Behavioral & Scene Context** | Visual scene tags, social style compatibility, and shared locations | **18%** |
+  | **Interaction Signals** | Mutual likes, comments, and engagement patterns | **15%** |
+  | **Social Graph** | Co-tags, `@mentions`, and mutual appearances in posts | **12%** |
+- **Evidence-Backed Explanations (`ReasonWithSource`):** Every match reason is linked directly to the real posts from both users that triggered the connection.
+- **Natural Language Match Narratives:** Powered by the `explain-match` Edge Function, generating personalized, human-friendly compatibility summaries in English and Turkish.
 
-- Supabase Auth
-- Supabase Database
-- Supabase Storage
-- Supabase Edge Functions
-- Supabase Realtime
-- Row Level Security politikaları
+### 3. Rich Social & Media Experience
+- **Multimodal Posts:** Share multi-photo carousels, compressed videos, Live Photos, location pins, interactive user tags, and embedded Spotify/Apple Music tracks.
+- **Real-Time Communication:** 1-on-1 and group messaging with read receipts, typing/presence indicators, media sharing, and voice notes via **Supabase Realtime**.
+- **Voice & Video Calling:** Low-latency audio and video calls powered by **ZegoCloud**.
+- **Spark Proximity Mode:** Bluetooth Low Energy (**BLE**) proximity discovery (`flutter_blue_plus`) to detect and connect with Kinnect users nearby in real life.
+- **AI Content Safety:** Integrated toxic comment detection (`ToxicityService`) backed by a custom TF-IDF + Logistic Regression ML API trained on 77,800+ comments (**90.72% accuracy**).
+- **Localization & Theming:** Full **English** and **Turkish** localization (`AppL10n`) with sleek dark/light adaptive theming.
 
-### Yapay Zeka
+---
 
-- Anthropic Claude
-- Claude Vision ile fotoğraf/video karesi analizi
-- Claude ile kullanıcı profili sentezleme
-- Claude ile eşleşme açıklaması üretme
-
-### Medya ve İletişim
-
-- Firebase Cloud Messaging ile push bildirimleri
-- ZegoCloud ile sesli/görüntülü arama
-- Spotify API
-- Apple Music entegrasyonu
-- Video sıkıştırma ve video kare çıkarma
-
-## Uygulama Mimarisi
-
-Kinnect genel olarak üç ana katmandan oluşur:
-
-1. **Flutter istemci uygulaması**
-   Kullanıcı arayüzü, post oluşturma, profil ekranları, mesajlaşma, eşleşme ekranı ve uygulama içi deneyim bu katmandadır.
-
-2. **Supabase backend**
-   Kimlik doğrulama, veritabanı, dosya depolama, realtime veriler ve Edge Function'lar Supabase üzerinde çalışır.
-
-3. **Yapay zeka servisleri**
-   Fotoğraf/video analizi, profil çıkarımı ve eşleşme açıklaması Claude tabanlı Edge Function'lar üzerinden yapılır.
+## System Architecture
 
 ```mermaid
 flowchart LR
-  A["Flutter Uygulaması"] --> B["Supabase Auth"]
-  A --> C["Supabase Database"]
-  A --> D["Supabase Storage"]
-  A --> E["Supabase Edge Functions"]
-  E --> F["Claude AI"]
-  E --> C
-  D --> E
+  subgraph Client["Flutter Mobile Client (iOS & Android)"]
+    UI["Feature Modules\n(Feed, AI Match, Chat, Spark, Profile)"]
+    SVC["Service & Repository Layer"]
+    UI --> SVC
+  end
+
+  subgraph Backend["Supabase Backend"]
+    AUTH["Supabase Auth\n(Email & Google OAuth)"]
+    DB[("PostgreSQL + RLS\n& Realtime")]
+    STORE["Supabase Storage\n(Media & Video Frames)"]
+    EDGE["Supabase Edge Functions\n(Deno / TypeScript)"]
+  end
+
+  subgraph External["AI & Third-Party Services"]
+    CLAUDE["Anthropic Claude API\n(Vision & Profile Synthesis)"]
+    MUSIC["Spotify & Apple Music APIs"]
+    ZEGO["ZegoCloud WebRTC\n(Voice & Video Calls)"]
+    FCM["Firebase Cloud Messaging"]
+    TOXIC["Kinnect ML Toxicity API\n(Flask / Scikit-Learn)"]
+  end
+
+  SVC --> AUTH
+  SVC --> DB
+  SVC --> STORE
+  SVC --> EDGE
+  SVC --> ZEGO
+  SVC --> FCM
+  SVC --> TOXIC
+  EDGE --> CLAUDE
+  EDGE --> MUSIC
+  EDGE --> DB
+  STORE --> EDGE
 ```
 
-## Yapay Zeka Eşleşme Sistemi
+### Architecture Diagrams
 
-Kinnect'in en önemli kısmı yapay zeka destekli eşleşme sistemidir. Bu sistem kullanıcıların paylaşımlarını analiz ederek her kullanıcı için bir "AI profil" oluşturur.
+<p align="center">
+  <img src="assets/presentation/solution-flow.png" alt="Kinnect Solution Flow" width="48%" />
+  <img src="assets/presentation/kinnect-er-diagram.png" alt="Kinnect ER Diagram" width="48%" />
+</p>
 
-### 1. Post Oluşturma
+---
 
-Kullanıcı yeni bir post paylaştığında fotoğraflar ve videolar Supabase Storage'a yüklenir. Postun metni, müzik bilgisi, konumu ve medya URL'leri `posts` tablosuna kaydedilir.
-
-Video paylaşımı varsa sistem videonun tamamını yapay zekaya göndermek yerine videodan birkaç kare çıkarır. Bu kareler Storage'a yüklenir ve `video_frame_urls` alanında saklanır.
-
-### 2. Analizin Tetiklenmesi
-
-Post kaydedildikten sonra uygulama arka planda `analyze-user-profile` adlı Supabase Edge Function'ı çağırır. Bu işlem kullanıcıyı bekletmeden yapılır.
-
-```mermaid
-flowchart LR
-  A["Kullanıcı post paylaşır"] --> B["Medya Storage'a yüklenir"]
-  B --> C["Post posts tablosuna kaydedilir"]
-  C --> D["analyze-user-profile tetiklenir"]
-```
-
-### 3. Claude ile Fotoğraf ve Video Analizi
-
-`analyze-user-profile` fonksiyonu kullanıcının son postlarını çeker. Her post için şu veriler değerlendirilir:
-
-- Fotoğraf URL'leri
-- Video kare URL'leri
-- Post açıklaması
-- Konum bilgisi
-- Spotify/Apple Music bilgileri
-- Kullanıcı etiketleri
-
-Eğer postta fotoğraf varsa Claude'a görsel olarak gönderilir. Eğer postta video varsa videodan çıkarılan kareler Claude'a gönderilir.
-
-Claude'dan her post için JSON formatında analiz istenir:
-
-```json
-{
-  "analysis": "Fotoğrafta iki kişi kafe ortamında vakit geçiriyor. Ortam samimi ve sosyal bir buluşma havasında.",
-  "scene_tags": ["kafe", "kahve", "arkadaşlar", "sosyal", "akşam"]
-}
-```
-
-Bu analiz sonucunda sistem postun ortamını, aktivitesini, sosyal bağlamını ve atmosferini anlamaya çalışır.
-
-### 4. Analizlerin Veritabanına Kaydedilmesi
-
-Her post için çıkarılan analizler tekrar veritabanına yazılır:
-
-- `photo_scene_tags`: Fotoğraf/video ortamından çıkarılan etiketler
-- `mentioned_usernames`: Post metnindeki kullanıcı mention'ları
-
-Örneğin:
+## Project Structure
 
 ```text
-photo_scene_tags = ["kafe", "kahve", "arkadaşlar", "sosyal"]
-mentioned_usernames = ["emre", "batuhan"]
+kinnect/
+├── lib/
+│   ├── core/
+│   │   ├── config/              # Environment & RTC configuration (ZegoConfig)
+│   │   ├── constants/           # App constants & API key templates
+│   │   ├── language/            # Bilingual localization (EN / TR)
+│   │   └── theme/               # Design system, colors & theme manager
+│   ├── data/
+│   │   ├── models/              # Domain models
+│   │   ├── repositories/        # Data access abstraction (Auth, Feed, Friend, Profile)
+│   │   └── services/            # 16 core services (Matching, Chat, Spotify, BLE, Safety, etc.)
+│   ├── features/
+│   │   ├── ai_matching/         # AI discovery, match evidence & interactive quiz screens
+│   │   ├── auth/                # Onboarding, login, signup & profile creation
+│   │   ├── chat/                # 1-on-1 & group chat, voice notes, Zego voice/video calls
+│   │   ├── create_post/         # Media composer, video trimmer, music & location pickers
+│   │   ├── home/                # Main social feed & stories/post cards
+│   │   ├── notifications/       # Real-time activity & push notification center
+│   │   ├── post/                # Post details, comments & likers sheet
+│   │   ├── profile/             # User profiles, music sync & AI profile insights
+│   │   ├── search/              # Explore feed & user/content search
+│   │   ├── settings/            # Privacy, language, theme & account settings
+│   │   └── spark/               # BLE proximity discovery mode
+│   ├── shared/
+│   │   └── widgets/             # Reusable UI components, carousels, shimmers & overlays
+│   └── main.dart                # Application entry point & background initialization
+├── supabase/
+│   ├── functions/
+│   │   ├── analyze-user-profile/     # Multimodal post & Vision analysis via Claude
+│   │   ├── match-users/              # Hybrid weighted matching & evidence extraction
+│   │   ├── explain-match/            # Natural-language match explanation generator
+│   │   ├── generate-post-embedding/  # Post vector embedding pipeline
+│   │   ├── send-push-notification/   # FCM push notification dispatcher
+│   │   └── spotify-search/           # Server-side Spotify track/artist proxy
+│   └── migrations/              # PostgreSQL schema, RLS policies & triggers
+└── assets/                      # Icons, Lottie animations & architecture diagrams
 ```
 
-Bu veriler daha sonra eşleşme skorunda kullanılır.
+---
 
-### 5. Kullanıcı Profilinin Sentezlenmesi
+## Ecosystem Repositories
 
-Tek tek post analizleri tamamlandıktan sonra Claude bu analizleri topluca değerlendirir ve kullanıcı için genel bir profil üretir.
+Kinnect is built as a modular multi-repo ecosystem:
 
-Üretilen profil şu bilgileri içerir:
+| Repository | Description | Tech Stack |
+| :--- | :--- | :--- |
+| **[`kinnect`](https://github.com/emreceylantr/kinnect)** | Main iOS & Android mobile application + Supabase Edge Functions | Flutter, Supabase, Claude AI, ZegoCloud, BLE |
+| **[`kinnect_admin`](https://github.com/emreceylantr/kinnect_admin)** | Desktop & Web administration dashboard for moderation, user analytics, and AI match inspection | Flutter (macOS / Web / Windows), Supabase |
+| **[`kinnect-toxic-api`](https://github.com/emreceylantr/kinnect-toxic-api)** | Real-time NLP microservice for toxic comment classification | Python, Flask, Scikit-Learn (TF-IDF + Logistic Regression) |
 
-- Türkçe profil özeti
-- İngilizce profil özeti
-- İlgi alanları listesi
-- Sosyal stil
+---
 
-Sosyal stil şu kategorilerden biridir:
+## Getting Started
 
-- `yalnız`: Kullanıcı genellikle tek başına içerik paylaşıyor
-- `ikili`: Kullanıcı genellikle bir kişiyle içerik paylaşıyor
-- `sosyal`: Kullanıcı genellikle kalabalık/grup ortamlarında bulunuyor
-- `karma`: Kullanıcı hem sosyal hem bireysel ortamlarda aktif
+### Prerequisites
+- **Flutter SDK** `>=3.0.0 <4.0.0`
+- **Xcode** (for iOS builds) / **Android Studio** (for Android builds)
+- **Supabase CLI** (optional, for deploying Edge Functions)
 
-Bu sonuçlar `user_profiles` tablosuna kaydedilir.
-
-## Veritabanında AI Profil Yapısı
-
-AI analizinden sonra oluşan kullanıcı profili `user_profiles` tablosunda tutulur.
-
-Temel alanlar:
-
-- `user_id`
-- `profile_summary`
-- `interests`
-- `social_style`
-- `analyzed_post_count`
-- `quiz_answers`
-- `spotify_top_artists`
-- `spotify_top_tracks`
-- `updated_at`
-
-Bu yapı sayesinde kullanıcı her yeni post attığında profili güncellenebilir.
-
-## Eşleşme Skoru Nasıl Hesaplanır?
-
-Eşleşme sistemi `match-users` Edge Function'ı içinde çalışır. Sistem mevcut kullanıcının AI profilini ve diğer kullanıcıların AI profillerini karşılaştırır.
-
-Skor beş ana kategori üzerinden hesaplanır:
-
-| Kategori | Açıklama | Ağırlık |
-| --- | --- | --- |
-| İlgi alanı skoru | Claude tarafından çıkarılan ilgi alanlarının benzerliği | %30 |
-| Müzik skoru | Ortak sanatçı, şarkı ve müzik zevki | %25 |
-| Davranış/ortam skoru | Fotoğraf sahne etiketleri, sosyal stil ve konum benzerliği | %18 |
-| Sosyal grafik skoru | Mention, etiketleme ve birbirinin postlarında görünme | %12 |
-| Etkileşim skoru | Beğeni ve yorum davranışları | %15 |
-
-Bu skorlar birleştirilir, normalize edilir ve en yüksek uyuma sahip kullanıcılar listelenir.
-
-## Açıklanabilir Eşleşme Mantığı
-
-Kinnect sadece "bu kullanıcıyla %80 uyumlusun" demez. Aynı zamanda bu eşleşmenin neden oluştuğunu da açıklar.
-
-Örnek eşleşme sebepleri:
-
-- "İkiniz de aynı sanatçıyı dinliyorsunuz."
-- "Benzer kafe ortamlarında paylaşım yapıyorsunuz."
-- "Birbirinizin paylaşımlarına yorum yapıyorsunuz."
-- "İkiniz de seyahat ve müzikle ilgileniyorsunuz."
-- "Aynı konumdan paylaşım yapmışsınız."
-
-Bu sebeplerin yanında gerçek postlar da gösterilir. Böylece kullanıcı eşleşmenin sadece soyut bir skor olmadığını, gerçek davranışlara dayandığını görebilir.
-
-## Claude ile Eşleşme Açıklaması
-
-Eşleşme detay ekranında `explain-match` Edge Function'ı çalışır. Bu fonksiyon iki kullanıcının:
-
-- AI profil özetlerini
-- İlgi alanlarını
-- Son postlarını
-- Ortak eşleşme sebeplerini
-
-Claude'a gönderir. Claude da teknik olmayan, doğal ve kısa bir açıklama üretir.
-
-Örnek:
-
-> "Sen de canlı müzik ve kafe ortamlarını seviyorsun, Ayşe'nin paylaşımlarında da aynı enerjiyi görmek mümkün. İkinizin de sosyal ve müzik odaklı bir tarzı olduğu için tanışmanız oldukça doğal görünüyor."
-
-## Güvenlik ve Gizlilik
-
-- Kullanıcı oturumları Supabase Auth ile yönetilir.
-- Veritabanında Row Level Security politikaları kullanılır.
-- Kullanıcı bazlı işlemler `auth.uid()` kontrolüyle sınırlandırılır.
-- Edge Function'lar hassas işlemler için Supabase service role key ile backend tarafında çalışır.
-- API anahtarları kod içinde tutulmaz; Supabase secrets/environment değişkenleri üzerinden yönetilir.
-
-## Proje Klasör Yapısı
-
-```text
-lib/
-  core/
-    config/
-    language/
-    theme/
-  data/
-    repositories/
-    services/
-  features/
-    ai_matching/
-    auth/
-    chat/
-    create_post/
-    home/
-    notifications/
-    post/
-    profile/
-    search/
-    settings/
-    spark/
-  shared/
-
-supabase/
-  functions/
-    analyze-user-profile/
-    match-users/
-    explain-match/
-    send-push-notification/
-    spotify-search/
-  migrations/
-```
-
-## Önemli Edge Function'lar
-
-- `analyze-user-profile`: Kullanıcının postlarını analiz eder, Claude ile AI profil üretir.
-- `match-users`: Kullanıcıları AI profil, müzik, sahne, etkileşim ve sosyal sinyallerle eşleştirir.
-- `explain-match`: Eşleşmenin nedenini Claude ile doğal dille açıklar.
-- `send-push-notification`: Push bildirim gönderir.
-- `spotify-search`: Spotify arama işlemlerini yönetir.
-
-## Kurulum
-
-Flutter bağımlılıklarını yüklemek için:
+### 1. Clone & Install Dependencies
 
 ```bash
+git clone https://github.com/emreceylantr/kinnect.git
+cd kinnect
 flutter pub get
 ```
 
-iOS bağımlılıkları için:
+For iOS, install CocoaPods dependencies:
 
 ```bash
-cd ios
-pod install
-cd ..
+cd ios && pod install && cd ..
 ```
 
-Uygulamayı çalıştırmak için:
+### 2. Configure API Keys & Environment
+
+Copy the example configuration files and populate your credentials:
 
 ```bash
-flutter run
+cp lib/core/constants/api_keys.example.dart lib/core/constants/api_keys.dart
+cp lib/core/config/zego_config.example.dart lib/core/config/zego_config.dart
 ```
 
-IPA üretmek için:
+Configure the following secrets in your **Supabase Dashboard -> Edge Functions -> Secrets**:
+- `ANTHROPIC_API_KEY` — Anthropic Claude API key for profile synthesis and match explanations
+- `SUPABASE_URL` & `SUPABASE_SERVICE_ROLE_KEY` — Automatically provided by Supabase runtime
+- `SPOTIFY_CLIENT_ID` & `SPOTIFY_CLIENT_SECRET` — For server-side music search
+
+### 3. Run the Application
+
+```bash
+flutter run \
+  --dart-define=ZEGO_APP_ID=YOUR_ZEGO_APP_ID \
+  --dart-define=ZEGO_APP_SIGN=YOUR_ZEGO_APP_SIGN
+```
+
+To build a release iOS archive (`.ipa`):
 
 ```bash
 flutter build ipa --release
 ```
 
-## Gerekli Servis Ayarları
+---
 
-Projeyi sıfırdan çalıştırmak için aşağıdaki servislerin yapılandırılması gerekir:
+## Security & Privacy
 
-- Supabase proje URL'i ve anon key
-- Supabase Edge Function secrets
-- `ANTHROPIC_API_KEY`
-- Firebase yapılandırması
-- Google Sign-In client bilgileri
-- Spotify client bilgileri
-- ZegoCloud AppID ve AppSign
+- **Row-Level Security (RLS):** All PostgreSQL tables enforce strict `auth.uid()` policies.
+- **Zero Client-Side AI Keys:** All LLM and Vision operations execute inside isolated Supabase Edge Functions; `ANTHROPIC_API_KEY` never leaves the server.
+- **Secret Hygiene:** Local credential files (`api_keys.dart`, `zego_config.dart`, `.env`) are git-ignored and parameterized via `--dart-define`.
 
-ZegoCloud bilgileri build sırasında `dart-define` ile de verilebilir:
+---
 
-```bash
-flutter run \
-  --dart-define=ZEGO_APP_ID=APP_ID \
-  --dart-define=ZEGO_APP_SIGN=APP_SIGN
-```
+## License
 
-## Bitirme Projesi Açısından Öne Çıkan Noktalar
-
-- Gerçek sosyal medya verilerinden AI profil çıkarımı
-- Claude Vision ile fotoğraf/video sahne analizi
-- Sosyal medya davranışlarına göre açıklanabilir eşleşme
-- Supabase Edge Function tabanlı backend mimarisi
-- Gerçek zamanlı mesajlaşma ve bildirim altyapısı
-- Müzik zevki, konum, etkileşim ve görsel bağlamı birlikte değerlendiren hibrit skor sistemi
-
-## Geliştiriciler
-
-Bu proje bitirme projesi kapsamında geliştirilmiştir.
-
-Kinnect, sosyal medya deneyimini yapay zeka ile daha kişisel, açıklanabilir ve bağlantı odaklı hale getirmeyi amaçlar.
+Developed as a Capstone Engineering Project. All rights reserved.

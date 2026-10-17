@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../../core/language/app_l10n.dart';
 
 class MusicPickerScreen extends StatefulWidget {
   const MusicPickerScreen({super.key});
@@ -133,7 +134,7 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
           },
         ),
         title: Text(
-          'Müzik Ekle',
+          AppL10n.addMusicTitle,
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -150,7 +151,7 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
               controller: _searchController,
               style: GoogleFonts.poppins(color: Colors.white),
               decoration: InputDecoration(
-                hintText: '🔍 Şarkı veya sanatçı ara...',
+                hintText: '🔍 ${AppL10n.searchSongOrArtist}',
                 hintStyle: GoogleFonts.poppins(color: Colors.white38),
                 prefixIcon: const Icon(Icons.search, color: Colors.white38),
                 suffixIcon: _searchController.text.isNotEmpty
@@ -190,7 +191,7 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Müzik Ara',
+                      AppL10n.searchMusic,
                       style: GoogleFonts.poppins(
                         color: Colors.white54,
                         fontSize: 16,
@@ -198,7 +199,7 @@ class _MusicPickerScreenState extends State<MusicPickerScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Apple Music ile arama yapılır',
+                      AppL10n.appleMusicSearchSubtitle,
                       style: GoogleFonts.poppins(
                         color: Colors.white38,
                         fontSize: 13,

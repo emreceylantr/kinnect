@@ -1,0 +1,153 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#0B142A" flood-opacity="0.12"/>
+    </filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBFDFB"/>
+      <stop offset="1" stop-color="#F0F7F1"/>
+    </linearGradient>
+    <pattern id="grid" width="38" height="38" patternUnits="userSpaceOnUse">
+      <path d="M38 0H0V38" stroke="#DCEBDE" stroke-opacity="0.48" stroke-width="1"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1 1L9 5L1 9V1Z" fill="#1D7044"/>
+    </marker>
+    <style>
+      .table-title { font: 800 22px Inter, Arial, sans-serif; fill: #0B142A; }
+      .col { font: 600 15px Inter, Arial, sans-serif; fill: #53627A; }
+      .key { font: 800 15px Inter, Arial, sans-serif; fill: #1D7044; }
+      .rel { font: 800 15px Inter, Arial, sans-serif; fill: #1D7044; }
+      .note { font: 700 14px Inter, Arial, sans-serif; fill: #6A7A5B; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="760" rx="34" fill="url(#bg)"/>
+  <rect width="1200" height="760" rx="34" fill="url(#grid)"/>
+
+  <text x="64" y="70" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="850" fill="#0B142A">Kinnect Kritik ER Diyagramı</text>
+  <text x="64" y="102" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="650" fill="#53627A">PostgreSQL/Supabase ilişkisel çekirdek: profil, içerik, etkileşim, sohbet ve AI eşleşme verileri</text>
+
+  <!-- Relationship lines under cards -->
+  <g stroke="#1D7044" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.78">
+    <path d="M600 178V228" marker-end="url(#arrow)"/>
+    <path d="M520 320C448 340 340 355 265 378" marker-end="url(#arrow)"/>
+    <path d="M600 320V390" marker-end="url(#arrow)"/>
+    <path d="M680 320C758 340 884 354 970 380" marker-end="url(#arrow)"/>
+    <path d="M436 510C455 544 470 580 485 628" marker-end="url(#arrow)"/>
+    <path d="M600 512V620" marker-end="url(#arrow)"/>
+    <path d="M852 512C825 548 804 585 782 628" marker-end="url(#arrow)"/>
+    <path d="M970 512C965 548 960 585 955 628" marker-end="url(#arrow)"/>
+  </g>
+
+  <g>
+    <rect x="493" y="122" width="214" height="78" rx="18" fill="#0B142A" filter="url(#shadow)"/>
+    <text x="600" y="153" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#FFFFFF">auth.users</text>
+    <text x="600" y="179" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="750" fill="#D9E7DA">id PK</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="475" y="228" width="250" height="120" rx="20" fill="#FFFFFF" stroke="#C9DEC9" stroke-width="2"/>
+    <rect x="475" y="228" width="250" height="44" rx="20" fill="#EAF4EC"/>
+    <path d="M475 252H725" stroke="#EAF4EC" stroke-width="44"/>
+    <text x="500" y="258" class="table-title">profiles</text>
+    <text x="500" y="292" class="key">id PK / FK auth.users</text>
+    <text x="500" y="317" class="col">username, full_name</text>
+    <text x="500" y="341" class="col">avatar_url, fcm_token</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="62" y="378" width="270" height="134" rx="20" fill="#FFFFFF" stroke="#C9DEC9" stroke-width="2"/>
+    <rect x="62" y="378" width="270" height="44" rx="20" fill="#EAF4EC"/>
+    <path d="M62 402H332" stroke="#EAF4EC" stroke-width="44"/>
+    <text x="87" y="408" class="table-title">user_profiles</text>
+    <text x="87" y="444" class="key">id PK</text>
+    <text x="87" y="469" class="key">user_id UNIQUE FK</text>
+    <text x="87" y="494" class="col">interests, social_style</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="453" y="390" width="294" height="122" rx="20" fill="#FFFFFF" stroke="#C9DEC9" stroke-width="2"/>
+    <rect x="453" y="390" width="294" height="44" rx="20" fill="#EAF4EC"/>
+    <path d="M453 414H747" stroke="#EAF4EC" stroke-width="44"/>
+    <text x="478" y="420" class="table-title">posts</text>
+    <text x="478" y="456" class="key">id PK</text>
+    <text x="478" y="481" class="key">user_id FK profiles.id</text>
+    <text x="478" y="506" class="col">content, image_urls, location</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="884" y="380" width="260" height="132" rx="20" fill="#FFFFFF" stroke="#C9DEC9" stroke-width="2"/>
+    <rect x="884" y="380" width="260" height="44" rx="20" fill="#EAF4EC"/>
+    <path d="M884 404H1144" stroke="#EAF4EC" stroke-width="44"/>
+    <text x="909" y="410" class="table-title">chat_rooms</text>
+    <text x="909" y="446" class="key">id PK</text>
+    <text x="909" y="471" class="key">created_by FK auth.users</text>
+    <text x="909" y="496" class="col">is_group, group_name</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="198" y="620" width="248" height="118" rx="20" fill="#FFFFFF" stroke="#C9DEC9" stroke-width="2"/>
+    <rect x="198" y="620" width="248" height="44" rx="20" fill="#EAF4EC"/>
+    <path d="M198 644H446" stroke="#EAF4EC" stroke-width="44"/>
+    <text x="223" y="650" class="table-title">likes</text>
+    <text x="223" y="686" class="key">user_id FK profiles.id</text>
+    <text x="223" y="711" class="key">post_id FK posts.id</text>
+    <text x="223" y="732" class="note">UNIQUE(user_id, post_id)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="484" y="620" width="248" height="118" rx="20" fill="#FFFFFF" stroke="#C9DEC9" stroke-width="2"/>
+    <rect x="484" y="620" width="248" height="44" rx="20" fill="#EAF4EC"/>
+    <path d="M484 644H732" stroke="#EAF4EC" stroke-width="44"/>
+    <text x="509" y="650" class="table-title">comments</text>
+    <text x="509" y="686" class="key">id PK</text>
+    <text x="509" y="711" class="key">post_id FK posts.id</text>
+    <text x="509" y="732" class="col">user_id, content</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="770" y="620" width="282" height="118" rx="20" fill="#FFFFFF" stroke="#C9DEC9" stroke-width="2"/>
+    <rect x="770" y="620" width="282" height="44" rx="20" fill="#EAF4EC"/>
+    <path d="M770 644H1052" stroke="#EAF4EC" stroke-width="44"/>
+    <text x="795" y="650" class="table-title">messages</text>
+    <text x="795" y="686" class="key">id PK / room_id FK</text>
+    <text x="795" y="711" class="key">sender_id, receiver_id FK</text>
+    <text x="795" y="732" class="col">content, created_at, is_read</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="62" y="202" width="260" height="96" rx="20" fill="#FFFFFF" fill-opacity="0.92" stroke="#D6E8D9" stroke-width="2"/>
+    <text x="88" y="238" class="table-title">spark_devices</text>
+    <text x="88" y="270" class="key">user_id UNIQUE FK auth.users</text>
+  </g>
+
+  <g stroke="#A9C7AD" stroke-width="2" stroke-dasharray="7 9" stroke-linecap="round">
+    <path d="M493 162C390 160 305 177 270 202"/>
+    <path d="M332 445C380 445 414 445 453 445"/>
+    <path d="M747 451C800 451 834 449 884 446"/>
+  </g>
+
+  <g>
+    <rect x="616" y="204" width="72" height="26" rx="13" fill="#176E42"/>
+    <text x="652" y="222" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="850" fill="#FFFFFF">1:1</text>
+
+    <rect x="382" y="347" width="82" height="26" rx="13" fill="#176E42"/>
+    <text x="423" y="365" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="850" fill="#FFFFFF">1:1 AI</text>
+
+    <rect x="620" y="354" width="72" height="26" rx="13" fill="#176E42"/>
+    <text x="656" y="372" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="850" fill="#FFFFFF">1:N</text>
+
+    <rect x="774" y="347" width="90" height="26" rx="13" fill="#176E42"/>
+    <text x="819" y="365" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="850" fill="#FFFFFF">creates</text>
+
+    <rect x="340" y="553" width="80" height="26" rx="13" fill="#176E42"/>
+    <text x="380" y="571" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="850" fill="#FFFFFF">N:M</text>
+
+    <rect x="620" y="555" width="72" height="26" rx="13" fill="#176E42"/>
+    <text x="656" y="573" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="850" fill="#FFFFFF">1:N</text>
+
+    <rect x="898" y="553" width="96" height="26" rx="13" fill="#176E42"/>
+    <text x="946" y="573" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="850" fill="#FFFFFF">room msgs</text>
+  </g>
+</svg>

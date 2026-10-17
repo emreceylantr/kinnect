@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -76,20 +75,42 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
 
   _ReasonType _detectReasonType() {
     final r = widget.reason.toLowerCase();
-    if (r.contains('yorum')) return _ReasonType.comment;
-    if (r.contains('harl')) return _ReasonType.like;
-    if (r.contains('görünüyor') || r.contains('etiket')) return _ReasonType.mention;
-    if (r.contains('dinliyorsunuz') || r.contains('sanatçı')) return _ReasonType.music;
-    if (r.contains('ortam') || r.contains('benzer') && r.contains('fotoğraf')) return _ReasonType.scene;
-    if (r.contains("'dan paylaşım") || r.contains('şehri paylaşıyor')) return _ReasonType.location;
-    if (r.contains('ilginiz örtüşüyor')) return _ReasonType.interest;
+    if (_containsAny(r, ['yorum', 'comment'])) return _ReasonType.comment;
+    if (_containsAny(r, ['harl', 'fueled', 'liked'])) return _ReasonType.like;
+    if (_containsAny(r, ['görünüyor', 'etiket', 'tagged', 'mentioned'])) return _ReasonType.mention;
+    if (_containsAny(r, ['dinliyorsunuz', 'sanatçı', 'listen', 'artist'])) return _ReasonType.music;
+    if (_containsAny(r, ['ortam', 'benzer fotoğraf', 'similar photo', 'scene', 'environment'])) return _ReasonType.scene;
+    if (_containsAny(r, ["'dan paylaşım", 'şehri paylaşıyor', 'same city', 'same place', 'both post from', 'you both post from'])) return _ReasonType.location;
+    if (_containsAny(r, ['ilginiz örtüşüyor', 'shared interest', 'both like', 'both into', 'interest overlap'])) return _ReasonType.interest;
     // social_style reasons
-    if (r.contains('bağımsız') ||
-        r.contains('yakın çevre') ||
-        r.contains('kalabalık ortam') ||
-        r.contains('sessiz anlara') ||
-        r.contains('sosyal hem')) return _ReasonType.social;
+    if (_containsAny(r, [
+      'bağımsız',
+      'yakın çevre',
+      'kalabalık ortam',
+      'sessiz anlara',
+      'sosyal hem',
+      'independent',
+      'close circle',
+      'crowded',
+      'quiet moments',
+      'social but',
+    ])) {
+      return _ReasonType.social;
+    }
     return _ReasonType.profile;
+  }
+
+  bool _containsAny(String value, List<String> keywords) {
+    return keywords.any(value.contains);
+  }
+
+  String? _extractReasonValue(List<RegExp> patterns) {
+    for (final pattern in patterns) {
+      final match = pattern.firstMatch(widget.reason);
+      final value = match?.group(1)?.trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return null;
   }
 
   Future<void> _fetchEvidencePosts() async {
@@ -209,8 +230,12 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
 
   // ─── Music ────────────────────────────────────────────────────────────────
   Future<void> _fetchMusicPosts() async {
-    final match = RegExp(r'Her ikiniz de (.+?) dinliyorsunuz').firstMatch(widget.reason);
-    final artist = match?.group(1);
+    final artist = _extractReasonValue([
+      RegExp(r'Her ikiniz de (.+?) dinliyorsunuz', caseSensitive: false),
+      RegExp(r'Both of you listen to (.+?)(?:[.!]|$)', caseSensitive: false),
+      RegExp(r'You both listen to (.+?)(?:[.!]|$)', caseSensitive: false),
+      RegExp(r'Shared artist:? (.+?)(?:[.!]|$)', caseSensitive: false),
+    ]);
     if (artist == null) return;
 
     final results = await Future.wait([
@@ -276,8 +301,12 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
 
   // ─── Location ─────────────────────────────────────────────────────────────
   Future<void> _fetchLocationPosts() async {
-    final locMatch = RegExp(r"İkiniz de (.+?)'[dD]").firstMatch(widget.reason);
-    final location = locMatch?.group(1);
+    final location = _extractReasonValue([
+      RegExp(r"İkiniz de (.+?)'[dD]", caseSensitive: false),
+      RegExp(r'You both post from (.+?)(?:[.!]|$)', caseSensitive: false),
+      RegExp(r'Both of you are from (.+?)(?:[.!]|$)', caseSensitive: false),
+      RegExp(r'Same city:? (.+?)(?:[.!]|$)', caseSensitive: false),
+    ]);
     if (location == null) return;
 
     final results = await Future.wait([
@@ -301,8 +330,12 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
 
   // ─── Interest: "X ilginiz örtüşüyor ✨" ─────────────────────────────────
   Future<void> _fetchInterestPosts() async {
-    final interestMatch = RegExp(r'^(.+?) ilginiz').firstMatch(widget.reason);
-    final interest = interestMatch?.group(1)?.trim().toLowerCase();
+    final interest = _extractReasonValue([
+      RegExp(r'^(.+?) ilginiz', caseSensitive: false),
+      RegExp(r'^Shared interest:? (.+?)(?:[.!]|$)', caseSensitive: false),
+      RegExp(r'^Both into (.+?)(?:[.!]|$)', caseSensitive: false),
+      RegExp(r'^You both like (.+?)(?:[.!]|$)', caseSensitive: false),
+    ])?.toLowerCase();
     if (interest == null) return;
 
     final keywords = _interestKeywords(interest);
@@ -663,7 +696,7 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Bu analiz profil verilerine dayanıyor',
+              AppL10n.profileBasedAnalysisTitle,
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white,
@@ -673,7 +706,7 @@ class _MatchEvidenceScreenState extends State<MatchEvidenceScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Belirli bir post değil; ilgi alanları, sosyal tarz veya müzik zevki gibi profil bilgilerinden çıkarılan bir ortak nokta.',
+              AppL10n.profileBasedAnalysisSubtitle,
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white54,
@@ -938,12 +971,12 @@ class _PostCarouselState extends State<_PostCarousel> {
                           color: Colors.black.withValues(alpha: 0.65),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.play_arrow_rounded, color: Colors.white, size: 14),
-                            SizedBox(width: 4),
-                            Text('VIDEO',
+                            const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 14),
+                            const SizedBox(width: 4),
+                            Text(AppL10n.videoBadge,
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,

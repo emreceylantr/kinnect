@@ -193,7 +193,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
             const CircularProgressIndicator(color: Colors.orange),
             const SizedBox(height: 20),
             Text(
-              'Ruh ikizlerini arıyoruz...',
+              AppL10n.aiSearching,
               style: GoogleFonts.poppins(
                 color: Colors.white54,
                 fontSize: 14,
@@ -2121,7 +2121,7 @@ class _AiMatchingScreenState extends State<AiMatchingScreen> with TickerProvider
           ),
           const SizedBox(height: 20),
           Text(
-            'Ruh ikizlerini arıyoruz...',
+            AppL10n.aiSearching,
             style: GoogleFonts.poppins(
               color: Colors.white54,
               fontSize: 14,

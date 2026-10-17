@@ -62,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen>
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
-      await _authService.signInWithEmail(email, password);
+      final authResult = await _authService.signInWithEmail(email, password);
 
       final user = Supabase.instance.client.auth.currentUser;
       final userId = user?.id;
@@ -71,11 +71,7 @@ class _LoginScreenState extends State<LoginScreen>
         throw AppL10n.userInfoError;
       }
 
-      final profileData = await Supabase.instance.client
-          .from('profiles')
-          .select()
-          .eq('id', userId)
-          .maybeSingle();
+      final profileData = authResult.profile;
 
       if (!mounted) return;
 

@@ -17,9 +17,11 @@ serve(async () => {
       ADD COLUMN IF NOT EXISTS social_style text;
   `)
 
-  // Drop pg_net trigger — analyze-user-profile is now called from Flutter after post creation
+  // Drop DB HTTP triggers — analyze-user-profile is called from Flutter after post creation.
   await client.queryArray(`DROP TRIGGER IF EXISTS on_post_insert_analyze_profile ON posts;`)
   await client.queryArray(`DROP FUNCTION IF EXISTS trigger_analyze_user_profile();`)
+  await client.queryArray(`DROP TRIGGER IF EXISTS on_new_post_generate_embedding ON posts;`)
+  await client.queryArray(`DROP FUNCTION IF EXISTS call_generate_embedding();`)
 
   // Add photo_scene_tags and mentioned_usernames columns to posts
   await client.queryArray(`

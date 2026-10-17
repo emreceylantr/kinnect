@@ -364,11 +364,11 @@ class ModernMessageBubble extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 if (isImage)
-                  const Text('📷 Fotoğraf',
-                      style: TextStyle(color: Colors.white54, fontSize: 12))
+                  Text(AppL10n.photo,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12))
                 else if (isAudio)
-                  const Text('🎤 Ses mesajı',
-                      style: TextStyle(color: Colors.white54, fontSize: 12))
+                  Text(AppL10n.voiceMessage,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12))
                 else
                   Text(
                     rc,

@@ -36,16 +36,6 @@ String _formatTime(DateTime dt) {
   return AppL10n.timeMonthShort((diff.inDays / 30).floor());
 }
 
-String _formatTimeLong(DateTime dt) {
-  final diff = DateTime.now().difference(dt);
-  if (diff.inSeconds < 60) return AppL10n.justNowCap;
-  if (diff.inMinutes < 60) return AppL10n.timeMinLong(diff.inMinutes);
-  if (diff.inHours < 24) return AppL10n.timeHourLong(diff.inHours);
-  if (diff.inDays < 7) return AppL10n.timeDayLong(diff.inDays);
-  if (diff.inDays < 30) return AppL10n.timeWeekLong((diff.inDays / 7).floor());
-  return AppL10n.timeMonthLong((diff.inDays / 30).floor());
-}
-
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 

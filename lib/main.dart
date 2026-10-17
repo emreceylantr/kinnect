@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,14 +28,11 @@ const Color kSplashViolet = Color(0xFF8B5CF6);
 
 // 🔥 Global Navigator Key
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+Future<bool>? _firebaseInitialization;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('tr', null);
-
-  // 🚀 PERFORMANS OPTİMİZASYONU: Firebase'i arka planda başlat
-  // Firebase başlatması UI'ı bloklamamalı
-  _initializeFirebaseInBackground();
 
   // Supabase kritik - bunu beklemek zorundayız
   await Supabase.initialize(
@@ -47,6 +45,11 @@ Future<void> main() async {
     ),
   );
 
+  // 🚀 PERFORMANS OPTİMİZASYONU: Firebase'i arka planda başlat
+  // Firebase başlatması UI'ı bloklamamalı, ama Supabase hazır olmadan
+  // session okumamalı.
+  _initializeFirebaseInBackground();
+
   // 🌓 Temayı yükle + dil yükle
   await ThemeManager().loadTheme();
   await LanguageManager().loadLocale();
@@ -57,11 +60,27 @@ Future<void> main() async {
 
 /// 🔥 Firebase ve Push Notification'ı arka planda başlat
 /// Bu sayede uygulama hızlı açılır, bildirimler sonra hazır olur
+Future<bool> _ensureFirebaseInitialized() {
+  return _firebaseInitialization ??= Future<bool>(() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) {
+      debugPrint('ℹ️ Firebase bu platformda yapılandırılmadı, atlanıyor.');
+      return false;
+    }
+
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+    debugPrint('✅ Firebase arka planda başlatıldı');
+    return true;
+  });
+}
+
 void _initializeFirebaseInBackground() {
   Future.microtask(() async {
     try {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-      debugPrint('✅ Firebase arka planda başlatıldı');
+      final isFirebaseReady = await _ensureFirebaseInitialized();
+      if (!isFirebaseReady) {
+        return;
+      }
 
       // Firebase hazır olduktan sonra notification service'i başlat
       // Ama sadece kullanıcı giriş yapmışsa
@@ -150,8 +169,8 @@ class _MyAppState extends State<MyApp> {
           navigatorKey.currentState?.context != null
               ? ScaffoldMessenger.of(navigatorKey.currentState!.context)
                   .showSnackBar(
-                  const SnackBar(
-                    content: Text('🎵 Spotify başarıyla bağlandı!'),
+                  SnackBar(
+                    content: Text('🎵 ${AppL10n.spotifyConnectedToast}'),
                     backgroundColor: Color(0xFF1DB954),
                   ),
                 )
@@ -330,6 +349,11 @@ class _AuthGateState extends State<AuthGate> {
         Future.microtask(() async {
           try {
             if (!NotificationService().isInitialized) {
+              final isFirebaseReady = await _ensureFirebaseInitialized();
+              if (!isFirebaseReady) {
+                return;
+              }
+
               await NotificationService().initialize();
               debugPrint(
                   '✅ NotificationService HomeScreen geçişinde başlatıldı');
@@ -687,8 +711,7 @@ class _KinnectSplashScreenState extends State<KinnectSplashScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.auto_awesome,
-                        size: 13,
-                        color: kSplashViolet.withOpacity(0.6)),
+                        size: 13, color: kSplashViolet.withOpacity(0.6)),
                     const SizedBox(width: 6),
                     Text(
                       AppL10n.currentLanguageCode == 'en'

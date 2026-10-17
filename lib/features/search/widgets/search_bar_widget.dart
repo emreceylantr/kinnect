@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/language/app_l10n.dart';
 import '../../../co../../../core/theme/app_colors.dart';
 
 /// Animasyonlu arama çubuğu
@@ -70,7 +71,7 @@ class SearchBarWidget extends StatelessWidget {
                 fontSize: 15,
               ),
               decoration: InputDecoration(
-                hintText: 'Kullanıcı ara...',
+                hintText: AppL10n.searchUsers,
                 hintStyle: GoogleFonts.poppins(
                   color: Colors.white38,
                   fontSize: 15,
