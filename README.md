@@ -154,8 +154,8 @@ Kinnect is built as a modular multi-repo ecosystem:
 | Repository | Description | Tech Stack |
 | :--- | :--- | :--- |
 | **[`kinnect`](https://github.com/emreceylantr/kinnect)** | Main iOS & Android mobile application + Supabase Edge Functions | Flutter, Supabase, Claude AI, ZegoCloud, BLE |
-| **[`kinnect_admin`](https://github.com/emreceylantr/kinnect_admin)** | Desktop & Web administration dashboard for moderation, user analytics, and AI match inspection | Flutter (macOS / Web / Windows), Supabase |
-| **[`kinnect-toxic-api`](https://github.com/emreceylantr/kinnect-toxic-api)** | Real-time NLP microservice for toxic comment classification | Python, Flask, Scikit-Learn (TF-IDF + Logistic Regression) |
+| **[`kinnect-admin`](https://github.com/emreceylantr/kinnect-admin)** | Desktop & Web administration dashboard for moderation, user analytics, and AI match inspection | Flutter (macOS / Web / Windows), Supabase |
+| **[`turkish-toxic-comment-classifier`](https://github.com/emreceylantr/turkish-toxic-comment-classifier)** | Real-time NLP microservice for toxic comment classification | Python, Flask, Scikit-Learn (TF-IDF + Logistic Regression) |
 
 ---
 
